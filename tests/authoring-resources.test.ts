@@ -1,3 +1,4 @@
+import { parseJevRequest } from "./jev-request";
 import { credentialEnvironmentVariables } from "../src/server/runtime/credential-environment";
 import { afterEach, expect, it, vi } from "vitest";
 import {
@@ -69,7 +70,7 @@ it.each(["animate_ui", "react_bits", "anatomy", "local_code"])(
     vi.stubGlobal(
       "fetch",
       vi.fn(async (_url, options) => {
-        const body = JSON.parse(String(options.body));
+        const body = await parseJevRequest(options);
         expect(body.model).toBe("jev-1.14.0");
         expect(body.state.selected.primary).toBe("style-026");
         expect(body.state).not.toHaveProperty("evidence");

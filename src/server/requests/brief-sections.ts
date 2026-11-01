@@ -8,8 +8,8 @@ export function validateBriefSections(
 ) {
   if (!request.requirements) return; // Existing saved requests retain their original attachment contract.
   const assigned = new Set<string>();
-  for (const section of ["main", "music", "images"] as const) {
-    for (const id of request.requirements[section].assetIds) {
+  for (const section of ["main", "music", "images", "videos"] as const) {
+    for (const id of request.requirements[section]?.assetIds || []) {
       if (assigned.has(id) || !request.assetIds.includes(id))
         throw new CodedError(
           "INVALID_REQUEST",

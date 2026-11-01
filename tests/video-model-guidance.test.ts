@@ -215,7 +215,9 @@ it.each(["preview", "full", "refinement"] as const)(
     expect(globalPrompt).toContain('"voice":"af_heart"');
     expect(globalPrompt).toContain('"showSubtitles":true');
     expect(globalPrompt).toContain("Global language profiles govern every item");
-    expect(globalPrompt).toContain("never burn it into rendered frames");
+    expect(globalPrompt).toContain(
+      "Display its exact text inside the rendered video only when showSubtitles is true",
+    );
     expect(globalPrompt).not.toContain("Per-item language and voice selections override");
     const musicPrompt = "Sparse drums, warm bass. Keep my exact phrasing.";
     const musicRequest = VideoRequestSchema.parse({

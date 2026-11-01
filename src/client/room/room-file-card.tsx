@@ -11,7 +11,9 @@ function cardProps(asset: RoomLibraryAsset, imagePreview = false) {
     name: asset.originalName,
     byte: asset.bytes,
     size: "small" as const,
-    ...(roomMaterialSection(asset.originalName) === "images"
+    type: "file" as const,
+    ...(roomMaterialSection(asset.originalName) === "images" &&
+    !/\.(mp4|mov|webm)$/i.test(asset.originalName)
       ? {
           type: "file" as const,
           className: "room-image-file-card",

@@ -38,6 +38,16 @@
 以下日期采用新西兰时间。
 
 <details>
+<summary>2026-11-01</summary>
+
+- **MCP 素材导入：**通过 `import_asset` 将本地文件或 ComfyUI 产物导入已保存的草稿或项目；通过 `manage_idea_assets` 查看可用素材、附加到草稿或从素材架移除条目。MCP 与界面共用文件限制和附件规则。导入文件保存在 Git 忽略的运行时目录。详见[智能体 MCP](docs/agent-mcp.md)（英文）。
+- **关联草稿、素材与项目 ID：**`start_idea` 从已保存的草稿创建项目时，Kiteva 保留附件 ID，并将导入文件关联到该项目。更新操作会拒绝过期的草稿版本和属于其他项目的文件。
+- **独立的视频参考：**界面和 MCP 为 MP4、MOV、WebM 片段提供独立的 Videos 分类。Kiteva 在加载已保存的草稿时迁移此前误归入 Images 的视频，保留附件 ID 和说明。音乐上传同时支持 FLAC。
+- **简洁的智能体简报：**工具描述要求调用方保留用户需求并保持提示词简洁，将未指定的创意决策交给所选主模型，默认使用 Claude Opus 5.5。
+
+</details>
+
+<details>
 <summary>2026-10-31</summary>
 
 - **面向外部智能体的 HTTP MCP：**通过应用内置的 `/mcp` 端点搜索已保存的想法和 Motion Graphic、查看可用设置、保存 Assistant 草稿，并明确启动构建。工具共用类型化结果与请求校验，保护并发草稿编辑；默认使用 Claude Opus 5.5、Multiplane、2K、60 fps、Explore 和三个预览方向。详见[智能体 MCP](docs/agent-mcp.md)（英文）。

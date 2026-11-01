@@ -1,3 +1,9 @@
+import { assetLimits } from "../../shared/asset-limits";
+import { briefSectionFileAccept } from "../../shared/brief-sections";
+import { AssetSourceSchema, AssetTargetSchema, importMcpAsset } from "./assets";
+import type { Asset } from "../../shared/contracts";
+import type { AssetOwner } from "../../shared/asset-owner";
+import { toggleRoomAsset } from "../../shared/brief-attachments";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { randomUUID } from "node:crypto";
 import MiniSearch from "minisearch";
@@ -21,6 +27,7 @@ export type KitevaMcpDependencies = {
   store: Store;
   catalog: Pick<Catalog, "styles">;
   webUrl: string;
+  assetDirectory?: string;
   start: (request: z.infer<typeof VideoRequestSchema>) => Promise<{ id: string; phase: string }>;
 };
 
@@ -40,7 +47,13 @@ function search<T extends { id: string }>(
     .map((match) => matches.get(String(match.id))!);
 }
 
-export function createKitevaMcpTools({ store, catalog, webUrl, start }: KitevaMcpDependencies) {
+export function createKitevaMcpTools({
+  store,
+  catalog,
+  webUrl,
+  start,
+  assetDirectory,
+}: KitevaMcpDependencies) {
   const clientId = `kiteva-mcp-${randomUUID()}`;
   const server = new McpServer(
     { name: "kiteva", version: "1.0.0" },
@@ -65,6 +78,136 @@ export function createKitevaMcpTools({ store, catalog, webUrl, start }: KitevaMc
       };
     }
   }
+  const publicAsset = (asset: Asset, attached: boolean) => ({
+    id: asset.id,
+    originalName: asset.originalName || asset.name,
+    kind: asset.kind,
+    bytes: asset.bytes,
+    owner: asset.owner,
+    attached,
+  });
+  const scopedAssets = (target: AssetOwner) => {
+    const room = store.room();
+    const draft = Object.values(room.drafts).find((item) => item.id === target.id);
+    const project = target.kind === "project" ? store.get(target.id) : undefined;
+    if (target.kind === "draft" && !draft) throw Error("Draft not found");
+    if (target.kind === "project" && !project) throw Error("Project not found");
+    const ids =
+      target.kind === "draft"
+        ? (draft!.request.assetIds as string[]) || []
+        : project!.request.assetIds;
+    return [
+      ...new Map(
+        [...ids.map((id) => store.getAsset(id)!), ...store.ownedAssets(target)].map((asset) => [
+          asset.id,
+          asset,
+        ]),
+      ).values(),
+    ];
+  };
+  server.registerTool(
+    "import_asset",
+    {
+      description:
+        "Import one selected local file or ComfyUI output into an existing draft/project. Use the exact draftId from create_idea/read_idea or projectId from start_idea. Files go to private runtime storage, never source code or Git. Draft imports attach using the same UI section/limit rules: image files belong to images, MP4/MOV/WebM clips to videos, audio to music and documents to main; project imports are available for that project's later edits and never restart a build. Returns actual asset ID and current revision. No model calls. Do not automatically retry an uncertain import.",
+      inputSchema: { target: AssetTargetSchema, source: AssetSourceSchema },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
+    },
+    ({ target, source }) =>
+      run(async () => {
+        const asset = await importMcpAsset(store, target, source, assetDirectory);
+        return {
+          kind: "asset_imported",
+          target,
+          asset: publicAsset(asset, target.kind === "draft"),
+          revision: target.kind === "draft" ? store.room().revision : undefined,
+        };
+      }),
+  );
+  server.registerTool(
+    "manage_idea_assets",
+    {
+      description:
+        "List current draft attachments and available asset-pool items, Add an existing item, Remove its draft attachment, or remove an item from the shared pool. Uses the same UI attachment/section/limit logic. Detaching or removing from the pool does not delete source files or affect a project's build. Use exact draftId, returned asset IDs and latest room revision for edits. Never treat pool items as attached automatically.",
+      inputSchema: {
+        draftId: z.string().uuid(),
+        action: z.enum(["list", "attach", "detach", "remove_from_pool"]),
+        assetId: z.string().uuid().optional(),
+        revision: z.number().int().min(0).optional(),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
+    },
+    ({ draftId, action, assetId, revision }) =>
+      run(() => {
+        const room = store.room();
+        const entry = Object.entries(room.drafts).find(([, draft]) => draft.id === draftId);
+        if (!entry) throw Error("Draft not found");
+        const [key, draft] = entry;
+        const ids = (draft.request.assetIds as string[]) || [];
+        if (action !== "list") {
+          if (revision !== room.revision || !assetId)
+            throw Error("Read the latest draft revision and supply an asset ID before editing");
+          store.assertAssetOwner([assetId], { kind: "draft", id: draftId });
+          const asset = store.getAsset(assetId)!;
+          if ((action === "attach") !== ids.includes(assetId)) {
+            if (
+              action === "attach" &&
+              !store.library().some((item) => item.id === assetId) &&
+              asset.owner?.id !== draftId
+            )
+              throw Error("Asset is not in this draft or its available pool");
+            const request = toggleRoomAsset(
+              VideoRequestSchema.parse(draft.request),
+              { ...asset, originalName: asset.originalName || asset.name },
+              ids.map((id) => {
+                const a = store.getAsset(id)!;
+                return { ...a, originalName: a.originalName || a.name };
+              }),
+            );
+            const result = store.patchRoom(
+              RoomPatchSchema.parse({
+                client: clientId,
+                baseRevision: revision,
+                drafts: {
+                  [key]: {
+                    ...draft,
+                    request,
+                    assets: request.assetIds.map((id) => {
+                      const a = store.getAsset(id)!;
+                      return { ...a, originalName: a.originalName || a.name };
+                    }),
+                  },
+                },
+              }),
+            );
+            if (result.conflicts.length)
+              throw Error("Draft changed; read it again before retrying");
+          }
+        }
+        if (action === "remove_from_pool" && assetId) store.removeLibraryAsset(assetId);
+        const current = store.room();
+        const attached = (current.drafts[key].request.assetIds as string[]) || [];
+        const assets = [
+          ...new Map(
+            [
+              ...attached.map((id) => store.getAsset(id)!),
+              ...store
+                .library()
+                .filter(
+                  (asset) =>
+                    !asset.owner || (asset.owner.kind === "draft" && asset.owner.id === draftId),
+                ),
+            ].map((asset) => [asset.id, asset]),
+          ).values(),
+        ];
+        return {
+          kind: "assets",
+          target: { kind: "draft", id: draftId },
+          revision: current.revision,
+          assets: assets.map((asset) => publicAsset(asset, attached.includes(asset.id))),
+        };
+      }),
+  );
   const querySchema = {
     query: z
       .string()
@@ -124,22 +267,42 @@ export function createKitevaMcpTools({ store, catalog, webUrl, start }: KitevaMc
           .string()
           .min(1)
           .describe(
-            "Exact project ID or draft: key returned by search_ideas, for example draft:new.",
+            "Stable projectId or draftId returned by start_idea/create_idea/read_idea, or a draft: key such as draft:new from search_ideas.",
           ),
       },
       annotations: { readOnlyHint: true },
     },
     ({ id }) =>
       run(() => {
-        if (id.startsWith("draft:")) {
-          const room = store.room();
-          const draft = room.drafts[id.slice(6)];
+        const room = store.room();
+        const matchingDraft = Object.values(room.drafts).find((draft) => draft.id === id);
+        if (id.startsWith("draft:") || matchingDraft) {
+          const draft = matchingDraft || room.drafts[id.slice(6)];
           if (!draft) throw Error("Idea draft not found");
-          return { kind: "idea", id, request: draft.request, revision: room.revision };
+          return {
+            kind: "idea",
+            id,
+            draftId: draft.id,
+            request: draft.request,
+            revision: room.revision,
+            assets: draft.assets.map((asset) =>
+              publicAsset(
+                store.getAsset(asset.id)!,
+                ((draft.request.assetIds as string[]) || []).includes(asset.id),
+              ),
+            ),
+          };
         }
         const project = store.get(id);
         if (!project) throw Error("Project not found");
-        return { kind: "idea", id, request: { ...project.request } };
+        return {
+          kind: "idea",
+          id,
+          request: { ...project.request },
+          assets: scopedAssets({ kind: "project", id }).map((asset) =>
+            publicAsset(asset, project.request.assetIds.includes(asset.id)),
+          ),
+        };
       }),
   );
   server.registerTool(
@@ -154,6 +317,8 @@ export function createKitevaMcpTools({ store, catalog, webUrl, start }: KitevaMc
         kind: "options",
         defaults: kitevaIdeaDefaults,
         settingsSchema: z.toJSONSchema(IdeaSettingsSchema),
+        uploadLimits: assetLimits,
+        supportedExtensions: Object.values(briefSectionFileAccept).join(",").split(","),
       })),
   );
   server.registerTool(
@@ -193,6 +358,8 @@ export function createKitevaMcpTools({ store, catalog, webUrl, start }: KitevaMc
     ({ idea, settings }) =>
       run(() => {
         const request = ideaRequest(idea, settings);
+        const draftId = store.room().drafts.new?.id || randomUUID();
+        store.assertAssetOwner(request.assetIds, { kind: "draft", id: draftId });
         const assets = request.assetIds.map((id) => {
           const asset = store.getAsset(id);
           if (!asset)
@@ -231,7 +398,9 @@ export function createKitevaMcpTools({ store, catalog, webUrl, start }: KitevaMc
           RoomPatchSchema.parse({
             client: clientId,
             baseRevision: room.revision,
-            drafts: { new: { step: 7, stepLayout: "separate-speech", request, assets } },
+            drafts: {
+              new: { id: draftId, step: 8, stepLayout: "separate-video", request, assets },
+            },
           }),
         );
         if (result.conflicts.length)
@@ -244,6 +413,7 @@ export function createKitevaMcpTools({ store, catalog, webUrl, start }: KitevaMc
           request,
           url: new URL("/", webUrl).href,
           started: false,
+          draftId,
         };
       }),
   );
@@ -252,6 +422,13 @@ export function createKitevaMcpTools({ store, catalog, webUrl, start }: KitevaMc
     {
       description: ideaToolGuidance.start,
       inputSchema: {
+        draftId: z
+          .string()
+          .uuid()
+          .optional()
+          .describe(
+            "Stable draftId returned by create_idea/read_idea/import_asset. Supply it to start exactly that draft.",
+          ),
         revision: z
           .number()
           .int()
@@ -262,14 +439,22 @@ export function createKitevaMcpTools({ store, catalog, webUrl, start }: KitevaMc
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
     },
-    ({ revision }) =>
+    ({ revision, draftId }) =>
       run(async () => {
         const room = store.room();
         if (room.revision !== revision)
           throw Error("The room changed. Read draft:new again before starting.");
         if (!room.drafts.new) throw Error("No New idea draft to start");
+        if (draftId && room.drafts.new.id !== draftId)
+          throw Error("Draft ID does not match the current New idea");
+        const sourceDraftId = room.drafts.new.id;
         const request = VideoRequestSchema.parse(room.drafts.new.request);
+        store.assertAssetOwner(
+          request.assetIds,
+          sourceDraftId ? { kind: "draft", id: sourceDraftId } : undefined,
+        );
         const project = await start(request);
+        if (sourceDraftId) store.transferDraftAssets(sourceDraftId, project.id, request.assetIds);
         store.patchRoom(
           RoomPatchSchema.parse({
             client: clientId,
@@ -280,7 +465,9 @@ export function createKitevaMcpTools({ store, catalog, webUrl, start }: KitevaMc
         return {
           kind: "started",
           id: project.id,
+          projectId: project.id,
           phase: project.phase,
+          draftId: sourceDraftId,
           url: new URL(`/projects/${project.id}`, webUrl).href,
         };
       }),

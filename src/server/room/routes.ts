@@ -1,16 +1,15 @@
+import { writeUploadedAsset } from "../requests/asset-storage";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import sharp from "sharp";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { createHash, randomUUID } from "node:crypto";
+import { mkdir, readFile, rm } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { z } from "zod";
 import { RoomPatchSchema, RoomStateSchema } from "../../shared/room";
 import { roomWallpaperExtensions } from "../../shared/room-appearance";
 import { CodedError } from "../../shared/errors";
-import { validateAssetLimits } from "../../shared/asset-limits";
 import { briefSectionFileAccept } from "../../shared/brief-sections";
-import { inspectAssetLimits } from "../requests/asset-limits";
 import { appRoot, webPort } from "../runtime/config";
 import type { Store } from "../jobs/store";
 import type { Asset } from "../../shared/contracts";
@@ -41,22 +40,11 @@ async function receiveRoomUpload(
   await verify?.(buffer);
   const sha256 = createHash("sha256").update(buffer).digest("hex");
   const existing = store.assetByHash(sha256);
-  if (existing && existsSync(existing.path)) return { asset: existing, duplicate: true };
-  const id = randomUUID();
-  const name = id + extension;
-  const asset: Asset = {
-    id,
-    name,
-    originalName: path.basename(file.filename),
-    path: path.join(folder, name),
-    kind: file.mimetype,
-    bytes: buffer.length,
-    sha256,
-  };
-  validateAssetLimits([asset]);
-  await writeFile(asset.path, buffer, { mode: 0o600 });
+  if (existing && !existing.owner && existsSync(existing.path))
+    return { asset: existing, duplicate: true };
+  const asset = await writeUploadedAsset(buffer, file.filename, file.mimetype, folder);
+  asset.sha256 = sha256;
   try {
-    await inspectAssetLimits(asset, buffer);
     store.asset(asset);
   } catch (error) {
     await rm(asset.path, { force: true });
@@ -92,7 +80,16 @@ export async function registerRoomRoutes(
   await mkdir(folder, { recursive: true, mode: 0o700 });
   app.get("/api/room", async () => RoomStateSchema.parse(store.room()));
   app.patch("/api/room", async (req) => store.patchRoom(RoomPatchSchema.parse(req.body)));
-  app.get("/api/room/library", async () => store.library().map(withoutLocation));
+  app.get("/api/room/library", async () =>
+    store
+      .library()
+      .filter(
+        (asset) =>
+          !asset.owner ||
+          (asset.owner.kind === "draft" && asset.owner.id === store.room().drafts.new?.id),
+      )
+      .map(withoutLocation),
+  );
   app.post("/api/room/library", async (req) => {
     const { asset, duplicate } = await receiveRoomUpload(
       req,

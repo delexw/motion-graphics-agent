@@ -34,6 +34,11 @@ it("enforces section-specific formats and complete unique assignments at the ser
   expect(acceptsBriefAttachment("main", "BRIEF.MD")).toBe(true);
   expect(acceptsBriefAttachment("main", "image.png")).toBe(false);
   expect(acceptsBriefAttachment("main", "brief.docx")).toBe(false);
+  for (const name of ["clip.mp4", "clip.MOV", "clip.webm"]) {
+    expect(acceptsBriefAttachment("images", name)).toBe(false);
+    expect(acceptsBriefAttachment("videos", name)).toBe(true);
+  }
+  expect(acceptsBriefAttachment("videos", "image.png")).toBe(false);
   const duplicate = request();
   duplicate.requirements!.music.assetIds.push(documentId);
   expect(() => validateBriefSections(duplicate, getAsset)).toThrow("exactly one");
@@ -54,15 +59,17 @@ it("restores section instructions without combining or losing them", () => {
   expect(projectSettingsDraft(request()).sectionInstructions).toEqual({
     music: "Loop the soundtrack",
     images: "Use the product screen",
+    videos: "",
     urls: "Capture the editor",
   });
 });
-it("provides four focused cheap-model agents, restricts browsing to the URL role, and requires grounded synthesis", () => {
+it("provides five focused cheap-model agents, restricts browsing to the URL role, and requires grounded synthesis", () => {
   const agents = briefExplorationAgents("cheap-model");
   expect(Object.keys(agents)).toEqual([
     "main-brief",
     "music-requirements",
     "image-requirements",
+    "video-requirements",
     "url-requirements",
   ]);
   for (const agent of Object.values(agents)) {
@@ -80,7 +87,7 @@ it("provides four focused cheap-model agents, restricts browsing to the URL role
 it("renders section-specific upload controls and keeps each attachment in its assigned section", () => {
   const html = renderToStaticMarkup(
     <BriefRequirements
-      instructions={{ music: "Loop", images: "Screen", urls: "Editor" }}
+      instructions={{ videos: "", music: "Loop", images: "Screen", urls: "Editor" }}
       onChange={() => {}}
       assets={[
         { id: audioId, originalName: "music.mp3", section: "music" },
@@ -96,7 +103,7 @@ it("renders section-specific upload controls and keeps each attachment in its as
     </BriefRequirements>,
   );
   expect(html).toContain('accept=".md,.txt,.pdf"');
-  expect(html).toContain('accept=".wav,.mp3,.m4a"');
+  expect(html).toContain('accept=".wav,.mp3,.m4a,.flac"');
   expect(html).toContain("Add links");
   expect(html.indexOf("music.mp3")).toBeGreaterThan(
     html.indexOf('aria-label="Music / instrumental requirements"'),

@@ -26,8 +26,9 @@ export const RoomLibraryAssetSchema = z.object({
 // Each field falls back on its own, so one damaged field never discards the rest of a draft.
 export const RoomDraftSchema = z
   .object({
-    step: z.number().int().min(0).max(7).catch(0).default(0),
-    stepLayout: z.literal("separate-speech").optional().catch(undefined),
+    id: z.string().uuid().optional(),
+    step: z.number().int().min(0).max(8).catch(0).default(0),
+    stepLayout: z.enum(["separate-speech", "separate-video"]).optional().catch(undefined),
     editHistoryIds: z.array(z.string()).optional(),
     editHistoryText: z.string().optional(),
     request: z
@@ -42,6 +43,10 @@ export const RoomDraftSchema = z
     if (!draft.stepLayout) {
       if (draft.step === 5 || draft.step === 6) draft.step += 1;
       draft.stepLayout = "separate-speech";
+    }
+    if (draft.stepLayout !== "separate-video") {
+      if (draft.step >= 3) draft.step += 1;
+      draft.stepLayout = "separate-video";
     }
     return draft;
   });

@@ -37,7 +37,7 @@ it.skipIf(!browserExecutablePath())(
 import React,{useState}from'react';import{createRoot}from'react-dom/client';
 import{RoomOnboarding}from'/src/client/room/room-onboarding.tsx';
 import{emptyRoomDraft}from'/src/client/room/onboarding.ts';
-function App(){const[created,setCreated]=useState(null);const[draft,setDraft]=useState({...emptyRoomDraft(),step:6,stepLayout:'separate-speech',request:{instructions:${JSON.stringify(instructions)},duration:180,urls:[],selectedStyleIds:['style-056','style-098','style-093'],candidateCount:2}});return React.createElement(React.Fragment,null,React.createElement(RoomOnboarding,{draft,onChange:setDraft,materials:[],styles:${JSON.stringify(styles)},examples:[],onCreated:setCreated,onUpload:async()=>[]}),React.createElement('output',{id:'state'},JSON.stringify(draft)),React.createElement('output',{id:'created'},JSON.stringify(created)));}
+function App(){const[created,setCreated]=useState(null);const[draft,setDraft]=useState({...emptyRoomDraft(),step:7,stepLayout:'separate-video',request:{instructions:${JSON.stringify(instructions)},duration:180,urls:[],selectedStyleIds:['style-056','style-098','style-093'],candidateCount:2}});return React.createElement(React.Fragment,null,React.createElement(RoomOnboarding,{draft,onChange:setDraft,materials:[],styles:${JSON.stringify(styles)},examples:[],onCreated:setCreated,onUpload:async()=>[]}),React.createElement('output',{id:'state'},JSON.stringify(draft)),React.createElement('output',{id:'created'},JSON.stringify(created)));}
 createRoot(document.getElementById('root')).render(React.createElement(App));</script>`,
               );
               res.setHeader("Content-Type", "text/html");
@@ -124,7 +124,7 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
         (next as HTMLButtonElement).click();
       });
       await page.waitForFunction(
-        () => JSON.parse(document.querySelector("#state")!.textContent!).step === 7,
+        () => JSON.parse(document.querySelector("#state")!.textContent!).step === 8,
       );
       await page.evaluate(() => {
         const submit = [...document.querySelectorAll("button")].find(

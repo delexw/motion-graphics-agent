@@ -40,8 +40,8 @@ it("includes full prompts, file names, URL instructions, subtitles and speech in
   expect(replies[1].text).toContain("Read the notes");
   expect(replies[2].text).toContain("Use a bright palette");
   expect(replies[2].text).toContain("reference.png");
-  expect(replies[3].text).toContain("https://example.com");
-  expect(replies[3].text).toContain("Capture the working app");
+  expect(replies[4].text).toContain("https://example.com");
+  expect(replies[4].text).toContain("Capture the working app");
   for (const value of [
     "Here are the actual subtitles",
     "Michael",
@@ -49,7 +49,7 @@ it("includes full prompts, file names, URL instructions, subtitles and speech in
     "Here is the actual narration",
     "Speak warmly",
   ])
-    expect(replies[5].text).toContain(value);
+    expect(replies[6].text).toContain(value);
 });
 it("lists actual generation settings and selected style names rather than counts", () => {
   const reply = roomSettingsReply(request(), styles);
@@ -81,23 +81,23 @@ it("handles optional steps and page settings without video or inactive voice set
   });
   const replies = roomOnboardingReplies(page, [], []);
   expect(replies[1]).toEqual({ text: "Skipped", skipped: true });
-  expect(replies[3]).toEqual({ text: "No websites", skipped: true });
-  expect(replies[4]).toEqual({ text: "Skipped", skipped: true });
-  expect(replies[6].text).toContain("Preview viewport: Mobile");
-  expect(replies[6].text).not.toContain("Frame rate");
+  expect(replies[4]).toEqual({ text: "No websites", skipped: true });
+  expect(replies[5]).toEqual({ text: "Skipped", skipped: true });
+  expect(replies[7].text).toContain("Preview viewport: Mobile");
+  expect(replies[7].text).not.toContain("Frame rate");
   const video = request();
   if (video.outputType !== "video") throw Error("Expected video fixture");
   video.subtitles = { mode: "off" };
-  expect(roomOnboardingReplies(video, assets, styles)[5].text).toContain("Voice: Michael");
+  expect(roomOnboardingReplies(video, assets, styles)[6].text).toContain("Voice: Michael");
   expect(roomSettingsReply(video, styles)).not.toContain("Michael");
 });
 
 it("keeps speech and narration in their own reply without repeating them in generation settings", () => {
   const replies = roomOnboardingReplies(request(), assets, styles);
-  expect(replies[4].text).toContain("An upbeat groove");
-  expect(replies[4].text).not.toContain("Here is the actual narration");
-  expect(replies[5].text).toContain("Here is the actual narration");
-  expect(replies[5].text).toContain("Voice: Michael");
+  expect(replies[5].text).toContain("An upbeat groove");
+  expect(replies[5].text).not.toContain("Here is the actual narration");
+  expect(replies[6].text).toContain("Here is the actual narration");
+  expect(replies[6].text).toContain("Voice: Michael");
   for (const value of [
     "Speech:",
     "Voice:",
@@ -105,5 +105,5 @@ it("keeps speech and narration in their own reply without repeating them in gene
     "Here is the actual narration",
     "Speak warmly",
   ])
-    expect(replies[6].text).not.toContain(value);
+    expect(replies[7].text).not.toContain(value);
 });

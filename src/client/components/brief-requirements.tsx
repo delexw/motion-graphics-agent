@@ -32,8 +32,8 @@ export function BriefRequirements({
   onUrlsChange,
 }: {
   children: ReactNode;
-  instructions: { music: string; images: string; urls: string };
-  onChange: (section: "music" | "images" | "urls", value: string) => void;
+  instructions: { music: string; images: string; videos: string; urls: string };
+  onChange: (section: "music" | "images" | "videos" | "urls", value: string) => void;
   assets: BriefAttachment[];
   onRemove: (id: string) => void;
   uploading: boolean;
@@ -42,14 +42,14 @@ export function BriefRequirements({
   onUrlsChange: (value: string) => void;
 }) {
   useUiLanguage();
-  const fileInputs = useRef<Partial<Record<"main" | "music" | "images", HTMLInputElement | null>>>(
-    {},
-  );
+  const fileInputs = useRef<
+    Partial<Record<"main" | "music" | "images" | "videos", HTMLInputElement | null>>
+  >({});
   const links = useRef<TextAreaRef>(null);
   return (
     <div className="brief-sections">
       <p className="secondary">{assetLimitHelp.total}</p>
-      {(["main", "music", "images", "urls"] as const).map((section) => (
+      {(["main", "music", "images", "videos", "urls"] as const).map((section) => (
         <section
           className={`brief-section${section === "main" ? " brief-section-main" : ""}`}
           key={section}
@@ -58,6 +58,7 @@ export function BriefRequirements({
               main: "Main prompt",
               music: "Music / instrumental requirements",
               images: "Image requirements",
+              videos: "Video requirements",
               urls: "URL requirements",
             }[section]
           }
@@ -69,6 +70,7 @@ export function BriefRequirements({
                   main: "Main prompt",
                   music: "Music / instrumental requirements",
                   images: "Image requirements",
+                  videos: "Video requirements",
                   urls: "URL requirements",
                 }[section]
               }
@@ -91,7 +93,13 @@ export function BriefRequirements({
                     uploading ||
                     hasReachedAssetCountLimit(
                       assets.map((asset) => asset.originalName),
-                      section === "music" ? "audio" : section === "images" ? "images" : "documents",
+                      section === "music"
+                        ? "audio"
+                        : section === "images"
+                          ? "images"
+                          : section === "videos"
+                            ? "videos"
+                            : "documents",
                     )
                   }
                   onClick={() => fileInputs.current[section]?.click()}
@@ -99,9 +107,12 @@ export function BriefRequirements({
                   <Paperclip size={16} />
                   {uploading
                     ? translateUi("Uploading…")
-                    : { main: "Attach documents", music: "Attach audio", images: "Attach images" }[
-                        section
-                      ]}
+                    : {
+                        main: "Attach documents",
+                        music: "Attach audio",
+                        images: "Attach images",
+                        videos: "Attach videos",
+                      }[section]}
                 </Button>
                 <input
                   ref={(element) => {
@@ -116,13 +127,20 @@ export function BriefRequirements({
                       main: "Upload brief documents",
                       music: "Upload music",
                       images: "Upload images",
+                      videos: "Upload videos",
                     }[section]
                   }
                   disabled={
                     uploading ||
                     hasReachedAssetCountLimit(
                       assets.map((asset) => asset.originalName),
-                      section === "music" ? "audio" : section === "images" ? "images" : "documents",
+                      section === "music"
+                        ? "audio"
+                        : section === "images"
+                          ? "images"
+                          : section === "videos"
+                            ? "videos"
+                            : "documents",
                     )
                   }
                   onChange={async (event) => {
@@ -145,7 +163,9 @@ export function BriefRequirements({
                     ? "Music / instrumental"
                     : section === "images"
                       ? "Image"
-                      : "URL",
+                      : section === "videos"
+                        ? "Video"
+                        : "URL",
               })}
               value={instructions[section]}
               maxLength={8000}
@@ -155,6 +175,7 @@ export function BriefRequirements({
                   music: "Describe the soundtrack, instruments, mood, and how to use your audio…",
                   images:
                     "Describe which images to use, what to show, and how they support your story…",
+                  videos: "Describe which video clips to use and their role in the story…",
                   urls: "Describe which pages or views to capture and how to use them…",
                 }[section]
               }

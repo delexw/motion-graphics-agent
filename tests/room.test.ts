@@ -1,4 +1,5 @@
 import { afterEach, expect, it } from "vitest";
+import { randomUUID } from "node:crypto";
 import { mkdtemp, rm, readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -46,7 +47,9 @@ it("persists room windows, onboarding and scoped reply drafts across database re
       { id: "assistant", x: 20, y: 30, width: 440, height: 600 },
       { id: "library", x: 48, y: 64, width: 512, height: 416, placement: "user" },
     ],
-    drafts: { new: { step: 3, request: { instructions: "A new story", assetIds: [] } } },
+    drafts: {
+      new: { id: randomUUID(), step: 3, request: { instructions: "A new story", assetIds: [] } },
+    },
     questionDrafts: { "project:question": "Keep the original" },
   });
   store.saveRoom(state);
@@ -260,7 +263,7 @@ it("reuses an identical upload instead of storing a duplicate, even after shelf 
     await app.inject({ method: "DELETE", url: `/api/room/library/${first.id}` });
     expect((await upload(app, "notes.txt", "Same notes")).json().id).toBe(first.id);
     expect(store.library()).toHaveLength(1);
-    expect((await upload(app, "clip.mp4", "video")).statusCode).toBe(400);
+    expect((await upload(app, "clip.mp4", "video")).statusCode).toBe(200);
   } finally {
     await app.close();
     store.close();
@@ -322,14 +325,20 @@ it("keeps materials that are not on the shelf visible and counted when editing a
   next = toggleRoomDraftAsset(next, offShelf);
   expect(next.assets.map((asset) => asset.id)).toEqual(["c", "d"]);
   expect(roomStepMaterialCounts("main", next.assets)[0].label).toBe("Documents 2/3");
-  expect(() =>
-    toggleRoomDraftAsset(next, { id: "v", originalName: "clip.mp4", kind: "", bytes: 10 }),
-  ).toThrow("can’t be used");
+  const withVideo = toggleRoomDraftAsset(next, {
+    id: "v",
+    originalName: "clip.mp4",
+    kind: "",
+    bytes: 10,
+  });
+  expect(
+    (withVideo.request.requirements as { videos: { assetIds: string[] } }).videos,
+  ).toMatchObject({ assetIds: ["v"] });
 });
 it("restores drafts saved before materials were tracked", () => {
   expect(RoomStateSchema.parse({ drafts: { new: { step: 1, request: {} } } }).drafts.new).toEqual({
     step: 1,
-    stepLayout: "separate-speech",
+    stepLayout: "separate-video",
     request: {},
     assets: [],
   });
@@ -372,9 +381,9 @@ it("migrates legacy draft steps once and persists their layout through room save
     ),
   };
   const migrated = RoomStateSchema.parse(legacy);
-  expect(Object.values(migrated.drafts).map((draft) => draft.step)).toEqual([0, 4, 6, 7]);
+  expect(Object.values(migrated.drafts).map((draft) => draft.step)).toEqual([0, 5, 7, 8]);
   for (const draft of Object.values(migrated.drafts)) {
-    expect(draft.stepLayout).toBe("separate-speech");
+    expect(draft.stepLayout).toBe("separate-video");
     expect(draft.request).toEqual({ instructions: "Preserve my idea", speech: { mode: "off" } });
   }
   store.saveRoom(migrated);
@@ -407,7 +416,7 @@ it("round-trips the new narration step through the room API after a legacy draft
   await registerRoomRoutes(app, store, folder);
   try {
     const loaded = (await app.inject({ method: "GET", url: "/api/room" })).json();
-    expect(loaded.drafts["edit:legacy"]).toMatchObject({ step: 6, stepLayout: "separate-speech" });
+    expect(loaded.drafts["edit:legacy"]).toMatchObject({ step: 7, stepLayout: "separate-video" });
     const saved = await app.inject({
       method: "PATCH",
       url: "/api/room",
@@ -420,12 +429,12 @@ it("round-trips the new narration step through the room API after a legacy draft
     expect(saved.statusCode).toBe(200);
     expect(saved.json().state.drafts["edit:legacy"]).toMatchObject({
       step: 5,
-      stepLayout: "separate-speech",
+      stepLayout: "separate-video",
     });
     const reloaded = (await app.inject({ method: "GET", url: "/api/room" })).json();
     expect(reloaded.drafts["edit:legacy"]).toMatchObject({
       step: 5,
-      stepLayout: "separate-speech",
+      stepLayout: "separate-video",
       request: { instructions: "My saved story" },
     });
   } finally {

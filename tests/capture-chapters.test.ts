@@ -290,6 +290,7 @@ it("invalidates captures when explicit source requirements change", async () => 
   await prepareChapterCaptures(input, generate);
   input.request.requirements = {
     main: { instructions: "Preserve exact product name", assetIds: [] },
+    videos: { instructions: "", assetIds: [] },
     images: { instructions: "Use the supplied cover", assetIds: [] },
     music: { instructions: "", assetIds: [] },
     urls: { instructions: "Show the sharing result too" },

@@ -1,3 +1,4 @@
+import { parseJevRequest } from "./jev-request";
 import { credentialEnvironmentVariables } from "../src/server/runtime/credential-environment";
 import { afterEach, expect, it, vi } from "vitest";
 import { BriefRequirementsSchema } from "../src/shared/brief-sections";
@@ -77,7 +78,7 @@ it.each([
     vi.stubGlobal(
       "fetch",
       vi.fn(async (_url, init) => {
-        const body = JSON.parse(String(init.body));
+        const body = await parseJevRequest(init);
         expect(body.state.musicPrompt).toBe(options.request.requirements!.music.instructions);
         expect(body.questions.audio.type).toBe("choice");
         expect(body.state.renderer.id).toBe(renderer);

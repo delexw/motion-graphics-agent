@@ -39,7 +39,7 @@ import { manualDirection } from "./manual-direction";
 import { validateAssetLimits } from "../../shared/asset-limits";
 import { RequestSchema } from "../../shared/contracts";
 import { AssetQuestionAnswerSchema } from "../../shared/agents/schemas/asset-needs";
-import { acceptsBriefAttachment } from "../../shared/brief-sections";
+import { acceptsBriefAttachment, BriefRequirementsSchema } from "../../shared/brief-sections";
 import {
   assetQuestionBuildScope,
   assetIdsForQuestionScope,
@@ -194,10 +194,12 @@ export class Workflow {
         main: { instructions: "", assetIds: [] },
         music: { instructions: "", assetIds: [] },
         images: { instructions: "", assetIds: [] },
+        videos: { instructions: "", assetIds: [] },
         urls: { instructions: "" },
       };
+      request.requirements = BriefRequirementsSchema.parse(request.requirements);
       for (const id of added) {
-        for (const name of ["main", "music", "images"] as const)
+        for (const name of ["main", "music", "images", "videos"] as const)
           request.requirements[name].assetIds = request.requirements[name].assetIds.filter(
             (existing) => existing !== id,
           );

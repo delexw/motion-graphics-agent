@@ -1,3 +1,4 @@
+import { writeUploadedAsset } from "./requests/asset-storage";
 import { credentialEnvironmentVariables } from "./runtime/credential-environment";
 import { jobDownloadBasename } from "../shared/job-download-name";
 import { projectArtifactPath, renderSourcePath } from "./runtime/workspace";
@@ -21,8 +22,8 @@ import { registerSpeechRoutes } from "./audio/routes";
 import { speechConfigurationProblem, activeSpeech } from "../shared/speech";
 import { assetLimitKind } from "../shared/asset-limits";
 import { manualDirection } from "./jobs/manual-direction";
-import { inspectAssetLimits, validateProjectAssetLimits } from "./requests/asset-limits";
-import { assetLimits, validateAssetLimits } from "../shared/asset-limits";
+import { validateProjectAssetLimits } from "./requests/asset-limits";
+import { assetLimits } from "../shared/asset-limits";
 import { validateBriefSections } from "./requests/brief-sections";
 import { recordedModelPrompt } from "./governance/prompts";
 import { correctionTypeLabels } from "../shared/governance";
@@ -38,18 +39,13 @@ import multipart from "@fastify/multipart";
 import staticFiles from "@fastify/static";
 import { randomUUID } from "node:crypto";
 import { createReadStream, existsSync } from "node:fs";
-import { mkdir, writeFile, readFile, realpath, rm } from "node:fs/promises";
+import { mkdir, readFile, realpath, rm } from "node:fs/promises";
 import path from "node:path";
 import { createProjectBundle, projectAvailable } from "./project-export/bundle";
 import { z } from "zod";
 import { apiErrorHandler } from "./runtime/api-errors";
 import sharp from "sharp";
-import {
-  RequestSchema,
-  type Asset,
-  type Run,
-  type AgentProgressEvent,
-} from "../shared/contracts.js";
+import { RequestSchema, type Run, type AgentProgressEvent } from "../shared/contracts.js";
 import {
   agentMode,
   appRoot,
@@ -197,47 +193,16 @@ export async function createApp(options: { store?: Store } = {}) {
     const existingAssets = await validateProjectAssetLimits(existingIds, (id) =>
       store.getAsset(id),
     );
-    const extension = path.extname(file.filename).toLowerCase();
-    if (
-      ![
-        ".txt",
-        ".md",
-        ".json",
-        ".csv",
-        ".pdf",
-        ".docx",
-        ".png",
-        ".jpg",
-        ".jpeg",
-        ".webp",
-        ".gif",
-        ".svg",
-        ".mp4",
-        ".mov",
-        ".webm",
-        ".wav",
-        ".mp3",
-        ".m4a",
-      ].includes(extension)
-    )
-      throw new CodedError("FILE_TYPE_UNSUPPORTED", "Unsupported asset type");
     const buffer = await file.toBuffer();
     if (file.file.truncated) throw new CodedError("FILE_TOO_LARGE", "Asset exceeds 25 MB");
-    const id = randomUUID();
-    const name = `${id}${extension}`;
-    const asset: Asset = {
-      id,
-      name,
-      path: path.join(uploadFolder, name),
-      kind: file.mimetype,
-      bytes: buffer.length,
-      originalName: path.basename(file.filename),
-    };
-    validateAssetLimits([...existingAssets, asset]);
-    await writeFile(asset.path, buffer, { mode: 0o600 });
+    const asset = await writeUploadedAsset(
+      buffer,
+      file.filename,
+      file.mimetype,
+      uploadFolder,
+      existingAssets,
+    );
     try {
-      await inspectAssetLimits(asset, buffer);
-      validateAssetLimits([...existingAssets, asset]);
       store.asset(asset);
     } catch (error) {
       await rm(asset.path, { force: true });
@@ -364,6 +329,11 @@ export async function createApp(options: { store?: Store } = {}) {
     if (request.selectedStyleIds?.length) manualDirection(request, catalog.styles);
     validateBriefSections(request, (id) => store.getAsset(id));
     await validateProjectAssetLimits(request.assetIds, (id) => store.getAsset(id));
+    const sourceDraftId = store.room().drafts.new?.id;
+    store.assertAssetOwner(
+      request.assetIds,
+      sourceDraftId ? { kind: "draft", id: sourceDraftId } : undefined,
+    );
     const run: Run = {
       id: randomUUID(),
       request,
@@ -373,8 +343,8 @@ export async function createApp(options: { store?: Store } = {}) {
       jobs: [],
     };
     await writeProjectRequest(path.join(dataRoot, "runs", run.id), request);
+    store.saveProjectWithAssets(run, sourceDraftId);
     cache.set(run.id, run);
-    store.save(run);
     void workflow.prepare(run);
     return reply.code(202).send(run);
   });
@@ -420,6 +390,7 @@ export async function createApp(options: { store?: Store } = {}) {
         .object({ assetIds: z.array(z.string().uuid()).default([]) })
         .passthrough()
         .parse(req.body);
+      store.assertAssetOwner(body.assetIds, { kind: "project", id: run.id });
       await validateProjectAssetLimits(
         [...new Set([...run.request.assetIds, ...body.assetIds])],
         (id) => store.getAsset(id),
@@ -487,6 +458,7 @@ export async function createApp(options: { store?: Store } = {}) {
   app.post<{ Params: { id: string } }>("/api/runs/:id/refine", async (req, reply) => {
     const run = getRun(req.params.id);
     const body = VideoRefinementRequestSchema.parse(req.body);
+    store.assertAssetOwner(body.assetIds, { kind: "project", id: run.id });
     if (fullLocks.has(run.id)) throw new CodedError("PROJECT_ACTIVE", "A build is starting", 409);
     const task = workflow.refineVideo(
       run,

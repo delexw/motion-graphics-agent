@@ -208,6 +208,7 @@ function App() {
   const [speech, setSpeech] = useState<SpeechConfiguration>();
   const [urls, setUrls] = useState("");
   const [sectionInstructions, setSectionInstructions] = useState({
+    videos: "",
     music: "",
     images: "",
     urls: "",
@@ -538,6 +539,10 @@ function App() {
             instructions: sectionInstructions.images,
             assetIds: assets.filter((asset) => asset.section === "images").map((asset) => asset.id),
           },
+          videos: {
+            instructions: sectionInstructions.videos,
+            assetIds: assets.filter((asset) => asset.section === "videos").map((asset) => asset.id),
+          },
           urls: { instructions: sectionInstructions.urls },
         },
         urls: urls
@@ -612,7 +617,7 @@ function App() {
       draftRevision.current++;
       setComposerRevision((previous) => previous + 1);
       setInstructions("");
-      setSectionInstructions({ music: "", images: "", urls: "" });
+      setSectionInstructions({ music: "", images: "", videos: "", urls: "" });
       setPreference("context");
       setProvider("codex");
       setCount(5);

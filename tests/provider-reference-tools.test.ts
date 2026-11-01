@@ -236,7 +236,7 @@ it.each(["claude", "codex"] as const)(
     if (provider === "claude") {
       const options = calls.query.mock.calls[0][0].options;
       expect(options.tools).toContain("Agent");
-      expect(Object.keys(options.agents)).toHaveLength(4);
+      expect(Object.keys(options.agents)).toHaveLength(5);
       expect(options.agents["main-brief"].model).toBe("cheap-model");
       expect(await options.canUseTool("Bash", {})).toMatchObject({ behavior: "deny" });
     } else

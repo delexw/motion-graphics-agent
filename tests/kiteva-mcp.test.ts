@@ -60,7 +60,7 @@ it("saves the requested defaults at Review without starting a build", async () =
     request: kitevaIdeaDefaults,
   });
   expect(store.room().drafts.new).toMatchObject({
-    step: 7,
+    step: 8,
     request: { instructions: "Explain how a city prepares for spring.", ...kitevaIdeaDefaults },
   });
   expect(start).not.toHaveBeenCalled();
@@ -76,7 +76,12 @@ it("uses one settings contract for server instructions, tool descriptions and ru
   const create = tools.find((tool) => tool.name === "create_idea")!;
   expect(create.description).toContain(ideaToolGuidance.creation);
   expect(create.description).toContain(ideaToolGuidance.settings);
+  expect(create.description).toContain(ideaToolGuidance.idea);
+  expect(create.inputSchema.properties?.idea).toMatchObject({
+    description: ideaToolGuidance.idea,
+  });
   expect(client.getInstructions()).toContain(ideaToolGuidance.idea);
+  expect(client.getInstructions()).toContain(ideaToolGuidance.settings);
   const schema = create.inputSchema.properties?.settings as {
     properties: Record<string, { description?: string; default?: unknown }>;
   };

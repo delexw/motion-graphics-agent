@@ -1,4 +1,4 @@
-import { zstdDecompressSync } from "node:zlib";
+import { parseJevRequest } from "./jev-request";
 import { credentialEnvironmentVariables } from "../src/server/runtime/credential-environment";
 import type { PreferenceHistoryRecord } from "../src/server/catalog/preference-history";
 import { type Brief } from "../src/shared/agents/schemas/video";
@@ -7,11 +7,7 @@ import { it, expect, vi, afterEach } from "vitest";
 import { rankOptions, weightedScore } from "../src/server/jev/strategies/style-combination";
 import { loadCatalog } from "../src/server/catalog/catalog";
 import { RequestSchema } from "../src/shared/contracts";
-async function parseJevRequest(init: RequestInit) {
-  const bytes = Buffer.from(await new Response(init.body).arrayBuffer());
-  const encoding = new Headers(init.headers).get("content-encoding");
-  return JSON.parse((encoding === "zstd" ? zstdDecompressSync(bytes) : bytes).toString("utf8"));
-}
+
 const brief: Brief = {
   subject: "Generic system",
   audience: "Technical audience",
@@ -457,6 +453,7 @@ it("preserves original instructions and evaluates readable combination tradeoffs
     expect(payload.state.sectionInstructions).toEqual({
       main: "Preserve all main requirements",
       images: "No presenter figures",
+      videos: "",
       music: "Quiet instrumental",
       urls: "Use the live site",
     });

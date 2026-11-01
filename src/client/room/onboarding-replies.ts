@@ -138,8 +138,8 @@ export function roomOnboardingReplies(
   const selected = assets.filter((asset) => request.assetIds.includes(asset.id));
   return roomQuestions.map((_, index) => {
     if (index === 0) return { text: request.instructions, skipped: false };
-    if (index === 6) return { text: roomSettingsReply(request, styles), skipped: false };
-    if (index === 5) {
+    if (index === 7) return { text: roomSettingsReply(request, styles), skipped: false };
+    if (index === 6) {
       if (request.outputType !== "video")
         return { text: translateUi("Not used for interactive pages"), skipped: true };
       const trackSummary = request.languageTracks
@@ -205,7 +205,7 @@ export function roomOnboardingReplies(
       ].join("\n\n");
       return { text, skipped: false };
     }
-    if (index === 3) {
+    if (index === 4) {
       const parts = [
         request.urls.filter((url) => url.trim()).join("\n"),
         request.requirements?.urls.instructions,

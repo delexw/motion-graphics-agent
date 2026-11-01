@@ -1,3 +1,9 @@
+import { randomUUID } from "node:crypto";
+import type { AssetOwner } from "../../shared/asset-owner";
+import { validateAssetLimits } from "../../shared/asset-limits";
+import { toggleRoomAsset, normalizeBriefAttachmentSections } from "../../shared/brief-attachments";
+import { BriefRequirementsSchema } from "../../shared/brief-sections";
+import { VideoRequestSchema } from "../../shared/domains/video";
 import { normalizeRetiredSpeechSelections } from "../../shared/speech-compatibility";
 import { activityItems } from "../../shared/activity-model";
 import {
@@ -41,11 +47,37 @@ export class Store {
     this.db.exec(
       "CREATE TABLE IF NOT EXISTS room_state(id INTEGER PRIMARY KEY CHECK(id=1),json TEXT NOT NULL); CREATE TABLE IF NOT EXISTS room_library(asset_id TEXT PRIMARY KEY); CREATE TABLE IF NOT EXISTS room_wallpapers(asset_id TEXT PRIMARY KEY);",
     );
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const room = this.room();
+      let changed = false;
+      for (const draft of Object.values(room.drafts))
+        if (!draft.id) {
+          draft.id = randomUUID();
+          changed = true;
+        }
+      if (changed) this.saveRoom(room);
+      this.db.exec("COMMIT");
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
     this.bus.setMaxListeners(100);
   }
   room(): RoomState {
     const row = this.db.prepare("SELECT json FROM room_state WHERE id=1").get();
-    return RoomStateSchema.parse(row ? normalizeSubtitleFields(JSON.parse(String(row.json))) : {});
+    const state = RoomStateSchema.parse(
+      row ? normalizeSubtitleFields(JSON.parse(String(row.json))) : {},
+    );
+    for (const draft of Object.values(state.drafts)) {
+      const requirements = BriefRequirementsSchema.safeParse(draft.request.requirements);
+      if (requirements.success)
+        draft.request.requirements = normalizeBriefAttachmentSections(
+          requirements.data,
+          draft.assets,
+        );
+    }
+    return state;
   }
   saveRoom(state: RoomState) {
     this.db
@@ -58,7 +90,29 @@ export class Store {
   patchRoom(patch: RoomPatch) {
     this.db.exec("BEGIN IMMEDIATE");
     try {
-      const result = applyRoomPatch(this.room(), patch);
+      const room = this.room();
+      const drafts = Object.fromEntries(
+        Object.entries(patch.drafts).map(([key, draft]) => [
+          key,
+          draft ? { ...draft, id: room.drafts[key]?.id ?? draft.id ?? randomUUID() } : null,
+        ]),
+      );
+      for (const [key, draft] of Object.entries(drafts))
+        if (draft) {
+          const ids = Array.isArray(draft.request.assetIds)
+            ? (draft.request.assetIds as string[])
+            : [];
+          const ownedIds = ids.filter((id) => this.getAsset(id)?.owner);
+          this.assertAssetOwner(
+            ownedIds,
+            key.startsWith("edit:")
+              ? { kind: "project", id: key.slice(5) }
+              : draft.id
+                ? { kind: "draft", id: draft.id }
+                : undefined,
+          );
+        }
+      const result = applyRoomPatch(room, { ...patch, drafts });
       const state = RoomStateSchema.parse(result.state);
       this.saveRoom(state);
       this.db.exec("COMMIT");
@@ -162,6 +216,135 @@ export class Store {
   getAsset(id: string): Asset | undefined {
     const r = this.db.prepare("SELECT json FROM assets WHERE id=?").get(id);
     return r ? normalizeSubtitleFields(JSON.parse(String(r.json))) : undefined;
+  }
+  ownedAssets(owner: AssetOwner): Asset[] {
+    return this.db
+      .prepare(
+        "SELECT json FROM assets WHERE json_extract(json,'$.owner.kind')=? AND json_extract(json,'$.owner.id')=?",
+      )
+      .all(owner.kind, owner.id)
+      .map((row) => JSON.parse(String(row.json)) as Asset);
+  }
+  assertAssetOwner(ids: string[], owner?: AssetOwner) {
+    for (const id of ids) {
+      const asset = this.getAsset(id);
+      if (!asset) throw Error("Attached asset not found");
+      if (asset.owner && (asset.owner.kind !== owner?.kind || asset.owner.id !== owner.id))
+        throw Error("Asset belongs to a different draft or project");
+    }
+  }
+  commitImportedAsset(asset: Asset, owner: AssetOwner, revision?: number) {
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const room = this.room();
+      const entry = Object.entries(room.drafts).find(([, draft]) => draft.id === owner.id);
+      const project = owner.kind === "project" ? this.get(owner.id) : undefined;
+      if (owner.kind === "draft" && (!entry || revision !== room.revision))
+        throw Error("The draft changed while importing; read it again before retrying");
+      if (owner.kind === "project" && !project) throw Error("Project not found");
+      const existingIds =
+        owner.kind === "draft"
+          ? (entry![1].request.assetIds as string[]) || []
+          : project!.request.assetIds;
+      const existing = new Map(existingIds.map((id) => this.getAsset(id)!).map((a) => [a.id, a]));
+      validateAssetLimits([...existing.values(), asset]);
+      const owned = { ...asset, owner };
+      if (owner.kind === "draft") {
+        const [key, draft] = entry!;
+        const request = toggleRoomAsset(
+          VideoRequestSchema.parse(draft.request),
+          {
+            id: asset.id,
+            originalName: asset.originalName || asset.name,
+            kind: asset.kind,
+            bytes: asset.bytes,
+            durationSeconds: asset.durationSeconds,
+            documentPages: asset.documentPages,
+          },
+          existingIds.map((id) => {
+            const old = this.getAsset(id)!;
+            return { ...old, originalName: old.originalName || old.name };
+          }),
+        );
+        const result = applyRoomPatch(room, {
+          client: "mcp-asset-import",
+          baseRevision: room.revision,
+          windows: {},
+          questionDrafts: {},
+          views: {},
+          dismissedQuestions: [],
+          force: [],
+          drafts: {
+            [key]: {
+              ...draft,
+              request,
+              assets: [
+                ...draft.assets,
+                {
+                  id: asset.id,
+                  originalName: asset.originalName || asset.name,
+                  kind: asset.kind,
+                  bytes: asset.bytes,
+                  durationSeconds: asset.durationSeconds,
+                  documentPages: asset.documentPages,
+                },
+              ],
+            },
+          },
+        });
+        this.saveRoom(RoomStateSchema.parse(result.state));
+      }
+      this.asset(owned);
+      if (owner.kind === "draft") this.addLibraryAsset(asset.id);
+      this.db.exec("COMMIT");
+      return owned;
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  transferDraftAssets(draftId: string, projectId: string, ids: string[]) {
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      this.transferAssetOwners(draftId, projectId, ids);
+      this.db.exec("COMMIT");
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  private transferAssetOwners(draftId: string | undefined, projectId: string, ids: string[]) {
+    const assets = ids.map((id) => {
+      const asset = this.getAsset(id);
+      if (!asset) throw Error("Attached asset not found");
+      if (
+        asset.owner &&
+        !(
+          (asset.owner.kind === "draft" && asset.owner.id === draftId) ||
+          (asset.owner.kind === "project" && asset.owner.id === projectId)
+        )
+      )
+        throw Error("Asset belongs to a different draft or project");
+      return asset;
+    });
+    for (const asset of assets)
+      if (asset.owner)
+        this.db
+          .prepare("UPDATE assets SET json=? WHERE id=?")
+          .run(JSON.stringify({ ...asset, owner: { kind: "project", id: projectId } }), asset.id);
+  }
+  saveProjectWithAssets(run: Run, draftId?: string) {
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      if (draftId && this.room().drafts.new?.id !== draftId)
+        throw Error("Draft identity changed before the project started");
+      this.transferAssetOwners(draftId, run.id, run.request.assetIds);
+      this.save(run);
+      this.db.exec("COMMIT");
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
   }
   emit(runId: string, type: string, message: string, jobId?: string, data?: unknown) {
     const e = {

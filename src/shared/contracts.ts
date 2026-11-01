@@ -1,3 +1,4 @@
+import type { AssetOwner } from "./asset-owner";
 import { normalizeSubtitleFields } from "./subtitle-compatibility";
 import type { ErrorCode } from "./errors";
 import type { Provider } from "./domains/common";
@@ -214,6 +215,7 @@ export interface StyleExample {
   error?: string;
 }
 export interface Asset {
+  owner?: AssetOwner;
   durationSeconds?: number;
   documentPages?: number;
   id: string;

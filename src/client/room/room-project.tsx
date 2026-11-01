@@ -50,6 +50,7 @@ import {
 const sectionLabels: Record<string, string> = {
   main: "Documents",
   images: "Images",
+  videos: "Videos",
   music: "Music",
   urls: "Websites",
 };

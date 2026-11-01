@@ -33,7 +33,7 @@ it.skipIf(!browserExecutablePath())(
 import React,{useState}from'react';import{createRoot}from'react-dom/client';
 import{RoomOnboarding}from'/src/client/room/room-onboarding.tsx';
 import{emptyRoomDraft}from'/src/client/room/onboarding.ts';
-function App(){const[draft,setDraft]=useState({...emptyRoomDraft(),step:3,stepLayout:'separate-speech',request:{instructions:'An example film',urls:[]}});return React.createElement(React.Fragment,null,React.createElement(RoomOnboarding,{draft,onChange:setDraft,materials:[],styles:[],examples:[],onCreated(){},onUpload:async()=>[]}),React.createElement('output',{id:'state'},JSON.stringify(draft)));}
+function App(){const[draft,setDraft]=useState({...emptyRoomDraft(),step:4,stepLayout:'separate-video',request:{instructions:'An example film',urls:[]}});return React.createElement(React.Fragment,null,React.createElement(RoomOnboarding,{draft,onChange:setDraft,materials:[],styles:[],examples:[],onCreated(){},onUpload:async()=>[]}),React.createElement('output',{id:'state'},JSON.stringify(draft)));}
 createRoot(document.getElementById('root')).render(React.createElement(App));</script>`,
               );
               res.setHeader("Content-Type", "text/html");
@@ -99,7 +99,7 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
         button?.click();
       });
       await page.waitForFunction(
-        () => JSON.parse(document.querySelector("#state")!.textContent!).step === 4,
+        () => JSON.parse(document.querySelector("#state")!.textContent!).step === 5,
       );
       expect(errors).toEqual([]);
     } finally {

@@ -1,3 +1,9 @@
+import {
+  roomMaterialSection,
+  toggleRoomAsset,
+  normalizeBriefAttachmentSections,
+} from "../../shared/brief-attachments";
+export { roomMaterialSection, toggleRoomAsset } from "../../shared/brief-attachments";
 import { normalizeRetiredSpeechSelections } from "../../shared/speech-compatibility";
 import { applyLanguageTracks } from "../../shared/language-tracks";
 import { normalizeSubtitleFields } from "../../shared/subtitle-compatibility";
@@ -14,10 +20,9 @@ import { projectEditBrief } from "../../shared/project-edit-brief";
 import { SharedRequestSchema } from "../../shared/domains/common";
 import type { PageRequest } from "../../shared/domains/page";
 import type { VideoRequest } from "../../shared/domains/video";
-import { assetLimitKind, assetLimits, validateAssetLimits } from "../../shared/asset-limits";
+import { assetLimitKind, assetLimits } from "../../shared/asset-limits";
 import {
   BriefRequirementsSchema,
-  acceptsBriefAttachment,
   briefSectionFileAccept,
   type BriefRequirements,
 } from "../../shared/brief-sections";
@@ -40,6 +45,10 @@ export const roomQuestions = [
       "Any images to bring into the story? Pick them from your shelf, or describe the look.",
   },
   {
+    label: "Videos",
+    question: "Any video clips to use? Pick them from your shelf, or describe their role.",
+  },
+  {
     label: "URLs",
     question: "Any websites to look at? Add up to five links, one per line, or skip.",
   },
@@ -60,7 +69,7 @@ export const roomQuestions = [
     question: "Here’s your brief. Nothing starts until you press create.",
   },
 ] as const;
-export const roomMaterialSteps = { 1: "main", 2: "images", 4: "music" } as const;
+export const roomMaterialSteps = { 1: "main", 2: "images", 3: "videos", 5: "music" } as const;
 export type RoomMaterialSection = (typeof roomMaterialSteps)[keyof typeof roomMaterialSteps];
 export const roomMaterialIntake = {
   main: {
@@ -74,6 +83,12 @@ export const roomMaterialIntake = {
     upload: "Upload images",
     limit: "images",
     accept: briefSectionFileAccept.images,
+  },
+  videos: {
+    step: "Videos",
+    upload: "Upload videos",
+    limit: "videos",
+    accept: briefSectionFileAccept.videos,
   },
   music: {
     step: "Music",
@@ -104,7 +119,7 @@ export function initialRoomRequest(): CreativeRequest {
 export function emptyRoomDraft(): RoomDraft {
   return {
     step: 0,
-    stepLayout: "separate-speech",
+    stepLayout: "separate-video",
     request: { instructions: "", outputLanguage: "en", scriptItems: [] },
     assets: [],
   };
@@ -140,6 +155,8 @@ export function roomDraftRequest(draft: Partial<RoomDraft>): CreativeRequest {
       : 5;
   const styles = strings(merged.selectedStyleIds);
   const requirements = BriefRequirementsSchema.safeParse(saved.requirements);
+  if (requirements.success)
+    requirements.data = normalizeBriefAttachmentSections(requirements.data, draft.assets || []);
   const parsed = RequestSchema.safeParse({
     ...merged,
     scriptItems: undefined,
@@ -180,12 +197,12 @@ export function roomDraftRequest(draft: Partial<RoomDraft>): CreativeRequest {
           requirements: {
             ...requirements.data,
             ...Object.fromEntries(
-              (["main", "music", "images", "urls"] as const).map((section) => [
+              (["main", "music", "images", "videos", "urls"] as const).map((section) => [
                 section,
                 {
                   ...requirements.data[section],
                   instructions:
-                    (saved.requirements as BriefRequirements)[section].instructions ?? "",
+                    (saved.requirements as BriefRequirements)[section]?.instructions ?? "",
                 },
               ]),
             ),
@@ -194,15 +211,6 @@ export function roomDraftRequest(draft: Partial<RoomDraft>): CreativeRequest {
       : {}),
     candidateCount: styles.length && merged.candidateCount === 0 ? 0 : count,
   };
-}
-const emptyRequirements = (): BriefRequirements => ({
-  main: { instructions: "", assetIds: [] },
-  images: { instructions: "", assetIds: [] },
-  music: { instructions: "", assetIds: [] },
-  urls: { instructions: "" },
-});
-export function roomMaterialSection(name: string): RoomMaterialSection | undefined {
-  return Object.values(roomMaterialSteps).find((section) => acceptsBriefAttachment(section, name));
 }
 const megabytes = (bytes: number) => Math.round(bytes / 100_000) / 10;
 export function roomStepMaterialCounts(
@@ -262,30 +270,6 @@ export function chooseRoomDraftStyle(draft: RoomDraft | undefined, styleId: stri
   const current = draft || emptyRoomDraft();
   return { ...current, request: { ...current.request, selectedStyleIds: [styleId] } };
 }
-export function toggleRoomAsset(
-  request: CreativeRequest,
-  asset: RoomLibraryAsset,
-  selected: RoomLibraryAsset[],
-): CreativeRequest {
-  const section = roomMaterialSection(asset.originalName);
-  if (!section) throw Error(`${asset.originalName} can’t be used in a brief`);
-  const removing = request.assetIds.includes(asset.id);
-  const ids = removing
-    ? request.assetIds.filter((id) => id !== asset.id)
-    : [...request.assetIds, asset.id];
-  if (!removing)
-    validateAssetLimits(
-      [...selected.filter((item) => item.id !== asset.id), asset].map((item) => ({
-        ...item,
-        name: item.originalName,
-      })),
-    );
-  const requirements = structuredClone(request.requirements || emptyRequirements());
-  requirements[section].assetIds = removing
-    ? requirements[section].assetIds.filter((id) => id !== asset.id)
-    : [...requirements[section].assetIds, asset.id];
-  return { ...request, assetIds: ids, requirements };
-}
 export function toggleRoomDraftAsset(draft: RoomDraft, asset: RoomLibraryAsset): RoomDraft {
   const request = roomDraftRequest(draft);
   const selected = (draft.assets || []).filter((item) => request.assetIds.includes(item.id));
@@ -339,8 +323,8 @@ export function roomDraftFromProject(
   assets: RoomLibraryAsset[],
 ): RoomDraft {
   return {
-    step: 6,
-    stepLayout: "separate-speech",
+    step: 7,
+    stepLayout: "separate-video",
     request: { ...normalizeStyleSelection(request) },
     assets: assets.filter((asset) => request.assetIds.includes(asset.id)),
   };

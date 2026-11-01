@@ -38,7 +38,7 @@ it.skipIf(!browserExecutablePath())(
 import React,{useState}from'react';import{createRoot}from'react-dom/client';
 import{RoomOnboarding}from'/src/client/room/room-onboarding.tsx';
 import{emptyRoomDraft}from'/src/client/room/onboarding.ts';
-function App(){const[draft,setDraft]=useState({...emptyRoomDraft(),step:5,stepLayout:'separate-speech',request:{instructions:'An example film',urls:[],subtitles:{mode:'provided',text:'Original words'},speech:{mode:'narration',source:'provided',text:'Original words'}}});return React.createElement(React.Fragment,null,React.createElement(RoomOnboarding,{draft,onChange:setDraft,materials:[],styles:[],examples:[],onCreated(){},onUpload:async()=>[]}),React.createElement('output',{id:'state'},JSON.stringify(draft)));}
+function App(){const[draft,setDraft]=useState({...emptyRoomDraft(),step:6,stepLayout:'separate-video',request:{instructions:'An example film',urls:[],subtitles:{mode:'provided',text:'Original words'},speech:{mode:'narration',source:'provided',text:'Original words'}}});return React.createElement(React.Fragment,null,React.createElement(RoomOnboarding,{draft,onChange:setDraft,materials:[],styles:[],examples:[],onCreated(){},onUpload:async()=>[]}),React.createElement('output',{id:'state'},JSON.stringify(draft)));}
 createRoot(document.getElementById('root')).render(React.createElement(App));</script>`,
               );
               res.setHeader("Content-Type", "text/html");

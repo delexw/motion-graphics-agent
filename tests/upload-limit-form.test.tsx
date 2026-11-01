@@ -11,7 +11,7 @@ it("shows shared upload limits and disables only the full attachment category", 
   ).toBe(true);
   const html = renderToStaticMarkup(
     <BriefRequirements
-      instructions={{ music: "", images: "", urls: "" }}
+      instructions={{ videos: "", music: "", images: "", urls: "" }}
       onChange={() => {}}
       assets={names.map((originalName, i) => ({ id: String(i), originalName, section: "images" }))}
       onRemove={() => {}}

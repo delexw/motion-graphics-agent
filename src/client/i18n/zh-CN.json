@@ -1278,5 +1278,11 @@
   "Saved sound effect sources and placements": "已保存的音效源文件和时间位置",
   "Separate music sources; effects and narration are not included.": "独立音乐源文件，不包含音效和旁白。",
   "desk": "制作台",
-  "storyboard": "分镜"
+  "storyboard": "分镜",
+  "Videos": "视频",
+  "Video clips": "视频片段",
+  "Upload videos": "上传视频",
+  "Any video clips to use? Pick them from your shelf, or describe their role.": "有要使用的视频片段吗？从素材架中选择，或描述它们的用途。",
+  "Choose finished video clips to use in your story.": "选择用于故事的成品视频片段。",
+  "Use up to 8 videos per project.": "每个项目最多使用 8 个视频。"
 }

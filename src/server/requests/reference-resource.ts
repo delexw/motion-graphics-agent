@@ -16,8 +16,9 @@ export async function referenceResource(
   mode: "local" | "hosted",
   headers: Record<string, string> = {},
   consumeBytes: (bytes: number) => void = () => {},
+  validateUrl: typeof validateReferenceUrl = validateReferenceUrl,
 ): Promise<{ status: number; headers: Record<string, string>; body: Buffer }> {
-  const { url, addresses } = await validateReferenceUrl(value, mode);
+  const { url, addresses } = await validateUrl(value, mode);
   signal.throwIfAborted();
   return new Promise((resolve, reject) => {
     const get = url.protocol === "https:" ? https.get : http.get;

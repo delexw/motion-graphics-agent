@@ -15,12 +15,13 @@ export function preparationRequest(run: Run): CreativeRequest {
     ...requirements,
     main: { ...requirements.main, assetIds: keep(requirements.main.assetIds) },
     images: { ...requirements.images, assetIds: keep(requirements.images.assetIds) },
+    videos: { ...requirements.videos, assetIds: keep(requirements.videos?.assetIds || []) },
     music: { ...requirements.music, assetIds: keep(requirements.music.assetIds) },
   };
   const empty =
     !sections ||
     (Object.values(sections).every((section) => !section.instructions) &&
-      [sections.main, sections.images, sections.music].every(
+      [sections.main, sections.images, sections.videos, sections.music].every(
         (section) => !section.assetIds.length,
       ));
   return {

@@ -38,6 +38,16 @@ Switch the interface instantly with **EN / 中文**; see [interface language](do
 Dates below use New Zealand time.
 
 <details>
+<summary>2026-11-01</summary>
+
+- **MCP asset imports:** import local files or ComfyUI outputs into a saved draft or project through `import_asset`. Use `manage_idea_assets` to list available assets, attach them to the draft or remove their entries from the material shelf. MCP and the interface share file limits and attachment rules. Imported files are stored in Git-ignored runtime uploads. See [agent MCP](docs/agent-mcp.md).
+- **Linked draft, asset and project IDs:** when `start_idea` creates a project from a saved draft, Kiteva keeps its attachment IDs and associates the imported files with that project. Updates reject outdated draft revisions and files belonging to another project.
+- **Separate video references:** give MP4, MOV and WebM clips their own Videos section in the interface and MCP. Kiteva moves clips previously assigned to Images when loading a saved draft, preserving attachment IDs and notes. Music uploads also accept FLAC.
+- **Concise agent briefs:** tool descriptions ask calling agents to preserve the user's requirements and keep prompts concise, leaving unspecified creative decisions to the selected main model, Claude Opus 5.5 by default.
+
+</details>
+
+<details>
 <summary>2026-10-31</summary>
 
 - **HTTP MCP for external agents:** search saved ideas and Motion Graphics, inspect available settings, save an Assistant draft, and explicitly start its build through the bundled `/mcp` endpoint. Tools share typed results and request validation, protect concurrent draft edits, and default to Claude Opus 5.5, Multiplane, 2K, 60 fps, Explore and three preview directions. See [agent MCP](docs/agent-mcp.md).

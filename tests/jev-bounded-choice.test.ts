@@ -1,3 +1,4 @@
+import { parseJevRequest } from "./jev-request";
 import { credentialEnvironmentVariables } from "../src/server/runtime/credential-environment";
 import { afterEach, expect, it, vi } from "vitest";
 import { runBoundedJevChoice, jevChoiceInputByteBudget } from "../src/server/jev/bounded-choice";
@@ -44,8 +45,10 @@ it("splits oversized comparisons before dispatch and presents every candidate to
   vi.stubEnv(credentialEnvironmentVariables.typesafeApiKey, "test-placeholder");
   const seen = new Set<string>();
   const fetch = vi.fn(async (_url, init) => {
-    const payload = JSON.parse(init.body);
-    expect(Buffer.byteLength(init.body, "utf8")).toBeLessThanOrEqual(jevChoiceInputByteBudget);
+    const payload = await parseJevRequest(init);
+    expect(Buffer.byteLength(JSON.stringify(payload), "utf8")).toBeLessThanOrEqual(
+      jevChoiceInputByteBudget,
+    );
     const ids = Object.keys(payload.questions.direction.criteria);
     expect(payload.state.comparedIds).toEqual(ids);
     ids.forEach((id) => seen.add(id));
@@ -67,7 +70,7 @@ it("splits a provider token-limit rejection, but propagates other errors", async
         status: 400,
       });
     }
-    return response(JSON.parse(init.body));
+    return response(await parseJevRequest(init));
   });
   vi.stubGlobal("fetch", fetch);
   expect((await runBoundedJevChoice(options())).answer.choice).toBe("option-8");
@@ -100,7 +103,7 @@ it("honors cancellation before any dispatch", async () => {
 it("carries an uncontested subgroup into the finalist comparison without inventing a confidence", async () => {
   vi.stubEnv(credentialEnvironmentVariables.typesafeApiKey, "test-placeholder");
   const fetch = vi.fn(async (_url, init) => {
-    const payload = JSON.parse(init.body);
+    const payload = await parseJevRequest(init);
     expect(Object.keys(payload.questions.direction.criteria)).toHaveLength(2);
     return response(payload);
   });

@@ -6,6 +6,7 @@ const customerErrors: Record<ErrorCode, string> = {
   FILE_TOO_LARGE: "Images and documents: up to 10 MB each. Audio: up to 25 MB each.",
   TOO_MANY_ATTACHMENTS: "Use up to 12 attachments per project.",
   TOO_MANY_IMAGES: "Use up to 8 images per project.",
+  TOO_MANY_VIDEOS: "Use up to 8 videos per project.",
   TOO_MANY_AUDIO: "Use up to 2 audio files per project.",
   TOO_MANY_DOCUMENTS: "Use up to 3 documents or other files per project.",
   ASSETS_TOO_LARGE: "Keep all attachments together within 100 MB.",

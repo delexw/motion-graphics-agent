@@ -1278,5 +1278,11 @@
   "Saved sound effect sources and placements": "Saved sound effect sources and placements",
   "Separate music sources; effects and narration are not included.": "Separate music sources; effects and narration are not included.",
   "desk": "desk",
-  "storyboard": "storyboard"
+  "storyboard": "storyboard",
+  "Videos": "Videos",
+  "Video clips": "Video clips",
+  "Upload videos": "Upload videos",
+  "Any video clips to use? Pick them from your shelf, or describe their role.": "Any video clips to use? Pick them from your shelf, or describe their role.",
+  "Choose finished video clips to use in your story.": "Choose finished video clips to use in your story.",
+  "Use up to 8 videos per project.": "Use up to 8 videos per project."
 }

@@ -81,7 +81,7 @@ it("reads partial and older drafts without losing what was typed", () => {
   expect(state.drafts.new.assets).toEqual([]);
   expect(state.drafts.broken).toEqual({
     step: 0,
-    stepLayout: "separate-speech",
+    stepLayout: "separate-video",
     request: {},
     assets: [],
   });

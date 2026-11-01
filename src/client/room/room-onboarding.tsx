@@ -26,6 +26,7 @@ import {
   Trash2,
   FileText,
   Image as ImageIcon,
+  Video,
   Link,
   Music2,
   Captions,
@@ -145,20 +146,21 @@ export function RoomOnboarding({
   const requirements = request.requirements || {
     main: { instructions: "", assetIds: [] },
     images: { instructions: "", assetIds: [] },
+    videos: { instructions: "", assetIds: [] },
     music: { instructions: "", assetIds: [] },
     urls: { instructions: "" },
   };
   const text =
     step === 0
       ? request.instructions
-      : step === 3
+      : step === 4
         ? requirements.urls.instructions
         : section
           ? requirements[section].instructions
           : "";
   const setText = (value: string) => {
     if (step === 0) patch({ instructions: value });
-    else if (step === 3)
+    else if (step === 4)
       patch({ requirements: { ...requirements, urls: { instructions: value } } });
     else if (section)
       patch({
@@ -170,14 +172,14 @@ export function RoomOnboarding({
   };
   const go = (next: number) => {
     setError("");
-    onChange({ ...draft, step: next, stepLayout: "separate-speech" });
+    onChange({ ...draft, step: next, stepLayout: "separate-video" });
   };
   const advance = () => {
     if (step === 0 && !ideaReady) {
       setError(translateUi("Tell me a little more — at least a short sentence."));
       return;
     }
-    if (step === 3) {
+    if (step === 4) {
       const urls = request.urls.map((url) => url.trim()).filter(Boolean);
       if (urls.length > 5 || urls.some((url) => !URL.canParse(url))) {
         setError(translateUi("Use up to five full links (starting with https://), one per line."));
@@ -243,7 +245,7 @@ export function RoomOnboarding({
           {translateUi("Back")}
         </Button>
       )}
-      {step === 7 && (
+      {step === 8 && (
         <Button
           type="primary"
           loading={busy}
@@ -269,14 +271,14 @@ export function RoomOnboarding({
             : translateUi("Create previews")}
         </Button>
       )}
-      {step < 7 && (
-        <Button type={step === 6 ? "primary" : "default"} onClick={advance}>
+      {step < 8 && (
+        <Button type={step === 7 ? "primary" : "default"} onClick={advance}>
           {step === 0 ||
-          step === 6 ||
+          step === 7 ||
           text.trim() ||
-          (step === 3 && request.urls.some((url) => url.trim())) ||
+          (step === 4 && request.urls.some((url) => url.trim())) ||
           sectionSelected.length ||
-          step === 5
+          step === 6
             ? translateUi("Continue")
             : translateUi("Skip")}
         </Button>
@@ -333,20 +335,26 @@ export function RoomOnboarding({
                   ? translateUi("Documents")
                   : section === "images"
                     ? translateUi("Reference images")
-                    : translateUi("Music and audio")
+                    : section === "videos"
+                      ? translateUi("Video clips")
+                      : translateUi("Music and audio")
               }
               description={
                 section === "main"
                   ? translateUi("Add notes and source documents for your project.")
                   : section === "images"
                     ? translateUi("Choose images to guide the look and story.")
-                    : translateUi("Describe the sound and choose reference audio.")
+                    : section === "videos"
+                      ? translateUi("Choose finished video clips to use in your story.")
+                      : translateUi("Describe the sound and choose reference audio.")
               }
               icon={
                 section === "main" ? (
                   <FileText size={18} />
                 ) : section === "images" ? (
                   <ImageIcon size={18} />
+                ) : section === "videos" ? (
+                  <Video size={18} />
                 ) : (
                   <Music2 size={18} />
                 )
@@ -425,7 +433,7 @@ export function RoomOnboarding({
             </div>
           </section>
         )}
-        {step === 3 && (
+        {step === 4 && (
           <section className="room-materials">
             <SettingsSectionHeading
               title={translateUi("Website references")}
@@ -467,20 +475,20 @@ export function RoomOnboarding({
             </div>
           </section>
         )}
-        {step === 5 && request.outputType === "video" && (
+        {step === 6 && request.outputType === "video" && (
           <LanguageTrackSettings
             request={request}
             onChange={(languageTracks) => patch({ languageTracks })}
           />
         )}
-        {step === 5 && request.outputType === "video" && request.scriptItems !== undefined && (
+        {step === 6 && request.outputType === "video" && request.scriptItems !== undefined && (
           <ScriptItems
             items={request.scriptItems}
             duration={request.duration}
             onChange={(scriptItems) => patch({ scriptItems })}
           />
         )}
-        {step === 5 && request.outputType === "video" && request.scriptItems === undefined && (
+        {step === 6 && request.outputType === "video" && request.scriptItems === undefined && (
           <div className="room-inline-field room-materials">
             <Button
               disabled={request.speech?.mode === "uploaded"}
@@ -516,12 +524,12 @@ export function RoomOnboarding({
             />
           </div>
         )}
-        {step === 5 && request.outputType === "page" && (
+        {step === 6 && request.outputType === "page" && (
           <p className="room-hint">
             {translateUi("Narration and subtitles are available for video projects.")}
           </p>
         )}
-        {step === 6 && (
+        {step === 7 && (
           <div className="room-settings">
             <SettingsSectionHeading
               title={translateUi("Generation settings")}
@@ -733,7 +741,7 @@ export function RoomOnboarding({
             </div>
           </div>
         )}
-        {step === 7 && (
+        {step === 8 && (
           <div className="room-review">
             <SettingsSectionHeading
               title={translateUi("Review your brief")}
@@ -791,7 +799,7 @@ export function RoomOnboarding({
       ) : (
         <>
           {chatLog}
-          {step < 5 ? <Sender {...replyProps} /> : actions}
+          {step < 6 ? <Sender {...replyProps} /> : actions}
         </>
       )}
     </div>

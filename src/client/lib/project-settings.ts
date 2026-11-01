@@ -6,6 +6,7 @@ export function projectSettingsDraft(request: CreativeRequest) {
   return {
     instructions: request.instructions,
     sectionInstructions: {
+      videos: request.requirements?.videos?.instructions || "",
       music: request.requirements?.music.instructions || "",
       images: request.requirements?.images.instructions || "",
       urls: request.requirements?.urls.instructions || "",

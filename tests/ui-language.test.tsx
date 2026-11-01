@@ -66,9 +66,9 @@ it("changes UI summaries without altering the idea, script, subtitles or output-
   await uiLanguage.change("zh-CN");
   const replies = roomOnboardingReplies(request, [], []);
   expect(replies[0].text).toBe("Keep my original idea");
-  expect(replies[5].text).toContain("Keep my original subtitles");
-  expect(replies[5].text).toContain("Keep my original script");
-  expect(replies[6].text).toContain("模型：");
+  expect(replies[6].text).toContain("Keep my original subtitles");
+  expect(replies[6].text).toContain("Keep my original script");
+  expect(replies[7].text).toContain("模型：");
   expect(JSON.stringify(draft)).toBe(before);
   expect(draft.request.outputLanguage).toBe("en");
 });
