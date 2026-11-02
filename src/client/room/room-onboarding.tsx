@@ -503,8 +503,16 @@ export function RoomOnboarding({
               {translateUi("Use timed script items")}
             </Button>
             <SettingsSectionHeading
-              title={translateUi("Shared script")}
-              description={translateUi("Use one script for narration and on-screen text.")}
+              title={translateUi(
+                request.languageTracks && !request.languageTracks.narration.length
+                  ? "Subtitle text"
+                  : "Shared script",
+              )}
+              description={translateUi(
+                request.languageTracks && !request.languageTracks.narration.length
+                  ? "Paste lyrics or subtitle text. No voice will be generated."
+                  : "Use one script for narration and on-screen text.",
+              )}
               icon={<Captions size={18} />}
             />
             <Input.TextArea

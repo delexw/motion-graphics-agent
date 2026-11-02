@@ -220,3 +220,70 @@ it("submits global profiles rather than hidden legacy item switches", () => {
   });
   expect(request.scriptItems![0].speech.mode).toBe("off");
 });
+
+it("keeps supplied bilingual subtitles silent while editing languages and toggling narration", () => {
+  const lyrics = "光を連れて\n海を越えよう";
+  const request = VideoRequestSchema.parse({
+    instructions: "Compose the supplied clips with the existing song",
+    outputLanguage: "ja",
+    subtitles: { mode: "provided", text: lyrics },
+    speech: { mode: "off" },
+    languageTracks: {
+      narration: [],
+      subtitles: ["zh", "ja"],
+      defaultSubtitle: "zh",
+      showSubtitles: true,
+    },
+  });
+  const selected = selectLanguageTrackLanguages(request, ["zh", "ja"]);
+  expect(selected.narration).toEqual([]);
+  expect(selected.subtitles).toEqual(["zh", "ja"]);
+  expect(selected.defaultNarration).toBeUndefined();
+  const spoken = selectLanguageTrackLanguages(
+    { ...request, languageTracks: selected },
+    ["zh", "ja"],
+    { narrationEnabled: true },
+  );
+  expect(spoken.narration.map((track) => track.language)).toEqual(["zh", "ja"]);
+  const silent = selectLanguageTrackLanguages(
+    { ...request, languageTracks: spoken },
+    ["zh", "ja"],
+    { narrationEnabled: false },
+  );
+  const submitted = roomSubmission({ ...request, languageTracks: silent });
+  expect(submitted).toMatchObject({
+    speech: { mode: "off" },
+    subtitles: { mode: "provided", text: lyrics },
+    languageTracks: { narration: [], subtitles: ["zh", "ja"], defaultSubtitle: "zh" },
+  });
+  const direction = languageTracksDirection({ ...request, languageTracks: silent });
+  expect(direction).toContain("Narration is disabled");
+  expect(direction).toContain("Do not generate speech");
+  expect(direction).not.toContain("Create only the primary narration");
+  expect(direction).not.toContain("measured narration cues");
+  expect(LanguageTracksSchema.safeParse(silent).success).toBe(true);
+});
+
+it("retains language choices when both narration and subtitle visibility are off", () => {
+  const request = VideoRequestSchema.parse({
+    instructions: "A silent subtitle setting",
+    languageTracks: {
+      narration: [],
+      subtitles: ["zh", "ja"],
+      showSubtitles: false,
+      defaultSubtitle: "off",
+    },
+  });
+  const hidden = selectLanguageTrackLanguages(request, ["zh", "ja"]);
+  expect(hidden).toMatchObject({
+    narration: [],
+    subtitles: ["zh", "ja"],
+    showSubtitles: false,
+    defaultSubtitle: "off",
+  });
+  const visible = selectLanguageTrackLanguages(
+    { ...request, languageTracks: { ...hidden, showSubtitles: true } },
+    ["zh", "ja"],
+  );
+  expect(visible).toMatchObject({ narration: [], subtitles: ["zh", "ja"], defaultSubtitle: "zh" });
+});

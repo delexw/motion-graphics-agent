@@ -12,11 +12,18 @@ import { appRoot } from "../src/server/runtime/config";
 import { browserAliases, browserDependencyScan } from "../vite.resolve";
 
 it.skipIf(!browserExecutablePath()).each([
-  { engine: "ming-tts", voice: "ming_original_female", languages: ["zh", "en"] },
+  { engine: "kokoro", voice: "af_heart", languages: ["zh", "ja"], subtitleOnly: true },
+  {
+    engine: "ming-tts",
+    voice: "ming_original_female",
+    languages: ["zh", "en"],
+    subtitleOnly: false,
+  },
   {
     engine: "ming-tts",
     voice: mingVoices[0].id,
     languages: ["en", "zh", "ja", "ko", "de", "fr", "es"],
+    subtitleOnly: false,
   },
 ])(
   "aligns language voice controls and handles narrow settings panels ($engine, $voice)",
@@ -47,8 +54,8 @@ it.skipIf(!browserExecutablePath()).each([
                   req.url,
                   `<style>body{margin:0;padding:16px;box-sizing:border-box}#root{max-width:1100px}</style><div id="root"></div><script type="module">
 import React from 'react';import{createRoot}from'react-dom/client';import{LanguageTrackSettings}from'/src/client/components/language-track-settings.tsx';import{VideoRequestSchema}from'/src/shared/domains/video.ts';import'/src/client/framework.css';
-const fixture=${JSON.stringify(fixture)};const request=VideoRequestSchema.parse({instructions:'Explain an example',languageTracks:{narration:fixture.languages.map(language=>({language,speech:{mode:'narration',engine:fixture.engine,voice:fixture.voice,language,speed:1,volume:1}})),subtitles:fixture.languages,defaultNarration:fixture.languages[0],defaultSubtitle:fixture.languages[0]}});
-createRoot(document.getElementById('root')).render(React.createElement(LanguageTrackSettings,{request,onChange:()=>{}}));</script>`,
+const fixture=${JSON.stringify(fixture)};const request=VideoRequestSchema.parse({instructions:'Explain an example',outputLanguage:'ja',speech:{mode:'off'},subtitles:{mode:'provided',text:'光を連れて'},languageTracks:{narration:fixture.subtitleOnly?[]:fixture.languages.map(language=>({language,speech:{mode:'narration',engine:fixture.engine,voice:fixture.voice,language,speed:1,volume:1}})),subtitles:fixture.languages,defaultNarration:fixture.subtitleOnly?undefined:fixture.languages[0],defaultSubtitle:fixture.languages[0]}});
+function Fixture(){const[state,setState]=React.useState(request);return React.createElement(React.Fragment,null,React.createElement(LanguageTrackSettings,{request:state,onChange:languageTracks=>setState(previous=>({...previous,languageTracks}))}),React.createElement('pre',{id:'state'},JSON.stringify(state)));}createRoot(document.getElementById('root')).render(React.createElement(Fixture));</script>`,
                 ),
               );
             });
@@ -65,6 +72,17 @@ createRoot(document.getElementById('root')).render(React.createElement(LanguageT
       const page = await browser.newPage();
       await page.setViewport({ width: 1200, height: 900 });
       await page.goto(`${server.resolvedUrls!.local[0]}layout`);
+      await page.waitForSelector('[aria-label="Generate narration"]');
+      if (fixture.subtitleOnly) {
+        await page.waitForFunction(
+          () => document.querySelectorAll(".language-track-voice").length === 2,
+        );
+        expect(await page.$$(".speech-settings")).toHaveLength(0);
+        const initial = await page.$eval("#state", (el) => JSON.parse(el.textContent || "{}"));
+        expect(initial.languageTracks.narration).toEqual([]);
+        expect(initial.languageTracks.subtitles).toEqual(["zh", "ja"]);
+        await page.click('[aria-label="Generate narration"]');
+      }
       await page.waitForSelector(".speech-ready");
       if (fixture.engine === "ming-tts") {
         await page.click(".speech-voice-control .ant-select");
@@ -138,6 +156,18 @@ createRoot(document.getElementById('root')).render(React.createElement(LanguageT
           fullPage: true,
         });
       }
+      await page.click('[aria-label="Generate narration"]');
+      await page.waitForFunction(() => document.querySelectorAll(".speech-settings").length === 0);
+      const silent = await page.$eval("#state", (el) => JSON.parse(el.textContent || "{}"));
+      expect(silent.languageTracks.narration).toEqual([]);
+      expect(silent.languageTracks.subtitles).toEqual(fixture.languages);
+      expect(silent.subtitles).toEqual({ mode: "provided", text: "光を連れて" });
+      await page.click('[aria-label="Show subtitles on screen"]');
+      await page.click('[aria-label="Show subtitles on screen"]');
+      const restored = await page.$eval("#state", (el) => JSON.parse(el.textContent || "{}"));
+      expect(restored.languageTracks.narration).toEqual([]);
+      expect(restored.languageTracks.subtitles).toEqual(fixture.languages);
+      expect(restored.languageTracks.showSubtitles).toBe(true);
     } finally {
       await browser.close();
       await server.close();

@@ -1284,5 +1284,9 @@
   "Upload videos": "Upload videos",
   "Any video clips to use? Pick them from your shelf, or describe their role.": "Any video clips to use? Pick them from your shelf, or describe their role.",
   "Choose finished video clips to use in your story.": "Choose finished video clips to use in your story.",
-  "Use up to 8 videos per project.": "Use up to 8 videos per project."
+  "Use up to 8 videos per project.": "Use up to 8 videos per project.",
+  "Generate narration": "Generate narration",
+  "Subtitle text": "Subtitle text",
+  "Paste lyrics or subtitle text. No voice will be generated.": "Paste lyrics or subtitle text. No voice will be generated.",
+  "Use supplied text for subtitles, with optional narration.": "Use supplied text for subtitles, with optional narration."
 }

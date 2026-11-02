@@ -93,9 +93,9 @@ function App(){const[draft,setDraft]=useState({step:4,stepLayout:'separate-speec
       await page.waitForSelector('[aria-label="Add language"]');
       expect(await page.$('[aria-label="Multiple language tracks"]')).toBeNull();
       expect(await page.$('[aria-label="Default language"]')).toBeNull();
+      await page.click('[aria-label="Generate narration"]');
+      await page.waitForSelector('[aria-label="Shared script"]');
       await page.type('[aria-label="Shared script"]', "Let your idea take flight.");
-      await page.click('[aria-label="Add language"]');
-      await page.locator('.ant-select-item-option[title="English"]').click();
       await page.waitForSelector('section[aria-label="Narration voice en"]');
       expect(await page.$('[aria-label="Speech mode"]')).toBeNull();
       expect(await page.$('[aria-label="Speech language"]')).toBeNull();
@@ -131,7 +131,7 @@ function App(){const[draft,setDraft]=useState({step:4,stepLayout:'separate-speec
           voice: "ming_original_female",
           language: "en",
         });
-      await page.click('.language-track-subtitles [role="switch"]');
+      await page.click('[aria-label="Show subtitles on screen"]');
       await page.waitForFunction(
         () =>
           JSON.parse(document.querySelector("#draft-state")!.textContent!).request.languageTracks
@@ -139,7 +139,7 @@ function App(){const[draft,setDraft]=useState({step:4,stepLayout:'separate-speec
       );
       const draft = await page.$eval("#draft-state", (el) => JSON.parse(el.textContent!));
       expect(draft.request.languageTracks.showSubtitles).toBe(false);
-      expect(draft.request.languageTracks.subtitles).toEqual([]);
+      expect(draft.request.languageTracks.subtitles).toEqual(["en"]);
       expect(
         await page.$eval('[aria-label="Shared script"]', (el) => (el as HTMLTextAreaElement).value),
       ).toBe("Let your idea take flight.");

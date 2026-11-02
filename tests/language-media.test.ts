@@ -8,6 +8,7 @@ import { VideoRequestSchema } from "../src/shared/domains/video";
 import { command } from "../src/server/runtime/process";
 import { probeVideo } from "../src/server/rendering/video-probe";
 import { validStoryboard } from "./fixtures/storyboard";
+import { StoryboardSchema } from "../src/shared/agents/schemas/storyboard";
 import type { Brief } from "../src/shared/agents/schemas/video";
 import type { VideoGenerationJob } from "../src/shared/domains/video";
 import { SubtitleProgressSchema } from "../src/shared/subtitle-progress";
@@ -224,3 +225,43 @@ it("omits all subtitle downloads when the global subtitle switch is off", async 
   expect(result.defaultSubtitle).toBe("off");
   expect(speak).not.toHaveBeenCalled();
 }, 60000);
+
+it("exports supplied Japanese and Chinese lyric subtitles without generating narration or changing the song", async () => {
+  const input = await fixture();
+  input.request = VideoRequestSchema.parse({
+    ...input.request,
+    outputLanguage: "ja",
+    subtitles: { mode: "provided", text: "光を連れて" },
+    speech: { mode: "off" },
+    languageTracks: {
+      narration: [],
+      subtitles: ["zh", "ja"],
+      defaultSubtitle: "zh",
+      showSubtitles: true,
+    },
+  });
+  input.job.speechTrack = undefined;
+  const storyboard = StoryboardSchema.parse(validStoryboard(4));
+  const beat = storyboard.scenes[0].beats[0];
+  beat.audio.subtitles = ["光を連れて"];
+  await writeFile(path.join(input.job.workspace, "STORYBOARD.json"), JSON.stringify(storyboard));
+  const originalSong = await readFile(path.join(input.job.workspace, "renders/full.music.mp4"));
+  const speak = vi.fn(async () => {
+    throw Error("TTS must not run for subtitle-only requests");
+  });
+  const result = await buildLanguageMedia(input, {
+    speak,
+    translate: async (_text, language) => (language === "zh" ? "带着光前行" : "光を連れて"),
+  });
+  expect(speak).not.toHaveBeenCalled();
+  expect(result.narration).toEqual([]);
+  expect(result.subtitles.map((track) => track.language)).toEqual(["zh", "ja"]);
+  expect(result.defaultSubtitle).toBe("zh");
+  for (const track of result.subtitles) {
+    const srt = await readFile(path.join(input.job.workspace, track.srt), "utf8");
+    expect(srt).toContain(track.language === "zh" ? "带着光前行" : "光を連れて");
+  }
+  expect(await readFile(path.join(input.job.workspace, "renders/full.music.mp4"))).toEqual(
+    originalSong,
+  );
+});

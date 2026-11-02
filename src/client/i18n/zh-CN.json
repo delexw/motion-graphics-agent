@@ -1284,5 +1284,9 @@
   "Upload videos": "上传视频",
   "Any video clips to use? Pick them from your shelf, or describe their role.": "有要使用的视频片段吗？从素材架中选择，或描述它们的用途。",
   "Choose finished video clips to use in your story.": "选择用于故事的成品视频片段。",
-  "Use up to 8 videos per project.": "每个项目最多使用 8 个视频。"
+  "Use up to 8 videos per project.": "每个项目最多使用 8 个视频。",
+  "Generate narration": "生成旁白",
+  "Subtitle text": "字幕文本",
+  "Paste lyrics or subtitle text. No voice will be generated.": "粘贴歌词或字幕文本，不会生成旁白。",
+  "Use supplied text for subtitles, with optional narration.": "使用提供的文本生成字幕，可独立开启或关闭旁白。"
 }

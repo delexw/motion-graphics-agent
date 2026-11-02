@@ -90,7 +90,7 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
       expect(narrationOnly.request.speech).toMatchObject({
         text: "One shared script.",
       });
-      expect(narrationOnly.request.languageTracks.subtitles).toEqual([]);
+      expect(narrationOnly.request.languageTracks.subtitles).toEqual(["en"]);
       expect(errors).toEqual([]);
     } finally {
       await browser.close();

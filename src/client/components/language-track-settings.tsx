@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { Button, ConfigProvider, Select, Switch, Typography } from "antd";
 import { translateUi, useUiLanguage } from "../i18n";
-import { videoLanguages, deliverySpeech } from "../../shared/video-language";
+import { videoLanguages, deliverySpeech, type VideoLanguage } from "../../shared/video-language";
 import { selectLanguageTrackLanguages } from "../../shared/language-tracks";
 import type { VideoRequest } from "../../shared/domains/video";
 import type { LanguageTracks } from "../../shared/language-tracks";
@@ -44,19 +44,11 @@ export function LanguageTrackSettings({
         );
       return;
     }
-    const languages = [
-      ...new Set([...value.narration.map((track) => track.language), ...value.subtitles]),
-    ];
-    if (
-      value.narration.length !== languages.length ||
-      value.subtitles.length !== (value.showSubtitles === false ? 0 : languages.length) ||
-      (value.showSubtitles !== false &&
-        value.narration.some((track) => !value.subtitles.includes(track.language))) ||
-      (value.defaultSubtitle !== "off" &&
-        value.defaultSubtitle !== (value.defaultNarration || value.narration[0]?.language))
-    )
-      onChange(selectLanguageTrackLanguages(request, languages));
   }, [request, value, onChange, supported]);
+  const languages = value
+    ? [...new Set([...value.narration.map((track) => track.language), ...value.subtitles])]
+    : [];
+  const narrationEnabled = Boolean(value?.narration.length);
   return (
     <section aria-label={translateUi("Language tracks")} className="language-track-settings">
       {!supported && (
@@ -70,10 +62,24 @@ export function LanguageTrackSettings({
         {value && (
           <>
             <Typography.Text type="secondary">
-              {translateUi(
-                "Share the same visuals and music. Each selected language narrates the script using its configured voice.",
-              )}
+              {translateUi("Use supplied text for subtitles, with optional narration.")}
             </Typography.Text>
+            <label className="language-track-subtitles">
+              <Switch
+                aria-label={translateUi("Generate narration")}
+                checked={narrationEnabled}
+                onChange={(enabled) =>
+                  onChange(
+                    selectLanguageTrackLanguages(
+                      request,
+                      languages.length ? languages : [request.outputLanguage || "en"],
+                      { narrationEnabled: enabled },
+                    ),
+                  )
+                }
+              />
+              {translateUi("Generate narration")}
+            </label>
             <label className="language-track-subtitles">
               <Switch
                 aria-label={translateUi("Show subtitles on screen")}
@@ -82,91 +88,85 @@ export function LanguageTrackSettings({
                   onChange(
                     selectLanguageTrackLanguages(
                       { ...request, languageTracks: { ...value, showSubtitles } },
-                      value.narration.map((track) => track.language),
+                      languages,
                     ),
                   )
                 }
               />
               {translateUi("Show subtitles on screen")}
             </label>
-            {value.narration.map((track) => (
-              <section
-                key={track.language}
-                className="language-track-voice"
-                aria-label={`${translateUi("Narration voice")} ${track.language}`}
-              >
-                <div className="language-track-voice-heading">
-                  <strong>
-                    {options.find((option) => option.value === track.language)?.label}
-                  </strong>
-                  <Button
-                    aria-label={`${translateUi("Remove language")} ${track.language}`}
-                    onClick={() =>
-                      onChange(
-                        selectLanguageTrackLanguages(
-                          request,
-                          value.narration
-                            .filter((item) => item.language !== track.language)
-                            .map((item) => item.language),
-                        ),
-                      )
-                    }
-                  >
-                    {translateUi("Remove language")}
-                  </Button>
-                </div>
-                <SpeechSettings
-                  value={track.speech}
-                  audioAssets={[]}
-                  videoLanguage={track.language}
-                  profileOnly
-                  timedItem
-                  sharedScript
-                  onChange={(speech) => {
-                    const adapted =
-                      speech.mode === "narration"
-                        ? deliverySpeech({
-                            outputLanguage: track.language,
-                            speech: { ...speech, followVideoLanguage: true },
-                          })
-                        : undefined;
-                    if (adapted?.mode === "narration")
-                      onChange({
-                        ...value,
-                        narration: value.narration.map((item) =>
-                          item.language === track.language
-                            ? {
-                                ...track,
-                                speech: {
-                                  ...adapted,
-                                  language: track.language,
-                                  followVideoLanguage: false,
-                                },
-                              }
-                            : item,
-                        ),
-                      });
-                  }}
-                />
-              </section>
-            ))}
-            {value.narration.length < options.length && (
+            {languages.map((language) => {
+              const track = value.narration.find((item) => item.language === language);
+              return (
+                <section
+                  key={language}
+                  className="language-track-voice"
+                  aria-label={`${translateUi(track ? "Narration voice" : "Subtitle language")} ${language}`}
+                >
+                  <div className="language-track-voice-heading">
+                    <strong>{options.find((option) => option.value === language)?.label}</strong>
+                    <Button
+                      aria-label={`${translateUi("Remove language")} ${language}`}
+                      onClick={() =>
+                        onChange(
+                          selectLanguageTrackLanguages(
+                            request,
+                            languages.filter((item) => item !== language),
+                          ),
+                        )
+                      }
+                    >
+                      {translateUi("Remove language")}
+                    </Button>
+                  </div>
+                  {track && (
+                    <SpeechSettings
+                      value={track.speech}
+                      audioAssets={[]}
+                      videoLanguage={track.language}
+                      profileOnly
+                      timedItem
+                      sharedScript
+                      onChange={(speech) => {
+                        const adapted =
+                          speech.mode === "narration"
+                            ? deliverySpeech({
+                                outputLanguage: track.language,
+                                speech: { ...speech, followVideoLanguage: true },
+                              })
+                            : undefined;
+                        if (adapted?.mode === "narration")
+                          onChange({
+                            ...value,
+                            narration: value.narration.map((item) =>
+                              item.language === track.language
+                                ? {
+                                    ...track,
+                                    speech: {
+                                      ...adapted,
+                                      language: track.language,
+                                      followVideoLanguage: false,
+                                    },
+                                  }
+                                : item,
+                            ),
+                          });
+                      }}
+                    />
+                  )}
+                </section>
+              );
+            })}
+            {languages.length < options.length && (
               <label className="language-track-add">
                 {translateUi("Add language")}
-                <Select<"en" | "zh">
+                <Select<VideoLanguage>
                   aria-label={translateUi("Add language")}
                   placeholder={translateUi("Choose languages")}
                   value={undefined}
-                  options={options.filter(
-                    (option) => !value.narration.some((track) => track.language === option.value),
-                  )}
+                  options={options.filter((option) => !languages.includes(option.value))}
                   onChange={(language) =>
-                    onChange(
-                      selectLanguageTrackLanguages(request, [
-                        ...value.narration.map((track) => track.language),
-                        language,
-                      ]),
-                    )
+                    onChange(selectLanguageTrackLanguages(request, [...languages, language]))
                   }
                 />
               </label>

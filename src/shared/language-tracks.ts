@@ -61,51 +61,56 @@ export type LanguageMedia = {
   defaultSubtitle: VideoLanguage | "off";
 };
 
-/** One enabled-language selection produces matching narration and subtitle tracks. */
+/** Select shared languages while keeping narration optional and subtitles independent. */
 export function selectLanguageTrackLanguages(
   request: Pick<VideoRequest, "languageTracks" | "speech" | "scriptItems" | "outputLanguage">,
   languages: VideoLanguage[],
+  options: { narrationEnabled?: boolean } = {},
 ): LanguageTracks {
   const current = request.languageTracks;
   const selected = [...new Set(languages)];
-  const narration = selected.map((language) => {
-    const existing = current?.narration.find((track) => track.language === language);
-    if (existing) return existing;
-    const source =
-      request.scriptItems?.find((item) => item.speech.mode === "narration")?.speech ||
-      request.speech;
-    let speech = deliverySpeech({
-      outputLanguage: language,
-      speech: {
-        ...SpeechSettingsSchema.options[1].parse(
-          source?.mode === "narration" ? source : { mode: "narration" },
-        ),
-        followVideoLanguage: true,
-      },
-    });
-    if (
-      speech?.mode === "narration" &&
-      (!SpeechSettingsSchema.safeParse(speech).success ||
-        speechLanguage(speech.voice, speech.engine, language)?.split("-")[0] !== language)
-    ) {
-      // A newly added language needs a valid editable profile, even when the prior engine cannot speak it.
-      // This is a settings default, never an inference-time provider fallback.
-      speech = SpeechSettingsSchema.options[1].parse({
-        ...speech,
-        engine: "ming-tts",
-        voice: mingVoices[0].id,
-        language,
-      });
-    }
-    if (speech?.mode !== "narration") throw Error("No narration profile");
-    return { language, speech: { ...speech, language, followVideoLanguage: false } };
-  });
+  const narrationEnabled =
+    options.narrationEnabled ?? (current ? current.narration.length > 0 : true);
+  const narration = narrationEnabled
+    ? selected.map((language) => {
+        const existing = current?.narration.find((track) => track.language === language);
+        if (existing) return existing;
+        const source =
+          request.scriptItems?.find((item) => item.speech.mode === "narration")?.speech ||
+          request.speech;
+        let speech = deliverySpeech({
+          outputLanguage: language,
+          speech: {
+            ...SpeechSettingsSchema.options[1].parse(
+              source?.mode === "narration" ? source : { mode: "narration" },
+            ),
+            followVideoLanguage: true,
+          },
+        });
+        if (
+          speech?.mode === "narration" &&
+          (!SpeechSettingsSchema.safeParse(speech).success ||
+            speechLanguage(speech.voice, speech.engine, language)?.split("-")[0] !== language)
+        ) {
+          // A newly added language needs a valid editable profile, even when the prior engine cannot speak it.
+          // This is a settings default, never an inference-time provider fallback.
+          speech = SpeechSettingsSchema.options[1].parse({
+            ...speech,
+            engine: "ming-tts",
+            voice: mingVoices[0].id,
+            language,
+          });
+        }
+        if (speech?.mode !== "narration") throw Error("No narration profile");
+        return { language, speech: { ...speech, language, followVideoLanguage: false } };
+      })
+    : [];
   const defaultLanguage = selected[0];
   return {
     narration,
-    subtitles: current?.showSubtitles === false ? [] : selected,
+    subtitles: selected,
     ...(current?.showSubtitles !== undefined ? { showSubtitles: current.showSubtitles } : {}),
-    defaultNarration: defaultLanguage,
+    defaultNarration: narrationEnabled ? defaultLanguage : undefined,
     defaultSubtitle: current?.showSubtitles === false ? "off" : defaultLanguage || "off",
   };
 }
@@ -159,11 +164,16 @@ export function applyLanguageTracks(request: VideoRequest): VideoRequest {
 }
 export function languageTracksDirection(request: VideoRequest) {
   if (!request.languageTracks) return "";
-  return `LANGUAGE TRACKS: Video language controls only text built into the visuals. Narration languages: ${request.languageTracks.narration.map((track) => track.language).join(", ") || "none"}; subtitle languages: ${request.languageTracks.subtitles.join(", ") || "none"}. Author the primary narration in ${request.languageTracks.defaultNarration || request.languageTracks.narration[0]?.language || request.outputLanguage || "the idea language"}. Plan one shared visual timeline with enough space for each enabled spoken language. ${subtitleRenderingDirection(request)} Record their exact text and times in STORYBOARD.json audio.subtitles and narration cues. Titles, labels and credits remain authored visual text. Create only the primary narration through create_narration; the application translates and generates alternate tracks afterward. Keep music and effects separate from narration; never embed or duplicate narration in rendered scenes.`;
+  const narration = request.languageTracks.narration.length
+    ? `Author the primary narration in ${request.languageTracks.defaultNarration || request.languageTracks.narration[0]?.language || request.outputLanguage || "the idea language"}. Plan one shared visual timeline with enough space for each enabled spoken language. Create only the primary narration through create_narration; the application translates and generates alternate tracks afterward. Keep music and effects separate from narration; never embed or duplicate narration in rendered scenes.`
+    : "Narration is disabled. Do not generate speech, call create_narration or read the supplied lyrics aloud. Preserve the supplied music and its existing vocals. Use supplied lyrics or subtitle text as silent on-screen captions with authored timing; do not create narration cues.";
+  return `LANGUAGE TRACKS: Video language controls only text built into the visuals. Narration languages: ${request.languageTracks.narration.map((track) => track.language).join(", ") || "none"}; subtitle languages: ${request.languageTracks.subtitles.join(", ") || "none"}. ${narration} ${subtitleRenderingDirection(request)} Record exact subtitle text and times in STORYBOARD.json audio.subtitles. Titles, labels and credits remain authored visual text.`;
 }
 
 function subtitleRenderingDirection(request: VideoRequest) {
   return request.languageTracks?.showSubtitles === false
     ? "Subtitles are off: do not render narration subtitles into the video. Titles, labels and credits are unaffected."
-    : "Render narration subtitles directly into the video, synchronized to the measured narration cues. Keep them readable and scale them with the composition. Do not rely on a separate player subtitle overlay or playback toggle.";
+    : request.languageTracks?.narration.length
+      ? "Render narration subtitles directly into the video, synchronized to the measured narration cues. Keep them readable and scale them with the composition. Do not rely on a separate player subtitle overlay or playback toggle."
+      : "Render subtitle text directly into the video at its authored times, synchronized to the supplied song when lyrics are provided. Keep it readable and scale it with the composition. Do not rely on generated speech, a separate player subtitle overlay or playback toggle.";
 }
