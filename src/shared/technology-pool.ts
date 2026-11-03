@@ -1786,3 +1786,18 @@ export const technologyPool = {
 
 export type TechnologyKey = keyof typeof technologyPool;
 export const technologyPoolSize = Object.keys(technologyPool).length;
+
+/** Project composition and export choices are not Motion Graphic technology candidates. */
+export const projectRenderTechnologyPool = Object.fromEntries(
+  Object.entries<TechnologyDefinition>(technologyPool).filter(
+    // The Node-only fallback renderer is an export adapter, not a visual tool.
+    ([key, entry]) =>
+      entry.role === "composition_and_export_pipeline" || key === "remotion_renderer",
+  ),
+);
+
+export const motionGraphicTechnologyPool = Object.fromEntries(
+  Object.entries<TechnologyDefinition>(technologyPool).filter(
+    ([key]) => !Object.hasOwn(projectRenderTechnologyPool, key),
+  ),
+);

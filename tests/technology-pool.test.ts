@@ -3,9 +3,16 @@ import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { loadCatalog } from "../src/server/catalog/catalog";
-import { technologyPool } from "../src/shared/technology-pool";
+import {
+  technologyPool,
+  motionGraphicTechnologyPool,
+  projectRenderTechnologyPool,
+} from "../src/shared/technology-pool";
 import { resolveStyleTechnology } from "../src/shared/style-technology";
-import { validateTechnologyReview } from "../src/shared/technology-review";
+import {
+  technologyReviewedPrompt,
+  validateTechnologyReview,
+} from "../src/shared/technology-review";
 
 describe("shared technology pool", () => {
   it("retains original source assignments and metadata while separating project renderers", async () => {
@@ -136,9 +143,41 @@ describe("shared technology pool", () => {
     ]);
     expect(technologyPool.svg).toEqual(original);
   });
-  it("requires explicit assessment of every pool entry and every requested style", () => {
+  it("reviews only Motion Graphic tools while preserving the project renderer pool", () => {
+    expect(Object.keys(projectRenderTechnologyPool).sort()).toEqual([
+      "hyperframes",
+      "multiplane",
+      "remotion",
+      "remotion_renderer",
+    ]);
+    expect(Object.keys(motionGraphicTechnologyPool)).toHaveLength(88);
+    expect(motionGraphicTechnologyPool.svg).toBe(technologyPool.svg);
+    expect(motionGraphicTechnologyPool.gsap).toBe(technologyPool.gsap);
+    expect(motionGraphicTechnologyPool.ffmpeg).toBe(technologyPool.ffmpeg);
+    expect(Object.keys(technologyPool)).toHaveLength(92);
+  });
+  it("replaces stale review instructions instead of accumulating project pipeline choices", () => {
+    const template = "Use {{subject}}. Draw paths with the old implementation.";
+    const first = technologyReviewedPrompt(
+      template,
+      "the old implementation",
+      "SVG",
+      "Precise contours",
+    );
+    const next = technologyReviewedPrompt(first, "SVG", "Canvas 2D", "Bounded dot rendering");
+    expect(next).toBe(
+      "Use {{subject}}. Draw paths with Canvas 2D.\nReviewed technology choice: Canvas 2D Bounded dot rendering",
+    );
+    expect(technologyReviewedPrompt(next, "Canvas 2D", "Canvas 2D", "Bounded dot rendering")).toBe(
+      next,
+    );
+    expect(technologyReviewedPrompt("Use {{subject}}.", "", "SVG", "Precise contours")).toBe(
+      "Use {{subject}}.\nReviewed technology choice: SVG Precise contours",
+    );
+  });
+  it("requires explicit assessment of every eligible pool entry and every requested style", () => {
     const review = {
-      assessments: Object.keys(technologyPool).map((key) => ({
+      assessments: Object.keys(motionGraphicTechnologyPool).map((key) => ({
         key,
         matchingStyleIds: key === "svg" || key === "gsap" ? ["style-116"] : [],
         reason: "Considered for the requested visual medium",
@@ -163,12 +202,27 @@ describe("shared technology pool", () => {
     expect(() => validateTechnologyReview({ ...review, styles: [] }, ["style-116"])).toThrow(
       /every requested Motion Graphic/,
     );
-    expect(() =>
-      validateTechnologyReview(
-        { ...review, styles: [{ ...review.styles[0], rendererKeys: ["hyperframes"] }] },
-        ["style-116"],
-      ),
-    ).toThrow(/pipelines/);
+    for (const key of Object.keys(projectRenderTechnologyPool)) {
+      for (const role of ["rendererKeys", "motionKeys", "supportingKeys"] as const)
+        expect(() =>
+          validateTechnologyReview(
+            { ...review, styles: [{ ...review.styles[0], [role]: [key] }] },
+            ["style-116"],
+          ),
+        ).toThrow(/pipelines/);
+      expect(() =>
+        validateTechnologyReview(
+          {
+            ...review,
+            assessments: [
+              ...review.assessments,
+              { key, matchingStyleIds: [], reason: "Project-only pipeline" },
+            ],
+          },
+          ["style-116"],
+        ),
+      ).toThrow(/every pool key/);
+    }
   });
 });
 

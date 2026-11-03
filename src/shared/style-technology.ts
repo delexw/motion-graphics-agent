@@ -1,13 +1,15 @@
 import { z } from "zod";
-import { technologyPool, type TechnologyDefinition, type TechnologyKey } from "./technology-pool";
+import {
+  technologyPool,
+  projectRenderTechnologyPool,
+  type TechnologyDefinition,
+  type TechnologyKey,
+} from "./technology-pool";
 import type { Style } from "./contracts";
 
-const projectRendererTools = new Set([
-  "HyperFrames",
-  "Remotion",
-  "@remotion/renderer",
-  "Multiplane",
-]);
+const projectRendererTools = new Set(
+  Object.values(projectRenderTechnologyPool).map((entry) => entry.name),
+);
 export function styleTechnologyRecommendations(tech: Style["tech"]): Style["tech"] {
   return {
     ...tech,

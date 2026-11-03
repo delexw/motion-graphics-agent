@@ -1,10 +1,25 @@
-import { technologyPool } from "./technology-pool";
+import { motionGraphicTechnologyPool, projectRenderTechnologyPool } from "./technology-pool";
 
 export { TechnologyReviewSchema } from "./agents/schemas/technology-review";
 import { TechnologyReviewSchema } from "./agents/schemas/technology-review";
+
+export function technologyReviewedPrompt(
+  template: string,
+  previousImplementation: string,
+  implementation: string,
+  rationale: string,
+) {
+  const marker = "\nReviewed technology choice:";
+  const source = template.split(marker)[0];
+  const updated = previousImplementation
+    ? source.replace(previousImplementation, implementation)
+    : source;
+  return `${updated}${marker} ${implementation} ${rationale}`;
+}
+
 export function validateTechnologyReview(input: unknown, expectedStyleIds: string[]) {
   const review = TechnologyReviewSchema.parse(input);
-  const poolKeys = Object.keys(technologyPool);
+  const poolKeys = Object.keys(motionGraphicTechnologyPool);
   const assessedKeys = review.assessments.map((assessment) => assessment.key);
   if (
     assessedKeys.length !== poolKeys.length ||
@@ -28,19 +43,13 @@ export function validateTechnologyReview(input: unknown, expectedStyleIds: strin
   }
   for (const style of review.styles) {
     const keys = [...style.rendererKeys, ...style.motionKeys, ...style.supportingKeys];
+    if (keys.some((key) => Object.hasOwn(projectRenderTechnologyPool, key)))
+      throw Error("Composition pipelines cannot be selected in a Motion Graphic technology review");
     if (
-      keys.some((key) => !Object.hasOwn(technologyPool, key)) ||
+      keys.some((key) => !Object.hasOwn(motionGraphicTechnologyPool, key)) ||
       new Set(keys).size !== keys.length
     )
       throw Error(`Invalid technology selection: ${style.styleId}`);
-    if (
-      [...style.rendererKeys, ...style.motionKeys].some((key) =>
-        ["hyperframes", "remotion"].includes(key),
-      )
-    )
-      throw Error(
-        "Composition pipelines cannot replace Motion Graphic renderers or motion engines",
-      );
     if (
       keys.some(
         (key) =>
