@@ -38,6 +38,14 @@ Switch the interface instantly with **EN / 中文**; see [interface language](do
 Dates below use New Zealand time.
 
 <details>
+<summary>2026-11-03</summary>
+
+- **Printed Spark Collage and Boxed-Word Active Relay:** add a reviewed print-collage Motion Graphic, an authored video preview and a seekable word-highlighting motion. The catalog now contains 142 Motion Graphics and 50 motions, with Chinese metadata and supporting-style guidance. The preview uses the published prompt with explicit bindings; its review records visual differences from the reference.
+- **Focused Motion Graphic technology reviews:** assess 88 visual, motion and supporting tools separately from project composition and export. HyperFrames, Multiplane and Remotion remain project renderer choices and cannot be selected as per-MG technologies. Repeated reviews replace stale prompt guidance.
+
+</details>
+
+<details>
 <summary>2026-11-01</summary>
 
 - **MCP asset imports:** import local files or ComfyUI outputs into a saved draft or project through `import_asset`. Use `manage_idea_assets` to list available assets, attach them to the draft or remove their entries from the material shelf. MCP and the interface share file limits and attachment rules. Imported files are stored in Git-ignored runtime uploads. See [agent MCP](docs/agent-mcp.md).
@@ -136,7 +144,8 @@ Dates below use New Zealand time.
 - **Project-local technology tools:** both providers inspect availability through Creative Pool MCP, choose their own tools and run JavaScript, Python or other setup inside the project. Browser preparation bundles libraries, stylesheets and assets without installing packages or relying on Kiteva's dependency tree.
 - **Documentation research:** the bundled AnySearch skill reads tool documentation, CLI parameters, repository examples and source code. Native provider web search/fetch is disabled; sandbox networking supports research and model-owned setup, with project-local caches and isolated Codex skill discovery.
 - **Clearer provider activity:** reads, file updates, checks, installation and bundling share labels across GPT and Claude. Failed MCP calls and commands stay failed; equivalent workflow stages no longer disappear into generic build messages.
-- **Pixel RPG Quest Explainer:** a reviewed Motion Graphic and preview plus Step-Tick Slot Refill bring the catalog to 141 Motion Graphics and 49 motions. Pixel progress follows the explained concepts rather than decorative counters.
+- **Offset-print lyric graphics:** Printed Spark Collage and Boxed-Word Active Relay bring the catalog to 142 Motion Graphics and 50 motions, with Opus-authored previews and recorded exact-template inputs. Per-Motion-Graphic technology reviews exclude project composition/export pipelines.
+- **Pixel RPG Quest Explainer:** a reviewed Motion Graphic and preview plus Step-Tick Slot Refill. Pixel progress follows the explained concepts rather than decorative counters.
 - **Prompt and preview fixes:** document filenames and titles stay out of the finished video unless requested; unanswered questions pause before storyboard validation, mention previews keep stable dimensions, and new catalog details have Chinese translations.
 - **Architecture documentation:** updated capability ownership, technology setup and skill-staging diagrams. Full local verification: 1,843 tests passed, three skipped, with build, lint and formatting passing. Platform-specific release verification is reported separately.
 

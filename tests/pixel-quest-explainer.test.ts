@@ -89,8 +89,8 @@ const named = (commands: Command[], name: string) => commands.filter((c) => c[0]
 describe("Pixel RPG Quest Explainer catalog entry", () => {
   it("adds one complete authored style-141 with separate renderer, motion and pipeline roles", async () => {
     const catalog = await loadCatalog();
-    expect(catalog.styles).toHaveLength(141);
-    expect(catalog.styles.at(-1)!.id).toBe(STYLE_ID);
+    expect(catalog.styles.filter((style) => style.id === STYLE_ID)).toHaveLength(1);
+    expect(catalog.styles[140]!.id).toBe(STYLE_ID);
     const style = catalog.styles.find((s) => s.id === STYLE_ID)!;
     expect(style.name_en).toBe("Pixel RPG Quest Explainer");
     expect(style.provenance).toBe("authored");
@@ -237,9 +237,11 @@ describe("Pixel RPG Quest Explainer catalog entry", () => {
     const raw = JSON.parse(
       await readFile(path.join(catalogRoot, "motion-pattern-catalog.json"), "utf8"),
     );
-    expect(raw.metadata.pattern_count).toBe(49);
-    expect(raw.patterns).toHaveLength(49);
-    expect(catalog.motions.at(-1)!.id).toBe(MOTION_ID);
+    expect(raw.metadata.pattern_count).toBe(raw.patterns.length);
+    expect(raw.patterns.filter((pattern: { id: string }) => pattern.id === MOTION_ID)).toHaveLength(
+      1,
+    );
+    expect(catalog.motions[48]!.id).toBe(MOTION_ID);
     const entry = raw.patterns.find((p: { id: string }) => p.id === MOTION_ID);
     const template = Object.keys(raw.patterns.find((p: { id: string }) => p.id === "motion-048"));
     // The source file hash is unknown to this analysis, so it is omitted rather than invented.

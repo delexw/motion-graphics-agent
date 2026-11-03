@@ -1,7 +1,7 @@
 {
   "metadata": {
     "schema_version": "1.0",
-    "pattern_count": 49,
+    "pattern_count": 50,
     "language": "en",
     "description": "Reusable motion and interaction patterns that can supplement the separate visual-style catalog.",
     "interpretation_note": "The supplied reference images show titles rather than complete motion sequences. These entries propose adaptable interpretations; they do not claim to reproduce an observed original animation or its toolchain.",
@@ -5330,6 +5330,59 @@
         "exact_hex_from_source": false,
         "review_model": "claude-opus-5-5",
         "overview_review_session_id": "caef7c61-872b-41c3-a5fa-c88992e17e78"
+      }
+    },
+    {
+      "id": "motion-050",
+      "name": "Boxed-Word Active Relay",
+      "category": "kinetic typography",
+      "description": "Every word is a persistent box token on a fixed line grid. A solid active fill steps token to token in reading order with a brief overlap at each hand-over; completed tokens settle to a neutral bright state and upcoming tokens stay dim. When a line completes, the whole line scales down and moves into a corner history block while the next line appears dim in the main slot; the history block keeps its last fill briefly, then goes neutral.",
+      "motion_sequence": [
+        "Start: the first line is laid out in the main slot, all tokens dim, no fill.",
+        "Step: the next token's box pops in at about 92 percent scale and settles to 100 percent with a solid fill over about 0.06 s; text turns bright.",
+        "Overlap: for about 0.1 s the previous token keeps its fill alongside the new one, then the previous fill drops and that token turns neutral bright.",
+        "Line end: the last token stays filled while the line scales to about 0.4 and translates into the history corner over about 0.45 s (ease in-out); a faint ghost of the line at its old position fades out in the first 0.15 s.",
+        "Incoming: the next line fades in dim in the main slot during the second half of the handoff; its first token lights after the handoff completes.",
+        "History: the history block's last fill fades to neutral over about 0.4 s; any older history block fades out when replaced, so at most one history block is on screen.",
+        "End: the final line is fully completed (all neutral bright) in the main slot with the previous line as history."
+      ],
+      "video_adaptation": "Copy, per-token timing, line breaks, history corner and colours are parameters. With a supplied timing map, each token's onset is taken from it; without one, steps are spread evenly. Works on any ground because the token states are defined by contrast roles (dim, neutral, active) rather than fixed colours.",
+      "tech": {
+        "suggested_libraries": [],
+        "implementation": "Pure TypeScript module: stateAt(t) computes each token's state, fill opacity, box scale and line transforms from absolute time; draw(ctx, t) renders stateAt(t) in a logical 640x360 space. A HyperFrames wrapper bundles this same module with local esbuild and drives it from one paused GSAP timeline.",
+        "library_selection": "Canvas 2D draws the selected medium; GSAP owns deterministic timeline progress, and HyperFrames owns capture and export."
+      },
+      "compatibility": {
+        "good_fit": [
+          "lyric or voice-over captions",
+          "short manifesto or tagline sequences read word by word",
+          "explainer key sentences",
+          "style-142 Printed Spark Collage",
+          "styles with flat grounds and strong type"
+        ],
+        "adapt_or_omit_when": [
+          "copy is a single word or a logo (nothing to relay)",
+          "lines exceed about 8 words at 640x360 (break them first)",
+          "the style forbids boxed or filled text backgrounds",
+          "right-to-left or vertical scripts (reverse reading order and history corner)"
+        ]
+      },
+      "executable_prompt_template": "Build the Boxed-Word Active Relay motion about {{subject}}, rendered in this visual style: {{visual_style}}. Duration {{duration_seconds}} seconds, output resolution {{resolution}}, frame rate {{frame_rate}}. Motion parameters: {{motion_parameters}}. The parameters supply the exact copy as an ordered list of lines (each line an ordered list of words), and may supply per-token onset times, step overlap, handoff duration, history corner and scale, and fill colours; any copy given there is authoritative and must be used verbatim, with no added words. Where a parameter is missing use these authored defaults: lead-in 0.4 s; token onsets spread evenly over the time remaining after lead-in and handoffs; fill pop 0.06 s (box scale 0.92 to 1.0, ease out); overlap 0.10 s where the previous token keeps its fill; completed-token fade from fill to neutral 0.12 s; line handoff 0.45 s ease in-out cubic, old line scaling to 0.40 and moving to the top-right history slot (top-left if the main slot is on the right); ghost of the old line at its old position fading from 0.35 to 0 opacity over the first 0.15 s of the handoff; incoming line fading in dim over the second half of the handoff; history last-fill decay 0.40 s; hold of the fully completed final line until the end. Colour roles come from {{visual_style}}: background, dim token text, neutral bright completed text, active fill, active text, optional alternate fill. If the style gives none, use background #1a2350, dim #7d7a78, neutral #f3eee2, active fill #e2552a, active text #f3eee2.\n\nBEHAVIOUR. Every word is its own token with a tight rectangular box on a fixed line grid; tokens never move within their line. Upcoming tokens are dim with no fill; the active token has a solid fill; completed tokens are neutral bright with no fill. At each step allow the short overlap, so two adjacent tokens can be filled at once only during that overlap. When a line completes, the whole line scales down and moves into the history corner while the next line appears dim in the main slot; at most one history block is visible, and an older one fades out as it is replaced. The main slot is lower-left for long lines or a stacked top-left block for short emphatic lines. Readable states: at t=0 the first line is fully visible and all dim; around the middle a later line is mid-relay with the previous line small in the history corner; at t=duration the last line is fully completed in the main slot.\n\nTECHNICAL CONTRACT (mandatory). In {{output_directory}} write a pure TypeScript module motion.ts with no DOM access, no globals, no timers, no clocks and no Math.random. It exports a pure function stateAt(t: number) that clamps t to [0, {{duration_seconds}}] and returns a plain serialisable object describing the exact frame: for every token its line index, word, state ('upcoming' | 'active' | 'completed'), fill opacity, box scale and box rectangle; for the main line, history line and ghost their translate, scale and opacity; and the current handoff progress. It also exports default function draw(ctx: CanvasRenderingContext2D, t: number) that clears and paints the frame in a logical 640x360 coordinate space using only stateAt(t), so drawing is fully determined by absolute time. Measure text with a fixed system sans stack (bold condensed: 'Arial Narrow', Arial, sans-serif; no font files) and cache measurements by string so results do not depend on draw order. Then write a standalone index.html in {{output_directory}} that bundles this same motion.ts with the locally available esbuild into an inline IIFE script (do not re-implement the animation in the wrapper) and loads only the local gsap.min.js supplied in the workspace; no network requests, CDNs, web fonts, remote resources, setTimeout, setInterval, requestAnimationFrame loops or Date/performance clocks. The whole-canvas root is a div with data-composition-id=\"video\", data-width and data-height equal to {{resolution}}, data-duration equal to {{duration_seconds}} and data-fps equal to {{frame_rate}}, containing one canvas sized to {{resolution}} whose context is scaled from 640x360 before calling draw. Build exactly one GSAP timeline, paused, fully constructed at load, of duration {{duration_seconds}}, exposed as window.__timelines = { video: timeline }; it contains a single linear proxy tween from 0 to duration whose onUpdate calls draw(ctx, t). Support both direct timeline.time(t, false) and a window event hf-seek that calls timeline.time(event.detail.time, false) and draws that time. Call draw at t=0 on load. Direct, backward and repeated seeks to the same t must produce identical stateAt output and identical pixels. Follow {{render_pipeline}} for capture, validation and export. Before finishing, verify stateAt at the start, a middle time and the end against the readable states above, and confirm the copy matches the supplied lines exactly.",
+      "source_evidence": {
+        "source": "User-supplied 210.716625-second abstract print-poster music video; source words and images are not reproduced.",
+        "model": "claude-opus-5-5",
+        "method": "Whole-video chronological overview and scene-cut contact sheets, refined with nominal 8 fps samples at 50–52.375 s and 10 fps samples at 72–73.9 s. No continuous playback or audio analysis.",
+        "observed_seconds": [
+          24, 26, 28, 33.233, 33.3, 46, 48, 50, 50.375, 50.5, 50.875, 51.0, 51.125, 51.25, 51.5,
+          51.625, 51.875, 52.375, 72.8, 72.9, 73.0, 73.6, 73.7, 73.9, 104, 122.017, 142.05, 174.05
+        ],
+        "limitations": [
+          "Whole-video coverage is from about 2 s overview samples plus 31 detected cuts; only two dense windows (50 to 52.375 s at 8 fps, 72 to 73.9 s at 10 fps) are used here.",
+          "No audio was analysed; no tempo, beat or vocal-sync claim is made.",
+          "Colours are approximate readings from compressed contact sheets.",
+          "All timings in the templates are authored defaults chosen to resemble sampled behaviour, not measured source values.",
+          "Source lyrics, title, credits, subtitles and the signature mark are excluded from all reusable text."
+        ]
       }
     }
   ],

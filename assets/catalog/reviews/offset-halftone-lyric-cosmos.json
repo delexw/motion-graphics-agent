@@ -1,0 +1,889 @@
+{
+  "schema_version": 1,
+  "kind": "frame_analysis_additions",
+  "source": {
+    "description": "User-supplied 210.716625-second abstract offset-print music video. Original lyrics, title, branding and footage are excluded from reusable entries and previews.",
+    "reuse_policy": "Original code-drawn studies and neutral copy; no source artwork or audio reused."
+  },
+  "analysis_provenance": {
+    "model": "claude-opus-5-5",
+    "session_id": "fd1c05bf-7d31-46e9-8a7f-8376b5e0194b",
+    "sampling": "106 chronological overview frames and 31 scene-cut frames; final bounded design reviewed 50–52.375 s at nominal 8 fps and 72–73.9 s at nominal 10 fps. No continuous playback or audio analysis.",
+    "limitations": [
+      "Whole-video coverage is from about 2 s overview samples plus 31 detected cuts; only two dense windows (50 to 52.375 s at 8 fps, 72 to 73.9 s at 10 fps) are used here.",
+      "No audio was analysed; no tempo, beat or vocal-sync claim is made.",
+      "Colours are approximate readings from compressed contact sheets.",
+      "All timings in the templates are authored defaults chosen to resemble sampled behaviour, not measured source values.",
+      "Source lyrics, title, credits, subtitles and the signature mark are excluded from all reusable text."
+    ]
+  },
+  "dense_findings": [
+    {
+      "window": [50, 52.375],
+      "observation": "Chorus stacked block on maroon/black rays. The active vermilion box steps word to word at intervals of roughly 0.25 to 0.5 s. At several hand-overs two adjacent tokens are filled in the same sample (about 50.375, 51.5, 51.875, 52.375), so the relay has a short overlap rather than strictly one lit token. Completed words are bright off-white; upcoming words are dim grey. Between 50.875 and 51.125 the completed block shrinks and moves to the top-right as a history block (51.0 shows it mid-move with a faint ghost at the old position), while the next stanza appears dim at top-left. The history block keeps its last active fill at 51.125 to 51.25 and is neutral by 51.625. The ink silhouette at the vanishing point changes outline almost every sample (lobed, spiky, gear-like) and has a ring of light dots.",
+      "uncertainty": "8 fps sampling: the overlap length could be anything up to about 0.125 s; the fill could pop or wipe within one frame interval. The shrink-and-move appears continuous but its easing cannot be measured. Silhouette change may be a morph or per-frame replacement."
+    },
+    {
+      "window": [72, 73.9],
+      "observation": "At 72.0 to 72.1 a black spiky burst with cream and vermilion offset contours already fills the frame; by 72.2 to 72.3 it has shrunk to a small burst over the navy fog ground, and it lingers as a small spark glyph until about 73.4 before fading. The previous type block compresses into horizontal lines and disappears around 72.6 to 72.7. A new line appears dim lower-left at 72.8; its first token fills at 73.0, the second at about 73.6 with both filled at 73.6, and by 73.7 the first is neutral bright. A blue halftone container changes from a spiky disc (72.8) to a rotated square (73.0 to 73.5) to a disc (73.7), with its dot screen moving with it. Small ring, plus and dot glyphs appear beside it.",
+      "uncertainty": "The burst is already full-frame at the first sample, so whether it grew from a point or cut in is unknown; only the shrink-out is observed. The container change could be a morph or a cut sequence. 10 fps sampling."
+    },
+    {
+      "window": [20, 26],
+      "observation": "Not reviewed in this pass; a previous session inspected 20 to 22 s and 24 to 26 s but did not record findings. Whole-video findings for these times come from 2 s overview samples only.",
+      "uncertainty": "No dense evidence from these windows is used for the design."
+    }
+  ],
+  "rejected_candidates": [
+    {
+      "candidate": "Offset-Burst Section Punch",
+      "reason": "Only the exit (full-frame burst shrinking to a small glyph) is observed densely at 72 s; the entry is unobserved. The cover-and-swap idea overlaps motion-039 Radial Logo Burst and motion-044 Glyph Ink-Flood Container Handoff too closely to justify a separate entry on this evidence. Kept as a section-change instruction inside style-142."
+    },
+    {
+      "candidate": "Ground and palette swap at a hard cut",
+      "reason": "Variant of motion-040 Word Smash Cuts and motion-031 Medium Swap."
+    },
+    {
+      "candidate": "Diagonal split-panel re-angle",
+      "reason": "Variant of motion-023 Cursor Wipe; continuity between cuts unobserved."
+    },
+    {
+      "candidate": "RGB channel-split glitch hit",
+      "reason": "Variant of motion-020 Glitch Cut and motion-036 Glitch Type Build."
+    },
+    {
+      "candidate": "Title ink-bleed assemble and particle dissolve",
+      "reason": "Variant of motion-048 Pixel-Tile Materialize; also tied to the source title, which is excluded."
+    },
+    {
+      "candidate": "Per-line hero silhouette and container shape change",
+      "reason": "Variant of style-100 Shape Morphing; morph vs cut unresolved. Kept as a style cue."
+    },
+    {
+      "candidate": "Orbit glyphs, sonar rings, motif string, dim-to-grey rest",
+      "reason": "Variants of motion-035, motion-047, motion-033 and motion-024 respectively."
+    }
+  ],
+  "additions": [
+    {
+      "id": "style-142",
+      "name": "Offset-Halftone Lyric Cosmos",
+      "kind": "motion_graphic",
+      "near_duplicates": [
+        "style-050 Halftone Printing (print medium only)",
+        "style-049 Risograph (colour misregistration only)",
+        "style-011 Pop Art",
+        "style-093 Kinetic Typography (generic type motion)",
+        "style-138 Terminal Lyric Duotone Anime (lyric layer in a different medium)"
+      ]
+    },
+    {
+      "id": "motion-050",
+      "name": "Boxed-Word Active Relay",
+      "kind": "motion",
+      "near_duplicates": [
+        "motion-024 Focus Reveal (one highlight on a key phrase, position/blur introduction; no per-token relay or history block)",
+        "motion-037 Phrase Scatter & Step-In (words travel into place; tokens here never move within a line)",
+        "motion-022 Terminal Typing (characters appear; here all words are present from the start)",
+        "motion-049 Step-Tick Slot Refill"
+      ]
+    }
+  ],
+  "technology_review": {
+    "model": "claude-opus-5-5",
+    "session_id": "afa70c5b-8d03-4723-b537-25fd80dda82a",
+    "eligible_entries_assessed": 88,
+    "excluded_project_keys": ["hyperframes", "multiplane", "remotion", "remotion_renderer"],
+    "review": {
+      "assessments": [
+        {
+          "key": "matter_js",
+          "matchingStyleIds": [],
+          "reason": "2D rigid-body physics adds nothing here. Containers, silhouettes and tokens follow authored, lyric-timed transforms, not collisions or stacking."
+        },
+        {
+          "key": "html_css",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Selected renderer for the boxed word tokens. Real spans give crisp condensed system-sans text, tight solid vermilion, dim or bright boxes, and a scaled history block. Text stays on solid boxes, clear of dots."
+        },
+        {
+          "key": "svg",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Selected primary renderer. clipPath containers with explicit circles in each shape's local space make the halftone geometry-bound, and transforms move, rotate and scale the screen with its shape. Three-copy offset plates, dashed constellation links and flat grounds are all vector-exact."
+        },
+        {
+          "key": "gsap",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Selected motion owner. One paused timeline with a single proxy tween calls a pure render(t), so each property has one owner and direct, backward and repeated seeks match."
+        },
+        {
+          "key": "motion",
+          "matchingStyleIds": [],
+          "reason": "It would compete with the GSAP time proxy for the same SVG and token properties. It adds no capability the pure render(t) lacks."
+        },
+        {
+          "key": "chroma_js",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Selected supporting tool, used at build time only. It validates the approximate tokens and checks dim, bright and active-box text contrast on each ground family. It does no interpolation, because tone may only come from dot size."
+        },
+        {
+          "key": "chartist",
+          "matchingStyleIds": [],
+          "reason": "The style has no data or charts. A chart library would introduce axes the poster language doesn't have."
+        },
+        {
+          "key": "remotion_shapes",
+          "matchingStyleIds": [],
+          "reason": "It only generates basic shapes. The lobed blob, hexagon, star and rotated square are trivial to author as SVG paths, and the Remotion-oriented package adds a dependency for no gain."
+        },
+        {
+          "key": "p5_js",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Conditional for full video only: it could bake a dense fog or speckle Canvas layer with seeded noise if SVG dot counts get too high. It isn't selected, because it adds a second renderer, rasterises vector print geometry and needs care with redraw determinism."
+        },
+        {
+          "key": "anime_js",
+          "matchingStyleIds": [],
+          "reason": "An Anime.js timeline would be a second clock writing the same attributes as the GSAP proxy. Its line drawing and morphing are covered elsewhere."
+        },
+        {
+          "key": "gsap_drawsvgplugin",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Conditional: it could draw constellation link lines or orbit circles on, within the same GSAP timeline. It isn't selected, because the links are static dashed strokes and native stroke-dasharray in render(t) is enough."
+        },
+        {
+          "key": "remotion_paths",
+          "matchingStyleIds": [],
+          "reason": "Native getTotalLength and getPointAtLength already cover path measurement. Nothing in the style needs partial-path evolution beyond what native SVG does."
+        },
+        {
+          "key": "canvas_2d",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Conditional for full video: a cached, seeded Canvas layer for the mottled night fog or paper speckle if SVG node counts exceed budget, with the grid anchored per shape. It isn't the preview default, because it rasterises the flat vector print look."
+        },
+        {
+          "key": "mo_js",
+          "matchingStyleIds": [],
+          "reason": "Its bursts would add an independent effects clock and arbitrary particles. The section-change ink starburst is a single authored path scaled by render(t)."
+        },
+        {
+          "key": "luminance_based_halftone_shading",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Conditional for full video at very high dot densities: angled round-dot screening with dot size driven by tone suits the style. It needs a grid anchored to each container's object space and masks to protect text, and it risks aliasing and flicker. Not selected for the preview."
+        },
+        {
+          "key": "webgl",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Conditional host for a GPU halftone pass if dot fields grow beyond SVG budgets in a long video. For bounded flat poster frames it is unnecessary."
+        },
+        {
+          "key": "glsl",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Conditional: a fragment shader could compute shape-bound dot screens and halftone rings from uniforms such as time and the shape's transform. It is the fallback for density, not the default, because of the aliasing risk."
+        },
+        {
+          "key": "three_js",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Only conditional, as a flat orthographic host for a ShaderMaterial halftone pass. The style explicitly forbids 3D, so no scene depth, lighting or perspective is used. It isn't selected."
+        },
+        {
+          "key": "blender",
+          "matchingStyleIds": [],
+          "reason": "Offline 3D rendering contradicts the flat print-poster medium, and the execution policy disallows it in this environment."
+        },
+        {
+          "key": "python_bpy",
+          "matchingStyleIds": [],
+          "reason": "Blender scripting for 3D scenes doesn't fit a flat vector poster, and the execution policy disallows it."
+        },
+        {
+          "key": "cycles",
+          "matchingStyleIds": [],
+          "reason": "Path-traced 3D lighting contradicts the rule of flat ink and dots with no shading, and it is Blender-bound, which is disallowed."
+        },
+        {
+          "key": "python",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Conditional supporting host for offline audio timing analysis (librosa) when supplied audio and timing sync are requested, writing a JSON timing map. Not needed for the silent preview."
+        },
+        {
+          "key": "pillow",
+          "matchingStyleIds": [],
+          "reason": "No raster assets need preparing. Fog, speckle and dots are generated procedurally in the vector or Canvas layers."
+        },
+        {
+          "key": "rough_js",
+          "matchingStyleIds": [],
+          "reason": "Sketchy hand-drawn contours contradict the crisp offset-print shapes and regular round-dot screens."
+        },
+        {
+          "key": "photoswipe",
+          "matchingStyleIds": [],
+          "reason": "An interactive image lightbox, which has no role in a rendered lyric poster video."
+        },
+        {
+          "key": "cropper_js",
+          "matchingStyleIds": [],
+          "reason": "There are no photographs to crop. The style bans photography."
+        },
+        {
+          "key": "transparent_png_sequence",
+          "matchingStyleIds": [],
+          "reason": "The style is fully procedural vector geometry. Prepared raster frames would lose geometry-bound dot behaviour and seekable vector precision."
+        },
+        {
+          "key": "remotion_noise",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Conditional supporting tool: seeded noise2D could shape the mottled cloud tone that sets fog dot sizes. The seeded mulberry32 PRNG plus a simple value-noise function covers this already, so it isn't selected."
+        },
+        {
+          "key": "pixijs",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Conditional for full video: it could batch very large dot fields as Graphics inside transformed Containers, with the ticker disabled. It isn't selected, because it adds a second renderer and raster output where SVG is sufficient for bounded scenes."
+        },
+        {
+          "key": "paper_js",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Conditional authoring aid: it could prepare spiky and lobed silhouette variants with matching segment structure, or boolean container outlines, exported as SVG paths. Not needed at runtime or in the preview."
+        },
+        {
+          "key": "tldraw",
+          "matchingStyleIds": [],
+          "reason": "A whiteboard diagram editor whose default look conflicts with the print-poster geometry. It isn't needed."
+        },
+        {
+          "key": "cytoscape_js",
+          "matchingStyleIds": [],
+          "reason": "The constellation glyph links are decorative scatter, not graph semantics. A seeded scatter with dashed lines is enough."
+        },
+        {
+          "key": "geometry_outlines_and_crease_edges",
+          "matchingStyleIds": [],
+          "reason": "A 3D outline technique, and the style forbids 3D. The offset contours are 2D duplicated paths."
+        },
+        {
+          "key": "tonal_hatching_and_crosshatching",
+          "matchingStyleIds": [],
+          "reason": "Line hatching contradicts the round-dot halftone material. Tone must come only from dot size."
+        },
+        {
+          "key": "delaunator",
+          "matchingStyleIds": [],
+          "reason": "Triangulated mesh art isn't part of the style. Constellations are sparse dashed links, not triangulation."
+        },
+        {
+          "key": "layered_illustration_png_assets",
+          "matchingStyleIds": [],
+          "reason": "Storybook raster layers don't fit the procedural, geometry-bound halftone vector system."
+        },
+        {
+          "key": "layered_png_assets",
+          "matchingStyleIds": [],
+          "reason": "Prepared raster layers would freeze the dot screens and lose the screen moving with its shape and seekable vector fidelity."
+        },
+        {
+          "key": "krita",
+          "matchingStyleIds": [],
+          "reason": "Hand-painted frame animation contradicts the precise procedural print geometry. No painted inputs are needed."
+        },
+        {
+          "key": "transparent_png_frame_sequence",
+          "matchingStyleIds": [],
+          "reason": "Anime-style drawn frames don't match the procedural flat poster system."
+        },
+        {
+          "key": "eevee_cycles",
+          "matchingStyleIds": [],
+          "reason": "Blender 3D rendering is disallowed and contradicts the no-3D flat print rule."
+        },
+        {
+          "key": "layered_painting_assets",
+          "matchingStyleIds": [],
+          "reason": "Painterly media conflict with flat ink, solid grounds and regular dot screens."
+        },
+        {
+          "key": "calligraphy_assets",
+          "matchingStyleIds": [],
+          "reason": "The source's handwritten signature mark is explicitly excluded. Copy uses a condensed system sans."
+        },
+        {
+          "key": "sharp",
+          "matchingStyleIds": [],
+          "reason": "There are no high-resolution raster assets to preprocess. Everything is generated."
+        },
+        {
+          "key": "transparent_hand_drawn_assets",
+          "matchingStyleIds": [],
+          "reason": "A hand-drawn collage medium is outside this style's crisp print vocabulary."
+        },
+        {
+          "key": "procedural_paper_curl_and_fold_deformation",
+          "matchingStyleIds": [],
+          "reason": "The paper ground is a flat colour family. Curling 3D paper contradicts the flat poster frames."
+        },
+        {
+          "key": "extended_position_based_dynamics_xpbd",
+          "matchingStyleIds": [],
+          "reason": "Cloth or soft-body simulation has no role. Silhouette shape changes are authored path variants."
+        },
+        {
+          "key": "aseprite",
+          "matchingStyleIds": [],
+          "reason": "Pixel-art sprites contradict the smooth round-dot vector screens."
+        },
+        {
+          "key": "instancedmesh",
+          "matchingStyleIds": [],
+          "reason": "Repeated 3D objects. Dots are flat 2D circles, so a 3D instancing route would fake a 2D print with 3D for no benefit."
+        },
+        {
+          "key": "eevee",
+          "matchingStyleIds": [],
+          "reason": "Blender real-time 3D render engine, which is disallowed and contradicts the flat medium."
+        },
+        {
+          "key": "meshtoonmaterial",
+          "matchingStyleIds": [],
+          "reason": "3D cel shading conflicts with the no-3D, no-shading print look."
+        },
+        {
+          "key": "gltf_scene_assembly_and_part_animation",
+          "matchingStyleIds": [],
+          "reason": "There are no 3D models. The style is flat 2D poster geometry."
+        },
+        {
+          "key": "quantized_toon_shading",
+          "matchingStyleIds": [],
+          "reason": "3D lighting ramps contradict tone made only from halftone dot size."
+        },
+        {
+          "key": "raycast_object_interaction_and_camera_navigation",
+          "matchingStyleIds": [],
+          "reason": "There is no 3D scene or interaction. It is a rendered linear video."
+        },
+        {
+          "key": "buffergeometry",
+          "matchingStyleIds": [],
+          "reason": "Only relevant inside a Three.js shader route, where a single full-screen quad needs no custom buffers. Not needed for the vector approach."
+        },
+        {
+          "key": "points",
+          "matchingStyleIds": [],
+          "reason": "A 3D particle cloud. The constellation glyphs and dots are crisp 2D print marks laid out in negative space."
+        },
+        {
+          "key": "web_audio_api",
+          "matchingStyleIds": [],
+          "reason": "Live browser analysis isn't deterministic for seekable export. Supplied audio timing should come from an offline precomputed map (librosa) instead."
+        },
+        {
+          "key": "video_textured_screens_and_crt_overlays",
+          "matchingStyleIds": [],
+          "reason": "There is no footage or screen surface. Scanlines would add a texture the print style excludes."
+        },
+        {
+          "key": "scrambled_text_reveal",
+          "matchingStyleIds": [],
+          "reason": "Scrambled characters conflict with the word-token relay, where exact copy stays readable and only the box state changes."
+        },
+        {
+          "key": "meshphysicalmaterial",
+          "matchingStyleIds": [],
+          "reason": "Glass and physical reflections contradict the flat ink and paper medium."
+        },
+        {
+          "key": "offscreen_rendering",
+          "matchingStyleIds": [],
+          "reason": "Not needed. Even a conditional halftone shader can compute dots analytically per shape without render-target feedback."
+        },
+        {
+          "key": "pbr_materials",
+          "matchingStyleIds": [],
+          "reason": "Metal and plastic PBR conflict with the flat print poster."
+        },
+        {
+          "key": "postprocessing",
+          "matchingStyleIds": [],
+          "reason": "A frame-wide pass contradicts halftone that is bound to geometry rather than overlaid on the whole frame. It isn't needed."
+        },
+        {
+          "key": "layered_image_assets",
+          "matchingStyleIds": [],
+          "reason": "Vaporwave raster layers don't fit, and all imagery is procedural."
+        },
+        {
+          "key": "orthographiccamera",
+          "matchingStyleIds": [],
+          "reason": "Isometric 3D projection doesn't apply. Even a conditional shader quad wouldn't justify listing it as a style tool."
+        },
+        {
+          "key": "soft_surface_lighting_and_material_detail",
+          "matchingStyleIds": [],
+          "reason": "Soft lighting and normal detail contradict the style's flat look, which uses no shadows except hard offset contours."
+        },
+        {
+          "key": "drawn_frame_sequence",
+          "matchingStyleIds": [],
+          "reason": "Frame-by-frame drawing would replace the seekable procedural geometry. Silhouette changes are path variants."
+        },
+        {
+          "key": "layered_drawn_frame_sequence",
+          "matchingStyleIds": [],
+          "reason": "Traditional cel layers don't match the flat procedural print system."
+        },
+        {
+          "key": "drawing_asset_sequence",
+          "matchingStyleIds": [],
+          "reason": "The hand-drawn stop-motion look is outside the style."
+        },
+        {
+          "key": "photographed_stop_motion_frames",
+          "matchingStyleIds": [],
+          "reason": "The style bans photography."
+        },
+        {
+          "key": "ffmpeg",
+          "matchingStyleIds": [],
+          "reason": "An export and encoding tool, not a visual or motion layer. It is excluded from style selection."
+        },
+        {
+          "key": "photographed_clay_animation_frames",
+          "matchingStyleIds": [],
+          "reason": "Photographed clay contradicts the no-photography flat print style."
+        },
+        {
+          "key": "photographed_puppet_animation_frames",
+          "matchingStyleIds": [],
+          "reason": "Photographed puppets contradict the no-photography rule."
+        },
+        {
+          "key": "photographed_object_animation_frames",
+          "matchingStyleIds": [],
+          "reason": "Photographed objects contradict the no-photography rule."
+        },
+        {
+          "key": "photographed_pixilation_frames",
+          "matchingStyleIds": [],
+          "reason": "Live-action pixilation contradicts the no-photography rule."
+        },
+        {
+          "key": "live_action_reference",
+          "matchingStyleIds": [],
+          "reason": "No rotoscoping or live-action content is involved."
+        },
+        {
+          "key": "transparent_drawn_frame_sequence",
+          "matchingStyleIds": [],
+          "reason": "Rotoscoped drawn frames aren't part of this procedural vector style."
+        },
+        {
+          "key": "layered_character_assets",
+          "matchingStyleIds": [],
+          "reason": "There are no rigged characters. Hero silhouettes are abstract ink shapes."
+        },
+        {
+          "key": "react",
+          "matchingStyleIds": [],
+          "reason": "A plain DOM with a pure render(t) is sufficient. A component framework adds a reconciliation layer between time and attributes without benefit."
+        },
+        {
+          "key": "dragula",
+          "matchingStyleIds": [],
+          "reason": "An interactive drag-and-drop library with no role in a lyric poster video."
+        },
+        {
+          "key": "leaflet",
+          "matchingStyleIds": [],
+          "reason": "There is no geography. The 'cosmos' is decorative constellation glyphs."
+        },
+        {
+          "key": "manim",
+          "matchingStyleIds": [],
+          "reason": "A Python math-animation renderer would replace the browser vector stack and doesn't fit the print-poster identity."
+        },
+        {
+          "key": "numpy",
+          "matchingStyleIds": [],
+          "reason": "Dot grids and seeded scatter are cheap in browser JS. Offline audio timing is covered by librosa."
+        },
+        {
+          "key": "d3",
+          "matchingStyleIds": [],
+          "reason": "There are no data scales or layouts. Native math generates rotated dot grids and radial rays."
+        },
+        {
+          "key": "layered_high_resolution_assets",
+          "matchingStyleIds": [],
+          "reason": "Infinite-zoom raster layers aren't part of the style."
+        },
+        {
+          "key": "gsap_morphsvgplugin",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Conditional for full video: it can morph a silhouette between spiky and lobed outlines, or a container between blob, hexagon and star, inside the same GSAP timeline. All three offset copies share the morphed path. Not needed for the 3-second preview, which can cut between path variants."
+        },
+        {
+          "key": "layered_png_svg_assets",
+          "matchingStyleIds": [],
+          "reason": "2.5D parallax layering contradicts the flat poster frames, and no supplied layers are required."
+        },
+        {
+          "key": "librosa",
+          "matchingStyleIds": ["style-142"],
+          "reason": "Conditional supporting tool for full video, only when supplied audio and timing sync are requested. It precomputes onset and beat timestamps offline into a JSON timing map for token steps and section changes. It doesn't apply to the silent preview, and no tempo should be assumed without it."
+        },
+        {
+          "key": "unrealbloompass",
+          "matchingStyleIds": [],
+          "reason": "Glow and bloom contradict flat offset-print ink with hard edges."
+        }
+      ],
+      "styles": [
+        {
+          "styleId": "style-142",
+          "rendererKeys": ["svg", "html_css"],
+          "motionKeys": ["gsap"],
+          "supportingKeys": ["chroma_js"],
+          "implementation": "Visual layer (SVG): one inline SVG whose viewBox matches the project-supplied resolution. Each section shows one ground family: night_navy with night_fog cloud fog made of halftone dots, paper_cream with sparse grey speckle, or ray_maroon/ray_black radial rays from an off-centre vanishing point, or concentric halftone rings. Each geometric container (lobed blob, hexagon, rotated square, star, disc) is a <g> whose translate, rotate and scale come from render(t). Inside the group sit a clipPath of the container's own path and dots generated once as explicit circles in local coordinates on a rotated grid. Dot radius is maxR × tone(localPos), using radial or linear tone ramps in halftone_blue or ochre, so the screen travels, rotates and scales with its shape. There are no smooth gradients and no frame-wide overlay. Each hero silhouette is a single path drawn three times: muted_vermilion and cream copies offset 3–8 px in different directions, with the ink_black copy on top. Offsets may drift only as a pure function of t. Outline changes cut between authored spiky and lobed path variants. Fog, speckle, the constellation glyphs (rings, crosses, triangles, sparks, dots) and their thin dashed links come from a seeded mulberry32 PRNG computed once at load, and are placed in negative space away from the type.\n\nText layer (HTML/CSS): absolutely positioned real <span> word tokens in a heavy condensed system-sans stack. Box geometry is measured deterministically from character counts and font size after fonts are ready. render(t) sets the state: upcoming tokens dim_token with no fill, the current token on a solid muted_vermilion box with neutral_bright text, completed tokens neutral_bright. Hand-overs overlap briefly. A completed line scales down and moves into a single history block in the opposite corner, keeps its last fill briefly, then settles. crimson_alt is the active fill only for an aside line. There are no dots under letterforms.\n\nMotion (GSAP): one paused timeline whose only tween drives proxy.t across the project-supplied duration. Its onUpdate calls a pure render(t) that clamps t and sets every attribute, class and visibility, with no carried state, so forward, backward, repeated and direct seeks are identical. Section changes: the ink starburst and its offset plates cover the frame for a few frames, the ground swaps underneath, then the burst shrinks into a constellation glyph and fades. The outgoing line compresses horizontally and fades before the incoming line appears, so two main lines are never readable at once.\n\nSupporting (chroma.js, build time only): validate the approximate hex tokens and check text contrast for dim, bright and active-box tokens on every ground family. Never interpolate colours.\n\nPreview scope (3 s, silent): one navy section with one hero silhouette, two screened containers and a constellation, then a cut to a maroon-ray chorus beat. The active box steps through the exact supplied copy on an even authored schedule fitted to the supplied duration, with a settled reading hold.\n\nFull video: sections follow the copy and lyric structure. Exact copy, dimensions, duration and audio all come from the project. Token timing uses an offline timing map only when supplied audio and timing analysis are requested; otherwise it uses the authored schedule. Optional MorphSVG transitions for silhouettes and containers, within the same GSAP timeline. Optional cached Canvas 2D or GLSL halftone only if dot counts exceed SVG budgets, with the grid still anchored to each shape.",
+          "rationale": "The style is a flat offset-print poster whose defining trait is halftone bound to geometry, plus misregistered vector plates and boxed word tokens. SVG clipPath groups holding explicit local-space dots bind each screen to its shape exactly and stay crisp at any resolution. HTML spans give real, high-contrast text with solid boxes. A single GSAP time proxy feeding a pure render(t) gives one owner per property and safe seeking. chroma.js only verifies contrast; it never recolours.\n\nAlternatives and tradeoffs:\n- Canvas 2D, p5.js and PixiJS could batch dense fog and speckle cheaply, but they rasterise the vector print look and add a second renderer, so they stay conditional for full-video density.\n- A luminance-based GLSL/WebGL halftone (optionally hosted on a flat Three.js quad) scales to huge dot fields. It needs a grid anchored to each object and text masks, and risks aliasing and flicker, so it is a conditional fallback with no 3D.\n- MorphSVG, Paper.js (offline silhouette variants) and DrawSVG are useful for full-video morphs or line draw-ons, but unnecessary in the preview.\n- librosa (on a Python host) is used only when supplied audio sync is requested.\n- Anime.js, Motion and mo.js would compete with GSAP for the same properties.\n- Scrambled text breaks the exact-copy token relay.\n- 3D, PBR, toon, bloom, sketch, painterly, photographic and frame-sequence tools contradict the flat ink-and-dot medium, and the Blender-based tools are also disallowed.\n\nPalette roles are preserved: one ground family per section, vermilion only for the active box, offset plates and tiny accents, and tone only through dot size. Hex values are approximate readings, not measured colours."
+        }
+      ]
+    }
+  },
+  "previewInputs": [
+    {
+      "entryId": "style-142",
+      "name": "Printed Spark Collage",
+      "model": "claude-opus-5-5",
+      "workspace": "work/video-studies/little-black-spark/previews/style-142-fidelity-r2",
+      "promptFile": "work/video-studies/little-black-spark/previews/style-142-fidelity-r2/PROMPT.md",
+      "templateFile": "work/video-studies/little-black-spark/previews/style-142-fidelity-r2/PROMPT.template.md",
+      "variablesFile": "work/video-studies/little-black-spark/previews/style-142-fidelity-r2/variables.json",
+      "stdinFile": "PROMPT.md",
+      "templateSha256": "c2a352f7db703561077ad2f2d350af01f6725254ed51a169ccb34da08dd05c41",
+      "resolvedPromptSha256": "0d2ca6e86c732296d7d48e4000407a067b3f6f009cd7970cc63c519c79d2b2ab",
+      "variables": {
+        "subject": "a small idea growing into a clear, confident voice",
+        "audience_and_objective": "a general audience; a short style study showing the look in three seconds",
+        "assets_and_exact_copy": "Two lines, in this order: 'A SMALL IDEA' then 'FINDS ITS VOICE'. No other copy and no image assets.",
+        "duration_seconds": "3",
+        "aspect_ratio": "16:9",
+        "resolution": "1280x720",
+        "frame_rate": "30",
+        "audio_or_rhythm_requirements": "Silent; no audio. Use an authored even word schedule.",
+        "output_directory": "rendered",
+        "render_pipeline": "After index.html is written in this workspace: run node node_modules/hyperframes/bin/hyperframes.mjs with its render command at verbose logging on this composition (read only that command's --help for exact flags) to produce rendered/preview.mp4 at 1280x720, 30 fps, 3 seconds, piping all stdout and stderr to logs/render.log. Then load index.html in the headless browser available through the installed hyperframes dependencies, call window.exportPoster(2.4) and write the returned string to rendered/poster.svg, logging to logs/poster.log. Then decode frames at 0.3, 1.0, 1.7, 2.4 and 2.95 seconds from rendered/preview.mp4 into rendered/samples/ as PNG with the ffmpeg used by hyperframes, logging to logs/samples.log. Report the exit status of each step."
+      },
+      "additionalVisualBrief": false,
+      "authoringSessionId": "589d7dff-9b03-49b2-973f-4018e05fd377",
+      "actualModels": ["claude-opus-5-5"],
+      "authoringResultSubtype": "error_max_turns",
+      "frozenOn": "2026-11-03",
+      "visualFidelity": "published_with_limitations"
+    },
+    {
+      "entryId": "motion-050",
+      "model": "claude-opus-5-5",
+      "templateSha256": "72fa30df590551dfb97fcb0924ee5361220a1ad70e48198489fefcfab949a475",
+      "resolvedPromptSha256": "6ab0759492b25f769c9f71571933b394a8c314f7441a6873280e097874b467fb",
+      "stdinFile": "PROMPT.md",
+      "variables": {
+        "subject": "an idea becoming a signal",
+        "visual_style": "Flat print-poster typography on night navy #1a2350, warm cream #f3eee2 completed text, muted grey #7d7a78 upcoming text, muted vermilion #e2552a active word boxes, with sparse stationary halftone accents kept outside all text. No source lyrics, logos or extra copy.",
+        "motion_parameters": "{\"lines\":[[\"TURN\",\"ONE\",\"IDEA\"],[\"INTO\",\"A\",\"SIGNAL\"]],\"tokenOnsets\":[[0.4,1.05,1.7],[3.15,3.8,4.45]],\"lineHandoffStart\":2.4,\"handoffDuration\":0.45,\"historyScale\":0.4,\"stepOverlap\":0.1,\"finalHoldStart\":5.2}",
+        "duration_seconds": "6",
+        "resolution": "1280x720",
+        "frame_rate": "30",
+        "output_directory": ".",
+        "render_pipeline": "HyperFrames with local GSAP as the paused composition clock; local esbuild is available through node_modules. Render capture is handled separately after authoring."
+      },
+      "additionalVisualBrief": false,
+      "authoringSessionId": "ecedd5dc-2f56-4992-8cfb-7a67d08b91b4",
+      "actualModels": ["claude-opus-5-5"],
+      "authoringStoppedAtTurnLimit": true
+    }
+  ],
+  "visual_verification": {
+    "status": "usable_with_documented_raster_rounding",
+    "editor_inspection": "Eight decoded video frames per preview inspected for type readability, token handoff/history, geometry-bound dots, plate offsets and palette roles. This is not a claim of source audio sync or full-speed source playback.",
+    "motion": {
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_type": "video",
+            "width": 1280,
+            "height": 720,
+            "avg_frame_rate": "30/1",
+            "nb_read_frames": "180"
+          }
+        ],
+        "format": {
+          "duration": "6.000000"
+        }
+      },
+      "seek": {
+        "headless": true,
+        "errors": [],
+        "comparisons": [
+          {
+            "time": 5.5,
+            "identical": true
+          },
+          {
+            "time": 4.5,
+            "identical": true
+          },
+          {
+            "time": 3.5,
+            "identical": true
+          },
+          {
+            "time": 2.6,
+            "identical": true
+          },
+          {
+            "time": 1.8,
+            "identical": true
+          },
+          {
+            "time": 1.08,
+            "identical": true
+          },
+          {
+            "time": 0.43,
+            "identical": true
+          },
+          {
+            "time": 0,
+            "identical": true
+          }
+        ],
+        "pixelsMatch": true
+      }
+    },
+    "style": {
+      "metadata": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_type": "video",
+            "width": 1280,
+            "height": 720,
+            "avg_frame_rate": "30/1",
+            "nb_read_frames": "90"
+          }
+        ],
+        "format": {
+          "duration": "3.000000"
+        }
+      },
+      "seek": {
+        "headless": true,
+        "errors": [],
+        "comparison": "Decoded RGB pixels after browser paint readiness; direct vs reverse event seeks",
+        "comparisons": [
+          {
+            "time": 2.8,
+            "identical": true,
+            "domIdentical": true,
+            "changedPixels": 0,
+            "maxChannelDelta": 0,
+            "pixelSha256": "038206e749b5cbfcc54b2b2b1afa297b823ccf8a35d2f67b3e4294f9f8f6e244"
+          },
+          {
+            "time": 2.15,
+            "identical": true,
+            "domIdentical": true,
+            "changedPixels": 0,
+            "maxChannelDelta": 0,
+            "pixelSha256": "c0e0112a41c85abd5ceae97e1d4992da32ff619c5bcb83ff663107def1b2cb3c"
+          },
+          {
+            "time": 1.8,
+            "identical": true,
+            "domIdentical": true,
+            "changedPixels": 0,
+            "maxChannelDelta": 0,
+            "pixelSha256": "984dde0568f507ddc553421248e7b6ecaebf6b44836f060992cce41c50e66893"
+          },
+          {
+            "time": 1.48,
+            "identical": true,
+            "domIdentical": true,
+            "changedPixels": 0,
+            "maxChannelDelta": 0,
+            "pixelSha256": "a33ee1d14550ec144fa2bec4ee92da4e7c01212dc4f8a689fb315c4680cd284b"
+          },
+          {
+            "time": 1.3,
+            "identical": true,
+            "domIdentical": true,
+            "changedPixels": 0,
+            "maxChannelDelta": 0,
+            "pixelSha256": "7eb068a5e39a6afaa3371f6dad9debd50b40345f4ca79758fbb7a2db5f7d1cb2"
+          },
+          {
+            "time": 0.9,
+            "identical": false,
+            "domIdentical": true,
+            "changedPixels": 1260,
+            "maxChannelDelta": 1,
+            "pixelSha256": "cb0f1b5bc4a19430df3e1ae986893fbbb21cbc5f5f2e027f18f99cdfc4938dab"
+          },
+          {
+            "time": 0.4,
+            "identical": false,
+            "domIdentical": true,
+            "changedPixels": 1864,
+            "maxChannelDelta": 1,
+            "pixelSha256": "1b28223b5402810401dc94953436ec16835ef510d1c129cbdcb2d64276ff4b20"
+          },
+          {
+            "time": 0,
+            "identical": false,
+            "domIdentical": true,
+            "changedPixels": 2982,
+            "maxChannelDelta": 1,
+            "pixelSha256": "73ab172e4d9c6b8cc9c1505ee8ec5d4e9e8053fa03dde1134a805f6b733d3b66"
+          }
+        ],
+        "pixelsMatch": false
+      },
+      "software_seek": {
+        "headless": true,
+        "captureMode": "software rasterization, verification only; project renderer unchanged",
+        "comparisons": [
+          {
+            "time": 2.8,
+            "identical": true,
+            "changedChannels": 0,
+            "maxChannelDelta": 0
+          },
+          {
+            "time": 2.15,
+            "identical": true,
+            "changedChannels": 0,
+            "maxChannelDelta": 0
+          },
+          {
+            "time": 1.8,
+            "identical": true,
+            "changedChannels": 0,
+            "maxChannelDelta": 0
+          },
+          {
+            "time": 1.48,
+            "identical": true,
+            "changedChannels": 0,
+            "maxChannelDelta": 0
+          },
+          {
+            "time": 1.3,
+            "identical": true,
+            "changedChannels": 0,
+            "maxChannelDelta": 0
+          },
+          {
+            "time": 0.9,
+            "identical": false,
+            "changedChannels": 2032,
+            "maxChannelDelta": 1
+          },
+          {
+            "time": 0.4,
+            "identical": false,
+            "changedChannels": 2799,
+            "maxChannelDelta": 1
+          },
+          {
+            "time": 0,
+            "identical": false,
+            "changedChannels": 4393,
+            "maxChannelDelta": 1
+          }
+        ],
+        "pixelsMatch": false
+      },
+      "limitation": "All eight DOM states match. Some anti-aliased raster samples differ by at most 1/255 in a colour channel (up to 2982 of 921600 pixels), including under software capture; no text, position or section-state drift observed. This is recorded rather than claimed as bit-identical rendering."
+    },
+    "source_artwork_reused": false,
+    "source_audio_reused": false
+  },
+  "supersededPreviewInputs": [
+    {
+      "styleId": "style-142",
+      "previousName": "Offset-Halftone Lyric Cosmos",
+      "supersededOn": "2026-11-03",
+      "reason": "User-reported visual fidelity mismatch: overly clean dark giant-icon preview lacking the source's light collage and warm printed fields, print texture, clustered cutouts and section-dependent text.",
+      "input": {
+        "entryId": "style-142",
+        "model": "claude-opus-5-5",
+        "templateSha256": "1887116d751bf60753c78169c13ec5de4ff8241db18d246321236f66e1875ef6",
+        "resolvedPromptSha256": "087e015fc27a1bffb7f94c0f5cbc6c2b0ad689fe0fb762ea80addb277dd813ed",
+        "stdinFile": "PROMPT.md",
+        "variables": {
+          "subject": "an idea becoming a signal",
+          "audience_and_objective": "general viewers; communicate how a small idea becomes a shared signal through an original graphic study",
+          "assets_and_exact_copy": "[[\"TURN\",\"ONE\",\"IDEA\"],[\"INTO\",\"A\",\"SIGNAL\"]]",
+          "duration_seconds": "3",
+          "aspect_ratio": "16:9",
+          "resolution": "1280x720",
+          "frame_rate": "30",
+          "audio_or_rhythm_requirements": "Silent preview, no audio track. No supplied timing map; use an authored readable schedule fitted to the supplied duration and all supplied copy.",
+          "output_directory": "renders",
+          "render_pipeline": "HyperFrames with local GSAP as the paused composition clock. Capture and export will be performed separately after authoring."
+        },
+        "additionalVisualBrief": false,
+        "authoringSessionId": "f71c5eae-ba8d-4abf-b607-8c79fe22b6f2",
+        "actualModels": ["claude-opus-5-5"],
+        "authoringStoppedAtTurnLimit": true
+      }
+    }
+  ],
+  "visualFidelity": {
+    "style-142": {
+      "status": "published_with_limitations",
+      "approved": true,
+      "revision": "r2",
+      "reviewer": "claude-opus-5-5",
+      "promptSha256": "0d2ca6e86c732296d7d48e4000407a067b3f6f009cd7970cc63c519c79d2b2ab",
+      "templateSha256": "c2a352f7db703561077ad2f2d350af01f6725254ed51a169ccb34da08dd05c41",
+      "sourceSha256": "364c914ec630a8894655b024bd05c784a77905da3032b65011c01b101646508f",
+      "sourceEquivalence": false,
+      "observations": [
+        "Night section has frame-wide two-scale navy cloud mottle, speckle and grain; no flat ground.",
+        "Small vermilion/ochre/cobalt cutouts in dashed strings, off-centre, density rising into the chorus.",
+        "Warm section uses amber/ochre rays with rust ring screens and a coral dot field.",
+        "Screened cream containers (lobed blob, star) with varying dot radius and offset vermilion plate.",
+        "Verse copy is a small multi-word lower-left boxed relay; chorus copy is stacked caps top-left with vermilion active box.",
+        "No empty or solid black frame; no giant ink hero."
+      ],
+      "limitations": [
+        "Cream/cobalt appears only as a diagonal wipe, not a held paper (B) field; the prompt requires B or C so this complies, but the light-paper family is under-represented.",
+        "Chorus sets the three-word line FINDS / ITS / VOICE one word per line, against the prompt's no-one-word-per-line rule; judged minor at about 6 percent height, not a reason to redraw.",
+        "No ink starburst accent and no history block were used (both optional).",
+        "Three-second study cannot show all three ground families; comparison is to sampled stills only."
+      ],
+      "userObservations": [
+        {
+          "recordedOn": "2026-11-03",
+          "text": "旧版有种像素的感觉",
+          "about": "superseded r1 preview (work/video-studies/little-black-spark/superseded/r1-published)",
+          "meaning": "User perceived a pixel-like texture in the old r1 preview. Observation only: not approval of r1, not a request to change the current r2 art; no new visual direction was authorized."
+        }
+      ]
+    }
+  },
+  "supersededVisualFidelity": [
+    {
+      "style-142": {
+        "status": "pending",
+        "approved": false,
+        "revision": "r2",
+        "promptSha256": "0d2ca6e86c732296d7d48e4000407a067b3f6f009cd7970cc63c519c79d2b2ab"
+      }
+    }
+  ]
+}

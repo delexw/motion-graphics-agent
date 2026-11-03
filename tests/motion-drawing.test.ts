@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createCanvas } from "@napi-rs/canvas";
 import { loadCatalog } from "../src/server/catalog/catalog";
 import {
   drawMotionPreview,
@@ -7,14 +8,22 @@ import {
 } from "../src/client/motion-drawing";
 function drawCommands(id: string, time: number) {
   const commands: unknown[] = [];
+  let properties = new Map<PropertyKey, unknown>([["globalAlpha", 1]]);
+  const savedProperties: Map<PropertyKey, unknown>[] = [];
   const context = new Proxy(
     {},
     {
-      get:
-        (_, name) =>
-        (...args: unknown[]) =>
-          commands.push([name, ...args]),
+      get: (_, name) => {
+        if (properties.has(name)) return properties.get(name);
+        if (name === "measureText") return (text: string) => ({ width: text.length * 12 });
+        return (...args: unknown[]) => {
+          if (name === "save") savedProperties.push(new Map(properties));
+          if (name === "restore") properties = savedProperties.pop() ?? properties;
+          commands.push([name, ...args]);
+        };
+      },
       set: (_, name, value) => {
+        properties.set(name, value);
         commands.push([name, value]);
         return true;
       },
@@ -26,7 +35,10 @@ function drawCommands(id: string, time: number) {
 describe("motion explorer preview coverage", () => {
   it("keeps coordinates finite and frames independent of previous seeks", () => {
     for (const id of supportedMotionIds) {
-      const reference = drawCommands(id, 2.75);
+      const canvas = createCanvas(640, 360);
+      const pixels = canvas.getContext("2d") as unknown as CanvasRenderingContext2D;
+      drawMotionPreview(pixels, id, 2.75);
+      const reference = canvas.toBuffer("image/png");
       const invalidCoordinates: { time: number; value: number }[] = [];
       for (let frame = 0; frame <= 72; frame++) {
         const commands = drawCommands(id, frame / 12);
@@ -40,7 +52,10 @@ describe("motion explorer preview coverage", () => {
         }
       }
       expect(invalidCoordinates, id).toEqual([]);
-      expect(drawCommands(id, 2.75), id).toEqual(reference);
+      drawMotionPreview(pixels, id, 0);
+      drawMotionPreview(pixels, id, 6);
+      drawMotionPreview(pixels, id, 2.75);
+      expect(canvas.toBuffer("image/png").equals(reference), id).toBe(true);
     }
   });
   it("implements every catalog motion with different scheduled frames", async () => {

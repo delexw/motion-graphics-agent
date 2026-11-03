@@ -47,6 +47,7 @@ import motion046 from "./motion-046";
 import motion047 from "./motion-047";
 import motion048 from "./motion-048";
 import motion049 from "./motion-049";
+import motion050 from "./motion-050";
 
 export const motionDrawings: Record<
   string,
@@ -101,4 +102,5 @@ export const motionDrawings: Record<
   "motion-047": motion047,
   "motion-048": motion048,
   "motion-049": motion049,
+  "motion-050": motion050,
 };

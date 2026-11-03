@@ -115,7 +115,7 @@ const forbiddenSourceText = [
 describe("Terminal Lyric Duotone Anime catalog entry", () => {
   it("adds a complete authored style-138 with separate renderer, motion and pipeline roles", async () => {
     const catalog = await loadCatalog();
-    expect(catalog.styles).toHaveLength(141);
+    expect(catalog.styles).toHaveLength(142);
     const style = catalog.styles.find((s) => s.id === "style-138")!;
     expect(style.name_en).toBe("Terminal Lyric Duotone Anime");
     expect(style.provenance).toBe("authored");
@@ -229,13 +229,10 @@ describe("Terminal Lyric Duotone Anime catalog entry", () => {
     const raw = JSON.parse(
       await readFile(path.join(catalogRoot, "motion-pattern-catalog.json"), "utf8"),
     );
-    expect(raw.metadata.pattern_count).toBe(49);
-    // motion-049 (pixel-quest-explainer) is a later, separately reviewed addition.
+    expect(raw.metadata.pattern_count).toBe(50);
+    // Select this study's IDs explicitly; later additions have separate review evidence.
     expect(
-      catalog.motions
-        .map((m) => m.id)
-        .filter((id) => id !== "motion-049")
-        .slice(-2),
+      catalog.motions.map((m) => m.id).filter((id) => id === "motion-047" || id === "motion-048"),
     ).toEqual(["motion-047", "motion-048"]);
     const template = Object.keys(raw.patterns.find((p: { id: string }) => p.id === "motion-046"));
     const poolNames = new Set(Object.values(technologyPool).map((entry) => entry.name));

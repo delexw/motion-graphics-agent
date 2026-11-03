@@ -2,6 +2,17 @@
 
 Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Printed Spark Collage (`style-142`) with a rendered preview, Chinese metadata, supporting-style guidance and exact prompt-binding provenance. The review retains known visual differences from its reference.
+- Boxed-Word Active Relay (`motion-050`) with adjacent-word highlight overlap, a smaller completed-line history block and deterministic seeking. The catalog now contains 142 Motion Graphics and 50 motions.
+
+### Changed
+
+- Review 88 Motion Graphic drawing, motion and supporting technologies separately from project composition and export. Reject project renderers in every per-MG selection role and replace stale review instructions when reviewing again.
+
 ## [1.0.0] — 2026-10-30
 
 Kiteva — AI Motion Graphics Agent now lives at `delexw/motion-graphics-agent`. This release brings together the production workflow improvements since v0.4.0.

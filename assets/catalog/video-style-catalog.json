@@ -35670,6 +35670,200 @@
         ]
       },
       "combination_guidance_provenance": "authored_compatibility_guidance_2026-10-24"
+    },
+    {
+      "id": "style-142",
+      "name_en": "Printed Spark Collage",
+      "category": "Motion Design and Cinematography",
+      "visual_cues": "Hand-printed risograph/screenprint collage in motion with visible print texture on every frame. Three ground families alternate by section and adapt to the topic: night navy with irregular dark-cloud mottle, scuffed speckle and grain; cream paper or cream/coral/cobalt/periwinkle diagonal collage planes with coral halftone fields and blue branch linework; warm ochre/amber rays or rust/ochre concentric halftone rings, or coral dots on cream. Large screened containers (lobed blobs, hexagons, rotated squares, stars, discs) carry dot screens of varying density. Strings and clusters of small flat cutouts (vermilion stars, squares, flame drops, sparks, rings, crosses, triangles, tiny halftone discs) are joined by dashed lines, off-centre, with changing density. An ink starburst with misregistered cream/vermilion plates is an occasional accent, never a giant hero. Word-boxed type keeps natural multi-word lines and changes hierarchy by section: small lower-left lines on night and paper, big stacked caps top-left on the warm beat.",
+      "note": "Built from a source music video's graphic system, not its content; source lyrics, title, credits, subtitles and signature mark are excluded. Fidelity revision r2 (after the user rejected an overly clean dark giant-icon preview) restores the source's three ground families (navy cloud print, cream/coral/cobalt diagonal collage, warm ochre/rust printed rays or rings), frame-wide print texture, small clustered cutouts with variable density and section-dependent multi-word text hierarchy, while letting normal films adapt the section plan to the topic. Halftone belongs to shapes; vermilion marks 'now'.",
+      "provenance": "authored",
+      "executable_prompt_template": "Create an original motion-graphic video in the Printed Spark Collage style about {{subject}} for {{audience_and_objective}}. Duration {{duration_seconds}} seconds, aspect ratio {{aspect_ratio}}, resolution {{resolution}}, frame rate {{frame_rate}}. On-screen copy and assets are exactly {{assets_and_exact_copy}}: use that copy verbatim, in its given order and line breaks, add no other words, titles, logos, signatures or watermarks, and do not invent lyrics or slogans. Rhythm and audio: {{audio_or_rhythm_requirements}}; if no timing map is given, author an even word schedule after a short lead-in with a settled reading hold at the end, and never claim audio sync.\n\nLOOK. A hand-printed risograph and screenprint collage in motion: flat inks, visible print texture on every frame (mottle, scuffed speckle, fine grain, uneven dot screens), plates slightly misregistered, no photography, no 3D, no smooth gradients, no glow, no soft shadows (hard offset plates only). It must feel printed and busy-with-life, never clean, empty or vector-sleek. Three ground families:\n(A) NIGHT PRINT: night navy #1c2350 covered edge to edge by an irregular printed dark-cloud mottle in #10163a and #26306a (organic blotches at two scales, never a regular dot grid), with scuffed speckle and fine grain over the whole frame in cream and grey at low opacity; cobalt #3c5bd0 dot screens vary in density inside the fog.\n(B) PAPER AND DIAGONAL COLLAGE: warm cream paper #ece4d2 with grey #8c8a86 speckle and grain, cut by large diagonal planes in cobalt #3a55d8 or #4462e6, periwinkle #8a80d6 and coral #f1a088, with coral #f08a6e halftone dot fields and thin cobalt branch-like linework growing in from an edge.\n(C) WARM PRINTED ENERGY: radial rays alternating amber #f39a2e and ochre #f0b236 from an off-centre point, or concentric halftone rings in rust #a9352c and ochre, or a coarse salmon dot field on cream; rays and rings carry dot screens and speckle so they read as printed.\nADAPT TO THE TOPIC. The section plan, ground order, container shapes, cutout motifs and density come from the subject and copy, not from a fixed layout: a calm topic may stay mostly on paper with sparse clusters, an energetic one may build to denser warm sections. Split the duration into 2 to 5 sections. Every piece uses at least two families; a piece of 6 seconds or less with three or more sections, and every longer piece, shows all three families (A, B and C) at least once, each for long enough to read its texture. No frame is empty or solid black. Keep each colour in its role; do not raise saturation globally.\n\nSHAPES. Each section has one or two large screened containers (lobed flower blob, hexagon, rotated square, star or disc) filled with a round-dot halftone in #3c5bd0 on dark grounds or #f08a6e / #f0b236 on light grounds; dot radius follows a tone field so density changes across the shape, and the screen moves, rotates and scales with its shape. Containers support the scene and never dominate it. Around them place strings and clusters of 8 to 30 small flat cutouts (each roughly 1 to 4 percent of frame height): vermilion #e8572a four- and six-point stars, rotated squares with a thin cream edge, flame drops in vermilion with an ochre core, sparks, rings, crosses, triangles, tiny halftone discs and small cream crescents, joined by thin dashed lines. Keep clusters off-centre, leave breathing room, and let density rise and fall between sections. An ink #14121a starburst or lobed silhouette with cream and vermilion plates offset 3 to 8 px is an optional accent: at most one section, about 15 to 35 percent of frame height or a brief partial wipe, never a giant centred hero and never a black full frame. Small speckled ink blots, thin orbit arcs and a single ochre disc are optional accents.\n\nTYPE. Heavy system sans, condensed where available (font-family: 'Arial Narrow', 'Roboto Condensed', 'Helvetica Neue', Arial, sans-serif; bold; no font files). Keep the natural phrasing of the copy: multi-word lines, never one word per line. Hierarchy follows the section: on NIGHT and paper/collage sections set copy as one or two sentence-case-weight lines lower-left at about 3.5 to 5 percent of frame height; on the WARM section set copy as a stacked all-caps block top-left, lines of several words, at about 6 to 9 percent of frame height. Preserve the case of supplied copy. Every word is a token with a tight rectangular box: upcoming tokens dim #8a8784 without fill (on light grounds they sit on a translucent ink box so they stay legible), the current token on a solid vermilion #e8572a box with #f3eee2 text, completed tokens #f3eee2 on an ink #14121a box. Allow a brief 0.08 to 0.12 s overlap between outgoing and incoming active boxes. A completed line may shrink to about 35 percent into a small history block in the top-right corner. Never draw halftone dots under letterforms; text never collides with the largest container.\n\nSECTION CHANGE. Print-like changes that always show texture: a diagonal collage plane sliding across, a ray or ring field spinning in from a corner, or a brief partial ink-burst wipe; swap the ground underneath, and let outgoing type compress and fade before incoming type appears. Two main lines are never readable at once. Cutouts may travel along their dashed strings across a cut to tie sections together. Motion is snappy print-pop: shapes scale in with slight overshoot, cutouts pop on in staggered sequence, screens, rays and rings turn slowly, grain and mottle stay static within a section.\n\nTECHNICAL CONTRACT (mandatory). Write complete sources directly; do not inspect other files or run unrelated checks. Write a single standalone index.html in the current composition input workspace; encoded outputs belong in {{output_directory}}; capture, validation, poster export and sampling follow {{render_pipeline}}, a project-level procedure this style does not choose. Load only the local gsap.min.js in the same folder (script src=gsap.min.js); no network, CDNs, web fonts, external or source images, CSS animations or transitions, setTimeout, setInterval, requestAnimationFrame loops, Date or performance clocks, or Math.random. Use a seeded mulberry32 PRNG with a fixed seed computed once at load for mottle, speckle, grain, cutout scatter and dot jitter. Build texture as a few reusable SVG pattern tiles in defs (cloud mottle at two scales, speckle, grain, ring and ray screens, dot screen) plus explicit circles only for shape-bound screens; keep the total SVG node count in the low thousands and never generate one node per pixel. The root element is a div with data-composition-id=video, data-width and data-height from {{resolution}}, data-duration {{duration_seconds}} and data-fps {{frame_rate}}, sized exactly to the resolution with overflow hidden, containing one inline SVG with a matching viewBox and an absolutely positioned text layer; reflow proportionally if {{aspect_ratio}} is not 16:9. Build exactly one paused GSAP timeline, fully constructed at load, of total duration {{duration_seconds}}, exposed as window.__timelines = { video: timeline }. Its only tween is a linear proxy tween from t=0 to t=duration whose onUpdate calls render(t). render(t) clamps t and sets every visible attribute (section visibility, transforms, opacities, fills, dot radii, token states and box geometry) as a pure function of absolute t, resetting all visual state, so direct timeline.time(t, false), backward and repeated seeks give identical output. Listen for a window event named hf-seek and call timeline.time(event.detail.time, false) then render(event.detail.time). Call render(0) on load. Measure token boxes deterministically from character counts and font size. Define window.exportPoster = function(t) that calls render(t) and returns a standalone SVG string of that exact frame: same viewBox, defs, patterns, grounds, texture, shapes and cutouts, with every visible text token drawn as SVG rect plus text, no scripts, no raster or base64 embedding, under 150000 characters. poster.svg is written only from exportPoster; do not draw a second, different poster. Before finishing, check that every copy item appears exactly once in order with no extra copy, the required ground families are each visible, print texture covers every frame, no frame is empty or solid black, and render(t) is identical forward, backward and direct.\n",
+      "palette": {
+        "tokens": {
+          "background": "#1c2350",
+          "foreground": "#f1ece0",
+          "night_navy": "#1c2350",
+          "cloud_ink": "#10163a",
+          "cloud_mid": "#26306a",
+          "cobalt": "#3a55d8",
+          "cobalt_bright": "#4462e6",
+          "periwinkle": "#8a80d6",
+          "halftone_blue": "#3c5bd0",
+          "cream_paper": "#ece4d2",
+          "coral": "#f1a088",
+          "salmon_dot": "#f08a6e",
+          "vermilion": "#e8572a",
+          "ochre": "#f0b236",
+          "amber_ray": "#f39a2e",
+          "rust_ring": "#a9352c",
+          "maroon": "#561a2a",
+          "ink": "#14121a",
+          "speckle_grey": "#8c8a86",
+          "dim_token": "#8a8784",
+          "token_bright": "#f3eee2",
+          "token_box_dark": "#14121a"
+        },
+        "constraints": [
+          "Each section uses exactly one ground family; colours keep their roles rather than being globally saturated.",
+          "Night sections: navy/cloud_ink/cloud_mid ground, cobalt/halftone_blue screens, vermilion and ochre small cutouts, cream accents.",
+          "Light sections: cream_paper ground with cobalt, periwinkle and coral diagonal planes; vermilion and ink cutouts; speckle_grey grain.",
+          "Warm sections: amber_ray/ochre rays or rust_ring/ochre rings, or salmon_dot dots on cream; ink and vermilion accents.",
+          "Short studies with three or more sections, and all longer pieces, show all three ground families.",
+          "Vermilion is the active word box and small cutout colour, never a full ground.",
+          "Ink is for accent silhouettes, blots, history boxes and dark token boxes, never a full-frame black field.",
+          "Print texture (mottle, speckle, grain, uneven dot screens) is visible on every frame; tone never comes from smooth gradients.",
+          "Hex values are approximate readings from compressed frames."
+        ],
+        "background_policy": "scene_dependent"
+      },
+      "audio_direction": {
+        "prompt": "Section changes, token steps and hero-shape changes may follow a supplied rhythm or vocal timing map. No source audio was analysed; do not assume a tempo. When no timing map is supplied, use an even authored step derived from duration and word count."
+      },
+      "motion_references": {
+        "required": false,
+        "selection_policy": "Use the word relay when the supplied copy benefits from progressive reading; omit it for a single mark or image-led hold.",
+        "candidates": [
+          {
+            "motion_id": "motion-050",
+            "usage_guidance": "Every word is a persistent box token on a fixed line grid. A solid active fill steps token to token in reading order with a brief overlap at each hand-over; completed tokens settle to a neutral bright state and upcoming tokens stay dim. When a line completes, the whole line scales down and moves into a corner history block while the next line appears dim in the main slot; the history block keeps its last fill briefly, then goes neutral."
+          }
+        ]
+      },
+      "tech": {
+        "recommended_stack_keys": ["svg", "html_css", "gsap", "chroma_js"],
+        "implementation": "SVG for every printed visual (grounds, two-scale cloud mottle, speckle and grain tiles, halftone screens, rays, rings, diagonal collage planes, cutouts and dashed links) inside one inline SVG; HTML/CSS spans for word tokens over it; GSAP drives one paused timeline whose single linear proxy tween calls a pure render(t). Texture comes from a seeded mulberry32 generator run once at load into a few reusable SVG pattern tiles plus sparse explicit dots for shape-bound screens, keeping the node count in the low thousands. window.exportPoster(t) serialises the same frame as a standalone SVG with text drawn as rect plus text. chroma.js is optional for offline contrast checks only.",
+        "library_selection": "The style is a flat offset-print poster whose defining trait is halftone bound to geometry, plus misregistered vector plates and boxed word tokens. SVG clipPath groups holding explicit local-space dots bind each screen to its shape exactly and stay crisp at any resolution. HTML spans give real, high-contrast text with solid boxes. A single GSAP time proxy feeding a pure render(t) gives one owner per property and safe seeking. chroma.js only verifies contrast; it never recolours.\n\nAlternatives and tradeoffs:\n- Canvas 2D, p5.js and PixiJS could batch dense fog and speckle cheaply, but they rasterise the vector print look and add a second renderer, so they stay conditional for full-video density.\n- A luminance-based GLSL/WebGL halftone (optionally hosted on a flat Three.js quad) scales to huge dot fields. It needs a grid anchored to each object and text masks, and risks aliasing and flicker, so it is a conditional fallback with no 3D.\n- MorphSVG, Paper.js (offline silhouette variants) and DrawSVG are useful for full-video morphs or line draw-ons, but unnecessary in the preview.\n- librosa (on a Python host) is used only when supplied audio sync is requested.\n- Anime.js, Motion and mo.js would compete with GSAP for the same properties.\n- Scrambled text breaks the exact-copy token relay.\n- 3D, PBR, toon, bloom, sketch, painterly, photographic and frame-sequence tools contradict the flat ink-and-dot medium, and the Blender-based tools are also disallowed.\n\nPalette roles are preserved: one ground family per section, vermilion only for the active box, offset plates and tiny accents, and tone only through dot size. Hex values are approximate readings, not measured colours.",
+        "style_renderer": {
+          "recommended_stack_refs": ["SVG", "HTML/CSS"]
+        },
+        "motion_engine": {
+          "recommended_stack_refs": ["GSAP"]
+        },
+        "render_pipeline": "Composition and export follow the project renderer setting and are excluded from Motion Graphic technology selection.",
+        "stack_overrides": {
+          "svg": {
+            "values": {
+              "style_application": "Flat print-poster frames that alternate between a deep night-navy ground and a warm cream paper ground, with chorus-like sections on maroon-to-black radial rays or concentric halftone rings Round-dot halftone screens bound to each geometric container (lobed blob, hexagon, rotated square, star, disc); the screen moves, rotates and scales with its shape, and dot size changes to make tonal gradients Near-black ink hero silhouettes with spiky or lobed outlines, carrying two misregistered offset contours (cream and muted vermilion) like slipped print plates Mottled cloud-like halftone fog on night grounds and grey speckle on paper grounds Small constellation glyphs (rings, crosses, triangles, sparks, dots) linked by dashed lines in negative space Copy set as boxed word tokens: upcoming tokens dim, completed tokens neutral bright, the current token on a solid muted-vermilion box; the previous line parked as a small history block in the opposite corner"
+            },
+            "remove": []
+          },
+          "html_css": {
+            "values": {
+              "style_application": "Flat print-poster frames that alternate between a deep night-navy ground and a warm cream paper ground, with chorus-like sections on maroon-to-black radial rays or concentric halftone rings Round-dot halftone screens bound to each geometric container (lobed blob, hexagon, rotated square, star, disc); the screen moves, rotates and scales with its shape, and dot size changes to make tonal gradients Near-black ink hero silhouettes with spiky or lobed outlines, carrying two misregistered offset contours (cream and muted vermilion) like slipped print plates Mottled cloud-like halftone fog on night grounds and grey speckle on paper grounds Small constellation glyphs (rings, crosses, triangles, sparks, dots) linked by dashed lines in negative space Copy set as boxed word tokens: upcoming tokens dim, completed tokens neutral bright, the current token on a solid muted-vermilion box; the previous line parked as a small history block in the opposite corner"
+            },
+            "remove": []
+          },
+          "gsap": {
+            "values": {
+              "style_application": "Use this tool only for its documented role within the reviewed implementation; preserve this style's palette and material constraints."
+            },
+            "remove": []
+          },
+          "chroma_js": {
+            "values": {
+              "style_application": "Use this tool only for its documented role within the reviewed implementation; preserve this style's palette and material constraints."
+            },
+            "remove": []
+          }
+        },
+        "stack_property_order": {},
+        "technology_review": {
+          "sourceHash": "19606a1c0db7654f3ecfd5114b22966e8c22fd362fb37627d130a5a0062097de",
+          "model": "claude-opus-5-5",
+          "poolEntriesAssessed": 88,
+          "checkpoint": "technology-reviews/19606a1c0db7654f3ecfd5114b22966e8c22fd362fb37627d130a5a0062097de/review.json",
+          "integration_adjustments": [
+            "Add background/foreground aliases for existing catalog consumers, using the already-reviewed navy and neutral-bright values; no palette or preview change."
+          ]
+        }
+      },
+      "source_evidence": {
+        "source": "User-supplied 210.716625-second abstract print-poster music video; source words and images are not reproduced.",
+        "model": "claude-opus-5-5",
+        "method": "Whole-video chronological overview and scene-cut contact sheets, refined with nominal 8 fps samples at 50–52.375 s and 10 fps samples at 72–73.9 s. No continuous playback or audio analysis.",
+        "observed_seconds": [
+          0, 14, 22, 24, 33.233, 38, 39.267, 46, 50, 51, 52, 56, 60, 72, 73.5, 104, 122.017, 132.05,
+          148.05, 190.05
+        ],
+        "limitations": [
+          "Whole-video coverage is from about 2 s overview samples plus 31 detected cuts; only two dense windows (50 to 52.375 s at 8 fps, 72 to 73.9 s at 10 fps) are used here.",
+          "No audio was analysed; no tempo, beat or vocal-sync claim is made.",
+          "Colours are approximate readings from compressed contact sheets.",
+          "All timings in the templates are authored defaults chosen to resemble sampled behaviour, not measured source values.",
+          "Source lyrics, title, credits, subtitles and the signature mark are excluded from all reusable text."
+        ]
+      },
+      "suggested_combinations": {
+        "selection_guidance": "Use alone by default: the printed grounds, screened shapes, cutout strings and boxed-word relay already form a complete system. Add a support style only for a role this style does not cover (real audio timing, verified data, step-by-step relationships) and draw it in this style's inks, dot screens and print texture. Other print, collage and halftone styles overlap the primary medium and are deliberately not suggested.",
+        "suggestions": [
+          {
+            "supporting_styles": [
+              {
+                "style_id": "style-105",
+                "role": "timing source"
+              }
+            ],
+            "rationale": "When a real track or vocal timing map is supplied, its beats and sections can drive section changes, word steps and cutout pops while this style keeps every visual decision.",
+            "best_for": "Lyric videos and music promos with supplied audio.",
+            "video_application": "Map verse, bridge and chorus to ground families, pop cutout clusters on downbeats and step the word relay on vocal timing.",
+            "html_application": "Feed a precomputed beat and section table into render(t); no live audio analysis.",
+            "consistency_rules": [
+              "Timing only: no new shapes, palette or typography.",
+              "Section changes remain print wipes landing on downbeats.",
+              "Keep reading holds even when beats are dense."
+            ],
+            "avoid": [
+              "Flashing the ground on every beat.",
+              "Claiming sync without a supplied timing map."
+            ]
+          },
+          {
+            "supporting_styles": [
+              {
+                "style_id": "style-097",
+                "role": "explanatory data inset"
+              }
+            ],
+            "rationale": "For explainers with real figures, a data layer adds verified values while the print collage frames and paces them.",
+            "best_for": "Short explainers, reports and campaign recaps with supplied numbers.",
+            "video_application": "Place small charts as screened bars or dot counts on cream paper or collage sections, revealing one comparison per section.",
+            "html_application": "Draw charts inside the same SVG with halftone fills; show figures as word-box tokens.",
+            "consistency_rules": [
+              "Data marks use this style's inks and dot screens, never smooth gradients.",
+              "Values and units come only from supplied data.",
+              "Put charts on light sections for legibility."
+            ],
+            "avoid": ["Invented or rounded-up numbers.", "Glossy dashboard styling."]
+          },
+          {
+            "supporting_styles": [
+              {
+                "style_id": "style-109",
+                "role": "step and relationship paths"
+              }
+            ],
+            "rationale": "The style's dashed strings already link cutouts; line-art paths can make those links carry a real sequence or relationship for process topics.",
+            "best_for": "Process, journey and cause-and-effect stories.",
+            "video_application": "Draw dashed paths between cutout clusters in reading order so each link explains a step.",
+            "html_application": "Animate stroke-dashoffset on SVG paths as a pure function of t.",
+            "consistency_rules": [
+              "Use the thin dashed line in cobalt, cream or ink only.",
+              "Every path connects meaningful nodes.",
+              "Match the weight of the existing dashed links."
+            ],
+            "avoid": ["Tangled decorative line clusters.", "Glowing or neon strokes."]
+          }
+        ],
+        "review": {
+          "model": "claude-opus-5-5",
+          "reviewed_on": "2026-11-03",
+          "candidates_reviewed": 141,
+          "session_id": null,
+          "session_id_note": "Omitted until the caller's result is available; not invented."
+        }
+      },
+      "combination_guidance_provenance": "Editing-agent integration of the Opus design: standalone default; no unreviewed pairings asserted."
     }
   ],
   "library_options": [
