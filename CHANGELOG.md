@@ -12,6 +12,8 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Fixed
 
+- Use native locator readiness checks for preview hover and suggestion selection, avoiding stale browser handles during CI layout changes.
+
 - Close sign-in test sessions before cancellation and restore launch mocks before fallible cleanup, preventing cross-scenario recursion.
 
 - Move full-suite CI to supported macOS 15 runners after macOS 14 retirement. Install renderer-matched Chromium and declare browser test motion preferences explicitly instead of inheriting hosted accessibility defaults.
