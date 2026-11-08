@@ -35,6 +35,7 @@ it("keeps SDK sessions stable across jobs in one project and separates other pro
 it.skipIf(process.platform !== "darwin")(
   "launches Multiplane Chromium concurrently in deep project-local renderer directories",
   async () => {
+    await mkdir(path.join(dataRoot, "runtime"), { recursive: true });
     const root = await mkdtemp(path.join(dataRoot, "runtime", "multiplane-isolation-"));
     const workspaces = ["a", "b"].map((name) =>
       path.join(root, `project-${name}-${"x".repeat(30)}`, "preview-job"),
