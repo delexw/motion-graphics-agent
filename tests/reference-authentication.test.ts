@@ -230,20 +230,26 @@ it
         expect(launches.mock.calls[2][0]?.userDataDir).toBe(launches.mock.calls[0][0]?.userDataDir);
       }
     } finally {
-      controller.abort();
-      await session?.close();
-      await bridge?.close();
-      vi.unstubAllEnvs();
+      // Restore the launch spy even if browser/profile cleanup fails, so the next
+      // scenario cannot bind the previous scenario's mock as its real launcher.
       launches.mockRestore();
-      await Promise.all(
-        [site, identity].map(
-          (server) =>
-            new Promise<void>((resolve, reject) =>
-              server.close((error) => (error ? reject(error) : resolve())),
-            ),
-        ),
-      );
-      await rm(workspace, { recursive: true, force: true });
+      vi.unstubAllEnvs();
+      try {
+        // Graceful close persists cookies; aborting first races its browser read.
+        await session?.close();
+      } finally {
+        controller.abort();
+        await bridge?.close();
+        await Promise.all(
+          [site, identity].map(
+            (server) =>
+              new Promise<void>((resolve, reject) =>
+                server.close((error) => (error ? reject(error) : resolve())),
+              ),
+          ),
+        );
+        await rm(workspace, { recursive: true, force: true });
+      }
     }
   },
   60000,
