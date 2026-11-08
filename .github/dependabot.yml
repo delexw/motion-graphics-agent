@@ -10,25 +10,19 @@ updates:
       compatible-packages:
         patterns:
           - "*"
-        exclude-patterns:
-          - "@anthropic-ai/claude-agent-sdk"
         update-types:
           - minor
           - patch
       major-packages:
         patterns:
           - "*"
-        exclude-patterns:
-          - "@anthropic-ai/claude-agent-sdk"
         update-types:
           - major
       all-security-updates:
         applies-to: security-updates
         patterns:
           - "*"
-        exclude-patterns:
-          - "@anthropic-ai/claude-agent-sdk"
-  # Speech runtimes require manual review; native npm CI does not certify model compatibility.
+  # All ecosystems use the same full-suite and Windows auto-merge gates.
   - package-ecosystem: pip
     directories:
       - /src/server/audio/providers/pocket-tts

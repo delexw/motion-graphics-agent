@@ -6,7 +6,9 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Changed
 
-- Use compatible npm dependency ranges, separate daily compatible updates from majors and manual SDK updates, and monitor Python requirements and GitHub Actions. Keep security alerts enabled.
+- Run formatting, lint, build and the complete test suite for every PR; allow every Dependabot update to auto-merge only after full-suite and native Windows CI succeed.
+
+- Use compatible npm dependency ranges, separate daily compatible updates from majors, and monitor Python requirements and GitHub Actions. Keep security alerts enabled.
 
 ### Fixed
 
