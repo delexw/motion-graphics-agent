@@ -27,6 +27,8 @@ jobs:
           npx --no-install browsers install chrome-headless-shell@stable --path "$PUPPETEER_CACHE_DIR"
           npx --no-install browsers install chrome@stable --path "$PUPPETEER_CACHE_DIR"
           node --import tsx --input-type=module -e "import { browserExecutablePath } from './src/server/runtime/browser.ts'; import { appendFileSync } from 'node:fs'; const browser = browserExecutablePath(); const desktop = browserExecutablePath(true); if (!browser || !desktop) throw Error('Installed CI browsers not found'); appendFileSync(process.env.GITHUB_ENV, 'HYPERFRAMES_BROWSER_PATH=' + browser + '\nVIDEO_BROWSER_PATH=' + desktop + '\n');"
+      - name: Install the renderer-matched Chromium
+        run: npm run multiplane:setup
       - name: Prepare public authoring resources for offline integration tests
         run: node --import tsx --input-type=module -e "import { updateSkill } from './src/server/agents/bundled-skills/installation.ts'; import { bundledSkills } from './src/server/agents/bundled-skills/registry.ts'; for (const skill of bundledSkills) await updateSkill(skill);"
       - run: npm run format:check

@@ -1,3 +1,4 @@
+import { newBrowserPage } from "./fixtures/browser-page";
 import { browserDependencyScan } from "../vite.resolve";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -61,7 +62,7 @@ it.skipIf(!browserExecutablePath())(
     });
     try {
       await server.listen();
-      const page = await browser.newPage();
+      const page = await newBrowserPage(browser);
       const errors: string[] = [];
       page.on("pageerror", (error) =>
         errors.push(error instanceof Error ? error.message : String(error)),
