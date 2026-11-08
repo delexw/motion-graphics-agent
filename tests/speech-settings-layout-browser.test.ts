@@ -1,3 +1,4 @@
+import { newBrowserPage } from "./fixtures/browser-page";
 import { mingVoices } from "../src/shared/speech";
 import { nextSelectOption } from "./fixtures/select-options";
 import { mkdtemp, rm } from "node:fs/promises";
@@ -69,7 +70,7 @@ function Fixture(){const[state,setState]=React.useState(request);return React.cr
     });
     try {
       await server.listen();
-      const page = await browser.newPage();
+      const page = await newBrowserPage(browser);
       await page.setViewport({ width: 1200, height: 900 });
       await page.goto(`${server.resolvedUrls!.local[0]}layout`);
       await page.waitForSelector('[aria-label="Generate narration"]');
