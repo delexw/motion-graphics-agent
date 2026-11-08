@@ -38,6 +38,13 @@ Switch the interface instantly with **EN / 中文**; see [interface language](do
 Dates below use New Zealand time.
 
 <details>
+<summary>2026-11-09</summary>
+
+- **Complete PR checks and Dependabot auto-merge:** every PR runs formatting, lint, build and the full test suite, alongside native Windows verification. All Dependabot ecosystems and version updates qualify after both jobs pass.
+
+</details>
+
+<details>
 <summary>2026-11-08</summary>
 
 - **Dependency security maintenance:** compatible npm ranges, daily grouped updates, Python/Actions monitoring and targeted transitive fixes. The lockfile stays reproducible and security alerts stay enabled. See [dependency policy](docs/dependency-security.md).
