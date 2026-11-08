@@ -1,2 +1,2 @@
-mlx-audio==0.6.2
+mlx-audio==0.6.4
 soundfile==0.14.0

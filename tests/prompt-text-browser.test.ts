@@ -109,7 +109,7 @@ createRoot(document.getElementById('root')).render(React.createElement(StyleExam
         await page.waitForSelector(selector);
         expect(await page.$$eval(selector, (els) => els.length)).toBe(2);
         expect(await page.$eval(`#${section}`, (el) => el.textContent)).not.toContain("<style id=");
-        await page.hover(selector);
+        await page.locator(selector).hover();
         await page.waitForSelector(".style-mention-preview video", { visible: true });
         expect(
           await page.$eval(".style-mention-preview video", (el) => el.getAttribute("src")),
