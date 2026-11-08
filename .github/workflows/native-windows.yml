@@ -9,7 +9,7 @@ permissions:
 jobs:
   quality:
     name: Full test suite, lint and format
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 30
     env:
       PUPPETEER_CACHE_DIR: ${{ github.workspace }}/.data/browser-cache
