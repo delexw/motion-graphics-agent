@@ -4,10 +4,11 @@ Project npm defaults save caret ranges (`save-exact=false`, `save-prefix=^`). np
 
 ## Update policy
 
-- npm version updates run daily. Patch/minor updates are grouped separately from major updates, and the Claude Agent SDK stays outside those groups for manual review. Five version-update PRs can coexist; GitHub manages security-update limits separately.
-- Security updates remain enabled and visible. Compatible npm PRs retain the existing checked-head auto-merge policy. The workflow explicitly excludes Python and GitHub Actions updates from automatic merging; npm CI does not establish model compatibility.
-- Python monitoring covers the Pocket TTS, Kokoro and Ming requirement directories, including the Chinese requirements file. Ming's custom model-preparation `setup.py` is excluded from package-metadata discovery. These updates require manual review.
-- GitHub Actions updates run weekly and require manual review.
+- npm version updates run daily. Patch/minor updates are grouped separately from major updates. Five version-update PRs can coexist; GitHub manages security-update limits separately.
+- Every Dependabot PR is eligible for automatic merging, including npm SDK/major updates, Python and GitHub Actions. The trusted base workflow waits for the exact PR commit's complete CI run and requires both the full-suite quality job and native Windows job to succeed. Failed, skipped or cancelled jobs do not qualify; the merge also verifies the PR head has not changed.
+- Every PR runs formatting, lint, type checks/build and the complete Vitest suite on macOS, including browser fixtures and macOS-specific checks. The suite rejects skipped tests. Windows independently checks native platform contracts, security boundaries and real rendering. Provider calls remain mocked; these checks do not certify downloaded speech models or real inference.
+- Python monitoring covers the Pocket TTS, Kokoro and Ming requirement directories, including the Chinese requirements file. Ming's custom model-preparation `setup.py` is excluded from package-metadata discovery.
+- GitHub Actions updates run weekly. Post-merge CI is explicitly dispatched because token-created merges do not automatically trigger push workflows.
 - Multiplane reports its installed package version in contracts/readiness metadata instead of a frozen source constant. Its tests retain lockfile integrity and shared Three.js checks without rejecting compatible version ranges.
 - The lockfile stays committed. Do not replace compatible ranges with unrestricted wildcards or delete it to silence an alert.
 
