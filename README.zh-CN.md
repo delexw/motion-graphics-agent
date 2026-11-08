@@ -38,6 +38,13 @@
 以下日期采用新西兰时间。
 
 <details>
+<summary>2026-11-09</summary>
+
+- **完整 PR 检查与 Dependabot 自动合并：**每个 PR 执行格式、lint、构建及全量测试，并保留 Windows 原生验证；所有 Dependabot 生态及版本更新均在两项任务通过后自动合并。
+
+</details>
+
+<details>
 <summary>2026-11-08</summary>
 
 - **依赖安全维护：**使用兼容的 npm 版本范围、每日分组更新、Python/Actions 监控及针对性的间接依赖修复；保留可复现的锁文件和安全告警。详见[依赖策略](docs/dependency-security.md)。
