@@ -4,8 +4,13 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-11-08
+
+Image-guided procedural 3D authoring, project-owned agent assets and expanded Motion Graphics.
+
 ### Added
 
+- Project-owned MCP asset imports and draft/project attachment management, with matching interface limits, separate video references and FLAC music uploads.
 - img2threejs procedural 3D authoring for Claude and Codex, with JEV comparison against Anatomy and other resources, scoped image evidence, and composition-time model/camera helpers.
 - Printed Spark Collage (`style-142`) with a rendered preview, Chinese metadata, supporting-style guidance and exact prompt-binding provenance. The review retains known visual differences from its reference.
 - Boxed-Word Active Relay (`motion-050`) with adjacent-word highlight overlap, a smaller completed-line history block and deterministic seeking. The catalog now contains 142 Motion Graphics and 50 motions.
@@ -15,6 +20,13 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 - Run local preview-repair and page-validation checks without opt-in flags; remove four desktop/external-runtime-gated smoke tests and their unused recording fixture, with verification limits documented.
 - Refresh img2threejs from the latest default-branch commit at every backend startup, matching Anatomy, with integrity-checked offline reuse.
 - Review 88 Motion Graphic drawing, motion and supporting technologies separately from project composition and export. Reject project renderers in every per-MG selection role and replace stale review instructions when reviewing again.
+
+### Fixed
+
+- Allow generated subtitles without requiring narration, while preserving project language and subtitle settings.
+- Update Windows browser setup and cache isolation; remove the obsolete deleted-test path from its native contract checks.
+
+This is a GitHub source release. It does not publish an npm package or bundle desktop installers, local models or downloaded authoring skills. Windows support remains experimental.
 
 ## [1.0.0] — 2026-10-30
 
