@@ -110,7 +110,36 @@ createRoot(document.getElementById('root')).render(React.createElement(StyleExam
         expect(await page.$$eval(selector, (els) => els.length)).toBe(2);
         expect(await page.$eval(`#${section}`, (el) => el.textContent)).not.toContain("<style id=");
         await page.locator(selector).hover();
-        await page.waitForSelector(".style-mention-preview video", { visible: true });
+        await page
+          .waitForSelector(".style-mention-preview video", { visible: true })
+          .catch(async (cause: unknown) => {
+            const details = await page.evaluate((target) => {
+              const trigger = document.querySelector(target);
+              const bounds = trigger?.getBoundingClientRect();
+              return {
+                focused: document.hasFocus(),
+                visibility: document.visibilityState,
+                reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
+                hovered: trigger?.matches(":hover"),
+                bounds: bounds?.toJSON(),
+                hit: bounds
+                  ? document
+                      .elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)
+                      ?.outerHTML.slice(0, 600)
+                  : null,
+                popovers: [...document.querySelectorAll(".ant-popover")].map((node) => ({
+                  text: node.textContent?.slice(0, 200),
+                  display: getComputedStyle(node).display,
+                  visibility: getComputedStyle(node).visibility,
+                  opacity: getComputedStyle(node).opacity,
+                  videos: node.querySelectorAll("video").length,
+                })),
+              };
+            }, selector);
+            throw new Error(`Preview did not open in ${section}: ${JSON.stringify(details)}`, {
+              cause,
+            });
+          });
         expect(
           await page.$eval(".style-mention-preview video", (el) => el.getAttribute("src")),
         ).toBe("/api/examples/style-140/video?v=fixture");

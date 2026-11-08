@@ -12,6 +12,8 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Fixed
 
+- Serialize the full-suite browser/render workload on standard macOS runners to avoid competing rendering processes without weakening individual test deadlines.
+
 - Use native locator readiness checks for preview hover and suggestion selection, avoiding stale browser handles during CI layout changes.
 
 - Close sign-in test sessions before cancellation and restore launch mocks before fallible cleanup, preventing cross-scenario recursion.
