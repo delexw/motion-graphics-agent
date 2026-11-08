@@ -12,6 +12,8 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Fixed
 
+- Move full-suite CI to supported macOS 15 runners after macOS 14 retirement.
+
 - Upgrade vulnerable npm dependency chains and add targeted compatible overrides for Undici, KaTeX and the existing Webpack floor; raise the Mandarin PyTorch security minimum to 2.13.0.
 
 ## [1.1.0] — 2026-11-08
