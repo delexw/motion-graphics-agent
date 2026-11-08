@@ -109,6 +109,6 @@ processes as part of releasing it. Reported cleanup failures propagate through t
 [project stop/delete lifecycle](process-lifecycle.md), so deletion retains project files.
 
 `tests/recording-slot.test.ts` covers separate-process exclusion and queued
-cancellation. With `KITEVA_TEST_LOCAL_OPENSCREEN=1`,
-`tests/native-recording-concurrency.integration.test.ts` launches five independent
-builders and verifies real recording, saving, frame review and WebM export.
+cancellation with local fixtures. Actual native recording, frame review and WebM
+export require separate verification on the target desktop; unattended tests do
+not certify desktop recording.

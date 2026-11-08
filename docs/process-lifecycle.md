@@ -100,17 +100,7 @@ Automated coverage includes [queue cancellation](../tests/work-queue-cancellatio
 [project exports](../tests/project-export.test.ts). SDK cancellation probes use local dummy
 executables; they do not make model API calls.
 
-The gated [native recording integration](../tests/native-recording-concurrency.integration.test.ts)
-uses five independent builders and actual OpenScreen recording, saving, frame review and WebM
-export. Run it on a desktop with full Chrome and recording permission:
-
-```sh
-KITEVA_TEST_LOCAL_OPENSCREEN=1 npx vitest run tests/native-recording-concurrency.integration.test.ts --maxWorkers=1
-```
-
-Local native recording and cancellation were exercised on macOS. Transport tests do not
-establish that a remote VM or another operating system records correctly; verify that desktop
-separately before relying on it.
+Interactive native desktop-recording tests are not part of the unattended suite. The local fixture tests above cover process ownership, cancellation, worker transport and export handling; they do not establish that screen recording works on a particular desktop. Verify actual native recording separately on the target desktop before relying on it.
 
 [Project-local runtime files](project-file-isolation.md) explains filesystem ownership and
 why native recorder locks and app-owned services remain explicitly shared.

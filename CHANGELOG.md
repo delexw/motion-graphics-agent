@@ -12,6 +12,7 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Changed
 
+- Run local preview-repair and page-validation checks without opt-in flags; remove four desktop/external-runtime-gated smoke tests and their unused recording fixture, with verification limits documented.
 - Refresh img2threejs from the latest default-branch commit at every backend startup, matching Anatomy, with integrity-checked offline reuse.
 - Review 88 Motion Graphic drawing, motion and supporting technologies separately from project composition and export. Reject project renderers in every per-MG selection role and replace stale review instructions when reviewing again.
 

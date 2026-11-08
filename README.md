@@ -40,6 +40,7 @@ Dates below use New Zealand time.
 <details>
 <summary>2026-11-08</summary>
 
+- **Executable test coverage:** run the local preview-repair and page-validation checks by default. Remove four smoke tests requiring interactive desktop recording or an externally prepared package runtime, plus the unused recording worker. Documentation distinguishes local fixture coverage from actual desktop-recording verification.
 - **Reference-image 3D authoring:** JEV can choose img2threejs alongside Anatomy and other resources, using the brief and scoped image evidence. Claude and Codex share the staged skill, absolute-time model/camera helpers and actual browser-review requirements. Like Anatomy, img2threejs updates from the latest default-branch commit at every backend startup, with verified offline reuse. See [the integration guide](docs/img2threejs.md).
 
 </details>

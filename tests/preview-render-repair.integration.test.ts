@@ -23,7 +23,7 @@ import { generateVideo } from "../src/server/domains/video/workflow";
 import { writeStoryboardJson } from "../src/server/domains/video/storyboard";
 import { probeVideo } from "../src/server/rendering/video-probe";
 
-it.skipIf(process.env.KITEVA_TEST_LOCAL_PREVIEW_REPAIR !== "1").each([false, true])(
+it.each([false, true])(
   "repairs a real Canvas runtime failure and renders a silent preview (structured=%s)",
   async (structured) => {
     vi.clearAllMocks();
