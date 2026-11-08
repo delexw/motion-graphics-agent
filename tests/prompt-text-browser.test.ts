@@ -1,3 +1,4 @@
+import { newBrowserPage } from "./fixtures/browser-page";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -76,7 +77,7 @@ createRoot(document.getElementById('root')).render(React.createElement(StyleExam
     });
     try {
       await server.listen();
-      const page = await browser.newPage();
+      const page = await newBrowserPage(browser);
       await page.setViewport({ width: 1400, height: 1800 });
       const errors: string[] = [];
       page.on("pageerror", (e) => errors.push(String(e)));
