@@ -1,3 +1,4 @@
+import { newBrowserPage } from "./fixtures/browser-page";
 import { mingVoices } from "../src/shared/speech";
 import { nextSelectOption } from "./fixtures/select-options";
 import { browserDependencyScan } from "../vite.resolve";
@@ -79,7 +80,7 @@ function App(){const[draft,setDraft]=useState({step:4,stepLayout:'separate-speec
     });
     try {
       await server.listen();
-      const page = await browser.newPage();
+      const page = await newBrowserPage(browser);
       await page.setViewport({ width: 900, height: 1100 });
       await page.goto(`${server.resolvedUrls!.local[0]}speech-test`);
       await page.waitForSelector('textarea[aria-label="Answer the assistant"]');
