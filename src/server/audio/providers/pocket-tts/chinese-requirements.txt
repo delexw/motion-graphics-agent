@@ -1,4 +1,4 @@
 pocket-tts>=3.0.2,<4
 torch>=2.13.0,<3
 soundfile>=0.14.0,<1
-wetext>=0.1.2,<0.2
+wetext>=0.2.1,<0.3
