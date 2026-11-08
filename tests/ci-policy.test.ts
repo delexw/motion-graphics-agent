@@ -14,7 +14,10 @@ const step = z.object({
 });
 const workflow = z.object({
   on: z.record(z.string(), z.unknown()),
-  jobs: z.record(z.string(), z.object({ if: z.string().optional(), steps: z.array(step) })),
+  jobs: z.record(
+    z.string(),
+    z.object({ if: z.string().optional(), "runs-on": z.string(), steps: z.array(step) }),
+  ),
 });
 const load = (name: string) =>
   workflow.parse(
@@ -25,6 +28,7 @@ const merge = load("dependabot-auto-merge");
 
 it("checks every PR without path filters and runs the entire suite alongside native Windows", () => {
   expect(ci.on.pull_request).toBeNull();
+  expect(ci.jobs.quality["runs-on"]).toBe("macos-15");
   const commands = ci.jobs.quality.steps.map((s) => s.run ?? "").join("\n");
   for (const command of [
     "npm run format:check",
