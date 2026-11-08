@@ -1,3 +1,4 @@
+import { newBrowserPage } from "./fixtures/browser-page";
 import { browserDependencyScan } from "../vite.resolve";
 import { readFile, mkdtemp, rm } from "node:fs/promises";
 import path from "node:path";
@@ -69,7 +70,7 @@ createRoot(document.getElementById('root')).render(React.createElement(App));
     try {
       const clip = await readFile(path.join(appRoot, "assets/style-previews/style-001.webm"));
       await server.listen();
-      const page = await browser.newPage();
+      const page = await newBrowserPage(browser);
       await page.setViewport({ width: 1100, height: 1000 });
       await page.setRequestInterception(true);
       page.on("request", (req) => {

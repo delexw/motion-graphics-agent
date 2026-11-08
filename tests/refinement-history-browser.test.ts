@@ -1,3 +1,4 @@
+import { newBrowserPage } from "./fixtures/browser-page";
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -98,7 +99,7 @@ createRoot(document.getElementById('root')).render(h(App));</script>`,
     });
     try {
       await server.listen();
-      const page = await browser.newPage();
+      const page = await newBrowserPage(browser);
       const errors: string[] = [];
       page.on("pageerror", (error) => errors.push(String(error)));
       for (const route of ["review-test", "review-test?room"]) {

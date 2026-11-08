@@ -12,7 +12,7 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Fixed
 
-- Move full-suite CI to supported macOS 15 runners after macOS 14 retirement.
+- Move full-suite CI to supported macOS 15 runners after macOS 14 retirement. Install renderer-matched Chromium and declare browser test motion preferences explicitly instead of inheriting hosted accessibility defaults.
 
 - Upgrade vulnerable npm dependency chains and add targeted compatible overrides for Undici, KaTeX and the existing Webpack floor; raise the Mandarin PyTorch security minimum to 2.13.0.
 
