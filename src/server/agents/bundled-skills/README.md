@@ -19,3 +19,13 @@ Both providers receive copies from the same verified installation. Claude keeps 
 AnySearch uses the same installation and staging lifecycle. Its registration specifies CommonJS for the upstream Node CLI, preserving operation inside module-based projects. Research guidance covers documentation, command-line parameters, repository examples and source code.
 
 Each registration declares its purpose. Only `visual_authoring` skills participate in visual-resource selection; `research` skills remain available independently of that choice.
+
+## img2threejs
+
+`img2threejs.ts`, `img2threejs-prompt.ts` and `img2threejs-metadata.ts` own its upstream source, both-provider guidance and JEV comparison description. The upstream installer is not executed. Like Anatomy, it downloads the latest default-branch commit on every backend startup, records the resolved commit and file hashes, and uses the last verified local installation when updates fail. A missing first installation uses the existing setup error; it is never advertised as an installed successful fallback.
+
+JEV receives scoped image metadata and the existing brief's observed descriptions/asset evidence, comparing reference reconstruction against Anatomy, UI libraries and local code. This is one primary resource per job, not a renderer or MG choice.
+
+`procedural-runtime.ts` copies the app-owned `src/authoring/procedural-model.ts` into the job's render-input `vendor/` directory, outside the unchanged skill. It rejects linked destinations and supports both workspace layouts. The browser helper restores initial transforms for absolute-time poses, disposes owned resources and exposes an explicit-camera capture hook. The main model still authors the pose function, sets all animated material/shader values and owns the production plan. The hook does not launch a browser or write screenshots; existing renderer review must record actual captures.
+
+See [the integration guide](../../../../docs/img2threejs.md) for usage and limitations. Automated tests use local archives, mocked JEV/provider responses and a Chromium fixture; none invokes inference providers.

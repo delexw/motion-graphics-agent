@@ -10,10 +10,15 @@ import { z } from "zod";
 import { skillInstallationFixture } from "./fixtures/installed-skill";
 const fixture = await skillInstallationFixture();
 afterAll(() => rm(fixture.root, { recursive: true, force: true }));
-vi.mock("../src/server/agents/bundled-skills/installation", async (original) => ({
-  ...(await original<typeof import("../src/server/agents/bundled-skills/installation")>()),
-  installedSkill: async () => fixture,
-}));
+vi.mock("../src/server/agents/bundled-skills/installation", async (original) => {
+  const installation =
+    await original<typeof import("../src/server/agents/bundled-skills/installation")>();
+  return {
+    ...installation,
+    installedSkill: (skill: Parameters<typeof installation.installedSkill>[0]) =>
+      installation.installedSkill(skill, fixture.root),
+  };
+});
 const sdk = vi.hoisted(() => ({ query: vi.fn(), construct: vi.fn(), stream: vi.fn() }));
 vi.mock("../src/server/agents/caveman", () => ({
   cavemanSettings: () => ({ enabled: false }),
@@ -103,6 +108,9 @@ it.each(["claude", "codex"] as const)(
       expect(
         await readFile(path.join(workspace, anatomySkillPath, "kit/turn.mjs"), "utf8"),
       ).toContain("export");
+      expect(
+        await readFile(path.join(workspace, ".agents/skills/img2threejs/SKILL.md"), "utf8"),
+      ).toContain("name: img2threejs");
       const prompt =
         provider === "claude"
           ? sdk.query.mock.calls.at(-1)![0].options.systemPrompt
@@ -121,6 +129,7 @@ it.each(["claude", "codex"] as const)(
         ]);
         expect(sdk.query.mock.calls.at(-1)![0].options.skills).toEqual([
           "bundled-authoring:anatomy",
+          "bundled-authoring:img2threejs",
           "bundled-authoring:anysearch",
         ]);
       } else expect(sdk.construct.mock.calls.at(-1)![0].config.project_doc_max_bytes).toBe(0);

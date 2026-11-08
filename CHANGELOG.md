@@ -6,11 +6,13 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Added
 
+- img2threejs procedural 3D authoring for Claude and Codex, with JEV comparison against Anatomy and other resources, scoped image evidence, and composition-time model/camera helpers.
 - Printed Spark Collage (`style-142`) with a rendered preview, Chinese metadata, supporting-style guidance and exact prompt-binding provenance. The review retains known visual differences from its reference.
 - Boxed-Word Active Relay (`motion-050`) with adjacent-word highlight overlap, a smaller completed-line history block and deterministic seeking. The catalog now contains 142 Motion Graphics and 50 motions.
 
 ### Changed
 
+- Refresh img2threejs from the latest default-branch commit at every backend startup, matching Anatomy, with integrity-checked offline reuse.
 - Review 88 Motion Graphic drawing, motion and supporting technologies separately from project composition and export. Reject project renderers in every per-MG selection role and replace stale review instructions when reviewing again.
 
 ## [1.0.0] — 2026-10-30

@@ -1,3 +1,4 @@
+import { img2threejsSkill } from "../src/server/agents/bundled-skills/img2threejs";
 import { expect, it } from "vitest";
 import { bundledSkills, bundledSkillsGuidance } from "../src/server/agents/bundled-skills/registry";
 import { anatomySkill } from "../src/server/agents/bundled-skills/anatomy";
@@ -33,4 +34,13 @@ it("keeps research guidance concise and covers docs, CLI parameters, examples an
   expect(skill.guidance).toContain("Use Skill(anysearch)");
   expect(skill.guidance).toContain("CLI parameters, repository examples and source code");
   expect(skill.guidance.split(/\s+/).length).toBeLessThan(40);
+});
+
+it("registers the startup-updated reconstruction skill with explicit video and evidence boundaries", () => {
+  expect(bundledSkills).toContain(img2threejsSkill);
+  expect(img2threejsSkill).not.toHaveProperty("revision");
+  expect(img2threejsSkill.guidance).toContain("forge/next.py");
+  expect(img2threejsSkill.guidance).toContain("no --allow-nonstrict in production");
+  expect(img2threejsSkill.guidance).toContain("vendor/procedural-model.ts");
+  expect(img2threejsSkill.guidance).toContain("hidden sides as inferred");
 });

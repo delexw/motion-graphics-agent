@@ -1,3 +1,4 @@
+import { bundledSkills } from "../src/server/agents/bundled-skills/registry";
 import { credentialEnvironmentVariables } from "../src/server/runtime/credential-environment";
 import { projectRuntimeEnvironment } from "../src/server/runtime/project-files";
 vi.mock("../src/server/agents/claude-home", () => ({
@@ -185,7 +186,7 @@ it.each([claudeAgent, codexAgent] satisfies Agent[])(
       yield {
         type: "system",
         subtype: "init",
-        skills: ["bundled-authoring:anatomy", "bundled-authoring:anysearch"],
+        skills: bundledSkills.map((skill) => skill.claudeName),
         session_id: "resumed-session",
       };
       yield {
@@ -625,7 +626,7 @@ async function* claudeOverloadFailure() {
   yield {
     type: "system",
     subtype: "init",
-    skills: ["bundled-authoring:anatomy", "bundled-authoring:anysearch"],
+    skills: bundledSkills.map((skill) => skill.claudeName),
     session_id: "claude-direction",
   };
   yield claudeAssistantError("overloaded");
@@ -635,7 +636,7 @@ async function* claudeRecoveredTurn() {
   yield {
     type: "system",
     subtype: "init",
-    skills: ["bundled-authoring:anatomy", "bundled-authoring:anysearch"],
+    skills: bundledSkills.map((skill) => skill.claudeName),
     session_id: "claude-direction",
   };
   yield {
@@ -761,7 +762,7 @@ it("captures a structured Claude overload even if the SDK subsequently exits wit
       yield {
         type: "system",
         subtype: "init",
-        skills: ["bundled-authoring:anatomy", "bundled-authoring:anysearch"],
+        skills: bundledSkills.map((skill) => skill.claudeName),
         session_id: "claude-direction",
       };
       yield claudeAssistantError("overloaded");
@@ -1230,7 +1231,7 @@ it.each(["claude", "codex"] as const)(
         type: "system",
         subtype: "init",
         session_id: session,
-        skills: ["bundled-authoring:anatomy", "bundled-authoring:anysearch"],
+        skills: bundledSkills.map((skill) => skill.claudeName),
       };
       yield {
         type: "result",

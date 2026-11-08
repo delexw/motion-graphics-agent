@@ -1,5 +1,7 @@
 import { animateUiAuthoring } from "../../agents/capabilities/animate-ui/metadata";
 import { reactBitsAuthoring } from "../../agents/capabilities/react-bits/metadata";
+import { img2threejsAuthoring } from "../../agents/bundled-skills/img2threejs-metadata";
+import { briefAttachmentKind } from "../../requests/brief-attachments";
 import { anatomyAuthoring } from "../../agents/bundled-skills/anatomy-metadata";
 import { localAuthoring } from "../../agents/local-authoring";
 import { rendererMetadataFor } from "../../rendering/renderer-metadata";
@@ -12,6 +14,7 @@ import type {
   AuthoringResourceSelection,
 } from "../../../shared/agents/authoring-resources";
 import type {
+  Asset,
   ContentBrief,
   CreativeRequest,
   Style,
@@ -28,15 +31,14 @@ export const authoringResources: AuthoringResource[] = [
   reactBitsAuthoring,
   ...bundledSkills
     .filter((skill) => skill.purpose === "visual_authoring")
-    .map((skill) =>
-      skill.id === anatomyAuthoring.id
-        ? anatomyAuthoring
-        : {
-            id: skill.id,
-            name: skill.name,
-            kind: "bundled_skill" as const,
-            guidance: skill.guidance,
-          },
+    .map(
+      (skill) =>
+        [anatomyAuthoring, img2threejsAuthoring].find((resource) => resource.id === skill.id) ?? {
+          id: skill.id,
+          name: skill.name,
+          kind: "bundled_skill" as const,
+          guidance: skill.guidance,
+        },
     ),
   localAuthoring,
 ];
@@ -47,6 +49,7 @@ export async function selectAuthoringResources(input: {
   brief: ContentBrief;
   candidate: StyleCandidate;
   styles: Style[];
+  assets?: Asset[];
   signal: AbortSignal;
   onEvent: (event: ProviderEvent) => void;
 }): Promise<AuthoringResourceSelection> {
@@ -55,6 +58,15 @@ export async function selectAuthoringResources(input: {
   const visualInstructions = input.request.requirements?.images?.instructions;
   const state = {
     visualInstructions,
+    imageReferences: {
+      supplied: (input.assets || [])
+        .filter((asset) => briefAttachmentKind(asset) === "image")
+        .map(({ id, name, originalName }) => ({ id, name: originalName || name })),
+      observations: input.brief.assetDescriptions,
+      evidence: input.brief.assetPlan,
+      limitation:
+        "Supplied metadata is not proof of visual inspection. Read observed content and inspection limitations; verify the actual subject before reconstruction.",
+    },
     instructions: input.request.instructions,
     brief: input.brief,
     outputType: input.request.outputType || "video",
@@ -73,7 +85,7 @@ export async function selectAuthoringResources(input: {
       .map((s) => ({ id: s.id, name: s.name_en, visualDirection: s.visual_cues })),
     resources: authoringResources.map(({ id, name, kind }) => ({ id, name, kind })),
     policy:
-      "Choose one primary authoring resource by comparing the advantages, disadvantages and costs written in the Choice option descriptions against the original idea, image instructions, selected Motion Graphics and renderer contract. Honor explicit compatible resource requests. Local code remains available with any choice. Do not change selected styles, renderer, settings, explicit act assignments or user exclusions. No option has a fixed preference. Evaluate visual fit and adaptation effort rather than novelty or catalog size. These descriptions explain capabilities, not runtime readiness: the main model must inspect current source/skills, dependencies and license constraints before use. Video effects must support seekable composition time. The main model owns production planning and reads selected styles through creative_pool.",
+      "Choose one primary authoring resource by comparing the advantages, disadvantages and costs written in the Choice option descriptions against the original idea, image instructions, selected Motion Graphics and renderer contract. Honor explicit compatible resource requests. Local code remains available with any choice. Do not change selected styles, renderer, settings, explicit act assignments or user exclusions. No option has a fixed preference. Compare img2threejs for reconstructing a specific pictured object against Anatomy for explanatory mechanisms; retain local code and other candidates. Image instructions alone do not establish an available reconstruction image. Use imageReferences observations/evidence and supplied metadata, and never infer unseen geometry as verified. Evaluate visual fit and adaptation effort rather than novelty or catalog size. These descriptions explain capabilities, not runtime readiness: the main model must inspect current source/skills, dependencies and license constraints before use. Video effects must support seekable composition time. The main model owns production planning and reads selected styles through creative_pool.",
   };
   try {
     const result = await runJevChoice({

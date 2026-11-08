@@ -1,3 +1,4 @@
+import { img2threejsSkill } from "../../src/server/agents/bundled-skills/img2threejs";
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -40,6 +41,27 @@ export async function skillInstallationFixture() {
       repository: "https://github.com/anysearch-ai/anysearch-skill.git",
       revision,
       files: anysearchFiles,
+    }),
+  );
+  const modelRevision = revision;
+  const modelDirectory = path.join(root, img2threejsSkill.id, modelRevision);
+  await mkdir(modelDirectory, { recursive: true });
+  const modelFiles: Record<string, string> = {};
+  for (const [name, content] of Object.entries({
+    "SKILL.md": "---\nname: img2threejs\n---\nLocal reconstruction fixture.\n",
+    LICENSE: "Apache-2.0 test fixture.\n",
+    "forge/next.py": "print('local fixture')\n",
+  })) {
+    await mkdir(path.dirname(path.join(modelDirectory, name)), { recursive: true });
+    await writeFile(path.join(modelDirectory, name), content);
+    modelFiles[name] = createHash("sha256").update(content).digest("hex");
+  }
+  await writeFile(
+    path.join(root, img2threejsSkill.id, "current.json"),
+    JSON.stringify({
+      repository: img2threejsSkill.repository,
+      revision: modelRevision,
+      files: modelFiles,
     }),
   );
   return { root, directory, manifest };

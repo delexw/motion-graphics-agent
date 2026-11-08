@@ -19,6 +19,7 @@ it("keeps research skills available independently of visual authoring selection"
     "animate_ui",
     "react_bits",
     "anatomy",
+    "img2threejs",
     "local_code",
   ]);
 });
@@ -43,7 +44,7 @@ async function input() {
       previewBeat: "A request returns",
       facts: [],
       exactCopy: [],
-      assetDescriptions: [],
+      assetDescriptions: [] as string[],
       constraints: [],
     },
     candidate: {
@@ -63,7 +64,7 @@ async function input() {
     onEvent: vi.fn(),
   };
 }
-it.each(["animate_ui", "react_bits", "anatomy", "local_code"])(
+it.each(["animate_ui", "react_bits", "anatomy", "img2threejs", "local_code"])(
   "uses the native Choice API winner %s, preserving renderer, MGs and usage attribution",
   async (winner) => {
     vi.stubEnv(credentialEnvironmentVariables.typesafeApiKey, "test-placeholder");
@@ -75,6 +76,9 @@ it.each(["animate_ui", "react_bits", "anatomy", "local_code"])(
         expect(body.state.selected.primary).toBe("style-026");
         expect(body.state).not.toHaveProperty("evidence");
         expect(body.state.visualInstructions).toBe("Keep the exact visual direction.");
+        expect(body.state.imageReferences.supplied).toEqual([]);
+        expect(body.state.imageReferences.observations).toEqual([]);
+        expect(body.questions.resource.criteria.img2threejs).toContain("specific pictured object");
         expect(body.state.instructions).toBe("Explain a concept without people");
         for (const resource of authoringResources) {
           const description = body.questions.resource.criteria[resource.id];
@@ -108,7 +112,10 @@ it.each(["animate_ui", "react_bits", "anatomy", "local_code"])(
                 choice: winner,
                 confidence: 0.4,
                 probabilities: Object.fromEntries(
-                  authoringResources.map(({ id }) => [id, id === winner ? 0.4 : 0.2]),
+                  authoringResources.map(({ id }) => [
+                    id,
+                    id === winner ? 0.4 : 0.6 / (authoringResources.length - 1),
+                  ]),
                 ),
               },
             },
@@ -181,3 +188,52 @@ it.each([
     });
   },
 );
+
+it("passes supplied image facts and inspected observations without mistaking instructions for images", async () => {
+  vi.stubEnv(credentialEnvironmentVariables.typesafeApiKey, "test-placeholder");
+  const options = await input();
+  options.brief.assetDescriptions = ["assets/object.png: red product housing; rear surface unseen"];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (_url, init) => {
+      const body = await parseJevRequest(init);
+      expect(body.state.imageReferences.supplied).toEqual([
+        { id: "image", name: "Object reference.png" },
+      ]);
+      expect(body.state.imageReferences.observations).toEqual(options.brief.assetDescriptions);
+      expect(body.state.policy).toContain("Image instructions alone do not establish");
+      return new Response(
+        JSON.stringify({
+          model: "fixture",
+          answers: {
+            resource: {
+              type: "choice",
+              choice: "img2threejs",
+              confidence: 1,
+              probabilities: Object.fromEntries(
+                authoringResources.map(({ id }) => [id, id === "img2threejs" ? 1 : 0]),
+              ),
+            },
+          },
+          usage: {},
+        }),
+        { headers: { "content-type": "application/json" } },
+      );
+    }),
+  );
+  const result = await selectAuthoringResources({
+    ...options,
+    assets: [
+      {
+        id: "image",
+        name: "object.png",
+        originalName: "Object reference.png",
+        kind: "image/png",
+        path: "/private/reference.png",
+        bytes: 100,
+      },
+      { id: "audio", name: "music.wav", kind: "audio/wav", path: "/private/music.wav", bytes: 100 },
+    ],
+  });
+  expect(result.selectedIds).toEqual(["img2threejs"]);
+});

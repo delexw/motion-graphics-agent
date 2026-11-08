@@ -1,3 +1,5 @@
+import { prepareProjectLayout, projectArtifactPath } from "../src/server/runtime/workspace";
+import { stageProceduralModelRuntime } from "../src/server/agents/bundled-skills/procedural-runtime";
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
@@ -49,7 +51,7 @@ it("stages the complete installed skill and license and restores edited files", 
   ).toEqual({
     name: "bundled-authoring",
     version: "1.0.0",
-    skills: ["./skills/anatomy", "./skills/anysearch"],
+    skills: ["./skills/anatomy", "./skills/img2threejs", "./skills/anysearch"],
   });
   await writeFile(path.join(root, "SKILL.md"), "changed");
   await prepareBundledSkills(workspace, signal, installation.root);
@@ -58,7 +60,11 @@ it("stages the complete installed skill and license and restores edited files", 
 it("configures only the app-owned Claude plugin and disables skills for text-only tasks", () => {
   expect(claudeBundledSkills("/job", true)).toEqual({
     plugins: [{ type: "local", path: "/job/.agents" }],
-    skills: ["bundled-authoring:anatomy", "bundled-authoring:anysearch"],
+    skills: [
+      "bundled-authoring:anatomy",
+      "bundled-authoring:img2threejs",
+      "bundled-authoring:anysearch",
+    ],
   });
   expect(claudeBundledSkills("/job", false)).toEqual({ plugins: [], skills: [] });
 });
@@ -145,4 +151,41 @@ it("rejects linked generated runtime metadata without altering its target", asyn
     "Skill package metadata must not be a link",
   );
   expect(await readFile(outside, "utf8")).toBe('{"type":"module"}');
+});
+
+it.each([false, true])(
+  "stages the procedural helper inside the render inputs (versioned=%s)",
+  async (versioned) => {
+    const workspace = await temporaryWorkspace();
+    if (versioned) await prepareProjectLayout(workspace);
+    await prepareBundledSkills(workspace, new AbortController().signal, installation.root);
+    const helper = projectArtifactPath(workspace, "vendor", "procedural-model.ts");
+    expect(await readFile(path.join(workspace, helper), "utf8")).toContain(
+      "export function createProceduralModelController",
+    );
+    expect(
+      await readFile(path.join(workspace, ".agents/skills/img2threejs/forge/next.py"), "utf8"),
+    ).toContain("local fixture");
+  },
+);
+it("rejects linked runtime files and directories and respects cancelled staging", async () => {
+  const workspace = await temporaryWorkspace();
+  const outside = await temporaryWorkspace();
+  const signal = new AbortController().signal;
+  await symlink(outside, path.join(workspace, "vendor"));
+  await expect(stageProceduralModelRuntime(workspace, signal)).rejects.toThrow(
+    "must not be a link",
+  );
+  await rm(path.join(workspace, "vendor"));
+  await mkdir(path.join(workspace, "vendor"));
+  const target = path.join(outside, "target.ts");
+  await writeFile(target, "preserve");
+  await symlink(target, path.join(workspace, "vendor/procedural-model.ts"));
+  await expect(stageProceduralModelRuntime(workspace, signal)).rejects.toThrow(
+    "must not be a link",
+  );
+  expect(await readFile(target, "utf8")).toBe("preserve");
+  const controller = new AbortController();
+  controller.abort();
+  await expect(stageProceduralModelRuntime(workspace, controller.signal)).rejects.toThrow();
 });

@@ -1,3 +1,4 @@
+import { img2threejsSkill } from "../src/server/agents/bundled-skills/img2threejs";
 import { mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -177,4 +178,37 @@ it("rejects archives above the download limit and non-GitHub sources", async () 
   await expect(
     updateSkill({ ...fixture.skill, repository: "http://example.com/skill" }, fixture.root),
   ).rejects.toThrow("HTTPS GitHub");
+});
+
+it("updates img2threejs from upstream HEAD on successive startup refreshes and retains verified offline reuse", async () => {
+  const fixture = await repository();
+  fixture.update(
+    { "SKILL.md": "name: img2threejs\nFirst upstream revision", LICENSE: "Apache-2.0" },
+    "a".repeat(40),
+  );
+  const report = vi.fn();
+  await refreshSkills([img2threejsSkill], fixture.root, report);
+  const first = await installedSkill(img2threejsSkill, fixture.root);
+  fixture.update(
+    { "SKILL.md": "name: img2threejs\nLatest upstream revision", LICENSE: "Apache-2.0" },
+    "b".repeat(40),
+  );
+  await refreshSkills([img2threejsSkill], fixture.root, report);
+  const latest = await installedSkill(img2threejsSkill, fixture.root);
+  expect(latest.manifest.revision).toBe("b".repeat(40));
+  expect(latest.manifest.revision).not.toBe(first.manifest.revision);
+  expect(await readFile(path.join(first.directory, "SKILL.md"), "utf8")).toContain(
+    "First upstream",
+  );
+  expect(await readFile(path.join(latest.directory, "SKILL.md"), "utf8")).toContain(
+    "Latest upstream",
+  );
+  expect(fixture.download).toHaveBeenCalledTimes(2);
+  expect(fixture.download).toHaveBeenLastCalledWith(
+    "https://codeload.github.com/img2threejs/img2threejs/zip/HEAD",
+    expect.objectContaining({ redirect: "error" }),
+  );
+  fixture.download.mockRejectedValue(Error("Offline"));
+  await refreshSkills([img2threejsSkill], fixture.root, report);
+  expect((await installedSkill(img2threejsSkill, fixture.root)).manifest).toEqual(latest.manifest);
 });

@@ -1048,6 +1048,13 @@ export class Workflow {
             brief: run.brief!,
             candidate: run.candidates.find((candidate) => candidate.id === job.candidateId)!,
             styles: this.catalog.styles,
+            assets: assetIdsForQuestionScope(
+              run.request.assetIds,
+              scopedAssetQuestions(run),
+              assetQuestionBuildScope(job, run.jobs),
+            )
+              .map((id) => this.store.getAsset(id))
+              .filter((asset): asset is Asset => !!asset),
             signal: controller.signal,
             onEvent: this.providerEvent(run, job, "Authoring resource selection"),
           });

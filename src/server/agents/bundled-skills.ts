@@ -1,3 +1,4 @@
+import { stageProceduralModelRuntime } from "./bundled-skills/procedural-runtime";
 import { createHash } from "node:crypto";
 import { lstat, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -72,6 +73,7 @@ export async function prepareBundledSkills(
       await writeFile(file, bytes, { signal });
     }
   }
+  await stageProceduralModelRuntime(root, signal);
   signal.throwIfAborted();
   // This root is an explicit Claude plugin as well as Codex's local skill directory.
   // Reject extra plugin components instead of loading generated hooks, MCP or settings.
