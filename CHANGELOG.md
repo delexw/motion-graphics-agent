@@ -6,9 +6,13 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Changed
 
-- Use compatible npm dependency ranges, separate daily compatible updates from majors and manual SDK updates, and monitor Python requirements and GitHub Actions. Keep security alerts enabled.
+- Run formatting, lint, build and the complete test suite for every PR; allow every Dependabot update to auto-merge only after full-suite and native Windows CI succeed.
+
+- Use compatible npm dependency ranges, separate daily compatible updates from majors, and monitor Python requirements and GitHub Actions. Keep security alerts enabled.
 
 ### Fixed
+
+- Move full-suite CI to supported macOS 15 runners after macOS 14 retirement.
 
 - Upgrade vulnerable npm dependency chains and add targeted compatible overrides for Undici, KaTeX and the existing Webpack floor; raise the Mandarin PyTorch security minimum to 2.13.0.
 

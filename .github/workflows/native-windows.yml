@@ -2,23 +2,41 @@ name: Native Windows
 on:
   push:
     branches: [main]
-    paths:
-      - "src/server/**"
-      - "scripts/**"
-      - "tests/**"
-      - "package*.json"
-      - ".github/workflows/native-windows.yml"
   pull_request:
-    paths:
-      - "src/server/**"
-      - "scripts/**"
-      - "tests/**"
-      - "package*.json"
-      - ".github/workflows/native-windows.yml"
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
+  quality:
+    name: Full test suite, lint and format
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      PUPPETEER_CACHE_DIR: ${{ github.workspace }}/.data/browser-cache
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Install test prerequisites
+        run: |
+          brew list ffmpeg >/dev/null 2>&1 || brew install ffmpeg
+          command -v jq >/dev/null || brew install jq
+          npx --no-install browsers install chrome-headless-shell@stable --path "$PUPPETEER_CACHE_DIR"
+          npx --no-install browsers install chrome@stable --path "$PUPPETEER_CACHE_DIR"
+          node --import tsx --input-type=module -e "import { browserExecutablePath } from './src/server/runtime/browser.ts'; import { appendFileSync } from 'node:fs'; const browser = browserExecutablePath(); const desktop = browserExecutablePath(true); if (!browser || !desktop) throw Error('Installed CI browsers not found'); appendFileSync(process.env.GITHUB_ENV, 'HYPERFRAMES_BROWSER_PATH=' + browser + '\nVIDEO_BROWSER_PATH=' + desktop + '\n');"
+      - name: Prepare public authoring resources for offline integration tests
+        run: node --import tsx --input-type=module -e "import { updateSkill } from './src/server/agents/bundled-skills/installation.ts'; import { bundledSkills } from './src/server/agents/bundled-skills/registry.ts'; for (const skill of bundledSkills) await updateSkill(skill);"
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run build
+      - name: Run every test
+        run: npm test -- --maxWorkers=2 --reporter=default --reporter=json --outputFile=test-results.json
+      - name: Reject skipped or missing tests
+        run: |
+          node --input-type=module -e "import { readFileSync } from 'node:fs'; const r = JSON.parse(readFileSync('test-results.json', 'utf8')); if (!r.success || !r.numTotalTests || r.numPendingTests || r.numTodoTests || r.numPassedTests !== r.numTotalTests) throw Error('Full suite must pass without skipped tests');"
   native-windows:
     runs-on: windows-2022
     timeout-minutes: 20
