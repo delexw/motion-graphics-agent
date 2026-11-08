@@ -156,18 +156,21 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
       await page.keyboard.type("Act 3: ");
       // Repeated lookup by ID, with a mouse selection this time.
       await page.keyboard.type("@style-136");
-      await page.waitForFunction(() =>
-        [...document.querySelectorAll('[role="menuitemcheckbox"]')].some((el) =>
-          el.textContent?.includes("Manga Production Theatre"),
-        ),
-      );
-      const itemHandle = await page.evaluateHandle(() =>
-        [...document.querySelectorAll<HTMLElement>('[role="menuitemcheckbox"]')].find((el) =>
-          el.textContent?.includes("Manga Production Theatre"),
-        )!,
-      );
-      const option = await itemHandle.asElement()!.toElement("li");
-      await option.click();
+      await page
+        .locator(
+          () =>
+            [
+              ...document.querySelectorAll<HTMLElement>(
+                '.style-prompt-suggestions [role="menuitemcheckbox"]',
+              ),
+            ].find(
+              (element) =>
+                element.checkVisibility() &&
+                element.textContent?.includes("Manga Production Theatre"),
+            ) ?? null,
+        )
+        .filter((element): element is HTMLElement => element !== null)
+        .click();
       await page.waitForFunction(() =>
         document.querySelector("#state")?.textContent?.includes('<style id="style-136">'),
       );
