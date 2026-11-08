@@ -37,6 +37,8 @@ jobs:
         uses: dependabot/fetch-metadata@v3.1.0
       - name: Wait for checks, merge and verify main
         if: >-
+          (steps.metadata.outputs.package-ecosystem == 'npm' ||
+          steps.metadata.outputs.package-ecosystem == 'npm_and_yarn') &&
           !contains(steps.metadata.outputs.dependency-names, '@anthropic-ai/claude-agent-sdk') &&
           (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
           steps.metadata.outputs.update-type == 'version-update:semver-minor')

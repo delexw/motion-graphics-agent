@@ -1,3 +1,4 @@
+import { multiplaneVersion } from "./rendering/multiplane/version";
 import { writeUploadedAsset } from "./requests/asset-storage";
 import { credentialEnvironmentVariables } from "./runtime/credential-environment";
 import { jobDownloadBasename } from "../shared/job-download-name";
@@ -60,11 +61,7 @@ import { Workflow } from "./jobs/workflow.js";
 import { projectGovernance } from "./governance/report";
 import { videoMimeType } from "./rendering/webm-video";
 import { multiplaneStatus } from "./rendering/multiplane";
-import {
-  multiplaneSettingCoverage,
-  multiplaneVersion,
-  videoRenderers,
-} from "../shared/video-renderers";
+import { multiplaneSettingCoverage, videoRenderers } from "../shared/video-renderers";
 import { combinationModels, textModels } from "./agents/models";
 import type { GovernanceReport } from "../shared/governance";
 import {

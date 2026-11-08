@@ -5,14 +5,13 @@ import { api } from "../lib/api";
 import {
   multiplaneLimits,
   multiplaneSettingCoverage,
-  multiplaneVersion,
   videoRendererIds,
   videoRenderers,
   type RendererSettingSupport,
   type VideoRenderer,
 } from "../../shared/video-renderers";
 
-type MultiplaneStatus = { available: boolean; version: string; problem?: string };
+type MultiplaneStatus = { available: boolean; version?: string; problem?: string };
 const support: Record<RendererSettingSupport, { color: string; label: string }> = {
   supported: { color: "success", label: "Supported" },
   partial: { color: "warning", label: "Partly" },
@@ -33,11 +32,7 @@ export function RendererChoice({
     let live = true;
     api<{ multiplane: MultiplaneStatus }>("/api/renderers")
       .then((result) => live && setStatus(result.multiplane))
-      .catch(
-        (error) =>
-          live &&
-          setStatus({ available: false, version: multiplaneVersion, problem: error.message }),
-      );
+      .catch((error) => live && setStatus({ available: false, problem: error.message }));
     return () => {
       live = false;
     };
@@ -66,7 +61,9 @@ export function RendererChoice({
             title={
               status && !status.available
                 ? translateUi("Multiplane isn’t ready on this computer")
-                : translateUi("Trying Multiplane {{value0}}", { value0: multiplaneVersion })
+                : status?.version
+                  ? translateUi("Trying Multiplane {{value0}}", { value0: status.version })
+                  : videoRenderers.multiplane.label
             }
             description={
               status && !status.available

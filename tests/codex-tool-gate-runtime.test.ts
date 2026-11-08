@@ -1,3 +1,4 @@
+import { terminateProcessTree } from "../src/server/runtime/process-tree";
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import { mkdtemp, writeFile, readFile, rm, access, chmod } from "node:fs/promises";
@@ -111,7 +112,11 @@ it.skipIf(process.platform !== "darwin")(
           home,
           "Test the tool policy.",
         ],
-        { env: { ...process.env, CODEX_HOME: home }, stdio: ["ignore", "pipe", "pipe"] },
+        {
+          detached: true,
+          env: { ...process.env, CODEX_HOME: home },
+          stdio: ["ignore", "pipe", "pipe"],
+        },
       );
       let output = "";
       child.stdout?.on("data", (chunk) => {
@@ -130,7 +135,7 @@ it.skipIf(process.platform !== "darwin")(
           clearTimeout(timer);
           reject(error);
         });
-        running.once("exit", (code) => {
+        running.once("close", (code) => {
           clearTimeout(timer);
           resolve(code);
         });
@@ -146,7 +151,7 @@ it.skipIf(process.platform !== "darwin")(
         ),
       ).toBe(false);
     } finally {
-      child?.kill();
+      await terminateProcessTree(child?.pid, { processGroup: true });
       server.closeAllConnections();
       await new Promise<void>((resolve) => server.close(() => resolve()));
       await rm(home, { recursive: true, force: true });

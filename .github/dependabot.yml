@@ -3,13 +3,45 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
-    open-pull-requests-limit: 1
+      interval: daily
+    versioning-strategy: increase-if-necessary
+    open-pull-requests-limit: 5
     groups:
-      all-packages:
+      compatible-packages:
         patterns:
           - "*"
+        exclude-patterns:
+          - "@anthropic-ai/claude-agent-sdk"
+        update-types:
+          - minor
+          - patch
+      major-packages:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@anthropic-ai/claude-agent-sdk"
+        update-types:
+          - major
       all-security-updates:
         applies-to: security-updates
         patterns:
           - "*"
+        exclude-patterns:
+          - "@anthropic-ai/claude-agent-sdk"
+  # Speech runtimes require manual review; native npm CI does not certify model compatibility.
+  - package-ecosystem: pip
+    directories:
+      - /src/server/audio/providers/pocket-tts
+      - /src/server/audio/providers/kokoro
+      - /src/server/audio/providers/ming-tts
+    # Ming setup.py prepares models; it is not Python package metadata.
+    exclude-paths:
+      - "**/setup.py"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 5
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

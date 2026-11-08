@@ -1,3 +1,4 @@
+import { multiplaneVersion } from "../src/server/rendering/multiplane/version";
 import { beforeEach, expect, it, vi } from "vitest";
 import { existsSync } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
@@ -5,11 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { ProductionSchema } from "../src/shared/agents/schemas/video";
 import { VideoRequestSchema } from "../src/shared/domains/video";
-import {
-  multiplaneVersion,
-  rendererPipelineProblem,
-  videoRendererOf,
-} from "../src/shared/video-renderers";
+import { rendererPipelineProblem, videoRendererOf } from "../src/shared/video-renderers";
 vi.mock("../src/server/jev/strategies/render-cache", () => ({
   reviewRenderCache: vi.fn(async () => false),
 }));
@@ -320,11 +317,11 @@ it("tells the agent the Multiplane shot contract with the exact output settings"
   expect(hyperframes).not.toContain("Multiplane");
 });
 
-it("pins Multiplane in the app package and shares the app's single Three.js", async () => {
+it("allows compatible Multiplane upgrades and shares the app's single Three.js", async () => {
   const root = path.join(import.meta.dirname, "..");
   const manifest = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
   const lock = JSON.parse(await readFile(path.join(root, "package-lock.json"), "utf8"));
-  expect(manifest.dependencies.multiplane).toBe(multiplaneVersion);
+  expect(manifest.dependencies.multiplane).toMatch(/^\^\d+\.\d+\.\d+$/);
   expect(manifest.overrides.multiplane.three).toBe("$three");
   expect(lock.packages["node_modules/multiplane"].version).toBe(multiplaneVersion);
   expect(lock.packages["node_modules/multiplane"].integrity).toMatch(/^sha512-/);

@@ -1,6 +1,6 @@
 import { projectArtifactPath } from "../../runtime/workspace";
 import { rendererDurationContract } from "../duration-contract";
-import { multiplaneVersion } from "../../../shared/video-renderers";
+import { multiplaneVersion } from "./version";
 import type { RenderContractInput } from "../metadata";
 import { multiplaneMetadata, multiplaneShotGuidanceForWorkspace } from "./metadata";
 import { rendererCommandLabel, rendererStageLabels } from "../execution";

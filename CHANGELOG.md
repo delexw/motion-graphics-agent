@@ -4,6 +4,14 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ## [Unreleased]
 
+### Changed
+
+- Use compatible npm dependency ranges, separate daily compatible updates from majors and manual SDK updates, and monitor Python requirements and GitHub Actions. Keep security alerts enabled.
+
+### Fixed
+
+- Upgrade vulnerable npm dependency chains and add targeted compatible overrides for Undici, KaTeX and the existing Webpack floor; raise the Mandarin PyTorch security minimum to 2.13.0.
+
 ## [1.1.0] — 2026-11-08
 
 Image-guided procedural 3D authoring, project-owned agent assets and expanded Motion Graphics.

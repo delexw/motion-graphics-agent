@@ -3,9 +3,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { RendererChoice } from "../src/client/room/renderer-choice";
 import { multiplaneLimits, multiplaneSettingCoverage } from "../src/shared/video-renderers";
 
-it("shows the trial's limits up front and keeps the full support list folded away", () => {
+it("shows trial limits before the installed version is known and keeps full support folded away", () => {
   const html = renderToStaticMarkup(<RendererChoice value="multiplane" onChange={() => {}} />);
-  expect(html).toContain("Trying Multiplane 0.3.13");
+  expect(html).toContain("Multiplane · trial");
+  expect(html).not.toContain("Trying Multiplane ");
   for (const limit of multiplaneLimits) expect(html).toContain(limit);
   expect(html).toContain("Supported settings and limits");
   expect(html).not.toContain(multiplaneSettingCoverage[0].detail);
