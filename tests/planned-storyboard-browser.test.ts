@@ -1,3 +1,4 @@
+import { newBrowserPage } from "./fixtures/browser-page";
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -75,7 +76,7 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
         headless: "shell",
         pipe: true,
       });
-      const page = await browser.newPage();
+      const page = await newBrowserPage(browser);
       const errors: string[] = [];
       page.on("pageerror", (error) => errors.push(String(error)));
       await page.goto(`${server.resolvedUrls!.local[0]}planned-storyboard-test`);
