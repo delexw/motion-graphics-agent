@@ -38,6 +38,7 @@ it("checks every PR without path filters and runs the entire suite alongside nat
   ])
     expect(commands).toContain(command);
   expect(commands).not.toContain("npm test -- tests/");
+  expect(commands).toContain("npm run multiplane:setup");
   expect(ci.jobs["native-windows"].steps.some((s) => s.run === "npm run windows:check")).toBe(true);
 });
 
