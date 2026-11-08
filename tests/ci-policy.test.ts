@@ -34,7 +34,7 @@ it("checks every PR without path filters and runs the entire suite alongside nat
     "npm run format:check",
     "npm run lint",
     "npm run build",
-    "npm test -- --maxWorkers=2",
+    "npm test -- --maxWorkers=1",
   ])
     expect(commands).toContain(command);
   expect(commands).not.toContain("npm test -- tests/");

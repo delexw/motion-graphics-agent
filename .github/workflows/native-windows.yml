@@ -34,8 +34,9 @@ jobs:
       - run: npm run format:check
       - run: npm run lint
       - run: npm run build
+      # Browser/render fixtures share a three-CPU runner; avoid competing render processes.
       - name: Run every test
-        run: npm test -- --maxWorkers=2 --reporter=default --reporter=json --outputFile=test-results.json
+        run: npm test -- --maxWorkers=1 --reporter=default --reporter=json --outputFile=test-results.json
       - name: Reject skipped or missing tests
         run: |
           node --input-type=module -e "import { readFileSync } from 'node:fs'; const r = JSON.parse(readFileSync('test-results.json', 'utf8')); if (!r.success || !r.numTotalTests || r.numPendingTests || r.numTodoTests || r.numPassedTests !== r.numTotalTests) throw Error('Full suite must pass without skipped tests');"
