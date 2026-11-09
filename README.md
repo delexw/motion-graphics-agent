@@ -38,6 +38,17 @@ Switch the interface instantly with **EN / 中文**; see [interface language](do
 Dates below use New Zealand time.
 
 <details>
+<summary>2026-11-10</summary>
+
+- **Upgradeable dependency ranges, tested in CI:** Python speech requirements use ranges up to the next major version instead of exact pins, like npm's `^`. A new CI job installs every speech engine's libraries at the newest allowed versions and checks them against Kiteva's adapters without downloading models, and Dependabot auto-merge now waits for all three CI jobs. Mandarin Pocket TTS stays below 3.1 because its checkpoint breaks on newer releases. See [dependency policy](docs/dependency-security.md).
+- **Ming TTS in the installer:** `./install.sh` installs Ming TTS on Apple Silicon by default, and `--speech ming` installs only Ming. A version mismatch that made Ming setup fail is fixed.
+- **Preview notifications:** a bell switch beside the language switch plays a chime and shows a browser notification when every preview direction of a project finishes. It is off by default.
+- **MCP asks about optional settings:** `get_idea_options` lists every optional idea setting with its default, and agents ask the user about each one before creating an idea.
+- **Cream Card Explainer Deck (`style-143`):** a cream-paper explainer deck with a walking presenter, a docking side panel and stepped flow diagrams. The catalog now has 143 Motion Graphics.
+
+</details>
+
+<details>
 <summary>2026-11-09</summary>
 
 - **Complete PR checks and Dependabot auto-merge:** every PR runs formatting, lint, build and the full test suite, alongside native Windows verification. All Dependabot ecosystems and version updates qualify after both jobs pass.

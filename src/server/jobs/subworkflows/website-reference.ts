@@ -497,7 +497,7 @@ export async function createLocalReferenceBrowser(
         await Promise.all([...editable.values()].map((take) => take.close().catch(() => {})));
         try {
           try {
-            if (browser.connected) await persistent?.save(browser);
+            if (browser.connected && !signal.aborted) await persistent?.save(browser);
           } finally {
             await browser.close();
           }

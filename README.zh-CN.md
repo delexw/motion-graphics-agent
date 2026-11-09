@@ -38,6 +38,17 @@
 以下日期采用新西兰时间。
 
 <details>
+<summary>2026-11-10</summary>
+
+- **可升级的依赖版本范围，并由 CI 验证：**Python 语音依赖不再固定精确版本，改用到下一个主版本为止的范围（等同 npm 的 `^`）。新增 CI 任务以允许的最新版本全新安装每个语音引擎的依赖库，并在不下载模型的情况下检查其是否仍符合 Kiteva 适配器的调用方式；Dependabot 自动合并现在需要三个 CI 任务全部通过。中文 Pocket TTS 保持在 3.1 以下，因为其模型代码在更新版本上会出错。详见[依赖策略](docs/dependency-security.md)。
+- **安装器支持 Ming TTS：**`./install.sh` 在 Apple Silicon 上默认安装 Ming TTS，`--speech ming` 只安装 Ming。修复了导致 Ming 安装失败的版本不一致问题。
+- **预览完成通知：**语言切换旁新增铃铛开关；项目的所有预览方向完成时播放提示音并显示浏览器通知。默认关闭。
+- **MCP 询问可选设置：**`get_idea_options` 列出每个可选创意设置及其默认值，智能体在创建创意前逐项询问用户。
+- **Cream Card Explainer Deck（`style-143`）：**米色纸质讲解卡片风格，包含行走的讲解人物、停靠的侧边面板和分步流程图。目录现有 143 个 Motion Graphic。
+
+</details>
+
+<details>
 <summary>2026-11-09</summary>
 
 - **完整 PR 检查与 Dependabot 自动合并：**每个 PR 执行格式、lint、构建及全量测试，并保留 Windows 原生验证；所有 Dependabot 生态及版本更新均在两项任务通过后自动合并。

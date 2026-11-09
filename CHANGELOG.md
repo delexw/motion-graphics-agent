@@ -12,7 +12,7 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Changed
 
-- Declare every Python speech requirement as a range up to the next major version (like npm's `^`) instead of an exact version. Dependabot proposes major upgrades as PRs, and a new CI job installs every speech engine at the newest allowed versions and synthesizes with it, so an incompatible upgrade fails before it merges. The Ming runtime check accepts any MLX-Audio release inside its range, and a test rejects exact pins in Python requirements and `package.json`.
+- Declare every Python speech requirement as a range up to the next major version (like npm's `^`) instead of an exact version. Dependabot proposes major upgrades as PRs, and a new CI job installs every speech engine's libraries at the newest allowed versions and checks that they still provide every function, parameter and result shape Kiteva's adapters use. It replaces model objects with fakes, so it downloads no models. An incompatible upgrade fails before it merges. The Ming runtime check accepts any MLX-Audio release inside its range, and a test rejects exact pins in Python requirements and `package.json`.
 
 - The MCP `get_idea_options` tool now lists every optional idea setting with its default, and agents ask the user about each one before `create_idea` instead of silently using defaults.
 
@@ -23,6 +23,10 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 - Use compatible npm dependency ranges, separate daily compatible updates from majors, and monitor Python requirements and GitHub Actions. Keep security alerts enabled.
 
 ### Fixed
+
+- Stopping a project during a website sign-in no longer fails while closing the browser. Closing skipped saving cookies only when the browser had disconnected, so it read cookies from a browser the stop was already shutting down.
+
+- The style suggestion test measures the visible suggestion row once it has a size, instead of the first matching row, which could be one not yet laid out.
 
 - A fresh Mandarin Pocket TTS install picked Pocket TTS 3.3.0, which crashes the community checkpoint's inference code. Its range now stops below 3.1.
 

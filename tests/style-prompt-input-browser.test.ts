@@ -138,10 +138,21 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
         ".style-prompt-suggestions",
         (el) => el.getBoundingClientRect().width,
       );
-      const rowWidth = await page.$eval(
-        '.style-prompt-suggestions [role="menuitemcheckbox"]',
-        (el) => el.getBoundingClientRect().width,
-      );
+      const rowWidth = await (
+        await page.waitForFunction(
+          () =>
+            [
+              ...document.querySelectorAll<HTMLElement>(
+                '.style-prompt-suggestions [role="menuitemcheckbox"]',
+              ),
+            ]
+              .find(
+                (element) =>
+                  element.checkVisibility() && element.textContent?.includes("Vintage Rubber Hose"),
+              )
+              ?.getBoundingClientRect().width || false,
+        )
+      ).jsonValue();
       expect(rowWidth).toBeGreaterThan(popupWidth - 32);
       await page.keyboard.press("ArrowDown");
       await page.keyboard.press("Enter");
