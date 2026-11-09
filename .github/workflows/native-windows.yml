@@ -40,6 +40,31 @@ jobs:
       - name: Reject skipped or missing tests
         run: |
           node --input-type=module -e "import { readFileSync } from 'node:fs'; const r = JSON.parse(readFileSync('test-results.json', 'utf8')); if (!r.success || !r.numTotalTests || r.numPendingTests || r.numTodoTests || r.numPassedTests !== r.numTotalTests) throw Error('Full suite must pass without skipped tests');"
+  speech-dependencies:
+    name: Python speech dependencies
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Install speech prerequisites
+        run: |
+          brew list ffmpeg >/dev/null 2>&1 || brew install ffmpeg
+          command -v uv >/dev/null || brew install uv
+          uv python install 3.11
+          echo "SPEECH_SETUP_PYTHON=$(uv python find 3.11)" >> "$GITHUB_ENV"
+      - name: Kokoro installs and speaks
+        run: npm run speech:setup
+      - name: Pocket TTS installs and speaks
+        run: npm run speech:setup:pocket -- --language english
+      - name: Mandarin Pocket TTS installs and speaks
+        run: npm run speech:setup:pocket:zh
+      - name: Ming TTS installs and passes its readiness check
+        run: npm run speech:setup:ming
   native-windows:
     runs-on: windows-2022
     timeout-minutes: 20

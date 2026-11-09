@@ -32,7 +32,7 @@ Speed and volume use existing application audio processing. They do not add Ming
 
 ## Setup and platform support
 
-Apple Silicon uses a dedicated **MLX-Audio 0.6.4** environment and the pinned `mlx-community/Ming-3.0-tts-0.5B-bf16` checkpoint. Other supported hosts use the upstream NVIDIA CUDA backend. Intel Macs are not supported. Runtime selection is explicit by platform, without a provider fallback. The macOS `install.sh` installs Ming by default on Apple Silicon and skips it on Intel Macs; `./install.sh --speech ming` installs only Ming. The dedicated setup command also works on its own.
+Apple Silicon uses a dedicated **MLX-Audio** environment (0.6.4 or later, below 0.7) and the pinned `mlx-community/Ming-3.0-tts-0.5B-bf16` checkpoint. Other supported hosts use the upstream NVIDIA CUDA backend. Intel Macs are not supported. Runtime selection is explicit by platform, without a provider fallback. The macOS `install.sh` installs Ming by default on Apple Silicon and skips it on Intel Macs; `./install.sh --speech ming` installs only Ming. The dedicated setup command also works on its own.
 
 On Apple Silicon, or a CUDA host with compatible Python, FFmpeg and Node installed:
 
@@ -40,7 +40,7 @@ On Apple Silicon, or a CUDA host with compatible Python, FFmpeg and Node install
 SPEECH_SETUP_PYTHON=python3.11 npm run speech:setup:ming
 ```
 
-The script creates a dedicated `.data/ming-tts-venv`. On Apple Silicon it installs pinned MLX dependencies, checks Metal, and prepares the MLX checkpoint under `models/ming-tts/mlx-checkpoint/`. On CUDA it installs the pinned upstream requirements, checks CUDA before downloading weights, and prepares the managed source/checkpoint under `models/ming-tts/`. Source and model revisions are pinned in the catalog. `MING_TTS_PYTHON` can select an existing compatible environment for inference. A readiness check verifies installed files, pinned revisions, imports, the selected Metal/CUDA backend and the neutral voice contract; it does not render a sample or guarantee available GPU memory. A real synthesis failure reports its actual diagnostic.
+The script creates a dedicated `.data/ming-tts-venv`. On Apple Silicon it installs the MLX dependency ranges from `requirements-mlx.txt`, checks Metal, and prepares the MLX checkpoint under `models/ming-tts/mlx-checkpoint/`. On CUDA it installs the pinned upstream requirements, checks CUDA before downloading weights, and prepares the managed source/checkpoint under `models/ming-tts/`. Source and model revisions are pinned in the catalog. `MING_TTS_PYTHON` can select an existing compatible environment for inference. A readiness check verifies installed files, pinned revisions, imports, the selected Metal/CUDA backend and the neutral voice contract; it does not render a sample or guarantee available GPU memory. A real synthesis failure reports its actual diagnostic.
 
 ## Verification
 

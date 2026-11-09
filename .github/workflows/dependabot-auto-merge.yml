@@ -42,8 +42,8 @@ jobs:
             if [ -z "$run_id" ]; then sleep 15; fi
           done
           gh run watch "$run_id" --exit-status --interval 15
-          # Both jobs must run and pass; skipped jobs never authorize merging.
-          test "$(gh run view "$run_id" --json jobs --jq 'any(.jobs[]; .name == "native-windows" and .conclusion == "success") and any(.jobs[]; .name == "Full test suite, lint and format" and .conclusion == "success") and all(.jobs[]; .conclusion == "success")')" = true
+          # Every job must run and pass; skipped jobs never authorize merging.
+          test "$(gh run view "$run_id" --json jobs --jq 'any(.jobs[]; .name == "native-windows" and .conclusion == "success") and any(.jobs[]; .name == "Full test suite, lint and format" and .conclusion == "success") and any(.jobs[]; .name == "Python speech dependencies" and .conclusion == "success") and all(.jobs[]; .conclusion == "success")')" = true
           gh api "repos/$GH_REPO/pulls/$PR_NUMBER/reviews" --method POST -f event=APPROVE -f commit_id="$HEAD_SHA"
           until gh pr merge "$PR_URL" --squash --match-head-commit "$HEAD_SHA"; do
             state=$(gh pr view "$PR_URL" --json state --jq .state)

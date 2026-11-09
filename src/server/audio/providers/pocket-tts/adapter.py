@@ -2,13 +2,11 @@
 import contextlib
 import sys
 import argparse
-import importlib.metadata
 import json
 import os
 from pathlib import Path
 
 catalog = json.loads((Path(__file__).resolve().parents[5] / "src/shared/pocket-tts-catalog.json").read_text())
-VERSION = catalog["version"]
 languages = {language["model"]: language for language in catalog["languages"] if language["id"] != "zh"}
 parser = argparse.ArgumentParser()
 parser.add_argument("--models", required=True)
@@ -33,8 +31,9 @@ os.environ["TORCH_HOME"] = str(root / "torch")
 if not args.setup:
     os.environ["HF_HUB_OFFLINE"] = "1"
     os.environ["HF_DATASETS_OFFLINE"] = "1"
-if importlib.metadata.version("pocket-tts") != VERSION:
-    raise RuntimeError(f"Install pocket-tts=={VERSION} using the setup command")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from requirement_range import installed_version_within  # noqa: E402
+VERSION = installed_version_within(Path(__file__).with_name("requirements.txt"), "pocket-tts")
 manifest_path = folder / "ready.json"
 if args.setup:
     folder.mkdir(parents=True, exist_ok=True)

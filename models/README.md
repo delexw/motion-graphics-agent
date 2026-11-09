@@ -17,7 +17,7 @@ preserved. The Python environment lives separately in `.data/speech-venv`.
 ## Pocket TTS
 
 [Pocket TTS](https://pypi.org/project/pocket-tts/) is implemented as its own provider
-(`src/server/audio/providers/pocket-tts.ts`), pinned to `pocket-tts==3.3.0`
+(`src/server/audio/providers/pocket-tts.ts`), installed as `pocket-tts>=3.3.0,<4`
 (`scripts/pocket-tts-requirements.txt`).
 
 - `pocket-tts/languages/<language>/`: a local-only `config.yaml`, a `ready.json` readiness manifest and
@@ -32,8 +32,8 @@ preserved. The Python environment lives separately in `.data/speech-venv`.
 
 Run `npm run speech:setup:pocket` to install every language, or
 `npm run speech:setup:pocket -- --language italian` for one. The Python environment lives separately in
-`.data/pocket-tts-venv`. `POCKET_TTS_PYTHON` can point at another environment with the same pinned
-package. Voice cloning isn't exposed.
+`.data/pocket-tts-venv`. `POCKET_TTS_PYTHON` can point at another environment with a supported
+package version. Voice cloning isn't exposed.
 
 ## Shared
 

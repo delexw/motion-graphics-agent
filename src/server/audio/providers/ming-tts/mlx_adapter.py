@@ -1,9 +1,12 @@
 """Apple Silicon Ming 0.5B; shares the exact neutral selection policy with CUDA."""
 import argparse
-import importlib.metadata
 import json
 import os
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from requirement_range import installed_version_within  # noqa: E402
 
 from adapter import synthesis_request
 
@@ -31,15 +34,14 @@ def main():
     parser.add_argument("--output")
     args = parser.parse_args()
     catalog = json.loads(Path(args.catalog).read_text(encoding="utf-8"))
-    if importlib.metadata.version("mlx-audio") != catalog["mlxAudioVersion"]:
-        raise RuntimeError("Ming requires the pinned MLX-Audio runtime; run speech:setup:ming")
+    installed_version_within(Path(__file__).with_name("requirements-mlx.txt"), "mlx-audio")
     import mlx.core as mx
     if not mx.metal.is_available():
         raise RuntimeError("Apple Metal is unavailable for Ming narration")
     root = Path(args.models).resolve()
     checkpoint = root / "mlx-checkpoint"
     manifest_file = root / "ready-mlx.json"
-    identity = {key: catalog[key] for key in ("mlxModel", "mlxRevision", "mlxAudioVersion")}
+    identity = {key: catalog[key] for key in ("mlxModel", "mlxRevision")}
     if args.setup:
         from huggingface_hub import snapshot_download
         snapshot_download(catalog["mlxModel"], revision=catalog["mlxRevision"], local_dir=str(checkpoint))

@@ -224,13 +224,3 @@ print('Reference contract passed')`;
     (await promisify(execFile)("python3", ["-B", "-c", code], { cwd: appRoot })).stdout,
   ).toContain("Reference contract passed");
 });
-
-it("pins the same MLX-Audio version in the setup requirements and the runtime check", async () => {
-  const { readFile } = await import("node:fs/promises");
-  const catalog = JSON.parse(await readFile("src/shared/ming-tts-catalog.json", "utf8"));
-  const requirements = await readFile(
-    "src/server/audio/providers/ming-tts/requirements-mlx.txt",
-    "utf8",
-  );
-  expect(requirements).toMatch(new RegExp(`^mlx-audio==${catalog.mlxAudioVersion}$`, "m"));
-});

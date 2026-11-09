@@ -33,6 +33,7 @@ updates:
       - "**/setup.py"
     schedule:
       interval: daily
+    versioning-strategy: increase-if-necessary
     open-pull-requests-limit: 5
   - package-ecosystem: github-actions
     directory: /

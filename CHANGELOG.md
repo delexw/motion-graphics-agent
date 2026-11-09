@@ -12,6 +12,8 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Changed
 
+- Declare every Python speech requirement as a range up to the next major version (like npm's `^`) instead of an exact version. Dependabot proposes major upgrades as PRs, and a new CI job installs every speech engine at the newest allowed versions and synthesizes with it, so an incompatible upgrade fails before it merges. The Ming runtime check accepts any MLX-Audio release inside its range, and a test rejects exact pins in Python requirements and `package.json`.
+
 - The MCP `get_idea_options` tool now lists every optional idea setting with its default, and agents ask the user about each one before `create_idea` instead of silently using defaults.
 
 - `install.sh` now installs Ming TTS on Apple Silicon by default, and `--speech ming` installs only Ming. Intel Macs skip it.
@@ -22,7 +24,9 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Fixed
 
-- Ming TTS setup failed its runtime check because the catalog pinned MLX-Audio 0.6.2 while setup installed 0.6.4. Both now pin 0.6.4, and a test keeps them in step.
+- A fresh Mandarin Pocket TTS install picked Pocket TTS 3.3.0, which crashes the community checkpoint's inference code. Its range now stops below 3.1.
+
+- Ming TTS setup failed its runtime check because the catalog expected a different MLX-Audio version from the one setup installed. The check now reads the requirements file directly.
 
 - Leave renderer state folders out of published style preview sources.
 

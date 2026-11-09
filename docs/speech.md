@@ -23,13 +23,13 @@ Setup installs Python requirements in ignored `.data/speech-venv`, copies the ex
 
 Each speech engine owns a separate TypeScript implementation under `src/server/audio/providers`, sharing the `SpeechProvider` interface. `kokoro/index.ts` owns interpreter selection, readiness and synthesis; `speech.ts` coordinates scripts, timing, caching and mixing. Renderers do not load speech models.
 
-Pocket TTS has its own `pocket-tts/index.ts` adapter, visible Git-ignored `models/pocket-tts/` directory, and isolated `.data/pocket-tts-venv` Python environment. Install its pinned package (3.3.0), all seven models and 27 preset voice embeddings with:
+Pocket TTS has its own `pocket-tts/index.ts` adapter, visible Git-ignored `models/pocket-tts/` directory, and isolated `.data/pocket-tts-venv` Python environment. Install the package (3.3.0 or later, below 4), all seven models and 27 preset voice embeddings with:
 
 ```sh
 npm run speech:setup:pocket
 ```
 
-Setup downloads all seven official language models, exports all 27 voice states for every language and writes a local-only config plus a readiness manifest per language under `models/pocket-tts/languages/<language>/`. The shared catalog in `src/shared/pocket-tts-catalog.json` supplies both the UI and Python adapter; there is no separate preset subset. To install one language explicitly, use `npm run speech:setup:pocket -- --language italian`. It then synthesizes `.data/pocket-tts-setup.wav`. `POCKET_TTS_PYTHON` can select another environment containing the pinned package. Synthesis loads only local model paths with Hugging Face offline mode enabled; model downloads happen only during explicit setup. A fresh clone needs setup once per engine. Python environments, model weights and voice data remain Git-ignored runtime files.
+Setup downloads all seven official language models, exports all 27 voice states for every language and writes a local-only config plus a readiness manifest per language under `models/pocket-tts/languages/<language>/`. The shared catalog in `src/shared/pocket-tts-catalog.json` supplies both the UI and Python adapter; there is no separate preset subset. To install one language explicitly, use `npm run speech:setup:pocket -- --language italian`. It then synthesizes `.data/pocket-tts-setup.wav`. `POCKET_TTS_PYTHON` can select another environment containing a supported package version. Synthesis loads only local model paths with Hugging Face offline mode enabled; model downloads happen only during explicit setup. A fresh clone needs setup once per engine. Python environments, model weights and voice data remain Git-ignored runtime files.
 
 The Narration / subtitles step keeps script, speed and writing direction when you switch engines, and selects a valid default voice for the new engine. The seven official Pocket languages retain all 27 official voice choices; Mandarin shows all eight compatible synthetic reference voices. `/api/speech/status?engine=pocket-tts&voice=pocket_giovanni` checks the selected language model and retries before reporting unavailable. Listen and generation use the selected engine; neither silently falls back to another model. Pocket speed changes use FFmpeg's pitch-preserving `atempo`, and both providers validate audio before publishing and remove partial files on failure or cancellation. Speech is separate from website capture and from the selected renderer.
 
@@ -48,7 +48,7 @@ npm run speech:setup
 npm run speech:setup:pocket:zh
 ```
 
-The second command installs an isolated `.data/pocket-tts-zh-venv` (Pocket TTS 3.0.2 and PyTorch below 2.10, matching the published int8 format), downloads the pinned community checkpoint and inference files to Git-ignored `models/pocket-tts-zh/`, and generates eight explicitly synthetic Mandarin references using Kokoro. Kokoro uses its native Misaki Chinese frontend, not the English phonemizer. The Chinese model adapter is `src/server/audio/providers/pocket-tts/chinese.ts`; the existing Pocket adapter routes Mandarin requests to it. Runtime inference is offline. `POCKET_TTS_ZH_PYTHON` overrides only this isolated runtime.
+The second command installs an isolated `.data/pocket-tts-zh-venv` (Pocket TTS 3.0.x, because the checkpoint's inference code breaks on 3.1 and later, and PyTorch 2.x from 2.15), downloads the pinned community checkpoint and inference files to Git-ignored `models/pocket-tts-zh/`, and generates eight explicitly synthetic Mandarin references using Kokoro. Kokoro uses its native Misaki Chinese frontend, not the English phonemizer. The Chinese model adapter is `src/server/audio/providers/pocket-tts/chinese.ts`; the existing Pocket adapter routes Mandarin requests to it. Runtime inference is offline. `POCKET_TTS_ZH_PYTHON` overrides only this isolated runtime.
 
 | Female   | Male    |
 | -------- | ------- |
@@ -114,4 +114,4 @@ Legacy `lyrics`, `showLyrics` and `generatedLyrics` fields are normalized when l
 
 ### Ming-3.0-TTS 0.5B
 
-Ming is available as a separate provider with seven target languages and curated built-in male/female voices without emotion variants. Emotion controls and inline expression tags are disabled. Apple Silicon uses the pinned local MLX backend; other supported hosts use upstream CUDA. The dropdown offers all 21 sampled Chinese female voices without emotion variants, plus the existing male and English voices. Setup is explicit with `npm run speech:setup:ming`; the macOS installer does not download this provider. See [Ming setup and neutral inference contract](ming-tts.md).
+Ming is available as a separate provider with seven target languages and curated built-in male/female voices without emotion variants. Emotion controls and inline expression tags are disabled. Apple Silicon uses the local MLX backend; other supported hosts use upstream CUDA. The dropdown offers all 21 sampled Chinese female voices without emotion variants, plus the existing male and English voices. Setup is explicit with `npm run speech:setup:ming`; the macOS installer does not download this provider. See [Ming setup and neutral inference contract](ming-tts.md).

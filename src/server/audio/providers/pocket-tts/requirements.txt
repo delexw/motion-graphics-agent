@@ -1,1 +1,2 @@
-pocket-tts==3.3.0
+pocket-tts>=3.3.0,<4
+packaging>=26.0,<27
