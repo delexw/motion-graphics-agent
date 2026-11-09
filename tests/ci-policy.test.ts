@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { globSync, readFileSync } from "node:fs";
 import { mkdtemp, writeFile, chmod, readFile, rm } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import os from "node:os";
@@ -40,6 +40,18 @@ it("checks every PR without path filters and runs the entire suite alongside nat
   expect(commands).not.toContain("npm test -- tests/");
   expect(commands).toContain("npm run multiplane:setup");
   expect(ci.jobs["native-windows"].steps.some((s) => s.run === "npm run windows:check")).toBe(true);
+});
+
+it("checks every speech requirements file against the adapters without downloading models", () => {
+  const speech = ci.jobs["speech-dependencies"];
+  expect(speech["runs-on"]).toBe("macos-15");
+  const commands = speech.steps.map((s) => s.run ?? "").join("\n");
+  const requirements = globSync("src/server/audio/providers/**/*requirements*.txt");
+  expect(requirements.length).toBeGreaterThan(0);
+  for (const file of requirements) expect(commands).toContain(`-r ${file}`);
+  for (const engine of ["kokoro", "pocket", "pocket-zh", "ming"])
+    expect(commands).toContain(`scripts/check-speech-libraries.py ${engine}`);
+  expect(commands).not.toContain("speech:setup");
 });
 
 it.each([
@@ -107,52 +119,61 @@ it("allows every dependency ecosystem and update size while trusting only same-r
   expect(merge.jobs["auto-merge"].steps.map((s) => s.run).join("\n")).not.toContain("checkout");
 });
 
-it.each(["success", "failure", "skipped", "cancelled", "missing"])(
-  "executes auto-merge with a %s quality job",
-  async (conclusion) => {
-    const folder = await mkdtemp(path.join(os.tmpdir(), "ci-merge-"));
-    try {
-      const jobs = [{ name: "native-windows", conclusion: "success" }];
-      if (conclusion !== "missing")
-        jobs.push({ name: "Full test suite, lint and format", conclusion });
-      await writeFile(path.join(folder, "jobs.json"), JSON.stringify({ jobs }));
-      const gh = path.join(folder, "gh");
-      await writeFile(
-        gh,
-        `#!/usr/bin/env node
+it.each([
+  ["Full test suite, lint and format", "success"],
+  ["Full test suite, lint and format", "failure"],
+  ["Full test suite, lint and format", "skipped"],
+  ["Full test suite, lint and format", "cancelled"],
+  ["Full test suite, lint and format", "missing"],
+  ["Python speech dependencies", "failure"],
+  ["Python speech dependencies", "missing"],
+])("executes auto-merge when the %s job is %s", async (checkedJob, conclusion) => {
+  const folder = await mkdtemp(path.join(os.tmpdir(), "ci-merge-"));
+  try {
+    const jobs = [
+      "native-windows",
+      "Full test suite, lint and format",
+      "Python speech dependencies",
+    ]
+      .map((name) => ({ name, conclusion: name === checkedJob ? conclusion : "success" }))
+      .filter((job) => job.conclusion !== "missing");
+    await writeFile(path.join(folder, "jobs.json"), JSON.stringify({ jobs }));
+    const gh = path.join(folder, "gh");
+    await writeFile(
+      gh,
+      `#!/usr/bin/env node
 const fs=require('node:fs');const {execFileSync}=require('node:child_process');
 const a=process.argv.slice(2);fs.appendFileSync('calls.jsonl',JSON.stringify(a)+'\\n');
 if(a[0]==='run'&&a[1]==='list') console.log('123');
 else if(a[0]==='run'&&a[1]==='view') process.stdout.write(execFileSync('jq',[a[a.indexOf('--jq')+1],'jobs.json']));
 else if(a[0]==='pr'&&a[1]==='merge'&&!a.includes('--match-head-commit')) process.exit(1);
 `,
-      );
-      await chmod(gh, 0o755);
-      const command = merge.jobs["auto-merge"].steps[0].run!;
-      const result = spawnSync("bash", ["-e", "-c", command], {
-        cwd: folder,
-        encoding: "utf8",
-        timeout: 10000,
-        env: {
-          ...process.env,
-          PATH: `${folder}${path.delimiter}${process.env.PATH}`,
-          HEAD_SHA: "checked-sha",
-          PR_URL: "https://example.com/pull/1",
-          PR_NUMBER: "1",
-          GH_REPO: "example/my-app",
-          BASE_BRANCH: "main",
-        },
-      });
-      const calls = await readFile(path.join(folder, "calls.jsonl"), "utf8");
-      expect(result.status === 0).toBe(conclusion === "success");
-      expect(calls.includes('"merge"')).toBe(conclusion === "success");
-      expect(calls.includes("event=APPROVE")).toBe(conclusion === "success");
-      if (conclusion === "success") {
-        expect(calls).toContain('"--match-head-commit","checked-sha"');
-        expect(calls).toContain('"workflow","run","native-windows.yml","--ref","main"');
-      }
-    } finally {
-      await rm(folder, { recursive: true, force: true });
+    );
+    await chmod(gh, 0o755);
+    const command = merge.jobs["auto-merge"].steps[0].run!;
+    const result = spawnSync("bash", ["-e", "-c", command], {
+      cwd: folder,
+      encoding: "utf8",
+      timeout: 10000,
+      env: {
+        ...process.env,
+        PATH: `${folder}${path.delimiter}${process.env.PATH}`,
+        HEAD_SHA: "checked-sha",
+        PR_URL: "https://example.com/pull/1",
+        PR_NUMBER: "1",
+        GH_REPO: "example/my-app",
+        BASE_BRANCH: "main",
+      },
+    });
+    const calls = await readFile(path.join(folder, "calls.jsonl"), "utf8");
+    expect(result.status === 0).toBe(conclusion === "success");
+    expect(calls.includes('"merge"')).toBe(conclusion === "success");
+    expect(calls.includes("event=APPROVE")).toBe(conclusion === "success");
+    if (conclusion === "success") {
+      expect(calls).toContain('"--match-head-commit","checked-sha"');
+      expect(calls).toContain('"workflow","run","native-windows.yml","--ref","main"');
     }
-  },
-);
+  } finally {
+    await rm(folder, { recursive: true, force: true });
+  }
+});

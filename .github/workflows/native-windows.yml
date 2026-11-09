@@ -43,28 +43,30 @@ jobs:
   speech-dependencies:
     name: Python speech dependencies
     runs-on: macos-15
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - name: Install speech prerequisites
+      - run: command -v uv >/dev/null || brew install uv
+      - name: Kokoro libraries match Kiteva's adapters
         run: |
-          brew list ffmpeg >/dev/null 2>&1 || brew install ffmpeg
-          command -v uv >/dev/null || brew install uv
-          uv python install 3.11
-          echo "SPEECH_SETUP_PYTHON=$(uv python find 3.11)" >> "$GITHUB_ENV"
-      - name: Kokoro installs and speaks
-        run: npm run speech:setup
-      - name: Pocket TTS installs and speaks
-        run: npm run speech:setup:pocket -- --language english
-      - name: Mandarin Pocket TTS installs and speaks
-        run: npm run speech:setup:pocket:zh
-      - name: Ming TTS installs and passes its readiness check
-        run: npm run speech:setup:ming
+          uv venv --python 3.11 "$RUNNER_TEMP/kokoro"
+          uv pip install --python "$RUNNER_TEMP/kokoro/bin/python" -r src/server/audio/providers/kokoro/requirements.txt
+          "$RUNNER_TEMP/kokoro/bin/python" -I scripts/check-speech-libraries.py kokoro
+      - name: Pocket TTS libraries match Kiteva's adapters
+        run: |
+          uv venv --python 3.11 "$RUNNER_TEMP/pocket"
+          uv pip install --python "$RUNNER_TEMP/pocket/bin/python" -r src/server/audio/providers/pocket-tts/requirements.txt
+          "$RUNNER_TEMP/pocket/bin/python" -I scripts/check-speech-libraries.py pocket
+      - name: Mandarin Pocket TTS libraries match Kiteva's adapters
+        run: |
+          uv venv --python 3.11 "$RUNNER_TEMP/pocket-zh"
+          uv pip install --python "$RUNNER_TEMP/pocket-zh/bin/python" -r src/server/audio/providers/pocket-tts/chinese-requirements.txt
+          "$RUNNER_TEMP/pocket-zh/bin/python" -I scripts/check-speech-libraries.py pocket-zh
+      - name: Ming TTS libraries match Kiteva's adapters
+        run: |
+          uv venv --python 3.11 "$RUNNER_TEMP/ming"
+          uv pip install --python "$RUNNER_TEMP/ming/bin/python" -r src/server/audio/providers/ming-tts/requirements-mlx.txt
+          "$RUNNER_TEMP/ming/bin/python" -I scripts/check-speech-libraries.py ming
   native-windows:
     runs-on: windows-2022
     timeout-minutes: 20
