@@ -47,3 +47,16 @@ it("preserves continuous visibility tracking for existing consumers", () => {
   expect(state.setVisible).toHaveBeenLastCalledWith(false);
   expect(disconnect).not.toHaveBeenCalled();
 });
+it("uses the newest entry when the browser delivers several changes together", () => {
+  useViewportVisibility({ current: {} as Element });
+  notify([
+    { isIntersecting: false, intersectionRatio: 0 },
+    { isIntersecting: true, intersectionRatio: 1 },
+  ]);
+  expect(state.setVisible).toHaveBeenLastCalledWith(true);
+  notify([
+    { isIntersecting: true, intersectionRatio: 1 },
+    { isIntersecting: false, intersectionRatio: 0 },
+  ]);
+  expect(state.setVisible).toHaveBeenLastCalledWith(false);
+});

@@ -9,7 +9,8 @@ export function useViewportVisibility(
     const element = ref.current;
     if (!element) return;
     const observer = new IntersectionObserver(
-      ([entry]) => {
+      (entries) => {
+        const entry = entries[entries.length - 1];
         const inView = entry.isIntersecting && entry.intersectionRatio >= threshold;
         setVisible(inView);
         if (inView && once) observer.disconnect();

@@ -24,6 +24,8 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Fixed
 
+- Style previews could stay paused with no video after opening. When the browser was busy it delivered several visibility changes at once, and the viewport visibility check read the oldest one. It now reads the newest.
+
 - Stopping a project during a website sign-in no longer fails while closing the browser. Closing skipped saving cookies only when the browser had disconnected, so it read cookies from a browser the stop was already shutting down.
 
 - The style suggestion test measures the visible suggestion row once it has a size, instead of the first matching row, which could be one not yet laid out.
