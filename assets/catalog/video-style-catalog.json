@@ -35864,6 +35864,197 @@
         }
       },
       "combination_guidance_provenance": "Editing-agent integration of the Opus design: standalone default; no unreviewed pairings asserted."
+    },
+    {
+      "id": "style-143",
+      "name_en": "Cream Card Explainer Deck",
+      "category": "Motion Design and Cinematography",
+      "visual_cues": "Warm product-explainer deck on a flat cream paper ground with faint hairline layout guides. Illustrated beats are busy, readable presenter scenes in flat monoline cartoon drawing (thick near-black outlines, white and cream fills, one leaf-green original character): the character walks in with visible steps, points, turns and reacts while content keeps changing inside a device or board, headline lines rise in from below with a brief blur as they darken from grey, and supporting figures dissolve out as new elements enter. Connected transitions carry elements into the next layout: a white side panel slides in from the edge and docks into the device as it scales up into a large white rounded card with a soft warm shadow, a fast zoom-through enters a screen, or a horizontal card push changes chapter. Card and diagram chapters are calmer: a lower-third pairs a small mascot avatar with a bold near-black caption whose last phrase turns deep green; diagrams use hairline white nodes with icon tiles, dotted connectors, saturated lime pills with one black pill, a pale peach caption bar and a page counter, stepping one active node at a time with a travelling dot. An end card centres a heavy olive wordmark with a leading green dot.",
+      "note": "Built from the motion-design system of a user-supplied product explainer. Revision r2 (after the user found the first preview too static) adds the source's measured motion density: its illustrated opener changes 5 to 25 percent of the frame in each one-second window through character performance, in-device content motion, layered entrances and exits and a panel-dock transition, while its card chapters are calm. The source's product, brand, mascot design, copy, workflow and screens are excluded; content, characters and copy always come from the project. Hex values are samples from compressed frames; easing is inferred from frame sampling, not measured keyframes.",
+      "provenance": "authored",
+      "executable_prompt_template": "Create an original motion-graphic video in the Cream Card Explainer Deck style about {{subject}} for {{audience_and_objective}}. Duration {{duration_seconds}} seconds, aspect ratio {{aspect_ratio}}, resolution {{resolution}}, frame rate {{frame_rate}}. On-screen copy and assets are exactly {{assets_and_exact_copy}}: use that copy verbatim and in order, add no other words, product names, logos, signatures or watermarks, and invent no interface, data or claims. Rhythm and audio: {{audio_or_rhythm_requirements}}; without a timing map, author an even schedule with a settled reading hold before every change and claim no audio sync.\n\nLOOK. A calm, friendly product-explainer deck with a lively illustrated opening. Ground: flat warm cream paper #f9efde, no gradient, grain or vignette, optionally crossed edge to edge by a few hairline layout guides in #e6e1d7 (one horizontal floor line and one or two vertical frame lines that run past the content like design-canvas guides). Cards are white #fcfeff with a corner radius of about 1.2 percent of frame width and a soft, wide, warm shadow (#d8d2c0 at the lower edge, blur about 3 percent of frame height, offset slightly down); a settled card fills about 78 percent of frame width and about 78 percent of frame height, centred horizontally with its top about 5 percent below the frame edge, leaving a cream band below for the lower-third. Never place content on a dark ground; the only black is small type, outlines, icon tiles and one contrast pill.\n\nREGISTERS. Choose two to five of these per piece from the subject and copy; the order is a suggestion, not a fixed template.\n(1) ILLUSTRATED HOOK: flat monoline cartoon drawing directly on the cream ground: thick rounded near-black #2b2c27 outlines (about 0.5 percent of frame height), white and cream fills, flat simple props such as a device, board or simple subject objects, and one original character whose body is leaf green #8fbd69 with a black outline, dot eyes and thin stick limbs. Up to three stacked headline lines sit top-left. This register carries most of the motion (see CHOREOGRAPHY).\n(2) TITLE CARD: on bare cream, a small leading mark plus a short label line, a two- or three-line bold statement left of centre and the character on the right, with a few faint four-point sparkles and small outline rings in tan #f2dec0 scattered in the margins.\n(3) CARD SHOWCASE: one floating white card holding the project's own supplied screen, image or a flat illustrated stand-in, with the lower-third below it.\n(4) FLOW DIAGRAM: inside one white card, optionally a header row with a small grey chapter number, a heavy tight title and a grey subtitle on one baseline; two to four columns or steps, optionally under tracked uppercase monospace micro-labels in grey #9a9a90; nodes are white rounded rectangles with a 1 px hairline #dedbd2 border, each led by a small rounded-square icon tile (lime #81e755 or black #171717) and a bold title, optionally over a small grey detail line; outer results use saturated lime #81e755 pills with black text and at most one black #171717 pill with white text; steps are joined by dotted grey connectors with tiny arrowheads and optional small grey monospace edge labels; optionally a pale peach #faf3ea caption bar sits centred near the card bottom and a small monospace page counter sits bottom right.\n(5) END CARD: on bare cream, a centred heavy dark olive #3c4230 wordmark-sized title with a leading green #93b966 dot, a second line in muted grey with its key phrase in deep green #4e842a, then a short hairline rule, a small grey tagline with green accent words and a tiny tracked monospace footer.\nLOWER-THIRD. In card showcase and flow-diagram chapters, a lower-third sits left-aligned at the card's left edge in the cream band below it: a small mascot avatar (the same original character, about 9 percent of frame height, idling with a slight bob or wave), then a bold near-black #1a1e0f caption at about 4 percent of frame height whose final key phrase is deep green #4e842a, over a smaller line with a bold green label, a middle dot and a grey #8e8f7c description. The lower-third belongs to its card: it moves with the card during a push and changes only at a chapter change. Illustrated hooks use the full-size character instead of the lower-third.\n\nTYPE. System neo-grotesk only (font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; no font files): heavy weight with slightly tight tracking for headlines and titles, regular or medium for detail lines, sentence case throughout; monospace (ui-monospace, Menlo, monospace) only for tiny tracked uppercase labels, edge labels and counters. Ink #1a1e0f on cream and white; muted copy in grey; green only for the key phrase or label, never for whole paragraphs. Keep generous left alignment; nothing is centred except the end card and the diagram caption bar.\n\nCHOREOGRAPHY AND MOTION DENSITY. The illustrated hook is busy but readable: at every moment at least one meaningful, subject-related change is visible, and two or three layers usually move at once on overlapping schedules. Card and diagram chapters are calmer: one focus change at a time with reading holds. Nothing bounces elastically, spins or shakes; there is no camera wobble, parallax drift, decorative particle noise or tiny looping jiggle. Durations are authored defaults inferred from the source and scale with the brief.\n- Presenter character: it enters from a frame edge (peeking first if time allows) and walks with visible alternating steps and a small vertical bob, stops to point at the thing being explained, turns its eyes and body toward each new element, and reacts with small expression changes (blink, open mouth, smile) and gestures (point, wave). It never covers type.\n- Content inside the subject: whatever the character presents keeps changing in a way that explains it: a device screen scrolls or swaps content, an object assembles, a field draws open and fills with typed text, nodes branch out with their connectors drawing along. Change carries meaning; never animate filler.\n- Layered entrances and exits: new elements enter while old ones leave on overlapping schedules of about 0.2 to 0.4 s; a supporting figure or prop dissolves to transparency as the next element arrives; chips, rows and nodes appear one after another about 0.12 to 0.4 s apart with a short fade, a slide of about 2 percent of frame height and a 2 to 4 percent scale-up; a choice that becomes selected fills lime or green in about 0.2 s.\n- Headline lines: each line rises about 2 to 3 percent of frame height from below with a brief vertical motion blur while fading in from pale grey #b5b1a2 to ink, about 0.35 to 0.5 s (ease-out), lines about 0.4 to 0.6 s apart and never all at once; a replaced headline cross-dissolves into the next over about 0.4 s.\n- Connected transitions (move elements into the next layout instead of cutting): (a) Panel dock: a white side panel slides in from the right edge, then the presented device or board scales up and recentres while the panel slides onto it and merges into one large white card, over about 0.6 to 0.8 s (ease-in-out); elements that persist travel to their new places in the card, keeping their identity. (b) Zoom-through: a fast push of about 0.3 s into a screen or card that resolves through a light cream wash into the next layout. (c) Chapter push: the whole card together with its lower-third slides left out of frame while the next card enters from the right with a cream gap, about 0.6 to 0.8 s with a slow start, fast middle and short settle (close to power2.inOut); the incoming lower-third fades in about 0.3 to 0.4 s after the card lands. (d) Soft dissolve between registers over about 0.5 to 0.8 s, optionally with a brief soft blur on the outgoing layer.\n- Diagram stepping: exactly one node is active at a time (pale peach #faf3ea tint with a 2 px green #8fbd69 outline, or a 2 px black outline on a lime pill); a small black dot travels along the dotted connector to the next node over about 0.3 to 0.6 s (ease-in-out) before the active state moves; dependent elements, counters and the caption bar update with each step; hold each step long enough to read.\n- End card: the last card fades out to cream over about 0.8 s while the title fades in; the rule, tagline and footer follow about 0.8 s later; then hold.\n\nCOMPOSITION FOR SHORT PIECES. A piece of 6 seconds or less compresses the source rhythm into three beats: an illustrated hook in which the character presents the subject while it visibly changes, one connected transition (panel dock preferred, or chapter push), then a card or diagram chapter with its lower-third that steps at least once and ends on a readable hold of at least 0.25 s. Keep the hook headline readable for at least 0.7 s. Longer pieces add the other registers as the subject needs and end on the end card when the copy includes a closing title. Two headlines are never fully readable at once except during a dissolve.\n\nTECHNICAL CONTRACT (mandatory). Write complete sources directly; do not inspect other files or run unrelated checks. Write a single standalone index.html in the current composition input workspace; encoded outputs belong in {{output_directory}}; capture, validation, poster export and sampling follow {{render_pipeline}}, a project-level procedure this style does not choose, including any root element attributes, timeline registration and seek events it requires. Load only the local gsap.min.js in the same folder (script src=gsap.min.js); no network, CDNs, web fonts, external or source images, CSS animations or transitions, setTimeout, setInterval, requestAnimationFrame loops, Date or performance clocks, or Math.random. Draw all illustration, icons and connectors in one inline SVG with a viewBox matching {{resolution}}; lay out cards, shadows (CSS box-shadow) and all text as HTML/CSS over it, or draw text in the same SVG when exactness matters; reflow proportionally if {{aspect_ratio}} is not 16:9. Build exactly one paused GSAP timeline, fully constructed at load, of total duration {{duration_seconds}}; its only tween is a linear proxy tween from t=0 to t=duration whose onUpdate calls render(t). render(t) clamps t and sets every visible property (positions, opacities, colours, limb angles, card geometry, active states, dot positions and text swaps) as a pure function of absolute t with named easing functions, resetting all visual state, so direct, forward, backward and repeated seeks give identical output. Call render(0) on load. Define window.exportPoster = function(t) that calls render(t) and returns a standalone SVG string of that exact frame: same layout, cards with an equivalent SVG shadow, illustration and every visible text item drawn as SVG text, no scripts, no raster or base64 embedding, under 150000 characters. poster.svg is written only from exportPoster. Before finishing, check that every copy item appears exactly once in order with no extra copy, the cream ground and white cards keep their roles, the lower-third stays attached to its card, at most one diagram node is active, something meaningful moves in every part of the hook, no frame is empty, and render(t) is identical forward, backward and direct.\nReviewed technology choice: One inline SVG (viewBox from the project resolution) holds every drawn element: the original monoline guide character built from limb groups rotating around fixed pivots (stepping legs, pointing and waving arms, blinking eyes, mouth shapes), the presented device or board and its changing content, icon tiles, dotted connectors whose visible length is set with stroke-dasharray and stroke-dashoffset, sparkles and rings. HTML/CSS lays out the white cards with a CSS box-shadow and all copy as real text in a system neo-grotesk, with monospace only for micro-labels and counters. GSAP owns time: one paused timeline whose single linear proxy tween calls a pure render(t), which computes from absolute time the walk cycle and gestures, content changes inside the subject, staggered layered entrances and exits, headline rise with a brief blur filter, card geometry for the panel dock (ease-in-out), element travel into the card, the single active diagram node and the dot's position along its connector, so any seek is exact. window.exportPoster(t) serialises the same frame as standalone SVG with an SVG shadow filter and SVG text. chroma.js checks ink, grey and green contrast offline only. In full videos, Cytoscape.js or D3 may compute layouts for larger diagrams or supplied data charts, GSAP DrawSVGPlugin or @remotion/paths may draw or follow curved connectors, and librosa may precompute a timing map from supplied audio; the preview uses none of these. The look is a clean vector deck: flat fills, thick even outlines, crisp hairlines and real text on cream and white, with a busy illustrated opener. SVG keeps drawing, limb groups and connectors sharp at any resolution, lets connector draw-ons and limb rotations be plain attributes of t, and makes the poster an exact vector frame; HTML/CSS gives measurable, readable type and the soft warm card shadow cheaply. A single GSAP proxy driving a pure render(t) gives one owner per property and identical forward, backward and direct seeks across many overlapping tracks (walk cycle, gestures, entrances, exits, dock, travelling dot).\n\nAlternatives and tradeoffs:\n- Canvas 2D, p5.js and PixiJS rasterise the vector look and add a second renderer for shapes SVG already draws.\n- Motion and Anime.js would compete with GSAP; mo.js bursts contradict the calm, non-bouncing motion.\n- Cytoscape.js and D3 help only when diagrams or supplied data grow beyond a hand-authored layout.\n- DrawSVGPlugin and @remotion/paths help with curved paths in full videos; straight dotted connectors are drawn on with dasharray arithmetic in the preview.\n- librosa is for supplied audio timing only; live Web Audio analysis is not deterministic.\n- Rough.js, halftone, hatching, grain and noise tools contradict the clean flat medium; 3D, lighting, PBR, toon and bloom tools contradict its flatness.\n- Raster asset workflows are unnecessary: everything is code-drawn, and any project screen is supplied media placed inside a card.\n\nPalette roles are preserved: cream ground, white cards, near-black ink, three distinct greens, signal lime with one black pill, pale peach caption bar.",
+      "palette": {
+        "tokens": {
+          "background": "#f9efde",
+          "foreground": "#1a1e0f",
+          "cream_paper": "#f9efde",
+          "guide_line": "#e6e1d7",
+          "card_white": "#fcfeff",
+          "card_shadow": "#d8d2c0",
+          "outline_ink": "#2b2c27",
+          "character_green": "#8fbd69",
+          "accent_green": "#4e842a",
+          "signal_lime": "#81e755",
+          "node_black": "#171717",
+          "node_hairline": "#dedbd2",
+          "peach_wash": "#faf3ea",
+          "sparkle_tan": "#f2dec0",
+          "ink_up_start": "#b5b1a2",
+          "muted_text": "#8e8f7c",
+          "micro_label": "#9a9a90",
+          "wordmark_olive": "#3c4230",
+          "dot_green": "#93b966"
+        },
+        "constraints": [
+          "Cream paper is the only full-frame ground; white is for cards and nodes; no dark or gradient grounds.",
+          "Green has three roles: character green for the original character and active outlines, accent green for key phrases and labels, and signal lime for outer-column pills, icon tiles and selected chips.",
+          "Black is limited to type, outlines, icon tiles and at most one contrast pill per diagram.",
+          "Pale peach is only the diagram caption bar and active-node tint; tan is only faint sparkles and rings.",
+          "Type is near-black ink on cream or white with muted grey for secondary copy; green never colours a whole paragraph.",
+          "Hex values are samples from compressed frames of the source, not exact brand colours."
+        ],
+        "background_policy": "scene_dependent"
+      },
+      "audio_direction": {
+        "prompt": "Typical use is a voice-over or calm music bed under a product or process explainer; chapter pushes, line reveals and diagram steps can land on supplied narration or beat timings. No source audio was analysed or reused; without a timing map, keep an even authored pace with reading holds and claim no sync."
+      },
+      "motion_references": {
+        "required": false,
+        "selection_policy": "Use the UI recompose for the panel dock, the chapter handoff for card-to-card changes and the data build for diagram chapters; omit them for a single-card hold.",
+        "candidates": [
+          {
+            "motion_id": "motion-026",
+            "usage_guidance": "Use for the panel dock: the presented device or board keeps its identity while it scales up and recentres into the white card, a side panel slides onto it and merges, and persisting elements travel to their new places in the card over about 0.6 to 0.8 s (ease-in-out)."
+          },
+          {
+            "motion_id": "motion-012",
+            "usage_guidance": "Use as the chapter push: the outgoing card and its lower-third slide left as one group while the incoming card enters from the right with a cream gap, slow start, fast middle and short settle over about 0.6 to 0.8 s; the incoming lower-third fades in after the card lands."
+          },
+          {
+            "motion_id": "motion-030",
+            "usage_guidance": "Use for flow-diagram chapters: build nodes before connectors and labels, then step a single active node with a small dot travelling along the dotted connector while dependent elements, the caption bar and the page counter update from the same step state."
+          }
+        ]
+      },
+      "tech": {
+        "recommended_stack_keys": ["svg", "html_css", "gsap", "chroma_js"],
+        "implementation": "One inline SVG (viewBox from the project resolution) holds every drawn element: the original monoline guide character built from limb groups rotating around fixed pivots (stepping legs, pointing and waving arms, blinking eyes, mouth shapes), the presented device or board and its changing content, icon tiles, dotted connectors whose visible length is set with stroke-dasharray and stroke-dashoffset, sparkles and rings. HTML/CSS lays out the white cards with a CSS box-shadow and all copy as real text in a system neo-grotesk, with monospace only for micro-labels and counters. GSAP owns time: one paused timeline whose single linear proxy tween calls a pure render(t), which computes from absolute time the walk cycle and gestures, content changes inside the subject, staggered layered entrances and exits, headline rise with a brief blur filter, card geometry for the panel dock (ease-in-out), element travel into the card, the single active diagram node and the dot's position along its connector, so any seek is exact. window.exportPoster(t) serialises the same frame as standalone SVG with an SVG shadow filter and SVG text. chroma.js checks ink, grey and green contrast offline only. In full videos, Cytoscape.js or D3 may compute layouts for larger diagrams or supplied data charts, GSAP DrawSVGPlugin or @remotion/paths may draw or follow curved connectors, and librosa may precompute a timing map from supplied audio; the preview uses none of these.",
+        "library_selection": "The look is a clean vector deck: flat fills, thick even outlines, crisp hairlines and real text on cream and white, with a busy illustrated opener. SVG keeps drawing, limb groups and connectors sharp at any resolution, lets connector draw-ons and limb rotations be plain attributes of t, and makes the poster an exact vector frame; HTML/CSS gives measurable, readable type and the soft warm card shadow cheaply. A single GSAP proxy driving a pure render(t) gives one owner per property and identical forward, backward and direct seeks across many overlapping tracks (walk cycle, gestures, entrances, exits, dock, travelling dot).\n\nAlternatives and tradeoffs:\n- Canvas 2D, p5.js and PixiJS rasterise the vector look and add a second renderer for shapes SVG already draws.\n- Motion and Anime.js would compete with GSAP; mo.js bursts contradict the calm, non-bouncing motion.\n- Cytoscape.js and D3 help only when diagrams or supplied data grow beyond a hand-authored layout.\n- DrawSVGPlugin and @remotion/paths help with curved paths in full videos; straight dotted connectors are drawn on with dasharray arithmetic in the preview.\n- librosa is for supplied audio timing only; live Web Audio analysis is not deterministic.\n- Rough.js, halftone, hatching, grain and noise tools contradict the clean flat medium; 3D, lighting, PBR, toon and bloom tools contradict its flatness.\n- Raster asset workflows are unnecessary: everything is code-drawn, and any project screen is supplied media placed inside a card.\n\nPalette roles are preserved: cream ground, white cards, near-black ink, three distinct greens, signal lime with one black pill, pale peach caption bar.",
+        "style_renderer": {
+          "recommended_stack_refs": ["SVG", "HTML/CSS"]
+        },
+        "motion_engine": {
+          "recommended_stack_refs": ["GSAP"]
+        },
+        "render_pipeline": "Composition and export follow the project renderer setting and are excluded from Motion Graphic technology selection.",
+        "stack_overrides": {
+          "svg": {
+            "values": {
+              "style_application": "Warm product-explainer deck on a flat cream paper ground with faint hairline layout guides. Illustrated beats are busy, readable presenter scenes in flat monoline cartoon drawing (thick near-black outlines, white and cream fills, one leaf-green original character): the character walks in with visible steps, points, turns and reacts while content keeps changing inside a device or board, headline lines rise in from below with a brief blur as they darken from grey, and supporting figures dissolve out as new elements enter. Connected transitions carry elements into the next layout: a white side panel slides in from the edge and docks into the device as it scales up into a large white rounded card with a soft warm shadow, a fast zoom-through enters a screen, or a horizontal card push changes chapter. Card and diagram chapters are calmer: a lower-third pairs a small mascot avatar with a bold near-black caption whose last phrase turns deep green; diagrams use hairline white nodes with icon tiles, dotted connectors, saturated lime pills with one black pill, a pale peach caption bar and a page counter, stepping one active node at a time with a travelling dot. An end card centres a heavy olive wordmark with a leading green dot."
+            },
+            "remove": []
+          },
+          "html_css": {
+            "values": {
+              "style_application": "Warm product-explainer deck on a flat cream paper ground with faint hairline layout guides. Illustrated beats are busy, readable presenter scenes in flat monoline cartoon drawing (thick near-black outlines, white and cream fills, one leaf-green original character): the character walks in with visible steps, points, turns and reacts while content keeps changing inside a device or board, headline lines rise in from below with a brief blur as they darken from grey, and supporting figures dissolve out as new elements enter. Connected transitions carry elements into the next layout: a white side panel slides in from the edge and docks into the device as it scales up into a large white rounded card with a soft warm shadow, a fast zoom-through enters a screen, or a horizontal card push changes chapter. Card and diagram chapters are calmer: a lower-third pairs a small mascot avatar with a bold near-black caption whose last phrase turns deep green; diagrams use hairline white nodes with icon tiles, dotted connectors, saturated lime pills with one black pill, a pale peach caption bar and a page counter, stepping one active node at a time with a travelling dot. An end card centres a heavy olive wordmark with a leading green dot."
+            },
+            "remove": []
+          },
+          "gsap": {
+            "values": {
+              "style_application": "Use this tool only for its documented role within the reviewed implementation; preserve this style's palette and material constraints."
+            },
+            "remove": []
+          },
+          "chroma_js": {
+            "values": {
+              "style_application": "Use this tool only for its documented role within the reviewed implementation; preserve this style's palette and material constraints."
+            },
+            "remove": []
+          }
+        },
+        "stack_property_order": {},
+        "technology_review": {
+          "sourceHash": "7237688c103efaa9538dbd9b10faba43167905e571ba03ded21dcb9f33e19287",
+          "model": "claude-opus-5-5",
+          "poolEntriesAssessed": 88,
+          "checkpoint": "technology-reviews/7237688c103efaa9538dbd9b10faba43167905e571ba03ded21dcb9f33e19287/review.json"
+        }
+      },
+      "source_evidence": {
+        "source": "User-supplied 108.03-second 1920x1080 30 fps product-explainer video with an audio track; only its motion design was studied. Its product, brand, mascot, copy, workflow and screens are not reproduced.",
+        "model": "claude-opus-5-5",
+        "method": "ffprobe metadata; ffmpeg scene-change scan; 1 fps contact sheets for the whole duration; dense sequences at 6 fps (0-3 s, 2.5-5.5 s, 19.5-22.5 s, 76-79 s, 96-99 s), 7.5 fps (8.8-11.2 s), 10 fps (54.6-56.4 s, 60.3-62.1 s), 15 fps (76.9-78.1 s) and 2 fps diagram crops (85-94 s); full-resolution key frames; pixel colour sampling and a per-frame card-edge scan of the 60.5 s chapter push. Audio was not played or analysed. Revision r2 added 10 fps sequences of 0-2.4 s (laptop crop), 8 fps of 3-6 s and 12 fps of 5.4-6.9 s, and a per-window changed-pixel measurement (320x180 greyscale, change threshold 12/255) over the whole video.",
+        "observed_seconds": [
+          0.5, 1, 2.5, 3.2, 3.9, 4, 4.5, 5.5, 5.6, 5.9, 6.3, 7, 9.3, 9.6, 10.5, 13, 18, 20.3, 21,
+          25, 55.4, 60.5, 61.2, 77.2, 78, 85, 90, 97, 101.5, 104
+        ],
+        "limitations": [
+          "Easing curves and durations are inferred from sampled frames (at best 30 fps edge scans), not from keyframe data.",
+          "Hex values are sampled from compressed H.264 frames and may differ slightly from the original colours.",
+          "Most of 21-77 s shows recorded screens inside the card; only their framing, card behaviour and lower-third were studied.",
+          "No audio was analysed; no tempo or sync claim is made.",
+          "The source's mascot design, product names, copy and interface are deliberately excluded; the style requires an original character and project-supplied content.",
+          "Motion density figures are changed-pixel fractions of downscaled greyscale frames; they compare activity, not perceived quality."
+        ]
+      },
+      "suggested_combinations": {
+        "selection_guidance": "Use alone by default: cards, lower-third, illustrated hooks, flow diagrams and end card already cover a full explainer. Add a support style only for a role this style does not cover, drawn in this style's cream, white, ink and green roles.",
+        "suggestions": [
+          {
+            "supporting_styles": [
+              {
+                "style_id": "style-109",
+                "role": "connector and path drawing"
+              }
+            ],
+            "rationale": "Line-art draw-ons can make diagram connectors and process paths carry the sequence while this style keeps its cards, nodes and palette.",
+            "best_for": "Process, pipeline and how-it-works explainers.",
+            "video_application": "Draw the dotted connectors on in reading order before the active-node steps begin.",
+            "html_application": "Animate SVG stroke-dashoffset on connector paths as a pure function of t inside the diagram card.",
+            "consistency_rules": [
+              "Connectors stay thin, grey and dotted.",
+              "Nodes appear before the connectors that join them.",
+              "No glow or colour-cycling strokes."
+            ],
+            "avoid": ["Decorative tangles that do not join real nodes.", "Neon or thick strokes."]
+          },
+          {
+            "supporting_styles": [
+              {
+                "style_id": "style-097",
+                "role": "verified data inset"
+              }
+            ],
+            "rationale": "When the explainer carries real figures, a data layer adds verified values while the card deck frames and paces them.",
+            "best_for": "Product results, reports and comparisons with supplied numbers.",
+            "video_application": "Place one chart per card in lime, black and grey, revealed with the element build and labelled with the lower-third.",
+            "html_application": "Draw charts in the card's SVG and set values as real text.",
+            "consistency_rules": [
+              "Values come only from supplied data.",
+              "Charts sit on white cards, never on the cream ground.",
+              "Use signal lime and node black only."
+            ],
+            "avoid": ["Invented or rounded-up numbers.", "Glossy dashboard styling."]
+          },
+          {
+            "supporting_styles": [
+              {
+                "style_id": "style-091",
+                "role": "character performance"
+              }
+            ],
+            "rationale": "Rigged character animation can give the original guide character richer gestures in illustrated hooks while keeping the flat monoline drawing.",
+            "best_for": "Friendly onboarding and brand-light explainers that lean on a guide character.",
+            "video_application": "Rig the character's limbs and face for points, waves and reactions in the hook and title card.",
+            "html_application": "Rotate SVG limb groups around fixed pivots from render(t).",
+            "consistency_rules": [
+              "Keep thick black outlines and flat character green.",
+              "Gestures stay small and never cover type.",
+              "Use an original character only."
+            ],
+            "avoid": ["Squash-and-stretch bounces.", "Copying an existing mascot."]
+          }
+        ],
+        "review": {
+          "model": "claude-opus-5-5",
+          "reviewed_on": "2026-11-09",
+          "candidates_reviewed": 142,
+          "session_id": null,
+          "session_id_note": "The authoring session ID is not exposed to the author; not invented."
+        }
+      },
+      "combination_guidance_provenance": "Claude Opus 5.5 authored from the source motion-design analysis: standalone default; supporting styles chosen only for roles this style lacks."
     }
   ],
   "library_options": [

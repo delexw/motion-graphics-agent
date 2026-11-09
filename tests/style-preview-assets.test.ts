@@ -21,7 +21,14 @@ describe("preview source publication", () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "preview-assets-"));
     try {
       const workspace = path.join(root, "work");
-      for (const folder of ["textures", "renders", "snapshots", "prompt-inputs"])
+      for (const folder of [
+        "textures",
+        "renders",
+        "snapshots",
+        "prompt-inputs",
+        ".hyperframes",
+        ".runtime",
+      ])
         await mkdir(path.join(workspace, folder), { recursive: true });
       for (const file of [
         "index.html",
@@ -32,6 +39,8 @@ describe("preview source publication", () => {
         "renders/preview.mp4",
         "snapshots/frame.png",
         "prompt-inputs/input.json",
+        ".hyperframes/video-state.json",
+        ".runtime/session.json",
         "authoring-events-1.json",
         "BACKGROUND_REVIEW.json",
         "background-reference-01.webp",

@@ -17,6 +17,8 @@ export async function publishStylePreviewSource(
   const excluded = new Set([
     "renders",
     "snapshots",
+    ".hyperframes",
+    ".runtime",
     "node_modules",
     "prompt-inputs",
     "repair-review.json",

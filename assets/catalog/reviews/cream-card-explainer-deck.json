@@ -1,0 +1,728 @@
+{
+  "schema_version": 1,
+  "kind": "frame_analysis_style_addition",
+  "source": {
+    "description": "User-supplied 108.033-second 1920x1080 H.264 30 fps product-explainer video with an AAC track. Only its motion design was studied; its product, brand, mascot, copy, workflow and screens are excluded from every reusable entry and from the preview.",
+    "reuse_policy": "Original code-drawn study with neutral copy and an original character; no source artwork, footage or audio reused."
+  },
+  "analysis_provenance": {
+    "model": "claude-opus-5-5",
+    "session_id": null,
+    "session_id_note": "The authoring session ID is not exposed to the author; not invented.",
+    "sampling": "ffprobe metadata; ffmpeg scene-change scan (only four frames above 0.15, at 9.27, 9.30, 9.63 and 55.40 s); 1 fps contact sheets over 0-108 s; dense sequences at 6 fps (0-3, 2.5-5.5, 19.5-22.5, 76-79, 96-99 s), 7.5 fps (8.8-11.2 s), 10 fps (54.6-56.4, 60.3-62.1 s caption band and full frame), 15 fps (76.9-78.1 s), 2.4 fps (100.5-108 s) and 2 fps diagram crops (85-94 s); full-resolution key frames; pixel colour sampling; a 30 fps card-edge scan of the 60.5 s chapter push. Revision r2 added 10 fps of 0-2.4 s (laptop crop), 8 fps of 3-6 s, 12 fps of 5.4-6.9 s and a changed-pixel density measurement (320x180 greyscale, |difference| > 12/255, 0.25 s and 1 s windows) over the source, the r1 preview and the r2 preview.",
+    "limitations": [
+      "Easing and durations are inferred from sampled frames; no keyframe data exists.",
+      "Colours are read from compressed H.264 frames.",
+      "Audio was neither played nor analysed.",
+      "Recorded screens inside the card (about 21-77 s) were studied only for framing, card behaviour and the lower-third."
+    ]
+  },
+  "dense_findings": [
+    {
+      "seconds": [0, 3],
+      "kind": "observed",
+      "finding": "Static establishing illustration on flat cream (#f9efde): thick near-black (#2b2c27) monoline figure at a laptop; the inset screen content swaps several times; hairline guides (#e6e1d7) run edge to edge."
+    },
+    {
+      "seconds": [3, 4.6],
+      "kind": "observed",
+      "finding": "Three headline lines appear top-left one at a time about 0.5-0.6 s apart; each enters pale grey and darkens to ink while rising slightly. A leaf-green (#8fbd69) character peeks in from the right edge."
+    },
+    {
+      "seconds": [5.5, 6.6],
+      "kind": "observed",
+      "finding": "Headline cross-dissolves to a new single line (ghosted overlap) while a white side panel slides in from the right; the character steps in and points."
+    },
+    {
+      "seconds": [6.4, 9.2],
+      "kind": "observed",
+      "finding": "Near-static framing (no measurable camera push); text types into a field; the character idles with blinks and small gestures."
+    },
+    {
+      "seconds": [9.27, 9.65],
+      "kind": "observed",
+      "finding": "Fast zoom-through into the screen (scene-score spike) that resolves through a light cream wash into a full interface layout."
+    },
+    {
+      "seconds": [10, 17.5],
+      "kind": "observed",
+      "finding": "Outlined chips appear one after another; a chosen chip fills green; a plan card builds rows with numbered circles in sequence."
+    },
+    {
+      "seconds": [17.5, 20.6],
+      "kind": "observed",
+      "finding": "Soft blurred cross-dissolve to a title card on bare cream with faint tan (#f2dec0) four-point sparkles and outline rings, then a second dissolve into the card layout."
+    },
+    {
+      "seconds": [20.3, 21.3],
+      "kind": "observed",
+      "finding": "Floating white card (#fcfeff) at about 10.4% side margins and 5% top margin with a soft wide warm shadow (#d8d2c0 at the lower edge); the lower-third (mascot avatar, bold #1a1e0f caption ending in deep green #4e842a, small green label, middle dot, grey #8e8f7c description) fades in after the card."
+    },
+    {
+      "seconds": [55.4, 55.4],
+      "kind": "observed",
+      "finding": "Only hard content cut inside the card; frame, card and lower-third stay fixed."
+    },
+    {
+      "seconds": [60.5, 61.23],
+      "kind": "measured_and_inferred",
+      "finding": "Chapter push: card and lower-third move left together; card-edge scan shows a slow start at 60.5-60.6 s, about 90 px per frame at 1920 px width through the middle and a short settle at 61.23 s with a cream gap between cards (about 0.7 s, inferred close to power2.inOut). The incoming caption fades in about 0.3-0.4 s after landing."
+    },
+    {
+      "seconds": [77, 77.8],
+      "kind": "observed",
+      "finding": "Same horizontal push into the diagram card."
+    },
+    {
+      "seconds": [78, 100],
+      "kind": "observed",
+      "finding": "Diagram card: grey chapter number, heavy title and grey subtitle on one baseline; tracked monospace column labels; hairline white nodes with icon tiles; lime (#81e755) pills with one black (#171717) pill; dotted connectors with small labels; one active node at a time (pale peach tint #faf3ea with green outline, or a black outline on a lime pill); a black dot travels along a connector before the active state moves; the pale peach caption bar and page counter update per step, roughly every 2.5-3.5 s."
+    },
+    {
+      "seconds": [101, 104],
+      "kind": "observed",
+      "finding": "The diagram card fades to cream (about 0.8 s) while a centred heavy olive (#3c4230) title with a leading green (#93b966) dot fades in; a hairline rule, a grey tagline with green accent words and a tracked monospace footer follow about 0.8 s later; hold to the end."
+    },
+    {
+      "revision": "r2",
+      "seconds": [0, 2.4],
+      "kind": "observed",
+      "finding": "The device screen scrolls its content continuously while the headline lines rise in from below with a brief vertical blur as they darken; the opener is never static."
+    },
+    {
+      "revision": "r2",
+      "seconds": [3.2, 4.6],
+      "kind": "observed",
+      "finding": "The character peeks in at the right edge, then walks in with visible alternating steps and a bob while the seated figure dissolves to transparency (supporting layer exit overlapping the entrance), and stops to point at the device."
+    },
+    {
+      "revision": "r2",
+      "seconds": [4.5, 6],
+      "kind": "observed",
+      "finding": "A white side panel slides in from the right edge; then the laptop scales up and recentres while the panel slides onto its screen and merges into the new layout (panel dock). The headline stays in place and cross-dissolves; the character waves and changes expression."
+    },
+    {
+      "revision": "r2",
+      "seconds": [6, 6.9],
+      "kind": "observed",
+      "finding": "After the dock a field draws open from the left and text types into it; the character blinks, smiles and gestures."
+    },
+    {
+      "revision": "r2",
+      "seconds": [0, 108],
+      "kind": "measured",
+      "finding": "Changed-pixel density: the illustrated opener (0-21 s) has a median of 1.55 percent of pixels changing per 0.25 s window and 73 percent of windows at or above 0.5 percent (5 to 25 percent per 1 s window); the diagram chapter (78-100 s) has 4 percent of windows moving. The r1 preview hook had a median of 0.60 percent; its motion was concentrated in the single card push."
+    }
+  ],
+  "technology_review": {
+    "model": "claude-opus-5-5",
+    "session_id": null,
+    "method": "Authored in the requesting Opus session and saved as the review checkpoint; scripts/review-new-style-technologies.ts reused it, validated it and applied it with no further model call. Re-applied for r2 because the visual cues and implementation changed; tool selection is unchanged.",
+    "eligible_entries_assessed": 88,
+    "excluded_project_keys": ["hyperframes", "multiplane", "remotion", "remotion_renderer"],
+    "review": {
+      "assessments": [
+        {
+          "key": "matter_js",
+          "matchingStyleIds": [],
+          "reason": "No physics: cards, chips and nodes move on authored eased paths, never by simulated collisions or gravity."
+        },
+        {
+          "key": "html_css",
+          "matchingStyleIds": ["style-143"],
+          "reason": "Real, measurable text for headlines, the lower-third, node titles and micro-labels, and CSS box-shadow for the soft warm card shadow; selected as a renderer."
+        },
+        {
+          "key": "svg",
+          "matchingStyleIds": ["style-143"],
+          "reason": "Crisp flat monoline illustration, the original character, icon tiles, dotted connectors with arrowheads, sparkles and rings; also serialises the exact frame for exportPoster; selected as a renderer."
+        },
+        {
+          "key": "gsap",
+          "matchingStyleIds": ["style-143"],
+          "reason": "One paused timeline with a single linear proxy tween driving a pure render(t) gives safe seeking and named eases for push, ink-up and dot travel; selected as the motion owner."
+        },
+        {
+          "key": "motion",
+          "matchingStyleIds": [],
+          "reason": "Would duplicate GSAP as a second owner of the same DOM and SVG properties; no advantage for a seekable pure render."
+        },
+        {
+          "key": "chroma_js",
+          "matchingStyleIds": ["style-143"],
+          "reason": "Offline contrast checks of ink, grey and green copy on cream and white; never recolours. Selected as a supporting check."
+        },
+        {
+          "key": "chartist",
+          "matchingStyleIds": [],
+          "reason": "Not needed for the style's own diagrams; real charts belong to an explicit data inset (style-097 support) drawn in the card's SVG."
+        },
+        {
+          "key": "remotion_shapes",
+          "matchingStyleIds": [],
+          "reason": "Stars and rings are a few hand-written SVG paths; an extra shape package adds no value."
+        },
+        {
+          "key": "p5_js",
+          "matchingStyleIds": [],
+          "reason": "Canvas/WebGL rasterises the crisp vector deck and adds a second renderer for flat geometry SVG already draws."
+        },
+        {
+          "key": "anime_js",
+          "matchingStyleIds": [],
+          "reason": "Competes with GSAP for the same properties."
+        },
+        {
+          "key": "gsap_drawsvgplugin",
+          "matchingStyleIds": ["style-143"],
+          "reason": "Conditionally useful in full videos for curved connector or illustration draw-ons (with the style-109 support); the preview draws its straight dotted connectors with dasharray arithmetic in render(t)."
+        },
+        {
+          "key": "remotion_paths",
+          "matchingStyleIds": ["style-143"],
+          "reason": "Conditionally useful to measure connector path lengths and points so the travelling dot follows a curved connector exactly; the preview uses straight segments computed directly."
+        },
+        {
+          "key": "canvas_2d",
+          "matchingStyleIds": [],
+          "reason": "Raster output for flat vector shapes and text; no texture or brush work that would need it."
+        },
+        {
+          "key": "mo_js",
+          "matchingStyleIds": [],
+          "reason": "Radial bursts and swirl accents contradict the calm, non-bouncing motion; also competes with GSAP."
+        },
+        {
+          "key": "luminance_based_halftone_shading",
+          "matchingStyleIds": [],
+          "reason": "No halftone: tone comes from flat fills and one soft shadow."
+        },
+        {
+          "key": "webgl",
+          "matchingStyleIds": [],
+          "reason": "No GPU effects, shaders or depth are part of the look."
+        },
+        {
+          "key": "glsl",
+          "matchingStyleIds": [],
+          "reason": "No shader treatment; a fragment-shader blur for the optional dissolve is unnecessary next to CSS opacity."
+        },
+        {
+          "key": "three_js",
+          "matchingStyleIds": [],
+          "reason": "Three.js serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "blender",
+          "matchingStyleIds": [],
+          "reason": "Blender serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "python_bpy",
+          "matchingStyleIds": [],
+          "reason": "Blender's Python API serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "cycles",
+          "matchingStyleIds": [],
+          "reason": "Cycles serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "python",
+          "matchingStyleIds": [],
+          "reason": "No offline preprocessing is needed for a code-drawn deck; supplied timing maps arrive as data."
+        },
+        {
+          "key": "pillow",
+          "matchingStyleIds": [],
+          "reason": "No raster preparation; any supplied screen is placed as-is inside a card by the project."
+        },
+        {
+          "key": "rough_js",
+          "matchingStyleIds": [],
+          "reason": "Lines are clean and even; a sketchy hand-drawn wobble contradicts the monoline drawing."
+        },
+        {
+          "key": "photoswipe",
+          "matchingStyleIds": [],
+          "reason": "Interactive gallery dialog; not part of linear video delivery."
+        },
+        {
+          "key": "cropper_js",
+          "matchingStyleIds": [],
+          "reason": "Interactive crop authoring; supplied screens are framed by the card, not cropped by the style."
+        },
+        {
+          "key": "transparent_png_sequence",
+          "matchingStyleIds": [],
+          "reason": "Transparent PNG sequences are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "remotion_noise",
+          "matchingStyleIds": [],
+          "reason": "The ground is flat with no grain, jitter or particles."
+        },
+        {
+          "key": "pixijs",
+          "matchingStyleIds": [],
+          "reason": "A sprite/WebGL renderer for flat vector cards and text adds rasterisation without benefit."
+        },
+        {
+          "key": "paper_js",
+          "matchingStyleIds": [],
+          "reason": "No boolean path operations or complex Bezier construction are needed for the simple monoline drawing."
+        },
+        {
+          "key": "tldraw",
+          "matchingStyleIds": [],
+          "reason": "Editor-style diagram authoring; the deck's diagrams are drawn directly in SVG to the style's exact node and connector rules."
+        },
+        {
+          "key": "cytoscape_js",
+          "matchingStyleIds": ["style-143"],
+          "reason": "Conditionally useful in full videos to compute node positions for larger flow diagrams before drawing them in the style's SVG; the preview's three-column layout is authored directly."
+        },
+        {
+          "key": "geometry_outlines_and_crease_edges",
+          "matchingStyleIds": [],
+          "reason": "Geometry outline rendering serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "tonal_hatching_and_crosshatching",
+          "matchingStyleIds": [],
+          "reason": "No hatching: fills are flat."
+        },
+        {
+          "key": "delaunator",
+          "matchingStyleIds": [],
+          "reason": "No triangulated meshes or point-cloud art."
+        },
+        {
+          "key": "layered_illustration_png_assets",
+          "matchingStyleIds": [],
+          "reason": "Layered illustration PNGs are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "layered_png_assets",
+          "matchingStyleIds": [],
+          "reason": "Layered PNG assets are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "krita",
+          "matchingStyleIds": [],
+          "reason": "Painted frame-by-frame artwork is not part of this flat code-drawn medium."
+        },
+        {
+          "key": "transparent_png_frame_sequence",
+          "matchingStyleIds": [],
+          "reason": "Transparent PNG frame sequences are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "eevee_cycles",
+          "matchingStyleIds": [],
+          "reason": "EEVEE/Cycles serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "layered_painting_assets",
+          "matchingStyleIds": [],
+          "reason": "Layered painting assets are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "calligraphy_assets",
+          "matchingStyleIds": [],
+          "reason": "Calligraphy assets are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "sharp",
+          "matchingStyleIds": [],
+          "reason": "No asset preprocessing is required; supplied screens are placed by the project."
+        },
+        {
+          "key": "transparent_hand_drawn_assets",
+          "matchingStyleIds": [],
+          "reason": "Transparent hand-drawn assets are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "procedural_paper_curl_and_fold_deformation",
+          "matchingStyleIds": [],
+          "reason": "The cream ground is a flat colour field, not a deformable paper object."
+        },
+        {
+          "key": "extended_position_based_dynamics_xpbd",
+          "matchingStyleIds": [],
+          "reason": "No cloth or soft-body motion."
+        },
+        {
+          "key": "aseprite",
+          "matchingStyleIds": [],
+          "reason": "Pixel-art sprites contradict the smooth vector drawing."
+        },
+        {
+          "key": "instancedmesh",
+          "matchingStyleIds": [],
+          "reason": "InstancedMesh serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "eevee",
+          "matchingStyleIds": [],
+          "reason": "EEVEE serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "meshtoonmaterial",
+          "matchingStyleIds": [],
+          "reason": "MeshToonMaterial serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "gltf_scene_assembly_and_part_animation",
+          "matchingStyleIds": [],
+          "reason": "glTF scene assembly serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "quantized_toon_shading",
+          "matchingStyleIds": [],
+          "reason": "Toon shading serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "raycast_object_interaction_and_camera_navigation",
+          "matchingStyleIds": [],
+          "reason": "Raycast camera navigation serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "buffergeometry",
+          "matchingStyleIds": [],
+          "reason": "BufferGeometry serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "points",
+          "matchingStyleIds": [],
+          "reason": "Point-cloud rendering serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "web_audio_api",
+          "matchingStyleIds": [],
+          "reason": "Live audio analysis is non-deterministic; supplied timing maps are used instead."
+        },
+        {
+          "key": "video_textured_screens_and_crt_overlays",
+          "matchingStyleIds": [],
+          "reason": "Screens sit flat inside white cards with no scanlines or display texture."
+        },
+        {
+          "key": "scrambled_text_reveal",
+          "matchingStyleIds": [],
+          "reason": "Text inks up from grey to ink; scrambled characters would break exact copy and the calm tone."
+        },
+        {
+          "key": "meshphysicalmaterial",
+          "matchingStyleIds": [],
+          "reason": "MeshPhysicalMaterial serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "offscreen_rendering",
+          "matchingStyleIds": [],
+          "reason": "Offscreen render targets serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "pbr_materials",
+          "matchingStyleIds": [],
+          "reason": "PBR materials serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "postprocessing",
+          "matchingStyleIds": [],
+          "reason": "No bloom, tone mapping or post effects; the optional dissolve blur is a CSS filter at most."
+        },
+        {
+          "key": "layered_image_assets",
+          "matchingStyleIds": [],
+          "reason": "Layered image assets are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "orthographiccamera",
+          "matchingStyleIds": [],
+          "reason": "OrthographicCamera serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "soft_surface_lighting_and_material_detail",
+          "matchingStyleIds": [],
+          "reason": "Soft surface lighting serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        },
+        {
+          "key": "drawn_frame_sequence",
+          "matchingStyleIds": [],
+          "reason": "Drawn frame sequences are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "layered_drawn_frame_sequence",
+          "matchingStyleIds": [],
+          "reason": "Layered drawn frame sequences are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "drawing_asset_sequence",
+          "matchingStyleIds": [],
+          "reason": "Drawing asset sequences are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "photographed_stop_motion_frames",
+          "matchingStyleIds": [],
+          "reason": "Photographed stop-motion frames are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "ffmpeg",
+          "matchingStyleIds": [],
+          "reason": "Encoding belongs to the project's render pipeline, not to this Motion Graphic's visual or motion layers."
+        },
+        {
+          "key": "photographed_clay_animation_frames",
+          "matchingStyleIds": [],
+          "reason": "Photographed clay frames are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "photographed_puppet_animation_frames",
+          "matchingStyleIds": [],
+          "reason": "Photographed puppet frames are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "photographed_object_animation_frames",
+          "matchingStyleIds": [],
+          "reason": "Photographed object frames are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "photographed_pixilation_frames",
+          "matchingStyleIds": [],
+          "reason": "Photographed pixilation frames are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "live_action_reference",
+          "matchingStyleIds": [],
+          "reason": "Live-action references are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "transparent_drawn_frame_sequence",
+          "matchingStyleIds": [],
+          "reason": "Transparent drawn frame sequences are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "layered_character_assets",
+          "matchingStyleIds": [],
+          "reason": "The guide character is an original code-drawn SVG; layered raster character art would break the flat monoline consistency."
+        },
+        {
+          "key": "react",
+          "matchingStyleIds": [],
+          "reason": "A component layer is unnecessary for one standalone deterministic page."
+        },
+        {
+          "key": "dragula",
+          "matchingStyleIds": [],
+          "reason": "Interactive drag-and-drop; not part of linear video."
+        },
+        {
+          "key": "leaflet",
+          "matchingStyleIds": [],
+          "reason": "No maps."
+        },
+        {
+          "key": "manim",
+          "matchingStyleIds": [],
+          "reason": "Mathematical animation engine and a second renderer; the deck needs no math objects."
+        },
+        {
+          "key": "numpy",
+          "matchingStyleIds": [],
+          "reason": "No numeric precomputation is required."
+        },
+        {
+          "key": "d3",
+          "matchingStyleIds": ["style-143"],
+          "reason": "Conditionally useful in full videos for scales and layout of a supplied data chart or a larger diagram inside a card; not used in the preview."
+        },
+        {
+          "key": "layered_high_resolution_assets",
+          "matchingStyleIds": [],
+          "reason": "Layered high-resolution assets are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "gsap_morphsvgplugin",
+          "matchingStyleIds": [],
+          "reason": "No shape morphs: elements fade, rise, slide and change fill."
+        },
+        {
+          "key": "layered_png_svg_assets",
+          "matchingStyleIds": [],
+          "reason": "Layered PNG/SVG assets are prepared raster inputs. This style is code-drawn flat vector cards, monoline drawing and diagrams; a project's own screen captures enter through the card-showcase register as supplied media, not as a style technology."
+        },
+        {
+          "key": "librosa",
+          "matchingStyleIds": ["style-143"],
+          "reason": "Conditionally useful offline to precompute beats or narration onsets as a timing map when supplied audio must drive chapter pushes and diagram steps; never used without supplied audio."
+        },
+        {
+          "key": "unrealbloompass",
+          "matchingStyleIds": [],
+          "reason": "Bloom passes serves lit or 3D scenes; the style is a flat 2D deck with no depth, lighting or materials beyond one soft card shadow."
+        }
+      ],
+      "styles": [
+        {
+          "styleId": "style-143",
+          "rendererKeys": ["svg", "html_css"],
+          "motionKeys": ["gsap"],
+          "supportingKeys": ["chroma_js"],
+          "implementation": "One inline SVG (viewBox from the project resolution) holds every drawn element: the original monoline guide character built from limb groups rotating around fixed pivots (stepping legs, pointing and waving arms, blinking eyes, mouth shapes), the presented device or board and its changing content, icon tiles, dotted connectors whose visible length is set with stroke-dasharray and stroke-dashoffset, sparkles and rings. HTML/CSS lays out the white cards with a CSS box-shadow and all copy as real text in a system neo-grotesk, with monospace only for micro-labels and counters. GSAP owns time: one paused timeline whose single linear proxy tween calls a pure render(t), which computes from absolute time the walk cycle and gestures, content changes inside the subject, staggered layered entrances and exits, headline rise with a brief blur filter, card geometry for the panel dock (ease-in-out), element travel into the card, the single active diagram node and the dot's position along its connector, so any seek is exact. window.exportPoster(t) serialises the same frame as standalone SVG with an SVG shadow filter and SVG text. chroma.js checks ink, grey and green contrast offline only. In full videos, Cytoscape.js or D3 may compute layouts for larger diagrams or supplied data charts, GSAP DrawSVGPlugin or @remotion/paths may draw or follow curved connectors, and librosa may precompute a timing map from supplied audio; the preview uses none of these.",
+          "rationale": "The look is a clean vector deck: flat fills, thick even outlines, crisp hairlines and real text on cream and white, with a busy illustrated opener. SVG keeps drawing, limb groups and connectors sharp at any resolution, lets connector draw-ons and limb rotations be plain attributes of t, and makes the poster an exact vector frame; HTML/CSS gives measurable, readable type and the soft warm card shadow cheaply. A single GSAP proxy driving a pure render(t) gives one owner per property and identical forward, backward and direct seeks across many overlapping tracks (walk cycle, gestures, entrances, exits, dock, travelling dot).\n\nAlternatives and tradeoffs:\n- Canvas 2D, p5.js and PixiJS rasterise the vector look and add a second renderer for shapes SVG already draws.\n- Motion and Anime.js would compete with GSAP; mo.js bursts contradict the calm, non-bouncing motion.\n- Cytoscape.js and D3 help only when diagrams or supplied data grow beyond a hand-authored layout.\n- DrawSVGPlugin and @remotion/paths help with curved paths in full videos; straight dotted connectors are drawn on with dasharray arithmetic in the preview.\n- librosa is for supplied audio timing only; live Web Audio analysis is not deterministic.\n- Rough.js, halftone, hatching, grain and noise tools contradict the clean flat medium; 3D, lighting, PBR, toon and bloom tools contradict its flatness.\n- Raster asset workflows are unnecessary: everything is code-drawn, and any project screen is supplied media placed inside a card.\n\nPalette roles are preserved: cream ground, white cards, near-black ink, three distinct greens, signal lime with one black pill, pale peach caption bar."
+        }
+      ]
+    }
+  },
+  "previewInputs": [
+    {
+      "entryId": "style-143",
+      "name": "Cream Card Explainer Deck",
+      "model": "claude-opus-5-5",
+      "workspace": "work/mg-analysis-88057165/preview-workspace-r2",
+      "promptFile": "work/mg-analysis-88057165/preview-input-r2/PROMPT.md",
+      "templateFile": "work/mg-analysis-88057165/preview-input-r2/PROMPT.template.md",
+      "variablesFile": "work/mg-analysis-88057165/preview-input-r2/variables.json",
+      "templateSha256": "dd98598243f9a10434f1407c1b77b0576a23d924167b1b9dfdf6b30123528053",
+      "resolvedPromptSha256": "051025e4c18d6c8fdc6e6eab50eff522e483a7f8a2e5a6f7951b33adc85fe494",
+      "variables": {
+        "subject": "an idea becomes a connected system (the shared subject of the catalog's style previews)",
+        "audience_and_objective": "a general audience; a short style study showing the look and motion in three seconds",
+        "assets_and_exact_copy": "Hook headline in two lines: 'An idea' then 'becomes'. Diagram nodes, in order: 'Idea', 'Links', 'System'. Lower-third caption 'a connected system' with key phrase 'connected system', label 'Spark' and description 'link · system'. Page counter '1 / 3', then '2 / 3', then '3 / 3'. No other copy and no image assets; the guide character is an original leaf-sprout character.",
+        "duration_seconds": "3",
+        "aspect_ratio": "16:9",
+        "resolution": "1280x720",
+        "frame_rate": "30",
+        "audio_or_rhythm_requirements": "Silent; no audio. Use an authored even schedule with a reading hold at the end.",
+        "output_directory": "renders",
+        "render_pipeline": "The project's default renderer setting (HyperFrames in this repository). The root element is a div with data-composition-id=cream-card-explainer-deck, data-width=1280, data-height=720, data-duration=3 and data-fps=30, sized exactly to the resolution with overflow hidden; register the timeline as window.__timelines = { 'cream-card-explainer-deck': timeline }; listen for a window event named hf-seek and call timeline.time(event.detail.time, false) then render(event.detail.time). The repository preview script captures the composition, publishes the source and records the clip; poster.svg is written from window.exportPoster(2.95)."
+      },
+      "additionalVisualBrief": false,
+      "authoringSessionId": null,
+      "actualModels": ["claude-opus-5-5"],
+      "frozenOn": "2026-11-09",
+      "visualFidelity": "published_with_limitations"
+    }
+  ],
+  "visual_verification": {
+    "status": "published_with_limitations",
+    "editor_inspection": "All 90 decoded frames of the published r2 WebM and headless-browser frames at 16 times inspected for the walking presenter, idea pop and bulb, branching links, side-panel entrance, panel dock with travelling elements, headline settling into the card header, presenter dissolve, lower-third entrance, dot stepping, satellite connections and the final reading hold.",
+    "seek": "DOM snapshots at 0.5, 1.75, 2.5 and 2.95 s are identical after direct, backward and forward-sweep seeks.",
+    "motion_density": {
+      "method": "Changed-pixel fraction per 0.25 s window, 320x180 greyscale, |difference| > 12/255.",
+      "source_opener_median": 0.0155,
+      "r1_hook_median": 0.006,
+      "r2_hook_median": 0.019,
+      "r2_windows": [
+        0.025, 0.024, 0.01, 0.003, 0.019, 0.028, 0.073, 0.042, 0.007, 0.003, 0.003, 0, 0
+      ]
+    },
+    "poster": "poster.svg is window.exportPoster(2.95); it passes the catalog SVG validator.",
+    "source_artwork_reused": false,
+    "source_audio_reused": false
+  },
+  "visualFidelity": {
+    "style-143": {
+      "status": "published_with_limitations",
+      "approved": true,
+      "revision": "r2",
+      "reviewer": "claude-opus-5-5",
+      "promptSha256": "051025e4c18d6c8fdc6e6eab50eff522e483a7f8a2e5a6f7951b33adc85fe494",
+      "templateSha256": "dd98598243f9a10434f1407c1b77b0576a23d924167b1b9dfdf6b30123528053",
+      "authoredSourceSha256": "6eeb5671846616dee6a70bec7fc066fc56450af29d0724d5fb8820c982d1fcf4",
+      "sourceSha256": "d43ca9b82e80ef058fb3a5a791a614aa4e8091f86fe0d2a4255a3d1875d32582",
+      "sourceEquivalence": false,
+      "observations": [
+        "The hook carries several overlapping, subject-related tracks as in the source opener: presenter walk with steps and bob, pointing and reaction, idea pop and bulb lighting, links branching with connectors drawing, staggered headline rise with blur and a side panel sliding in.",
+        "The connected transition follows the source panel dock: the board scales up into the white card while the panel slides onto it and becomes the System pill, the idea and links travel into their nodes, and the headline persists and settles as the card header.",
+        "The presenter dissolves while the lower-third avatar arrives, matching the source's overlapping exit and entrance.",
+        "The diagram chapter is calm like the source: connectors draw, a dot steps Idea to Links to System, dependent satellite nodes connect, then a 0.3 s hold."
+      ],
+      "limitations": [
+        "Three seconds cannot hold the source's long chapters; beats are compressed and the source holds each chapter far longer.",
+        "The 0.75-1.0 s window is a quieter beat (pointing, bulb and first link) and measures lower than the source opener.",
+        "The zoom-through, chapter push, title card, typed field and end card are specified in the prompt but not shown in this preview.",
+        "The render sandbox drew text in a fallback system sans rather than Helvetica Neue.",
+        "The guide character is original (a leaf sprout) and deliberately unlike the source mascot.",
+        "Source-sampled small-text colours are low contrast: accent green #4e842a is 3.96:1 on cream and 4.46:1 on white, and muted grey #8e8f7c is 2.89:1 on cream. They are kept for fidelity; green is safest in bold caption-size type, and projects needing WCAG AA small text should darken both.",
+        "The renderer appends project-level arrow and label reveal runtimes to the published source; they act only on opacity or stroke tweens and have nothing to act on in this composition."
+      ]
+    }
+  },
+  "duration_contract": {
+    "finding": "All 143 catalog previews are 3 seconds (assets/style-previews/videos.json) and the preview authoring, motion and workflow prompts specify a 3-second preview. The r1 mismatch was not caused by the duration contract: r1 spent its hook on a headline and one small arm gesture and put most of its motion into one card push. r2 keeps the shared 3-second contract and compresses the source rhythm into a busy hook, one connected transition and a calmer stepped diagram, encoded in the prompt's COMPOSITION FOR SHORT PIECES rule; no other style was changed."
+  },
+  "content_convention": {
+    "finding": "The catalog's shared preview subject is 'An idea becomes a connected system': it is fixed in src/server/catalog/style-examples.ts (example artwork prompt), src/server/catalog/style-motion.ts (illustrated motion prompt) and src/server/catalog/style-preview-authoring.ts (preview authoring prompt), and appears in 143 preview source folders. Visible copy across published preview sources most often reads 'An idea becomes' (33 previews) and 'a connected system' (32), as in style-028; stage labels follow style-111 ('IDEA', 'LINKS', 'SYSTEM') and style-028's sub-line 'SPARK · LINK · SYSTEM'.",
+    "reused": [
+      "Subject: an idea becomes a connected system.",
+      "Headline split 'An idea' / 'becomes' completed by the lower-third 'a connected system' (the style-028 two-part headline).",
+      "Diagram stages 'Idea', 'Links', 'System' (style-111 labels).",
+      "Lower-third sub-line 'Spark · link · system' (style-028 sub-line).",
+      "Semantics: one idea node branches into links and resolves into a system with connected satellite nodes."
+    ],
+    "other_previews_modified": false
+  },
+  "supersededPreviewInputs": [
+    {
+      "entryId": "style-143",
+      "name": "Cream Card Explainer Deck",
+      "model": "claude-opus-5-5",
+      "workspace": "work/mg-analysis-88057165/preview-workspace",
+      "promptFile": "work/mg-analysis-88057165/preview-input/PROMPT.md",
+      "templateFile": "work/mg-analysis-88057165/preview-input/PROMPT.template.md",
+      "variablesFile": "work/mg-analysis-88057165/preview-input/variables.json",
+      "templateSha256": "68eec1adfc36b88345b521f09ccffd980a55985f25089cadadb9d3ce7a59b7bb",
+      "resolvedPromptSha256": "9834fcbbcb77ad072ca7828237cfec26453874462059bc4cae491919e9917479",
+      "variables": {
+        "subject": "how rain becomes a river, told as a calm two-chapter explainer",
+        "audience_and_objective": "a general audience; a short style study showing the look in three seconds",
+        "assets_and_exact_copy": "Chapter 1 card: headline lines 'Rain falls.' then 'Streams gather.'; lower-third caption 'Every river starts as rain' with key phrase 'as rain', label 'Water cycle', description 'step one: collect'. Chapter 2 card: chapter number '02', title 'Flow', subtitle 'From cloud to sea'; column labels 'SKY', 'LAND', 'SEA'; nodes 'Cloud' (detail 'water vapour'), 'Rain' (detail 'drops fall'), 'Stream' (detail 'runs downhill'), 'River' (detail 'joins up'); outer pills 'Ocean' (detail 'stores water') and 'Sun' (detail 'warms the sea', the black pill); edge labels 'cools' and 'flows'; caption bar texts 'Rain feeds the stream' then 'Streams join the river'; page counter '2 / 5' then '3 / 5'; lower-third caption 'Water always finds a way' with key phrase 'finds a way', label 'Water cycle', description 'step two: flow'. No other copy and no image assets; the guide character is an original leaf-sprout character.",
+        "duration_seconds": "3",
+        "aspect_ratio": "16:9",
+        "resolution": "1280x720",
+        "frame_rate": "30",
+        "audio_or_rhythm_requirements": "Silent; no audio. Use an authored even schedule with a reading hold at the end.",
+        "output_directory": "renders",
+        "render_pipeline": "The project's default renderer setting (HyperFrames in this repository). The root element is a div with data-composition-id=cream-card-explainer-deck, data-width=1280, data-height=720, data-duration=3 and data-fps=30, sized exactly to the resolution with overflow hidden; register the timeline as window.__timelines = { 'cream-card-explainer-deck': timeline }; listen for a window event named hf-seek and call timeline.time(event.detail.time, false) then render(event.detail.time). The repository preview script captures the composition, publishes the source and records the clip; poster.svg is written from window.exportPoster(2.95)."
+      },
+      "additionalVisualBrief": false,
+      "authoringSessionId": null,
+      "actualModels": ["claude-opus-5-5"],
+      "frozenOn": "2026-11-09",
+      "visualFidelity": "published_with_limitations"
+    }
+  ],
+  "supersededVisualFidelity": [
+    {
+      "status": "superseded",
+      "approved": false,
+      "revision": "r1",
+      "reviewer": "claude-opus-5-5",
+      "promptSha256": "9834fcbbcb77ad072ca7828237cfec26453874462059bc4cae491919e9917479",
+      "templateSha256": "68eec1adfc36b88345b521f09ccffd980a55985f25089cadadb9d3ce7a59b7bb",
+      "authoredSourceSha256": "1bf303bece4475ace9909e6148cc9b3939a7d2af91c4dd8b52926e522c939d8c",
+      "sourceSha256": "af26ed9f1086266e03a5775e1cd7076c4354a6db1275ba62d8a5fa5802f1da38",
+      "sourceEquivalence": false,
+      "observations": [
+        "Cream ground, hairline guides, white rounded cards with a soft warm shadow and the attached lower-third match the source's framing and palette roles.",
+        "Headline lines ink up from grey with a small rise, one line at a time.",
+        "The 0.7 s ease-in-out chapter push moves card and caption together with a cream gap; the next caption fades in after landing.",
+        "The diagram card uses the source's node, pill, connector, caption-bar and counter vocabulary with one active node and a travelling dot."
+      ],
+      "limitations": [
+        "A 3-second preview shows two registers (illustrated card and flow diagram); the title card, zoom-through, element-build chips and end card are specified in the prompt but not shown.",
+        "The render sandbox drew text in a fallback system sans rather than Helvetica Neue, so glyph shapes differ slightly from the browser check.",
+        "The guide character is original (a leaf sprout) and deliberately unlike the source mascot.",
+        "Source-sampled small-text colours are low contrast: accent green #4e842a is 3.96:1 on cream and 4.46:1 on white, and muted grey #8e8f7c is 2.89:1 on cream. They are kept for fidelity; green is safest in bold caption-size type, and projects needing WCAG AA small text should darken both.",
+        "Timings are authored from inferred source behaviour and compressed to fit three seconds; the source holds each chapter far longer.",
+        "The renderer appends project-level arrow and label reveal runtimes to the published source; they act only on opacity or stroke tweens and have nothing to act on in this composition."
+      ],
+      "userObservations": [
+        "Explainer 动的有点少啊，和例子里的那个 (the explainer barely moves compared with the reference)."
+      ],
+      "baselineCopy": "work/mg-analysis-88057165/v1-baseline"
+    }
+  ]
+}

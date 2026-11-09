@@ -26,6 +26,7 @@ const laterStyleIds = [
   "style-140",
   "style-141",
   "style-142",
+  "style-143",
 ];
 // The user-directed Manga crew revision postdates the orbit review. Keep its
 // historical evidence unchanged and verify the revised metadata separately.

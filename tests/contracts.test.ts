@@ -36,7 +36,7 @@ describe("catalog and production contracts", () => {
   });
   it("loads every style with separate rendering, motion and export roles", async () => {
     const c = await loadCatalog();
-    expect(c.styles).toHaveLength(142);
+    expect(c.styles).toHaveLength(143);
     expect(c.motions).toHaveLength(50);
     for (const s of c.styles) {
       expect(s.audio_direction.prompt).toBeTruthy();

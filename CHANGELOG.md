@@ -4,6 +4,10 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ## [Unreleased]
 
+### Added
+
+- Cream Card Explainer Deck (`style-143`): a cream-paper explainer deck with a walking presenter character, layered entrances and exits, a side panel that docks into a floating white card, an attached mascot lower-third and stepped flow diagrams, learned from a source video's motion design only. Includes a reviewed technology choice, Chinese metadata, a frame-analysis record and a rendered preview built from the exact catalog prompt on the catalog's shared preview subject. The catalog now contains 143 Motion Graphics.
+
 ### Changed
 
 - Run formatting, lint, build and the complete test suite for every PR; allow every Dependabot update to auto-merge only after full-suite and native Windows CI succeed.
@@ -11,6 +15,8 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 - Use compatible npm dependency ranges, separate daily compatible updates from majors, and monitor Python requirements and GitHub Actions. Keep security alerts enabled.
 
 ### Fixed
+
+- Leave renderer state folders out of published style preview sources.
 
 - Serialize the full-suite browser/render workload on standard macOS runners to avoid competing rendering processes without weakening individual test deadlines.
 
