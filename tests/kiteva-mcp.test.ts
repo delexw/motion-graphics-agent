@@ -98,6 +98,25 @@ it("uses one settings contract for server instructions, tool descriptions and ru
   });
 });
 
+it("lists every supported optional setting so agents ask the user before omitting it", async () => {
+  const { client } = await connect();
+  const options = await client.callTool({ name: "get_idea_options" });
+  const { optionalSettings, settingsSchema } = options.structuredContent as {
+    optionalSettings: { name: string; description: string; default?: unknown }[];
+    settingsSchema: { properties: Record<string, unknown> };
+  };
+  expect(optionalSettings.map((setting) => setting.name).sort()).toEqual(
+    Object.keys(settingsSchema.properties)
+      .filter((name) => name !== "viewport")
+      .sort(),
+  );
+  for (const setting of optionalSettings) expect(setting.description.length).toBeGreaterThan(10);
+  for (const [field, value] of Object.entries(kitevaIdeaDefaults))
+    expect(optionalSettings.find((setting) => setting.name === field)?.default).toBe(value);
+  expect(ideaToolGuidance.settings).toContain("ask the user about each optionalSettings entry");
+  expect(ideaToolGuidance.settings).not.toContain("Omitted fields use the advertised defaults");
+});
+
 it("preserves explicit choices and uses the selected provider's actual default model", () => {
   const settings = IdeaSettingsSchema.parse({
     provider: "codex",

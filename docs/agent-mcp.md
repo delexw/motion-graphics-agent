@@ -55,7 +55,10 @@ project files, workspaces, credentials or Activity logs.
 
 ## Tools and workflow
 
-- `get_idea_options`: inspect current field validators and the MCP defaults.
+- `get_idea_options`: inspect current field validators and the MCP defaults. Its
+  `optionalSettings` lists every supported setting with its description and default.
+  Before `create_idea`, ask the user about each one they have not already specified,
+  and leave a setting out only after the user accepts its default or declines it.
 - `search_ideas`: text-search draft and project titles/ideas; returns bounded summaries.
 - `read_idea`: read a request and its dedicated settings. Draft IDs start with `draft:`.
 - `search_styles`: find Motion Graphic IDs and visual metadata. No implementation code.

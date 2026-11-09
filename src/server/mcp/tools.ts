@@ -21,6 +21,7 @@ import {
   IdeaSettingsSchema,
   kitevaIdeaDefaults,
   kitevaMcpInstructions,
+  optionalIdeaSettings,
 } from "./contract";
 
 export type KitevaMcpDependencies = {
@@ -316,6 +317,7 @@ export function createKitevaMcpTools({
       run(() => ({
         kind: "options",
         defaults: kitevaIdeaDefaults,
+        optionalSettings: optionalIdeaSettings,
         settingsSchema: z.toJSONSchema(IdeaSettingsSchema),
         uploadLimits: assetLimits,
         supportedExtensions: Object.values(briefSectionFileAccept).join(",").split(","),
