@@ -14,11 +14,15 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 - The MCP `get_idea_options` tool now lists every optional idea setting with its default, and agents ask the user about each one before `create_idea` instead of silently using defaults.
 
+- `install.sh` now installs Ming TTS on Apple Silicon by default, and `--speech ming` installs only Ming. Intel Macs skip it.
+
 - Run formatting, lint, build and the complete test suite for every PR; allow every Dependabot update to auto-merge only after full-suite and native Windows CI succeed.
 
 - Use compatible npm dependency ranges, separate daily compatible updates from majors, and monitor Python requirements and GitHub Actions. Keep security alerts enabled.
 
 ### Fixed
+
+- Ming TTS setup failed its runtime check because the catalog pinned MLX-Audio 0.6.2 while setup installed 0.6.4. Both now pin 0.6.4, and a test keeps them in step.
 
 - Leave renderer state folders out of published style preview sources.
 

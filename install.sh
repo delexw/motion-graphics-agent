@@ -10,7 +10,7 @@ Install macOS prerequisites, npm dependencies, Chrome for Testing, OpenScreen,
 Caveman, local speech providers, Audio Studio MCP/model weights, and build Kiteva.
 The default includes large model downloads. Re-running reuses installed runtimes/caches.
 
-  --speech MODE          all (default), kokoro, pocket, pocket-zh, or none
+  --speech MODE          all (default), kokoro, pocket, pocket-zh, ming, or none
   --skip-audio-studio     Skip local music generation setup
   --audio-no-weights     Install Audio Studio; defer its model weights until first use
   --skip-openscreen       Skip the desktop recorder installation
@@ -47,7 +47,7 @@ while [[ $# -gt 0 ]]; do
     *) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
   esac
 done
-case "$speech" in all|kokoro|pocket|pocket-zh|none) ;; *) echo "Invalid speech mode: $speech" >&2; exit 1 ;; esac
+case "$speech" in all|kokoro|pocket|pocket-zh|ming|none) ;; *) echo "Invalid speech mode: $speech" >&2; exit 1 ;; esac
 [[ "$(uname -s)" == Darwin ]] || { echo 'install.sh supports macOS. For native Windows use docs/windows.md.' >&2; exit 1; }
 if [[ "$(uname -m)" == x86_64 ]] && [[ "$(/usr/sbin/sysctl -n hw.optional.arm64 2>/dev/null || true)" == 1 ]]; then
   echo 'Run this installer from a native Apple Silicon terminal, not Rosetta.' >&2
@@ -127,6 +127,16 @@ if [[ "$speech" != none ]]; then
   if [[ "$speech" == all || "$speech" == kokoro || "$speech" == pocket-zh ]]; then npm run speech:setup; fi
   if [[ "$speech" == all || "$speech" == pocket ]]; then npm run speech:setup:pocket; fi
   if [[ "$speech" == all || "$speech" == pocket-zh ]]; then npm run speech:setup:pocket:zh; fi
+  if [[ "$speech" == all || "$speech" == ming ]]; then
+    if [[ "$(uname -m)" == arm64 ]]; then
+      npm run speech:setup:ming
+    elif [[ "$speech" == ming ]]; then
+      echo 'Ming TTS requires Apple Silicon on macOS; Intel Macs are not supported.' >&2
+      exit 1
+    else
+      echo 'Ming TTS requires Apple Silicon on macOS; skipped on this Intel Mac.'
+    fi
+  fi
 fi
 if [[ "$audio_studio" == 1 ]]; then
   if [[ "$(uname -m)" == arm64 ]]; then

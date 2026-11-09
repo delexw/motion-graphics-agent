@@ -35,7 +35,8 @@ The Narration / subtitles step keeps script, speed and writing direction when yo
 
 ## Chinese Pocket TTS
 
-`./install.sh` initializes all speech engines by default, including Chinese Pocket TTS.
+`./install.sh` initializes all speech engines by default, including Chinese Pocket TTS and, on
+Apple Silicon, Ming TTS.
 Use `./install.sh --speech pocket-zh --skip-audio-studio` to prepare only Kokoro and
 Chinese Pocket TTS. Web startup only checks readiness; it never installs packages or
 downloads models. If a Python upgrade removes the interpreter used by the managed

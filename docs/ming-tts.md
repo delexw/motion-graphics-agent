@@ -32,7 +32,7 @@ Speed and volume use existing application audio processing. They do not add Ming
 
 ## Setup and platform support
 
-Apple Silicon uses a dedicated **MLX-Audio 0.6.2** environment and the pinned `mlx-community/Ming-3.0-tts-0.5B-bf16` checkpoint. Other supported hosts use the upstream NVIDIA CUDA backend. Intel Macs are not supported. Runtime selection is explicit by platform, without a provider fallback. The macOS `install.sh` does not automatically install Ming; run its dedicated setup command.
+Apple Silicon uses a dedicated **MLX-Audio 0.6.4** environment and the pinned `mlx-community/Ming-3.0-tts-0.5B-bf16` checkpoint. Other supported hosts use the upstream NVIDIA CUDA backend. Intel Macs are not supported. Runtime selection is explicit by platform, without a provider fallback. The macOS `install.sh` installs Ming by default on Apple Silicon and skips it on Intel Macs; `./install.sh --speech ming` installs only Ming. The dedicated setup command also works on its own.
 
 On Apple Silicon, or a CUDA host with compatible Python, FFmpeg and Node installed:
 

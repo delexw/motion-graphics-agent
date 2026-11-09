@@ -462,8 +462,8 @@ npm start                       # open http://127.0.0.1:18417
 
 For a smaller installation, use `./install.sh --minimal` to skip speech and Audio Studio, or
 `./install.sh --speech pocket` to install only Pocket TTS narration. `--audio-no-weights` defers Audio
-Studio model downloads until first generation. The default installs Kokoro, Pocket TTS and Mandarin
-Pocket TTS using the existing `speech:setup*` scripts. See [speech setup](docs/speech.md) and
+Studio model downloads until first generation. The default installs Kokoro, Pocket TTS, Mandarin
+Pocket TTS and, on Apple Silicon, Ming TTS using the existing `speech:setup*` scripts. See [speech setup](docs/speech.md) and
 [language controls](docs/video-languages.md). Provider sign-in/API keys and macOS Screen Recording
 and Accessibility permissions require your action; the installer does not start the app or operate
 your browser. OpenScreen downloads come from its official GitHub releases and are SHA-256 checked;

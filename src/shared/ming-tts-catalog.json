@@ -253,5 +253,5 @@
   "defaultVoice": "ming_xiaorou",
   "mlxModel": "mlx-community/Ming-3.0-tts-0.5B-bf16",
   "mlxRevision": "283b3c342c6fb69a7a87832c97f9799567efe05d",
-  "mlxAudioVersion": "0.6.2"
+  "mlxAudioVersion": "0.6.4"
 }

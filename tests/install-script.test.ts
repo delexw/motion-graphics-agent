@@ -84,6 +84,7 @@ it("runs the complete fresh-clone setup in order using isolated command fixtures
       "npm run speech:setup\n",
       "npm run speech:setup:pocket\n",
       "npm run speech:setup:pocket:zh",
+      "npm run speech:setup:ming",
       "git clone --depth 1 https://github.com/kanaworksai-hue/audio-studio-mcp.git",
       "audio-installer \n",
       "npm run build",
@@ -191,6 +192,19 @@ it("stops on a dependency installation failure instead of reporting completion",
       }),
     ).rejects.toMatchObject({ code: 23 });
     expect(await readFile(f.log, "utf8")).toBe("npm ci\n");
+  } finally {
+    await f.close();
+  }
+});
+
+it("installs only Ming TTS for its dedicated speech mode", async () => {
+  const f = await fixture();
+  try {
+    await f.run(["--speech", "ming", "--skip-audio-studio", "--skip-build"]);
+    const speech = (await readFile(f.log, "utf8"))
+      .split("\n")
+      .filter((line) => line.includes("speech:setup"));
+    expect(speech).toEqual(["npm run speech:setup:ming"]);
   } finally {
     await f.close();
   }
