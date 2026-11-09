@@ -1288,5 +1288,10 @@
   "Generate narration": "生成旁白",
   "Subtitle text": "字幕文本",
   "Paste lyrics or subtitle text. No voice will be generated.": "粘贴歌词或字幕文本，不会生成旁白。",
-  "Use supplied text for subtitles, with optional narration.": "使用提供的文本生成字幕，可独立开启或关闭旁白。"
+  "Use supplied text for subtitles, with optional narration.": "使用提供的文本生成字幕，可独立开启或关闭旁白。",
+  "Preview directions finished": "预览方向已完成",
+  "{{value0}}: {{value1}} of {{value2}} directions ready": "{{value0}}：{{value2}} 个方向中有 {{value1}} 个已就绪",
+  "Preview notifications": "预览通知",
+  "Notify with a sound when all preview directions finish": "所有预览方向完成时发出提示音并通知",
+  "Preview notifications off": "预览通知已关闭"
 }

@@ -1,4 +1,5 @@
 import { UiLanguageSwitch, uiLanguages, uiLanguage } from "../i18n";
+import { PreviewNotificationSwitch } from "../components/preview-notification-switch";
 import { PromptText } from "../components/style-mention";
 import { translateUi, useUiLanguage } from "../i18n";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
@@ -816,6 +817,7 @@ export function CreativeRoom({
             <span>{translateUi("your creative room")}</span>
           </a>
           <nav className="room-menu-actions" aria-label={translateUi("Room")}>
+            <PreviewNotificationSwitch />
             <UiLanguageSwitch />
             <Button
               type="primary"

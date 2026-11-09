@@ -8,7 +8,11 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 - Cream Card Explainer Deck (`style-143`): a cream-paper explainer deck with a walking presenter character, layered entrances and exits, a side panel that docks into a floating white card, an attached mascot lower-third and stepped flow diagrams, learned from a source video's motion design only. Includes a reviewed technology choice, Chinese metadata, a frame-analysis record and a rendered preview built from the exact catalog prompt on the catalog's shared preview subject. The catalog now contains 143 Motion Graphics.
 
+- Optional preview notifications: a bell switch beside the language switch plays a short chime and shows a browser notification when every preview direction of a project finishes. Clicking the notification opens the project. Off by default; the choice is remembered in this browser.
+
 ### Changed
+
+- The MCP `get_idea_options` tool now lists every optional idea setting with its default, and agents ask the user about each one before `create_idea` instead of silently using defaults.
 
 - Run formatting, lint, build and the complete test suite for every PR; allow every Dependabot update to auto-merge only after full-suite and native Windows CI succeed.
 

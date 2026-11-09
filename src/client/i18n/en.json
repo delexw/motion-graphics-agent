@@ -1288,5 +1288,10 @@
   "Generate narration": "Generate narration",
   "Subtitle text": "Subtitle text",
   "Paste lyrics or subtitle text. No voice will be generated.": "Paste lyrics or subtitle text. No voice will be generated.",
-  "Use supplied text for subtitles, with optional narration.": "Use supplied text for subtitles, with optional narration."
+  "Use supplied text for subtitles, with optional narration.": "Use supplied text for subtitles, with optional narration.",
+  "Preview directions finished": "Preview directions finished",
+  "{{value0}}: {{value1}} of {{value2}} directions ready": "{{value0}}: {{value1}} of {{value2}} directions ready",
+  "Preview notifications": "Preview notifications",
+  "Notify with a sound when all preview directions finish": "Notify with a sound when all preview directions finish",
+  "Preview notifications off": "Preview notifications off"
 }

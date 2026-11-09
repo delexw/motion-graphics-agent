@@ -1,4 +1,5 @@
 import { UiLanguageSwitch, translateUi, useUiLanguage } from "../i18n";
+import { PreviewNotificationSwitch } from "../components/preview-notification-switch";
 import {
   useEffect,
   useLayoutEffect,
@@ -192,6 +193,7 @@ export function RoomWindow({
         {badge}
         {mobile && front && (
           <>
+            <PreviewNotificationSwitch />
             <UiLanguageSwitch />
             <Button
               size="small"

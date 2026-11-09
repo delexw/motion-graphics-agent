@@ -42,6 +42,12 @@ import { projectName } from "../shared/project-name";
 import { api } from "./lib/api";
 import { mergeActivityEvents, summaryEventLimit } from "../shared/project-activity";
 import { subscribeProjectEvents } from "./lib/project-event-stream";
+import {
+  createPreviewCompletionTracker,
+  notifyPreviewsFinished,
+  previewNotificationPreference,
+  primePreviewNotifications,
+} from "./lib/preview-notification";
 import { loadMotionCatalog } from "./motion-catalog";
 import { appRoute } from "./lib/app-route";
 import { projectSettingsDraft } from "./lib/project-settings";
@@ -292,6 +298,16 @@ function App() {
       unsubscribe();
     };
   }, [run?.id, projectId]);
+  const trackPreviewCompletion = useRef(createPreviewCompletionTracker());
+  useEffect(() => {
+    for (const finished of trackPreviewCompletion.current(history))
+      notifyPreviewsFinished(finished, () => navigate(`/projects/${finished.id}`));
+  }, [history]);
+  useEffect(() => {
+    previewNotificationPreference.load();
+    window.addEventListener("pointerdown", primePreviewNotifications, { once: true });
+    return () => window.removeEventListener("pointerdown", primePreviewNotifications);
+  }, []);
   useEffect(() => {
     if (!run) return;
     setHistory((previous) =>
