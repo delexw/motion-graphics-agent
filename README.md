@@ -44,6 +44,7 @@ Dates below use New Zealand time.
 - **Ming TTS in the installer:** `./install.sh` installs Ming TTS on Apple Silicon by default, and `--speech ming` installs only Ming. A version mismatch that made Ming setup fail is fixed.
 - **Preview notifications:** a bell switch beside the language switch plays a chime and shows a browser notification when every preview direction of a project finishes. It is off by default.
 - **MCP asks about optional settings:** `get_idea_options` lists every optional idea setting with its default, and agents ask the user about each one before creating an idea.
+- **Style previews no longer stay paused:** a style preview that opened while the browser was busy could stay paused with no video. It now plays once it is in view.
 - **Cream Card Explainer Deck (`style-143`):** a cream-paper explainer deck with a walking presenter, a docking side panel and stepped flow diagrams. The catalog now has 143 Motion Graphics.
 
 </details>
