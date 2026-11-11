@@ -473,3 +473,44 @@ it.each([true, false])(
     expect(JSON.stringify(other.structuredContent)).not.toContain("manga-head");
   },
 );
+
+it.each([
+  { readOnly: true, includeAlternatives: true },
+  { readOnly: true, includeAlternatives: false },
+  { readOnly: false, includeAlternatives: true },
+  { readOnly: false, includeAlternatives: false },
+])(
+  "keeps motion discovery open beyond recommendations (%j)",
+  ({ readOnly, includeAlternatives }) => {
+    const { guidance } = agentCapabilities("/job", readOnly, false, includeAlternatives);
+    expect(guidance).toContain("MOTION DISCOVERY ROUTE TABLE:");
+    const routeContexts = guidance
+      .split("\n")
+      .filter((line) => line.startsWith("| "))
+      .slice(2)
+      .map((line) => line.split("|")[1].trim());
+    expect(routeContexts).toEqual([
+      "Selected Motion Graphic",
+      "Explicit @ mentions of Motion Graphics or motions",
+      "Motion Graphic recommendations or motion compatibility",
+      "Scene needs a suitable motion",
+      "No motion improves the scene",
+      "Motion conflicts with user requirements or selected visual identity",
+    ]);
+    expect(guidance).toContain("Report unresolved conflicts involving explicit requirements");
+    expect(guidance).toContain(
+      "Treat motion compatibility.good_fit and Motion Graphic motion_references.candidates as recommendations, never allowlists or exhaustive choices",
+    );
+    expect(guidance).toContain("Search the full motion pool through creative_pool.search_pool");
+    expect(guidance).toContain("motions whose good_fit does not name it");
+    expect(guidance).toContain("Read the complete definition of any motion you intend to use");
+    expect(guidance).toContain("There is no requirement to inspect every motion");
+    expect(guidance).toContain("choosing none is valid");
+    expect(guidance).toContain(
+      "Preserve the selected Motion Graphics, user requirements, explicit @ mentions of Motion Graphics or motions, explicit exclusions, the selected visual identity and scene/act scope",
+    );
+    expect(guidance).toContain(
+      "Broader motion discovery does not authorize changing selected Motion Graphics or draft settings",
+    );
+  },
+);

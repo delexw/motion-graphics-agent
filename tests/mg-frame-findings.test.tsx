@@ -217,9 +217,9 @@ describe("catalog integration", () => {
     const raw = JSON.parse(
       await readFile(path.join(catalogRoot, "motion-pattern-catalog.json"), "utf8"),
     );
-    expect(raw.metadata.pattern_count).toBe(50);
+    expect(raw.metadata.pattern_count).toBe(55);
     expect(catalog.motions.map((motion) => motion.id)).toEqual(
-      Array.from({ length: 50 }, (_, i) => `motion-${String(i + 1).padStart(3, "0")}`),
+      Array.from({ length: 55 }, (_, i) => `motion-${String(i + 1).padStart(3, "0")}`),
     );
     expect(catalog.styles).toHaveLength(143);
     const template = Object.keys(raw.patterns.find((p: { id: string }) => p.id === "motion-041"));

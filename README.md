@@ -38,6 +38,15 @@ Switch the interface instantly with **EN / 中文**; see [interface language](do
 Dates below use New Zealand time.
 
 <details>
+<summary>2026-11-12</summary>
+
+- **Open motion discovery:** Direct builds and generated directions share a route table for reading selected Motion Graphics, resolving explicit `@` references and searching the full motion pool. Style candidates and motion `good_fit` lists are recommendations, not allowlists. The model preserves the selected visual identity, user requirements and scene scope; it need not inspect every motion or use one.
+
+- **Five composable motion techniques:** Metaball Merge & Split (`motion-051`), Path Follow & Text on Path (`motion-052`), 3D Tile Flip (`motion-053`), Particle Glyph Assembly (`motion-054`) and Velocity Motion Blur (`motion-055`). Each has a seekable explorer preview, Chinese metadata and a frame-analysis record. A review of twelve common techniques found the other seven already covered. The catalog now has 55 motions.
+
+</details>
+
+<details>
 <summary>2026-11-10</summary>
 
 - **Upgradeable dependency ranges, tested in CI:** Python speech requirements use ranges up to the next major version instead of exact pins, like npm's `^`. A new CI job installs every speech engine's libraries at the newest allowed versions and checks them against Kiteva's adapters without downloading models, and Dependabot auto-merge now waits for all three CI jobs. Mandarin Pocket TTS stays below 3.1 because its checkpoint breaks on newer releases. See [dependency policy](docs/dependency-security.md).

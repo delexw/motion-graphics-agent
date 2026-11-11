@@ -229,7 +229,7 @@ describe("Terminal Lyric Duotone Anime catalog entry", () => {
     const raw = JSON.parse(
       await readFile(path.join(catalogRoot, "motion-pattern-catalog.json"), "utf8"),
     );
-    expect(raw.metadata.pattern_count).toBe(50);
+    expect(raw.metadata.pattern_count).toBe(55);
     // Select this study's IDs explicitly; later additions have separate review evidence.
     expect(
       catalog.motions.map((m) => m.id).filter((id) => id === "motion-047" || id === "motion-048"),

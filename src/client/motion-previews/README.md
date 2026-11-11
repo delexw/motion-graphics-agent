@@ -59,6 +59,11 @@ Claude Opus 5.5 rewrote the 43 studies and reviewed their rendered six-timestamp
 | motion-047 | Rotating Sonar-Sweep Reveal                    | [motion-047.ts](./motion-047.ts) |
 | motion-048 | Pixel-Tile Materialize & Targeted Delete       | [motion-048.ts](./motion-048.ts) |
 | motion-049 | Step-Tick Slot Refill                          | [motion-049.ts](./motion-049.ts) |
+| motion-051 | Metaball Merge & Split                         | [motion-051.ts](./motion-051.ts) |
+| motion-052 | Path Follow & Text on Path                     | [motion-052.ts](./motion-052.ts) |
+| motion-053 | 3D Tile Flip                                   | [motion-053.ts](./motion-053.ts) |
+| motion-054 | Particle Glyph Assembly                        | [motion-054.ts](./motion-054.ts) |
+| motion-055 | Velocity Motion Blur                           | [motion-055.ts](./motion-055.ts) |
 
 `motion-043.ts` uses `../motion-orbit-preview.ts` for its projected 3D geometry.
 
@@ -76,6 +81,16 @@ Claude Opus 5.5 authored motion-047 and motion-048 on 2026-10-18 from a frame an
 
 Claude Opus 5.5 authored motion-049 on 2026-10-24 from a frame analysis of a user-supplied pixel-art technical explainer. Four fixed slot lanes advance on one STEP clock: every active lane gains one token per tick; on its finishing tick a lane clears to a muted completion fill while its request icon exits right out of frame, and on the next tick a new request takes that same lane with one token while the other lanes keep their progress. No waiting queue is drawn: the source shows none, and the order of new requests is authored data. The schedule is replayed from step 0 for every query through exported pure helpers. The [review record](../../../assets/catalog/reviews/pixel-quest-explainer.json) lists the evidence, rejected candidates and limitations.
 
+Claude Opus 5.5 authored motion-051 to motion-055 on 2026-11-12 from a frame analysis of a user-supplied tutorial that demonstrates twelve named motion techniques. Seven of the twelve were already covered by existing motions and Motion Graphics; these five fill the gaps as composable motions, each written from its finished catalog prompt on the shared Idea, Links, System content:
+
+- motion-051: one body splits into three drops through thinning necks, bridges again when a drop dips close, and merges into one outline. The outline is the threshold contour of a summed field, filled with marching squares on a fixed grid.
+- motion-052: a path draws and bends into a wave. A dot rides it by arc length past three labelled stops, while a phrase flows along the curve with every glyph at its own distance and rotated to the local direction.
+- motion-053: an Idea field flips tile by tile into a System field. The tiles turn about their own axes through the shared Three.js camera from `../motion-orbit-preview.ts`, show the face that points at the camera, and finish without gaps. The caption then flips in letter by letter.
+- motion-054: 620 seeded particles drift, gather onto points sampled along stroked letterforms for IDEA, hold, and re-form into SYSTEM along seeded curves.
+- motion-055: three words whip in and out. Each streak is an equal-weight average of 24 positions across a 1/60 s shutter, taken from the same eased motion, so it appears only while the word is fast and every hold is sharp.
+
+The [review record](../../../assets/catalog/reviews/motion-technique-study.json) lists the coverage of all twelve techniques, the evidence windows and the limitations.
+
 All drawings are original code; no source imagery is reused. The [frame-findings record](../../../assets/catalog/reviews/mg-frame-findings.json) maps each recommendation to its implementation and evidence frames. Its visual review stays pending until the rendered previews have been inspected.
 
 Verification:
@@ -84,5 +99,6 @@ Verification:
 - `tests/motion-orbit-preview.test.ts`: camera path and front/back occlusion.
 - `tests/terminal-lyric-anime.test.ts`: motion-047 rotation and mask semantics, motion-048 crops, assembly, fixed-cell deletion and seek stability, plus real canvas frames when the optional native canvas package is installed.
 - `tests/pixel-quest-explainer.test.ts`: motion-049 tick, finish, exit and next-step replacement semantics, authored request order, no drawn queue, explicit lane-label colour and contrast, English-only copy and seek stability.
+- `tests/motion-techniques.test.ts`: motion-051 to motion-055 catalog completeness, creative-pool discovery, field components and drop radius, glyph spacing and arc-length travel, camera-facing tile faces, perspective and seamless finish, particle targets and word coverage, speed-driven streaks, settled holds, and forward, backward and direct seeks on rendered canvas frames.
 - `tests/mg-frame-findings.test.tsx`: the three frame-finding motions, the seven improved studies, variant contracts, catalog links and seek stability.
 - `scripts/verify-motion-explorer.ts`: every catalog card and detail preview in the running app, pause/resume, pixel changes, repeatable seeking, offscreen pause and reduced motion. Run with `node --import tsx scripts/verify-motion-explorer.ts`.

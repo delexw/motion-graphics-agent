@@ -6,11 +6,15 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Added
 
+- Five composable motion techniques: Metaball Merge & Split (`motion-051`), Path Follow & Text on Path (`motion-052`), 3D Tile Flip (`motion-053`), Particle Glyph Assembly (`motion-054`) and Velocity Motion Blur (`motion-055`). Each entry has reusable prompt and implementation guidance, a seekable explorer preview, Chinese metadata and a frame-analysis record of a twelve-technique tutorial. The record also maps the seven techniques that existing motions and Motion Graphics already cover. The catalog now contains 55 motions.
+
 - Cream Card Explainer Deck (`style-143`): a cream-paper explainer deck with a walking presenter character, layered entrances and exits, a side panel that docks into a floating white card, an attached mascot lower-third and stepped flow diagrams, learned from a source video's motion design only. Includes a reviewed technology choice, Chinese metadata, a frame-analysis record and a rendered preview built from the exact catalog prompt on the catalog's shared preview subject. The catalog now contains 143 Motion Graphics.
 
 - Optional preview notifications: a bell switch beside the language switch plays a short chime and shows a browser notification when every preview direction of a project finishes. Clicking the notification opens the project. Off by default; the choice is remembered in this browser.
 
 ### Changed
+
+- Both direct builds and generated directions now receive a shared motion-discovery route table. Motion Graphic candidates and motion `compatibility.good_fit` lists are recommendations rather than allowlists: models may search the full pool while preserving selected Motion Graphics, explicit `@` references, user requirements, exclusions and scene scope. Reading every motion or using a recommendation is not mandatory.
 
 - Declare every Python speech requirement as a range up to the next major version (like npm's `^`) instead of an exact version. Dependabot proposes major upgrades as PRs, and a new CI job installs every speech engine's libraries at the newest allowed versions and checks that they still provide every function, parameter and result shape Kiteva's adapters use. It replaces model objects with fakes, so it downloads no models. An incompatible upgrade fails before it merges. The Ming runtime check accepts any MLX-Audio release inside its range, and a test rejects exact pins in Python requirements and `package.json`.
 

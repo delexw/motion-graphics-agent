@@ -17,6 +17,11 @@ const laterMotionIds = [
   "motion-048",
   "motion-049",
   "motion-050",
+  "motion-051",
+  "motion-052",
+  "motion-053",
+  "motion-054",
+  "motion-055",
 ];
 // Motion Graphics authored after the orbit review were not part of it and must not claim motion-043.
 const laterStyleIds = [

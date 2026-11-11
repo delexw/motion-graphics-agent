@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "kind": "frame_analysis_additions",
+  "source": {
+    "description": "User-supplied 32.3 s motion-design tutorial video (1920x1080, 30 fps) that names and demonstrates twelve techniques. Its copy, watermark, palette and branding are not reproduced.",
+    "source_sha256": "da25a2fe4a472ffdcdd1979e95a5a73c5e68e90bdeb17092830d981cc145c683",
+    "reuse_policy": "Only composable motion rules are recorded. Previews are original code drawings on the explorer palette with the shared Idea, Links, System content; the source's black, red and cream are not used."
+  },
+  "analysis_provenance": {
+    "model": "claude-opus-5-5",
+    "sampling": "2 fps overview sheets, 10 fps sheets of the whole video and 30 fps sheets of the metaball, motion blur, path, tile flip and particle windows. No continuous playback and no audio.",
+    "limitations": [
+      "Easing curves, field functions, shutter lengths and particle counts are not measurable from frames; all such values in the additions are authored.",
+      "Segment boundaries are accurate to about 0.1 s."
+    ]
+  },
+  "implementation_provenance": {
+    "model": "claude-opus-5-5",
+    "date": "2026-11-12",
+    "method": "Catalog entries were finalized first; each preview was then written from its own executable prompt, video adaptation and implementation text, rendered to frames with the native canvas package and reviewed as contact sheets."
+  },
+  "coverage": [
+    {
+      "technique": "Squash & Stretch",
+      "source_seconds": [0, 2],
+      "observed": "A ball drops onto the title, squashes on contact twice with ripple rings and rebounds; the title characters bounce apart on exit.",
+      "status": "supported",
+      "evidence": [
+        "motion-027 Elastic Arrival (gravity, contact squash, diminishing rebounds, preview motion-027.ts)",
+        "style-106 Squash and Stretch"
+      ],
+      "action": "none"
+    },
+    {
+      "technique": "Stagger",
+      "source_seconds": [2.2, 3.9],
+      "observed": "A row of dots carries a travelling wave with per-dot delay while title letters drop in one by one.",
+      "status": "supported",
+      "evidence": [
+        "motion-027 staggered tiles",
+        "motion-037 Phrase Scatter & Step-In",
+        "motion-036 per-glyph build",
+        "GSAP stagger in the technology pool"
+      ],
+      "action": "none"
+    },
+    {
+      "technique": "Easing",
+      "source_seconds": [4, 6.2],
+      "observed": "Three dots labelled linear, ease-in-out and expo.out cross the same distance with ghost marks showing their spacing.",
+      "status": "supported",
+      "evidence": [
+        "Every planned effect must state its easing (src/server/domains/video/build-plan.ts)",
+        "Pacing guidance separates spacing and easing from duration (src/server/domains/video/pacing.ts)",
+        "GSAP eases on every motion's paused timeline"
+      ],
+      "action": "none; no side-by-side easing study exists, which is a teaching device rather than a production capability"
+    },
+    {
+      "technique": "Metaball",
+      "source_seconds": [6.2, 8.6],
+      "observed": "One dot buds, splits into drops through thinning necks, drops bridge when they pass and re-merge.",
+      "status": "partial_before",
+      "evidence": [
+        "motion-014 mentions compact metaballs but its preview is one deforming orb",
+        "style-114 Liquid Motion names SDF metaballs, but its preview drops never fuse"
+      ],
+      "action": "added motion-051 Metaball Merge & Split"
+    },
+    {
+      "technique": "Morph",
+      "source_seconds": [8.6, 10.3],
+      "observed": "A circle becomes a rounded square, a five-point star, a ten-point burst and a circle again.",
+      "status": "supported",
+      "evidence": [
+        "style-100 Shape Morphing (tracked-anchor contour morph in its preview)",
+        "gsap_morphsvgplugin technology",
+        "motion-026 connector morph"
+      ],
+      "action": "none"
+    },
+    {
+      "technique": "Mask Reveal",
+      "source_seconds": [10.4, 12.7],
+      "observed": "A circle grows to fill the frame, glyphs rise through line masks, a bar wipes the subtitle on, and an iris closes.",
+      "status": "supported",
+      "evidence": [
+        "motion-023 Cursor Wipe",
+        "motion-039 circular mask inversion",
+        "motion-044 Glyph Ink-Flood",
+        "motion-045 portal mask"
+      ],
+      "action": "none"
+    },
+    {
+      "technique": "Motion Blur",
+      "source_seconds": [12.7, 14.5],
+      "observed": "The title slides in fast with a horizontal blur that shortens as it slows and lands sharp.",
+      "status": "partial_before",
+      "evidence": [
+        "motion-036 ghost smear is a fixed in-place streak",
+        "motion-045 names an optional peak-frame blur without a method"
+      ],
+      "action": "added motion-055 Velocity Motion Blur"
+    },
+    {
+      "technique": "Glitch",
+      "source_seconds": [14.6, 16.5],
+      "observed": "RGB split and slice offsets carry the switch to the next title, which re-glitches once while holding.",
+      "status": "supported",
+      "evidence": [
+        "motion-020 Scroll-Driven Glitch Cut",
+        "motion-036 Glitch Type Build",
+        "style-067 Glitch Art"
+      ],
+      "action": "none"
+    },
+    {
+      "technique": "Path Animation",
+      "source_seconds": [16.6, 19.3],
+      "observed": "A line bends into a wave; type flows along the curve rotated to its slope with a dot riding behind it.",
+      "status": "partial_before",
+      "evidence": [
+        "motion-029 pen follows its stroke",
+        "motion-035 orbit paths",
+        "no entry sets type on a path"
+      ],
+      "action": "added motion-052 Path Follow & Text on Path"
+    },
+    {
+      "technique": "Parallax",
+      "source_seconds": [19.3, 21.3],
+      "observed": "Outline rings drift slowly, large blurred discs pass fast in front, the centre dot stays fixed.",
+      "status": "supported",
+      "evidence": [
+        "motion-009 Cursor-Driven Miniature Scene Parallax",
+        "style-101 2.5D Parallax Animation (three labelled depth speeds in its preview)",
+        "motion-003 Immersive Float"
+      ],
+      "action": "none"
+    },
+    {
+      "technique": "3D Flip",
+      "source_seconds": [21.3, 23.8],
+      "observed": "A full-frame field breaks into tiles that turn edge-on in perspective from the top-left; title characters flip in one by one.",
+      "status": "absent_before",
+      "evidence": [
+        "motion-040's band flip is a flat 2D squash",
+        "motion-011 tilts one card",
+        "style-056 mentions Blender tile flips without a reusable motion"
+      ],
+      "action": "added motion-053 3D Tile Flip"
+    },
+    {
+      "technique": "Particles",
+      "source_seconds": [23.9, 26.1],
+      "observed": "A dot bursts into a drifting field that condenses by colour into a two-character title above a Latin word, holds, and disperses.",
+      "status": "partial_before",
+      "evidence": [
+        "style-062 Particle Art forms a bulb as a whole visual style",
+        "motion-039 particles only decorate a burst",
+        "motion-048 assembles image crops, not particles into type"
+      ],
+      "action": "added motion-054 Particle Glyph Assembly"
+    }
+  ],
+  "additions": [
+    {
+      "id": "motion-051",
+      "name": "Metaball Merge & Split",
+      "category": "procedural_form",
+      "evidence_window_seconds": [6.2, 8.6],
+      "executable_prompt_template_sha256": "e628655ab356ae108ae7cea79336ce06c1d8a73cb4ea459853ba97b8a4e6f956",
+      "preview_source": "src/client/motion-previews/motion-051.ts",
+      "preview_source_sha256": "dc3e7fe584f3dc25467589e75e28805cd418038c534c5b465c33878f04bffc05"
+    },
+    {
+      "id": "motion-052",
+      "name": "Path Follow & Text on Path",
+      "category": "object_choreography",
+      "evidence_window_seconds": [16.6, 19.3],
+      "executable_prompt_template_sha256": "4e6fbfa076c61c7f960aaa3fe8777f34cfd33f9f2452837dc7364075352ebca1",
+      "preview_source": "src/client/motion-previews/motion-052.ts",
+      "preview_source_sha256": "9a5c1ab2a8bc7b3d554f70fe83205011281fd270748fb7e42b8dbbaa96aa055d"
+    },
+    {
+      "id": "motion-053",
+      "name": "3D Tile Flip",
+      "category": "scene_transition",
+      "evidence_window_seconds": [21.3, 23.8],
+      "executable_prompt_template_sha256": "af5d38458ab1cee940aa178ed74792d331c9ea0fb554bb5d134f8ae2548a6c1b",
+      "preview_source": "src/client/motion-previews/motion-053.ts",
+      "preview_source_sha256": "8a63df811ef552a7510340f58fdf002bfda52a28ac2530c73ec68683c60e21bc"
+    },
+    {
+      "id": "motion-054",
+      "name": "Particle Glyph Assembly",
+      "category": "assembly",
+      "evidence_window_seconds": [23.9, 26.1],
+      "executable_prompt_template_sha256": "38bfede7bd0f23edc5f0e524eb8eb45e0771eee123f529a3e6de421d7312f503",
+      "preview_source": "src/client/motion-previews/motion-054.ts",
+      "preview_source_sha256": "49856d979e8b2a0de89ec5b9926c0537a4ed2b20333679a8c60a1edda3a47983"
+    },
+    {
+      "id": "motion-055",
+      "name": "Velocity Motion Blur",
+      "category": "transition",
+      "evidence_window_seconds": [12.7, 14.5],
+      "executable_prompt_template_sha256": "45b94194f3d01d781d36e2ff51a310d6dad4b1bb02c57b36d38d899fb47d22c3",
+      "preview_source": "src/client/motion-previews/motion-055.ts",
+      "preview_source_sha256": "f042205928517736e35edda060a6baa0a55198a0ac61091372410063cfbde7e2"
+    }
+  ],
+  "reused_existing": [
+    "src/client/motion-previews/drawing.ts palette, easing and seeded random",
+    "src/client/motion-orbit-preview.ts makeCamera and projector for motion-053"
+  ],
+  "rejected_candidates": [
+    {
+      "candidate": "Twelve new Motion Graphics",
+      "reason": "The techniques are composable motions; styles keep their own subjects and palettes."
+    },
+    {
+      "candidate": "An easing comparison motion",
+      "reason": "Easing is already required per effect in build plans; a side-by-side study is a teaching device."
+    }
+  ],
+  "visual_review": {
+    "status": "reviewed",
+    "reviewer_model": "claude-opus-5-5",
+    "observations": [
+      "motion-051: one outline at 0.3 s, three drops plus the parent at 3.45 s, a bridge during the 2.2 s dip and one outline after 4.6 s.",
+      "motion-052: glyphs follow the wave rotated to its slope; stops light in order.",
+      "motion-053: fronts show IDEA slices and backs show unmirrored SYSTEM slices; tiles foreshorten in perspective.",
+      "motion-054: IDEA and SYSTEM are readable from particles during both holds.",
+      "motion-055: streaks appear only on fast frames and every hold is sharp."
+    ]
+  }
+}

@@ -99,6 +99,13 @@ it.each(["claude", "codex"] as const)(
       "Execution policy",
     ]);
     expect(effectivePrompt).toContain("### Creative Pool\n\n");
+    expect(effectivePrompt).toContain("MOTION DISCOVERY ROUTE TABLE:");
+    expect(effectivePrompt).toContain("recommendations, never allowlists or exhaustive choices");
+    expect(effectivePrompt).toContain(
+      "Search the full motion pool through creative_pool.search_pool",
+    );
+    expect(effectivePrompt).toContain("There is no requirement to inspect every motion");
+    expect(effectivePrompt).toContain("explicit @ mentions of Motion Graphics or motions");
     expect(effectivePrompt).toContain("### Website references\n\n");
     expect(effectivePrompt).toContain(authoringResourceSelectionGuidance);
     expect(effectivePrompt.split(referenceFailureGuidance)).toHaveLength(2);

@@ -1,7 +1,7 @@
 {
   "metadata": {
     "schema_version": "1.0",
-    "pattern_count": 50,
+    "pattern_count": 55,
     "language": "en",
     "description": "Reusable motion and interaction patterns that can supplement the separate visual-style catalog.",
     "interpretation_note": "The supplied reference images show titles rather than complete motion sequences. These entries propose adaptable interpretations; they do not claim to reproduce an observed original animation or its toolchain.",
@@ -5382,6 +5382,636 @@
           "Colours are approximate readings from compressed contact sheets.",
           "All timings in the templates are authored defaults chosen to resemble sampled behaviour, not measured source values.",
           "Source lyrics, title, credits, subtitles and the signature mark are excluded from all reusable text."
+        ]
+      }
+    },
+    {
+      "id": "motion-051",
+      "name": "Metaball Merge & Split",
+      "reference_label": "Metaball split and merge (6.6–8.6 s)",
+      "category": "procedural_form",
+      "description": "Two or more soft round bodies behave as one liquid surface. As their centres approach, a smooth neck forms and they fuse; as they separate, the neck thins and pinches off into separate drops. The outline is one threshold contour of a summed field, so merging and splitting read as continuous surface change rather than overlapping circles or a crossfade.",
+      "motion_sequence": [
+        "Establish one body with a readable outline and a clear role, for example a single idea.",
+        "Split: move child centres outward along authored paths; the shared contour stretches into necks that thin and pinch off at a consistent distance.",
+        "Travel: separated drops move as distinct bodies; when two pass close together a temporary bridge forms and releases.",
+        "Merge: bring the centres together so the bridges widen and the bodies fuse into one settled outline, then hold it for reading."
+      ],
+      "video_adaptation": "Author every centre position and radius as a pure function of composition time. For each frame, evaluate the field f(p) = Σ rᵢ² / |p − cᵢ|² and draw its contour at threshold 1, so an isolated body keeps its authored radius and bridges appear only within a predictable distance. Nothing depends on the previous frame. Keep labels outside the liquid surface, or reveal them after the shape settles.",
+      "suggested_controls": [
+        "body_count",
+        "radius_per_body",
+        "field_threshold",
+        "centre_paths",
+        "split_and_merge_times",
+        "grid_spacing",
+        "surface_fill_and_highlight",
+        "reading_hold",
+        "reduced_motion"
+      ],
+      "tech": {
+        "suggested_libraries": [
+          {
+            "name": "GSAP",
+            "package": "gsap",
+            "runtime": "browser",
+            "purpose": "Tween authored body centres and radii on a paused, seekable timeline.",
+            "suggested_apis": ["gsap.timeline({ paused: true })", "to", "seek"],
+            "optional": false,
+            "docs_url": "https://gsap.com/docs/v3/",
+            "production_roles": ["motion_engine"]
+          },
+          {
+            "name": "Canvas 2D",
+            "package": null,
+            "runtime": "browser",
+            "purpose": "Sample the summed field on a fixed grid, trace its threshold contour and fill it as one path at the requested time.",
+            "suggested_apis": ["CanvasRenderingContext2D", "beginPath", "moveTo", "lineTo", "fill"],
+            "optional": true,
+            "docs_url": "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D",
+            "production_roles": ["style_renderer"]
+          },
+          {
+            "name": "SVG",
+            "package": null,
+            "runtime": "browser",
+            "purpose": "Optional goo filter: blur grouped circles and threshold their alpha into one outline.",
+            "suggested_apis": ["feGaussianBlur", "feColorMatrix", "filter"],
+            "optional": true,
+            "docs_url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Element/feColorMatrix",
+            "production_roles": ["style_renderer"]
+          }
+        ],
+        "implementation": "Keep a pure bodies(t) that returns centres and radii, and a pure contour step that samples the field on a fixed grid and extracts closed threshold lines with marching squares and linear edge interpolation; fill them as one path. A fixed grid means the same time always gives the same outline. An SVG alternative groups plain circles under feGaussianBlur followed by an feColorMatrix alpha threshold (the goo filter); keep the blur and threshold fixed and recheck the edge at the output resolution. A fragment shader can evaluate the same field per pixel. Do not fake fusion with overlapping circles or crossfaded shapes. The explorer preview is an original Canvas 2D study: one Idea body splits into three Links that orbit with passing bridges, then merges into one System outline.",
+        "style_renderer": {
+          "recommended_stack_refs": ["Canvas 2D"]
+        },
+        "motion_engine": {
+          "recommended_stack_refs": ["GSAP"]
+        }
+      },
+      "compatibility": {
+        "good_fit": ["Liquid Motion", "Abstract Motion Graphics", "Shape Morphing", "Y2K Design"],
+        "adapt_or_omit_when": [
+          "Use when joining or dividing is the idea: one source becoming several parts, parts gathering into a whole, or liquid materials.",
+          "Use Fluid Morphing Energy Orb (motion-014) when a single connected form only deforms and never divides.",
+          "Omit when the bodies carry text or detailed artwork that the shared surface would distort; keep that content beside the liquid.",
+          "This is an implicit-surface look, not a fluid simulation; do not claim volume conservation or physical viscosity."
+        ]
+      },
+      "audio_direction_prompt": "No audio was analysed in the source review. Based on the topic, mood and existing audio plan, decide whether this action needs a restrained accent, music synchronisation or silence. Previews stay silent.",
+      "executable_prompt_template": "Build Metaball Merge & Split (motion-051) for {{subject}} in {{visual_style}}. Treat the authored bodies as one liquid surface: draw a single threshold contour of their summed field, so bodies fuse through smooth necks when close and pinch apart when separated. Stage split, travel with passing bridges, merge and a settled hold. Compute centres and radii from composition time and rebuild the contour every frame without retained state; do not substitute overlapping circles or crossfades. Keep text outside the surface or reveal it after it settles. Inspect actual assets and preserve the approved medium and palette. Resolve {{motion_parameters}} (body count, radii, threshold, paths, timings, holds). Verify forward, backward and direct seeks. Use {{render_pipeline}} for composition timing, synchronization, validation and export; preserve the selected style renderer and motion ownership.",
+      "verification": [
+        "Close bodies show one continuous outline with a smooth neck, with no seam or overlapping circle edges.",
+        "Necks thin and pinch off at a consistent separation, and isolated bodies keep their authored size.",
+        "The merged outline holds still long enough to read.",
+        "Forward, backward and direct seeks give identical outlines."
+      ],
+      "palette_guidance": "This pattern adds no required colours. Use one fill for the liquid surface so fused bodies read as one material; an optional highlight may follow the outline. The preview uses the explorer's illustrative teal and warm accents, which are not binding.",
+      "source_evidence": {
+        "source_kind": "frame_analysis",
+        "source_file": "User-supplied 32.3 s motion-design tutorial video (1920x1080, 30 fps) demonstrating twelve named techniques; its copy, watermark, palette and branding are withheld and not reused",
+        "source_sha256": "da25a2fe4a472ffdcdd1979e95a5a73c5e68e90bdeb17092830d981cc145c683",
+        "time_window_seconds": [6.2, 8.6],
+        "evidence_seconds": [6.73, 6.87, 6.97, 7.07, 7.2, 7.33, 7.5, 8, 8.3, 8.5],
+        "sampling": "Claude Opus 5.5 reviewed 2 fps overview sheets, 10 fps sheets of the whole video and a 30 fps sheet of this window. No continuous playback or audio analysis.",
+        "observations": [
+          {
+            "seconds": [6.73, 6.87, 6.97],
+            "observation": "A single round dot grows, its outline turns lumpy, and buds bulge out of it before any piece separates."
+          },
+          {
+            "seconds": [7.07, 7.2, 7.33],
+            "observation": "Satellite drops leave the main body; a thin neck stays attached for a few frames and then pinches off."
+          },
+          {
+            "seconds": [7.5, 8],
+            "observation": "Separated drops travel around the main body; drops that pass close together fuse briefly through a bridge."
+          },
+          {
+            "seconds": [8.3, 8.5],
+            "observation": "The drops re-merge into one round body before the next technique starts."
+          }
+        ],
+        "limitations": [
+          "The source field function, threshold and paths are not measurable from frames; the preview's inverse-square field and orbits are authored.",
+          "The source shows the merge on a flat red fill; the preview's highlight and colours are explorer conventions."
+        ]
+      }
+    },
+    {
+      "id": "motion-052",
+      "name": "Path Follow & Text on Path",
+      "reference_label": "Path animation with type on a curve (16.6–19.3 s)",
+      "category": "object_choreography",
+      "description": "A path is drawn, then an object travels along it at a controlled speed, turning to the path's direction, while a short line of type flows along the same curve with each glyph placed and rotated at its own distance along the path. Path, object and type share one arc-length parameter, so the curve itself carries the reading direction.",
+      "motion_sequence": [
+        "Draw the path from its start, or bend a straight line into the curve, so the route is visible before anything rides it.",
+        "Send a short line of type along the curve: each glyph sits at its own distance along the path, rotated to the local direction, with even spacing measured along the curve.",
+        "Move the object along the same path by distance with authored easing, turning to the path direction when it has one, and pass labelled stops in order.",
+        "Arrive at the final stop and hold with the path, type and object readable; on exit the path may straighten or retract."
+      ],
+      "video_adaptation": "Build an arc-length table for the path once (cumulative length at fixed samples). At time t, convert authored progress into a distance s and look up the position and direction at s. Place glyph i at s minus the measured advance of the glyphs before it, and hide glyphs that fall outside the path. Never move by the raw curve parameter: equal parameter steps are not equal distances on a curve.",
+      "suggested_controls": [
+        "path_geometry",
+        "draw_duration",
+        "travel_easing",
+        "object_orientation",
+        "text_offset_and_spacing",
+        "stop_positions",
+        "path_exit",
+        "reading_hold",
+        "reduced_motion"
+      ],
+      "tech": {
+        "suggested_libraries": [
+          {
+            "name": "GSAP",
+            "package": "gsap",
+            "runtime": "browser",
+            "purpose": "Drive path drawing, travel distance and type offset from one paused, seekable timeline; MotionPathPlugin ships inside the installed gsap package and must be registered.",
+            "suggested_apis": [
+              "gsap.timeline({ paused: true })",
+              "gsap.registerPlugin(MotionPathPlugin)",
+              "motionPath",
+              "seek"
+            ],
+            "optional": false,
+            "docs_url": "https://gsap.com/docs/v3/",
+            "production_roles": ["motion_engine"]
+          },
+          {
+            "name": "SVG",
+            "package": null,
+            "runtime": "browser",
+            "purpose": "Hold the path, set type on it with textPath and read positions with getTotalLength and getPointAtLength.",
+            "suggested_apis": [
+              "path",
+              "textPath",
+              "startOffset",
+              "getTotalLength",
+              "getPointAtLength"
+            ],
+            "optional": true,
+            "docs_url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Element/textPath",
+            "production_roles": ["style_renderer"]
+          },
+          {
+            "name": "Canvas 2D",
+            "package": null,
+            "runtime": "browser",
+            "purpose": "Draw the path, the travelling object and per-glyph rotated type from an arc-length table at the requested time.",
+            "suggested_apis": [
+              "CanvasRenderingContext2D",
+              "measureText",
+              "translate",
+              "rotate",
+              "fillText"
+            ],
+            "optional": true,
+            "docs_url": "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D",
+            "production_roles": ["style_renderer"]
+          }
+        ],
+        "implementation": "In SVG, put the type in a textPath on the same path and animate its startOffset, and move the object with getPointAtLength or GSAP MotionPathPlugin on a paused timeline. In Canvas, sample the curve once into an arc-length table and find position and direction by binary search; measure glyph advances with measureText after fonts load and place each glyph separately. Keep path, glyphs and object on one distance parameter so they never drift apart. The explorer preview is an original Canvas 2D study: a wave path draws, the phrase 'idea → links → system' flows along it, and a dot rides the curve past three labelled stops.",
+        "style_renderer": {
+          "recommended_stack_refs": ["SVG", "Canvas 2D"]
+        },
+        "motion_engine": {
+          "recommended_stack_refs": ["GSAP"]
+        }
+      },
+      "compatibility": {
+        "good_fit": [
+          "Line Art",
+          "Kinetic Typography",
+          "Flat Vector Illustration",
+          "Scientific Visualization / Data Storytelling"
+        ],
+        "adapt_or_omit_when": [
+          "Use when a route, process or journey should be read in order: a flow from source to result, a timeline, a map or a connection.",
+          "Use Stroke Reveal (motion-029) when drawing the line is the whole point and nothing travels along it.",
+          "Keep type on a path short and on gentle curves; tight bends crowd or overlap glyphs. Set long copy straight.",
+          "Do not move by the raw curve parameter or by fixed per-frame steps; equal distance along the path must take equal progress."
+        ]
+      },
+      "audio_direction_prompt": "No audio was analysed in the source review. Based on the topic, mood and existing audio plan, decide whether this action needs a restrained accent, music synchronisation or silence. Previews stay silent.",
+      "executable_prompt_template": "Build Path Follow & Text on Path (motion-052) for {{subject}} in {{visual_style}}. Draw the path, then move the object along it by arc length with authored easing, turning to the path direction when it has one. Flow a short line of type along the same curve with each glyph placed at its own distance and rotated to the local direction, with even spacing measured along the curve. Pass labelled stops in order and hold the final state readable. Use one distance parameter for path, type and object; never step by raw curve parameter or per-frame increments. Inspect actual assets and preserve the approved medium and palette. Resolve {{motion_parameters}} (path, draw time, easing, text offset, stops, holds). Verify forward, backward and direct seeks. Use {{render_pipeline}} for composition timing, synchronization, validation and export; preserve the selected style renderer and motion ownership.",
+      "verification": [
+        "Glyph spacing measured along the curve stays even, and each glyph is rotated to the local path direction.",
+        "The object stays on the path and its speed follows the authored easing in distance, not curve parameter.",
+        "Stops are reached in order and the final state holds readable.",
+        "Forward, backward and direct seeks give identical frames."
+      ],
+      "palette_guidance": "This pattern adds no required colours. Give the path and the travelling object one accent and keep the type in a readable ink. The preview uses the explorer's illustrative teal, warm and ink colours, which are not binding.",
+      "source_evidence": {
+        "source_kind": "frame_analysis",
+        "source_file": "User-supplied 32.3 s motion-design tutorial video (1920x1080, 30 fps) demonstrating twelve named techniques; its copy, watermark, palette and branding are withheld and not reused",
+        "source_sha256": "da25a2fe4a472ffdcdd1979e95a5a73c5e68e90bdeb17092830d981cc145c683",
+        "time_window_seconds": [16.6, 19.3],
+        "evidence_seconds": [16.6, 16.9, 17, 17.27, 17.4, 17.6, 18, 18.5, 19, 19.2],
+        "sampling": "Claude Opus 5.5 reviewed 2 fps overview sheets, 10 fps sheets of the whole video and a 30 fps sheet of this window. No continuous playback or audio analysis.",
+        "observations": [
+          {
+            "seconds": [16.6, 16.9, 17],
+            "observation": "A straight line draws across the frame, then bends into a sine-like wave."
+          },
+          {
+            "seconds": [16.9, 17.27, 17.6, 18],
+            "observation": "A line of type enters from the left on the curve with every glyph rotated to the local slope; it keeps even spacing as it climbs and descends."
+          },
+          {
+            "seconds": [17.27, 17.6, 18.5],
+            "observation": "A dot rides the same curve at the tail of the type, so dot and type advance together along the path."
+          },
+          {
+            "seconds": [19, 19.2],
+            "observation": "The wave flattens back into a line and the dot is left centred for the next technique."
+          }
+        ],
+        "limitations": [
+          "The source's exact speed curve and path equation are not measurable from frames; the preview's wave and easing are authored.",
+          "The preview adds labelled stops to carry the shared Idea, Links, System content; the source shows no stops."
+        ]
+      }
+    },
+    {
+      "id": "motion-053",
+      "name": "3D Tile Flip",
+      "reference_label": "Perspective tile flip and letter flip (21.3–23.8 s)",
+      "category": "scene_transition",
+      "description": "A full frame divides into a grid of tiles that each rotate 180° about their own axis in true perspective, staggered across the grid, so the outgoing scene on the tile fronts gives way to the incoming scene on their backs. Single letters or small cards can use the same flip to arrive. Foreshortening and face order come from real 3D rotation, not a flat 2D squash.",
+      "motion_sequence": [
+        "Hold the outgoing scene, already divided into an invisible grid of tiles.",
+        "Flip: starting from an authored corner or edge, each tile rotates about its centre axis with a short delay per diagonal step; its front shows its slice of the outgoing scene and turns away as the back turns in.",
+        "Reveal: once every tile has turned, the backs form the complete incoming scene with no gaps or seams, and the grid disappears.",
+        "Optional letter flip: title letters or small cards flip in on their horizontal axes in reading order, then hold."
+      ],
+      "video_adaptation": "Give each tile a start time from its grid distance to the origin corner, and compute its angle from composition time with one easing. Project the tile's corners through one fixed perspective camera; show the front face while it faces the camera and the back face after that. Map each face's slice of the outgoing or incoming scene into the projected quad, and draw tiles in depth order so turning edges overlap correctly.",
+      "suggested_controls": [
+        "grid_columns_and_rows",
+        "flip_axis",
+        "origin_corner",
+        "stagger_per_step",
+        "flip_duration",
+        "camera_distance",
+        "edge_shading",
+        "letter_flip_order",
+        "reading_hold",
+        "reduced_motion"
+      ],
+      "tech": {
+        "suggested_libraries": [
+          {
+            "name": "GSAP",
+            "package": "gsap",
+            "runtime": "browser",
+            "purpose": "Schedule each tile's staggered rotation on one paused, seekable timeline.",
+            "suggested_apis": ["gsap.timeline({ paused: true })", "to", "stagger", "seek"],
+            "optional": false,
+            "docs_url": "https://gsap.com/docs/v3/",
+            "production_roles": ["motion_engine"]
+          },
+          {
+            "name": "HTML/CSS",
+            "package": null,
+            "runtime": "browser",
+            "purpose": "Build two-faced tiles with perspective, rotateY or rotateX, transform-style preserve-3d and backface-visibility hidden.",
+            "suggested_apis": [
+              "perspective",
+              "transform: rotateY()",
+              "transform-style: preserve-3d",
+              "backface-visibility: hidden"
+            ],
+            "optional": true,
+            "docs_url": "https://developer.mozilla.org/en-US/docs/Web/CSS/backface-visibility",
+            "production_roles": ["style_renderer"]
+          },
+          {
+            "name": "Three.js",
+            "package": "three",
+            "runtime": "browser",
+            "purpose": "Optional: one plane per tile with front and back materials, projected by a single perspective camera.",
+            "suggested_apis": [
+              "PerspectiveCamera",
+              "PlaneGeometry",
+              "InstancedMesh",
+              "Vector3.project"
+            ],
+            "optional": true,
+            "docs_url": "https://threejs.org/docs/",
+            "production_roles": ["style_renderer"]
+          },
+          {
+            "name": "Canvas 2D",
+            "package": null,
+            "runtime": "browser",
+            "purpose": "Project tile corners through a perspective camera and draw each face's scene slice clipped to its projected quad.",
+            "suggested_apis": ["CanvasRenderingContext2D", "setTransform", "clip", "fill"],
+            "optional": true,
+            "docs_url": "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D",
+            "production_roles": ["style_renderer"]
+          }
+        ],
+        "implementation": "In the DOM, give the grid container perspective and each tile two absolutely positioned faces with backface-visibility hidden, and fill each face with the matching slice of the outgoing or incoming scene, for example with background-position or a clipped copy. Rotate each tile with rotateY or rotateX on a paused GSAP timeline, with start times from grid distance. In WebGL, use one plane per tile with separate front and back materials or UV offsets. In Canvas, project the four corners with a perspective camera, pick the face from the projected winding, and draw its slice through an affine map clipped to the projected quad. The explorer preview is an original Canvas 2D study that reuses the explorer's Three.js projection helper: an Idea field flips tile by tile into a System field, then the caption flips in letter by letter.",
+        "style_renderer": {
+          "recommended_stack_refs": ["HTML/CSS", "Canvas 2D"]
+        },
+        "motion_engine": {
+          "recommended_stack_refs": ["GSAP"]
+        }
+      },
+      "compatibility": {
+        "good_fit": [
+          "UI Animation / Product Motion Design",
+          "Kinetic Typography",
+          "Mosaic",
+          "Minimalist Product Motion Design"
+        ],
+        "adapt_or_omit_when": [
+          "Use for a decisive chapter change or reveal where both the old and the new state are full images.",
+          "Use a flat wipe or Medium Swap (motion-031) when depth would distract from calm reading copy.",
+          "Keep tiles large enough that each slice stays recognisable; very fine grids read as noise.",
+          "A cosine-scaled 2D squash is a different, flatter effect; disclose it if perspective rotation is unavailable."
+        ]
+      },
+      "audio_direction_prompt": "No audio was analysed in the source review. Based on the topic, mood and existing audio plan, decide whether this action needs a restrained accent, music synchronisation or silence. Previews stay silent.",
+      "executable_prompt_template": "Build 3D Tile Flip (motion-053) for {{subject}} in {{visual_style}}. Divide the outgoing scene into a grid of two-faced tiles and rotate each tile 180° about its own axis in true perspective, staggered from an authored corner, so tile fronts carry slices of the outgoing scene and backs carry the matching slices of the incoming scene. Finish with the complete incoming scene, no gaps or seams, then optionally flip title letters in reading order and hold. Compute every tile angle from composition time with one easing and one fixed camera; choose the visible face from the projection, not from a timer. Inspect actual assets and preserve the approved medium and palette. Resolve {{motion_parameters}} (grid, axis, origin, stagger, duration, camera distance, holds). Verify forward, backward and direct seeks. Use {{render_pipeline}} for composition timing, synchronization, validation and export; preserve the selected style renderer and motion ownership.",
+      "verification": [
+        "Turning tiles foreshorten with perspective: the near edge grows and the far edge shrinks.",
+        "Each tile shows its outgoing slice until it turns edge-on to the camera and its incoming slice after that, never the wrong face or a mirrored slice.",
+        "After the flip the incoming scene is complete with no gaps, seams or leftover tiles; letters flip in reading order and hold.",
+        "Forward, backward and direct seeks give identical frames."
+      ],
+      "palette_guidance": "This pattern adds no required colours. The outgoing and incoming scenes keep their own fields; an optional slight darkening of a tile's edge-on face helps read the turn. The preview uses the explorer's illustrative teal and dark fields, which are not binding.",
+      "source_evidence": {
+        "source_kind": "frame_analysis",
+        "source_file": "User-supplied 32.3 s motion-design tutorial video (1920x1080, 30 fps) demonstrating twelve named techniques; its copy, watermark, palette and branding are withheld and not reused",
+        "source_sha256": "da25a2fe4a472ffdcdd1979e95a5a73c5e68e90bdeb17092830d981cc145c683",
+        "time_window_seconds": [21.3, 23.8],
+        "evidence_seconds": [21.3, 21.6, 21.83, 21.97, 22.1, 22.2, 22.33, 22.47, 23.4, 23.6],
+        "sampling": "Claude Opus 5.5 reviewed 2 fps overview sheets, 10 fps sheets of the whole video and a 30 fps sheet of this window. No continuous playback or audio analysis.",
+        "observations": [
+          {
+            "seconds": [21.3, 21.6],
+            "observation": "A dot grows into a full-frame red field that holds briefly."
+          },
+          {
+            "seconds": [21.83, 21.97, 22.1, 22.2, 22.33],
+            "observation": "The field breaks into rectangular tiles that turn edge-on with visible perspective, starting at the top-left and spreading right, exposing the dark background behind them."
+          },
+          {
+            "seconds": [22.1, 22.2, 22.33, 22.47],
+            "observation": "Title characters flip in one at a time from the left while the last tiles are still turning."
+          },
+          {
+            "seconds": [23.4, 23.6],
+            "observation": "The title characters flip out in order before the next technique."
+          }
+        ],
+        "limitations": [
+          "In the source the tile backs are empty; the preview fills them with the incoming scene to show the general two-faced form.",
+          "Tile count, axis and stagger are estimated from frames; the preview's grid and timing are authored.",
+          "The Canvas preview maps each face slice through an affine transform inside its projected outline, which only approximates perspective texture mapping."
+        ]
+      }
+    },
+    {
+      "id": "motion-054",
+      "name": "Particle Glyph Assembly",
+      "reference_label": "Particles condense into type (23.9–26.1 s)",
+      "category": "assembly",
+      "description": "A field of loose particles drifts, then each particle travels to its own target point sampled from rendered letterforms, so scattered dots condense into readable type. Later they release back into the field or re-form a new word. Every particle has one seeded start, one target and one arrival time, so the type resolves predictably and stays legible during the hold.",
+      "motion_sequence": [
+        "Establish a loose field: seeded positions with a small, slow drift, so it reads as particles rather than noise.",
+        "Gather: particles move toward their assigned glyph targets with staggered arrival, so the word condenses from a cloud into clear letters.",
+        "Hold: the word stays legible with at most a subtle, bounded shimmer.",
+        "Release or re-form: particles leave along seeded paths into the field, or travel to the targets of a second word, and the final state holds."
+      ],
+      "video_adaptation": "Sample target points from the actual rendered type once, after fonts load, for example by drawing the text to an offscreen canvas and keeping pixels above an alpha threshold on a fixed grid. Assign particles to targets in a fixed order. Seed every start position, drift phase and delay. At time t, each particle's position is a pure interpolation from its drift position to its target with its own eased progress; no velocities or forces accumulate between frames.",
+      "suggested_controls": [
+        "particle_count",
+        "sampling_spacing",
+        "scatter_extent",
+        "drift_amplitude",
+        "gather_duration_and_stagger",
+        "hold_shimmer",
+        "release_or_reform",
+        "colour_per_word",
+        "reading_hold",
+        "reduced_motion"
+      ],
+      "tech": {
+        "suggested_libraries": [
+          {
+            "name": "GSAP",
+            "package": "gsap",
+            "runtime": "browser",
+            "purpose": "Drive gather, hold and release progress on a paused, seekable timeline.",
+            "suggested_apis": ["gsap.timeline({ paused: true })", "to", "seek"],
+            "optional": false,
+            "docs_url": "https://gsap.com/docs/v3/",
+            "production_roles": ["motion_engine"]
+          },
+          {
+            "name": "Canvas 2D",
+            "package": null,
+            "runtime": "browser",
+            "purpose": "Sample glyph targets once from offscreen text pixels, then draw many small particles at the requested time.",
+            "suggested_apis": ["OffscreenCanvas", "fillText", "getImageData", "arc", "fill"],
+            "optional": true,
+            "docs_url": "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D",
+            "production_roles": ["style_renderer"]
+          },
+          {
+            "name": "Three.js",
+            "package": "three",
+            "runtime": "browser",
+            "purpose": "Optional for large counts: write the same pure positions into a Points buffer every frame.",
+            "suggested_apis": ["Points", "BufferGeometry", "BufferAttribute"],
+            "optional": true,
+            "docs_url": "https://threejs.org/docs/",
+            "production_roles": ["style_renderer"]
+          }
+        ],
+        "implementation": "Build targets once: render each word with the project's loaded font to an offscreen canvas, read its alpha with getImageData, and keep one point per grid cell above a threshold; cap the count and keep enough points per stroke for legibility. Give each particle a seeded start, drift phase and delay, and a target index; pairing by sorted position reduces crossing paths. Evaluate drift and eased travel directly from time and draw with one fill per word or role. For large counts write the same positions into Three.js Points. The explorer preview is an original Canvas 2D study whose targets are sampled along simple stroked letterforms, so it runs without a font raster; particles gather into IDEA and then re-form into SYSTEM.",
+        "style_renderer": {
+          "recommended_stack_refs": ["Canvas 2D"]
+        },
+        "motion_engine": {
+          "recommended_stack_refs": ["GSAP"]
+        }
+      },
+      "compatibility": {
+        "good_fit": [
+          "Particle Art",
+          "Kinetic Typography",
+          "Abstract Motion Graphics",
+          "Scientific Visualization / Data Storytelling"
+        ],
+        "adapt_or_omit_when": [
+          "Use when a word or mark should emerge from many small parts: data becoming a message, or scattered ideas forming one name.",
+          "Use Pixel-Tile Materialize & Targeted Delete (motion-048) when real crops of an image should assemble, and Radial Logo Burst (motion-039) when particles only decorate a reveal.",
+          "Keep the formed word short and large; small type needs dense sampling and becomes illegible as dots.",
+          "Do not drive particles with an unseeded physics engine or accumulated forces; that breaks seeking."
+        ]
+      },
+      "audio_direction_prompt": "No audio was analysed in the source review. Based on the topic, mood and existing audio plan, decide whether this action needs a restrained accent, music synchronisation or silence. Previews stay silent.",
+      "executable_prompt_template": "Build Particle Glyph Assembly (motion-054) for {{subject}} in {{visual_style}}. Sample target points once from the actual rendered words after fonts load and assign each particle a fixed target, a seeded start, drift phase and delay. Show a loose drifting field, gather the particles with staggered arrival into readable type, hold it legible, then release the particles or re-form them into a second word, and end on a held state. Compute every particle position from composition time as an eased interpolation from drift to target; never integrate velocities or forces across frames. Inspect actual assets and preserve the approved medium and palette. Resolve {{motion_parameters}} (count, sampling spacing, scatter, timings, colours, holds). Verify forward, backward and direct seeks. Use {{render_pipeline}} for composition timing, synchronization, validation and export; preserve the selected style renderer and motion ownership.",
+      "verification": [
+        "The formed word is readable at output size, with no stray particles crossing it during the hold.",
+        "Each particle arrives at its own target, and the particle count and colour per word stay constant.",
+        "Release or re-form follows seeded paths and ends in a held state.",
+        "Forward, backward and direct seeks give identical frames."
+      ],
+      "palette_guidance": "This pattern adds no required colours. One colour per word or role helps the viewer see which particles belong to which line. The preview uses the explorer's illustrative teal and warm accents, which are not binding.",
+      "source_evidence": {
+        "source_kind": "frame_analysis",
+        "source_file": "User-supplied 32.3 s motion-design tutorial video (1920x1080, 30 fps) demonstrating twelve named techniques; its copy, watermark, palette and branding are withheld and not reused",
+        "source_sha256": "da25a2fe4a472ffdcdd1979e95a5a73c5e68e90bdeb17092830d981cc145c683",
+        "time_window_seconds": [23.9, 26.1],
+        "evidence_seconds": [23.9, 24, 24.5, 24.83, 24.97, 25.07, 25.2, 25.3, 25.8, 26],
+        "sampling": "Claude Opus 5.5 reviewed 2 fps overview sheets, 10 fps sheets of the whole video and a 30 fps sheet of this window. No continuous playback or audio analysis.",
+        "observations": [
+          {
+            "seconds": [23.9, 24, 24.5],
+            "observation": "A dot bursts into a wide, sparse field of small particles that drifts slowly."
+          },
+          {
+            "seconds": [24.83, 24.97, 25.07],
+            "observation": "Particles gather toward the centre and separate by colour: red ones collect above and cream ones below."
+          },
+          {
+            "seconds": [25.2, 25.3, 25.8],
+            "observation": "The two groups settle into a two-character title above a Latin word, both drawn only from dots, and hold readable."
+          },
+          {
+            "seconds": [26],
+            "observation": "The particles disperse outward before the recap begins."
+          }
+        ],
+        "limitations": [
+          "The source's particle count and paths are not measurable; the preview's counts, seeds and timings are authored.",
+          "The preview samples simple stroked letterforms rather than a font raster, so its letter shapes are geometric; production should sample the project's actual type."
+        ]
+      }
+    },
+    {
+      "id": "motion-055",
+      "name": "Velocity Motion Blur",
+      "reference_label": "Speed-driven blur on a whip entrance (12.7–14.5 s)",
+      "category": "transition",
+      "description": "Fast moves get a streak along their direction of travel whose length follows the element's actual speed, and the element then settles perfectly sharp. The blur is computed from the motion curve itself by sampling positions across a short shutter interval at the same composition time, so it appears only while something is fast and always matches its path.",
+      "motion_sequence": [
+        "Establish the frame so the whip has a clear starting point.",
+        "Whip in: an element travels fast in one direction; while its speed is high its trail stretches behind it.",
+        "Settle: as the easing slows the move the streak shortens to nothing, and the element lands sharp in its final position for reading.",
+        "Optional hand-off: the next move uses the same rule, so outgoing and incoming items each blur in their own direction."
+      ],
+      "video_adaptation": "Define the position x(t) of each moving element. For the frame at time t with a shutter of s seconds, draw N samples at x(t − s·i/N) whose opacities add up to one, or derive a blur length from the speed |x′(t)| and apply a one-axis blur of that length. Both use only composition time, so a frame is identical after any seek. Below a speed threshold draw only the sharp element, so held frames stay crisp.",
+      "suggested_controls": [
+        "shutter_duration",
+        "sample_count",
+        "speed_threshold",
+        "max_streak_length",
+        "travel_direction",
+        "travel_easing",
+        "optional_colour_fringe",
+        "reading_hold",
+        "reduced_motion"
+      ],
+      "tech": {
+        "suggested_libraries": [
+          {
+            "name": "GSAP",
+            "package": "gsap",
+            "runtime": "browser",
+            "purpose": "Own each moving element's eased position on a paused, seekable timeline, so its speed is known at any time.",
+            "suggested_apis": ["gsap.timeline({ paused: true })", "gsap.parseEase", "to", "seek"],
+            "optional": false,
+            "docs_url": "https://gsap.com/docs/v3/",
+            "production_roles": ["motion_engine"]
+          },
+          {
+            "name": "Canvas 2D",
+            "package": null,
+            "runtime": "browser",
+            "purpose": "Composite a few sub-frame samples between the shutter start and the frame time, weighted to full opacity.",
+            "suggested_apis": ["CanvasRenderingContext2D", "globalAlpha", "drawImage", "fillText"],
+            "optional": true,
+            "docs_url": "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D",
+            "production_roles": ["style_renderer"]
+          },
+          {
+            "name": "SVG",
+            "package": null,
+            "runtime": "browser",
+            "purpose": "Optional: a one-axis feGaussianBlur whose deviation follows the element's speed.",
+            "suggested_apis": ["feGaussianBlur", "stdDeviation"],
+            "optional": true,
+            "docs_url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Element/feGaussianBlur",
+            "production_roles": ["style_renderer"]
+          }
+        ],
+        "implementation": "Compute each element's position from the same eased function the timeline uses, so its speed is known at any time. In Canvas, draw N sub-frame samples between t minus the shutter and t with opacities that add up to one, and draw only the sharp element below the speed threshold. In SVG, set feGaussianBlur stdDeviation to a one-axis value proportional to the speed, for example 'L 0' for horizontal travel. Never accumulate previous frames or use a persistence buffer, because that makes the blur depend on playback history. Uniform CSS blur is not directional motion blur. The explorer preview is an original Canvas 2D study: IDEA whips in from the right with a speed-length trail and lands sharp, then hands off to LINKS and SYSTEM with the same rule.",
+        "style_renderer": {
+          "recommended_stack_refs": ["Canvas 2D", "SVG"]
+        },
+        "motion_engine": {
+          "recommended_stack_refs": ["GSAP"]
+        }
+      },
+      "compatibility": {
+        "good_fit": [
+          "Kinetic Typography",
+          "UI Animation / Product Motion Design",
+          "Abstract Motion Graphics",
+          "Glitch Art"
+        ],
+        "adapt_or_omit_when": [
+          "Use for genuinely fast moves: whip entrances, swipes, hand-offs and impacts.",
+          "Use Focus Reveal (motion-024) for a blur-to-sharp change that does not travel, and Glitch Type Build (motion-036) for colour echoes and smears that are not tied to speed.",
+          "Keep reading holds fully sharp; never leave a residual blur on text that should be read.",
+          "Do not fake the effect with a uniform CSS blur, a fixed decorative streak or accumulated previous frames."
+        ]
+      },
+      "audio_direction_prompt": "No audio was analysed in the source review. Based on the topic, mood and existing audio plan, decide whether this action needs a restrained accent, music synchronisation or silence. Previews stay silent.",
+      "executable_prompt_template": "Build Velocity Motion Blur (motion-055) for {{subject}} in {{visual_style}}. Give genuinely fast moves a streak along their direction of travel whose length follows the element's speed, computed from the same eased position function at composition time: either N sub-frame samples across a short shutter with opacities adding to one, or a one-axis blur sized from the speed. Draw elements sharp below a speed threshold so every reading hold is crisp. Never accumulate previous frames, use a persistence buffer or substitute a uniform blur or fixed streak. Inspect actual assets and preserve the approved medium and palette. Resolve {{motion_parameters}} (shutter, samples, threshold, direction, easing, holds). Verify forward, backward and direct seeks. Use {{render_pipeline}} for composition timing, synchronization, validation and export; preserve the selected style renderer and motion ownership.",
+      "verification": [
+        "Streak length grows and shrinks with speed and points along the direction of travel.",
+        "Frames where the element is slow or held are fully sharp.",
+        "The streak follows the element's actual path rather than a fixed decoration.",
+        "Forward, backward and direct seeks give identical frames."
+      ],
+      "palette_guidance": "This pattern adds no required colours. The trail uses the element's own colour at reduced opacity; an optional colour fringe should stay subtle and vanish with the speed. The preview uses the explorer's illustrative ink, teal and warm colours, which are not binding.",
+      "source_evidence": {
+        "source_kind": "frame_analysis",
+        "source_file": "User-supplied 32.3 s motion-design tutorial video (1920x1080, 30 fps) demonstrating twelve named techniques; its copy, watermark, palette and branding are withheld and not reused",
+        "source_sha256": "da25a2fe4a472ffdcdd1979e95a5a73c5e68e90bdeb17092830d981cc145c683",
+        "time_window_seconds": [12.7, 14.5],
+        "evidence_seconds": [12.8, 12.83, 12.97, 13, 13.1, 13.2, 13.27, 13.37, 13.4, 14.4],
+        "sampling": "Claude Opus 5.5 reviewed 2 fps overview sheets, 10 fps sheets of the whole video and a 30 fps sheet of this window. No continuous playback or audio analysis.",
+        "observations": [
+          {
+            "seconds": [12.8, 12.83, 12.97],
+            "observation": "A blurred blob enters from the right edge and a thin line streaks across the frame ahead of it."
+          },
+          {
+            "seconds": [13, 13.1, 13.2],
+            "observation": "The title slides in from the right with a long horizontal blur and faint colour fringes; fine speed lines trail across the frame."
+          },
+          {
+            "seconds": [13.2, 13.27, 13.37],
+            "observation": "A subtitle slides in from the left with the same horizontal blur while the title's blur shortens as it decelerates."
+          },
+          {
+            "seconds": [13.4, 14.4],
+            "observation": "Both lines are fully sharp and still for the reading hold."
+          }
+        ],
+        "limitations": [
+          "The source's shutter length and blur method are unknown; the preview's sub-frame sample count and shutter are authored.",
+          "The preview omits the source's speed lines and colour fringe so the speed-driven trail itself stays the subject."
         ]
       }
     }
