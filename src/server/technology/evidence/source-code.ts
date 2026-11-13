@@ -24,7 +24,7 @@ const browserGlobals: Record<string, readonly string[]> = {
 
 /** Resolve lexical bindings rather than matching library names in strings or comments. */
 function origin(
-  expression: NodePath<NodePath["node"] | null | undefined> | NodePath[],
+  expression: NodePath<NodePath["node"] | null> | NodePath[],
   seen = new Set<object>(),
 ): Origin | undefined {
   if (Array.isArray(expression) || !expression.node || seen.has(expression.node)) return;
@@ -60,7 +60,10 @@ function origin(
       const parent = declaration.parentPath;
       if (parent?.isImportDeclaration()) return { module: parent.node.source.value };
     }
-    if (declaration.isVariableDeclarator()) return origin(declaration.get("init"), seen);
+    if (declaration.isVariableDeclarator()) {
+      const initializer = declaration.get("init");
+      return initializer.isExpression() ? origin(initializer, seen) : undefined;
+    }
     return;
   }
   if (

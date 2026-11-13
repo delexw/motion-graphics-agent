@@ -1,3 +1,5 @@
+import { chooseRenderedSelectOption } from "./fixtures/select-options";
+import { newBrowserPage } from "./fixtures/browser-page";
 import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -54,7 +56,7 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
   const requests: URL[] = [];
   try {
     await server.listen();
-    const page = await browser.newPage();
+    const page = await newBrowserPage(browser);
     await page.setViewport({ width: 1200, height: 900 });
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(String(error)));
@@ -256,7 +258,11 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
     expect(requests.at(-1)?.searchParams.get("search")).toBe("three");
     await page.locator(".governance-ant-select").click();
     await page.waitForSelector('.ant-select-dropdown [data-project-id="option-1"]');
-    await page.locator('.ant-select-dropdown [data-project-id="option-1"]').click();
+    await page.focus(".governance-ant-select input");
+    await chooseRenderedSelectOption(
+      page,
+      '.ant-select-dropdown:not(.ant-select-dropdown-hidden) [data-project-id="option-1"]',
+    );
     await page.waitForSelector('.governance-panel[data-project-id="option-1"]');
     await page.locator(".governance-ant-select").click();
     await page.waitForSelector('.ant-select-dropdown [data-project-id="option-0"]');

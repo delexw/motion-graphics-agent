@@ -1,3 +1,4 @@
+import { newBrowserPage } from "./fixtures/browser-page";
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -53,7 +54,7 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
     });
     try {
       await server.listen();
-      const page = await browser.newPage();
+      const page = await newBrowserPage(browser);
       const errors: string[] = [];
       page.on("pageerror", (error) => errors.push(String(error)));
       await page.goto(server.resolvedUrls!.local[0] + "activity-test");
@@ -71,9 +72,11 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
       expect(mounted.length).toBeLessThan(80);
       await page.locator('button[aria-label="Retry"]').click();
       expect(await page.evaluate(() => Reflect.get(window, "retryCount"))).toBe(1);
-      await page.$eval(".room-project-scroll", (node) => {
-        node.scrollTop = 0;
-      });
+      await page.hover(".room-project-scroll");
+      await page.mouse.wheel({ deltaY: -1000000 });
+      await page.waitForFunction(
+        () => document.querySelector(".room-project-scroll")!.scrollTop < 100,
+      );
       await page.waitForFunction(() =>
         document.querySelector(".room-virtual-activity")?.textContent?.includes("Recorded work 0"),
       );

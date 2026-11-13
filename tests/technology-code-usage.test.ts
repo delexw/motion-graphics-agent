@@ -46,6 +46,16 @@ timeline.to('.shape', {y: 5});`);
   ]);
 });
 
+it("handles optional API calls and bindings whose initializer path has no node", async () => {
+  const context = fixture(`import {technology as lib} from '../technology-gsap-fixture/index.js';
+let unused;
+unused?.to?.('.shape', {});
+lib?.gsap?.to?.('.shape', {x: 10});`);
+  expect((await technologyCodeUsage(context)).map((call) => call.expression)).toEqual([
+    "lib?.gsap?.to",
+  ]);
+});
+
 it.each([
   ["import-only", `import {technology as lib} from '../technology-gsap-fixture/index.js';`],
   ["comments and strings", `// gsap.to('.shape', {});\nconst text="gsap.to('.shape', {})";`],

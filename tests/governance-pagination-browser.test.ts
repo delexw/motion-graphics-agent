@@ -1,3 +1,5 @@
+import { chooseRenderedSelectOption } from "./fixtures/select-options";
+import { newBrowserPage } from "./fixtures/browser-page";
 import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -46,7 +48,7 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
   const browser = await puppeteer.launch({ executablePath, headless: "shell", pipe: true });
   try {
     await server.listen();
-    const page = await browser.newPage();
+    const page = await newBrowserPage(browser);
     await page.setViewport({ width: 1100, height: 400 });
     await page.setRequestInterception(true);
     page.on("request", (request) => {
@@ -91,7 +93,12 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
     expect(await page.$eval("#state", (node) => node.textContent)).toBe("3:8");
     await page.locator(".ant-pagination-options .ant-select").click();
     await page.waitForSelector('.ant-select-item-option[title="16 / page"]');
-    await page.locator('.ant-select-item-option[title="16 / page"]').click();
+    await page.focus(".ant-pagination-options input");
+    await chooseRenderedSelectOption(
+      page,
+      '.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option[title="16 / page"]',
+    );
+    await page.waitForFunction(() => document.querySelector("#state")?.textContent === "3:16");
     expect(await page.$eval("#state", (node) => node.textContent)).toBe("3:16");
     const output = path.join(appRoot, "work/pagination-fix");
     await mkdir(output, { recursive: true });
