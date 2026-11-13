@@ -45,16 +45,16 @@ for native players and full-length page captures.
     <th width="50%">Stack / Turn / Pack · video</th>
   </tr>
   <tr>
-    <td valign="top"><video controls playsinline preload="metadata" width="100%" src="docs/assets/showcase/ocean-research-film.mp4"></video><p><a href="docs/assets/showcase/ocean-research-film.mp4">Play MP4</a> · 10-second scientific/editorial film: currents, sampling and a synthetic heatmap.</p></td>
-    <td valign="top"><video controls playsinline preload="metadata" width="100%" src="docs/assets/showcase/stack-turn-pack.mp4"></video><p><a href="docs/assets/showcase/stack-turn-pack.mp4">Play MP4</a> · 10-second Bauhaus/Swiss film: introduce three shapes, assemble them and pack the result.</p></td>
+    <td valign="top"><p><a href="https://github.com/user-attachments/assets/538e1aaf-ef40-47fa-8548-4a91e1359a9c">https://github.com/user-attachments/assets/538e1aaf-ef40-47fa-8548-4a91e1359a9c</a></p><p><a href="docs/assets/showcase/ocean-research-film.mp4">Play MP4</a> · 10-second scientific/editorial film: currents, sampling and a synthetic heatmap.</p></td>
+    <td valign="top"><p><a href="https://github.com/user-attachments/assets/ddfb819c-b188-428d-b4a6-2ea1fba136ed">https://github.com/user-attachments/assets/ddfb819c-b188-428d-b4a6-2ea1fba136ed</a></p><p><a href="docs/assets/showcase/stack-turn-pack.mp4">Play MP4</a> · 10-second Bauhaus/Swiss film: introduce three shapes, assemble them and pack the result.</p></td>
   </tr>
   <tr>
     <th>Character animation · Playful Cat</th>
     <th>Product demo · Stageshow + Swiss</th>
   </tr>
   <tr>
-    <td valign="top"><video controls playsinline preload="metadata" width="100%" src="docs/assets/showcase/playful-cat.mp4"></video><p><a href="docs/assets/showcase/playful-cat.mp4">Play MP4</a> · A 50-second pixel-art cat story with Chinese narration and on-screen subtitles.</p></td>
-    <td valign="top"><video controls playsinline preload="metadata" width="100%" src="docs/assets/showcase/stageshow-swiss-demo.mp4"></video><p><a href="docs/assets/showcase/stageshow-swiss-demo.mp4">Play MP4</a> · A 12-second simulated task-board walkthrough: open a task, assign a teammate and mark it ready. Stageshow-style light UI with Swiss framing and motion; silent.</p></td>
+    <td valign="top"><p><a href="https://github.com/user-attachments/assets/028abfcb-4171-4ed9-842a-fa7aafb66346">https://github.com/user-attachments/assets/028abfcb-4171-4ed9-842a-fa7aafb66346</a></p><p><a href="docs/assets/showcase/playful-cat.mp4">Play MP4</a> · A 50-second pixel-art cat story with Chinese narration and on-screen subtitles.</p></td>
+    <td valign="top"><p><a href="https://github.com/user-attachments/assets/4c2b98ac-3dc9-4b94-afb3-3d659686729b">https://github.com/user-attachments/assets/4c2b98ac-3dc9-4b94-afb3-3d659686729b</a></p><p><a href="docs/assets/showcase/stageshow-swiss-demo.mp4">Play MP4</a> · A 12-second simulated task-board walkthrough: open a task, assign a teammate and mark it ready. Stageshow-style light UI with Swiss framing and motion; silent.</p></td>
   </tr>
   <tr>
     <th>Ocean research · interactive HTML</th>
@@ -65,13 +65,11 @@ for native players and full-length page captures.
     <td valign="top"><a href="docs/assets/showcase/fold-lab-full-page.png"><img src="docs/assets/showcase/fold-lab-full-page.png" width="100%" alt="Full 5529-pixel-tall Fold Lab page with folding, cutting diagram, pattern and palette controls"></a><p>Full-page capture of the packaging exhibit: interactive folds, dimensions, a Python-generated dot pattern and a palette mixer.</p></td>
   </tr>
   <tr><th colspan="2">Fire truck · multilingual subtitles</th></tr>
-  <tr><td colspan="2"><video controls playsinline preload="metadata" width="100%" src="docs/assets/showcase/fire-truck-multilingual.mp4"></video><p><a href="docs/assets/showcase/fire-truck-multilingual.mp4">Play MP4</a> · A user-created 90-second children's explainer with English narration and English/Chinese on-screen subtitles. This is a 720p showcase copy; the original remains unchanged.</p></td></tr>
+  <tr><td colspan="2"><p><a href="https://github.com/user-attachments/assets/7950ecda-2593-4e5c-ba7f-15a0e0addcca">https://github.com/user-attachments/assets/7950ecda-2593-4e5c-ba7f-15a0e0addcca</a></p><p><a href="docs/assets/showcase/fire-truck-multilingual.mp4">Play MP4</a> · A user-created 90-second children's explainer with English narration and English/Chinese on-screen subtitles. This is a 720p showcase copy; the original remains unchanged.</p></td></tr>
 </table>
 
-GitHub's README renderer does not play repository-relative video embeds; the MP4
-links remain available. The [local gallery](docs/showcase.html) uses real video
-players, without replacing films with screenshots. Hosted inline GitHub playback
-requires [uploaded video attachments](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/attaching-files).
+The videos use GitHub-hosted attachments for inline playback. The repository MP4
+links and [local gallery](docs/showcase.html) remain available for local viewing.
 
 ## Recent updates
 

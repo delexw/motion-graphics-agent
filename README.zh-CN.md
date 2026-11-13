@@ -41,13 +41,13 @@
 <table>
   <tr><th width="50%">海洋研究 · 视频</th><th width="50%">Stack / Turn / Pack · 视频</th></tr>
   <tr>
-    <td valign="top"><video controls playsinline preload="metadata" width="100%" src="docs/assets/showcase/ocean-research-film.mp4"></video><p><a href="docs/assets/showcase/ocean-research-film.mp4">播放 MP4</a> · 10 秒科学编辑风格短片，展示洋流、采样过程和合成热力图。</p></td>
-    <td valign="top"><video controls playsinline preload="metadata" width="100%" src="docs/assets/showcase/stack-turn-pack.mp4"></video><p><a href="docs/assets/showcase/stack-turn-pack.mp4">播放 MP4</a> · 10 秒包豪斯／瑞士平面风格短片：介绍三个形状、组装、装箱。</p></td>
+    <td valign="top"><p><a href="https://github.com/user-attachments/assets/538e1aaf-ef40-47fa-8548-4a91e1359a9c">https://github.com/user-attachments/assets/538e1aaf-ef40-47fa-8548-4a91e1359a9c</a></p><p><a href="docs/assets/showcase/ocean-research-film.mp4">播放 MP4</a> · 10 秒科学编辑风格短片，展示洋流、采样过程和合成热力图。</p></td>
+    <td valign="top"><p><a href="https://github.com/user-attachments/assets/ddfb819c-b188-428d-b4a6-2ea1fba136ed">https://github.com/user-attachments/assets/ddfb819c-b188-428d-b4a6-2ea1fba136ed</a></p><p><a href="docs/assets/showcase/stack-turn-pack.mp4">播放 MP4</a> · 10 秒包豪斯／瑞士平面风格短片：介绍三个形状、组装、装箱。</p></td>
   </tr>
   <tr><th>角色动画 · Playful Cat</th><th>产品演示 · Stageshow + Swiss</th></tr>
   <tr>
-    <td valign="top"><video controls playsinline preload="metadata" width="100%" src="docs/assets/showcase/playful-cat.mp4"></video><p><a href="docs/assets/showcase/playful-cat.mp4">播放 MP4</a> · 50 秒像素风猫咪日常，包含中文旁白和画面字幕。</p></td>
-    <td valign="top"><video controls playsinline preload="metadata" width="100%" src="docs/assets/showcase/stageshow-swiss-demo.mp4"></video><p><a href="docs/assets/showcase/stageshow-swiss-demo.mp4">播放 MP4</a> · 12 秒模拟任务看板演示：打开任务、分配同伴、标为就绪。保留 Stageshow 风格的浅色界面，配合瑞士风格外围排版和动效，无声。</p></td>
+    <td valign="top"><p><a href="https://github.com/user-attachments/assets/028abfcb-4171-4ed9-842a-fa7aafb66346">https://github.com/user-attachments/assets/028abfcb-4171-4ed9-842a-fa7aafb66346</a></p><p><a href="docs/assets/showcase/playful-cat.mp4">播放 MP4</a> · 50 秒像素风猫咪日常，包含中文旁白和画面字幕。</p></td>
+    <td valign="top"><p><a href="https://github.com/user-attachments/assets/4c2b98ac-3dc9-4b94-afb3-3d659686729b">https://github.com/user-attachments/assets/4c2b98ac-3dc9-4b94-afb3-3d659686729b</a></p><p><a href="docs/assets/showcase/stageshow-swiss-demo.mp4">播放 MP4</a> · 12 秒模拟任务看板演示：打开任务、分配同伴、标为就绪。保留 Stageshow 风格的浅色界面，配合瑞士风格外围排版和动效，无声。</p></td>
   </tr>
   <tr><th>海洋研究 · 交互网页</th><th>Fold Lab · 交互网页</th></tr>
   <tr>
@@ -55,12 +55,11 @@
     <td valign="top"><a href="docs/assets/showcase/fold-lab-full-page.png"><img src="docs/assets/showcase/fold-lab-full-page.png" width="100%" alt="高度 5529 像素的 Fold Lab 网页完整长截图，包含折叠、裁切图、点阵和调色控件"></a><p>包装设计展台的整页截图，包含折叠与尺寸控制、Python 生成的点阵图案和调色器。</p></td>
   </tr>
   <tr><th colspan="2">消防车 · 多语言字幕</th></tr>
-  <tr><td colspan="2"><video controls playsinline preload="metadata" width="100%" src="docs/assets/showcase/fire-truck-multilingual.mp4"></video><p><a href="docs/assets/showcase/fire-truck-multilingual.mp4">播放 MP4</a> · 用户创建的 90 秒儿童讲解视频，包含英文旁白及英／中双语画面字幕。展示副本为 720p，原始成品保持不变。</p></td></tr>
+  <tr><td colspan="2"><p><a href="https://github.com/user-attachments/assets/7950ecda-2593-4e5c-ba7f-15a0e0addcca">https://github.com/user-attachments/assets/7950ecda-2593-4e5c-ba7f-15a0e0addcca</a></p><p><a href="docs/assets/showcase/fire-truck-multilingual.mp4">播放 MP4</a> · 用户创建的 90 秒儿童讲解视频，包含英文旁白及英／中双语画面字幕。展示副本为 720p，原始成品保持不变。</p></td></tr>
 </table>
 
-GitHub 的 README 渲染器不播放仓库相对路径的视频嵌入，可使用 MP4 链接；
-[本地展示页](docs/showcase.html)使用真实视频播放器，不用截图代替视频。
-GitHub 页面内播放需要[上传视频附件](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/attaching-files)。
+视频使用 GitHub 托管的附件，可直接在 README 中播放。仓库内的 MP4 链接和
+[本地展示页](docs/showcase.html)仍可用于本地观看。
 
 ## 最近更新
 
