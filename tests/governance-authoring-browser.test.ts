@@ -1,3 +1,4 @@
+import { newBrowserPage } from "./fixtures/browser-page";
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -111,6 +112,26 @@ it.skipIf(!browserExecutablePath())(
         }).flat(),
       ).activity,
     );
+    rows.push({
+      ...rows[0],
+      purpose: "Combination evaluation",
+      authoringSelections: [],
+      renderCacheReviews: [],
+      combinationEvaluation: {
+        selected: [
+          {
+            id: "example-direction",
+            title: "Studio explainer",
+            styles: ["style-110", "style-093", "style-unknown"],
+            rationale: "A lit subject with a readable title",
+            score: 90,
+            confidence: 0.8,
+            dimensions: {},
+          },
+        ],
+        calls: [],
+      },
+    });
     const cacheDir = await mkdtemp(path.join(os.tmpdir(), "governance-authoring-"));
     const server = await createServer({
       configFile: false,
@@ -136,8 +157,11 @@ it.skipIf(!browserExecutablePath())(
                     `<div id="root"></div><script type="module">
 import React from 'react';import{createRoot}from'react-dom/client';
 import{GovernanceUsageTable}from'/src/client/governance/usage-table.tsx';
+import{uiLanguage}from'/src/client/i18n';
 import'/src/client/framework.css';import'/src/client/style.css';
-const rows=await(await fetch('/rows')).json();createRoot(document.getElementById('root')).render(React.createElement(GovernanceUsageTable,{rows,byFunction:true}));</script>`,
+const rows=await(await fetch('/rows')).json();
+const styles=[{id:'style-110',name_en:'3D Motion Graphics'},{id:'style-093',name_en:'Kinetic Typography'}];
+createRoot(document.getElementById('root')).render(React.createElement(React.Fragment,null,React.createElement('button',{id:'language-zh',onClick:()=>uiLanguage.change('zh-CN')},'中文'),React.createElement(GovernanceUsageTable,{rows,styles,byFunction:true})));</script>`,
                   ),
                 );
               } else next();
@@ -154,7 +178,7 @@ const rows=await(await fetch('/rows')).json();createRoot(document.getElementById
         headless: "shell",
         pipe: true,
       });
-      const page = await browser.newPage();
+      const page = await newBrowserPage(browser);
       const errors: string[] = [];
       page.on("pageerror", (error) => errors.push(String(error)));
       await page.setViewport({ width: 1440, height: 1000 });
@@ -167,8 +191,17 @@ const rows=await(await fetch('/rows')).json();createRoot(document.getElementById
         "Existing local code and libraries (82%)",
       );
       const expanders = await page.$$("button.ant-table-row-expand-icon");
-      expect(expanders).toHaveLength(3);
-      for (const button of expanders) await button.click();
+      expect(expanders).toHaveLength(4);
+      for (let count = 1; count <= expanders.length; count++) {
+        await page.locator("button.ant-table-row-expand-icon-collapsed").click();
+        await page.waitForFunction(
+          (expected) =>
+            document.querySelectorAll("button.ant-table-row-expand-icon-expanded").length ===
+            expected,
+          {},
+          count,
+        );
+      }
       await page.waitForFunction(
         () => document.querySelectorAll('section[aria-label="Authoring comparison"]').length === 2,
       );
@@ -195,6 +228,20 @@ const rows=await(await fetch('/rows')).json();createRoot(document.getElementById
           node.getAttribute("href"),
         ),
       ).toBe("/api/admin/governance/example-project/prompts/cache-0");
+      await page.waitForSelector('section[aria-label="Combination evaluation"]');
+      const combination = await page.$eval(
+        'section[aria-label="Combination evaluation"]',
+        (el) => el.textContent || "",
+      );
+      expect(combination).toContain("3D Motion Graphics + Kinetic Typography + style-unknown");
+      expect(combination).not.toContain("style-110");
+      expect(combination).not.toContain("style-093");
+      await page.click("#language-zh");
+      await page.waitForFunction(() =>
+        document
+          .querySelector(".governance-ant-table")
+          ?.textContent?.includes("三维动态图形 + 动态字体 + style-unknown"),
+      );
       expect(errors).toEqual([]);
     } finally {
       await browser?.close();

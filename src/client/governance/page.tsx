@@ -1,3 +1,4 @@
+import type { Style } from "../../shared/contracts";
 import { GovernanceProjectSelect } from "./project-select";
 import { formatGovernanceCost } from "./format-cost";
 import { settingsCheckActivity } from "../../shared/settings-check-accounting";
@@ -28,7 +29,7 @@ const duration = (ms: number) =>
     seconds: Math.floor(ms / 1000) % 60,
   });
 
-export function GovernancePage() {
+export function GovernancePage({ styles = [] }: { styles?: Pick<Style, "id" | "name_en">[] }) {
   useUiLanguage();
   const [report, setReport] = useState<GovernanceReport>();
   const [selected, setSelected] = useState("all");
@@ -220,7 +221,7 @@ export function GovernancePage() {
         title={translateUi("Usage by model · selected projects")}
         className="governance-ant-card"
       >
-        <GovernanceUsageTable rows={aggregateModels(activity)} />
+        <GovernanceUsageTable rows={aggregateModels(activity)} styles={styles} />
       </Card>
       {report.pagination && (
         <Pagination
@@ -454,6 +455,7 @@ export function GovernancePage() {
                 children: (
                   <div className="governance-subsection-body">
                     <GovernanceUsageTable
+                      styles={styles}
                       rows={[
                         ...project.activity,
                         ...checks

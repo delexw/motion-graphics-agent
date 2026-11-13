@@ -1,3 +1,5 @@
+import { candidateStyleName } from "../lib/candidate-style-name";
+import type { Style } from "../../shared/contracts";
 import { formatGovernanceCost } from "./format-cost";
 import { translateUi, useUiLanguage } from "../i18n";
 import { Table, Typography, type TableColumnsType } from "antd";
@@ -14,12 +16,15 @@ const money = (row: ModelActivity) =>
       : formatGovernanceCost(row.costLow);
 export function GovernanceUsageTable({
   rows,
+  styles = [],
   byFunction = false,
 }: {
   rows: ModelActivity[];
+  styles?: Pick<Style, "id" | "name_en">[];
   byFunction?: boolean;
 }) {
   useUiLanguage();
+  const displayStyles = styles.map(({ id, name_en }) => ({ id, name_en: translateUi(name_en) }));
   const columns: TableColumnsType<ModelActivity> = [
     {
       title: byFunction ? translateUi("Model / function") : translateUi("Model"),
@@ -192,7 +197,16 @@ export function GovernanceUsageTable({
                       {row.combinationEvaluation.selected.map((candidate) => (
                         <section key={candidate.id}>
                           <strong>{candidate.title || candidate.id}</strong>
-                          <div>{candidate.styles.join(" · ")}</div>
+                          <div>
+                            {candidate.styles.length > 0 &&
+                              candidateStyleName(
+                                {
+                                  primaryStyleId: candidate.styles[0],
+                                  supportingStyleIds: candidate.styles.slice(1),
+                                },
+                                displayStyles,
+                              )}
+                          </div>
                           <p>{candidate.rationale}</p>
                           <div>
                             {translateUi("Evaluation score")}: {candidate.score.toFixed(1)} / 100

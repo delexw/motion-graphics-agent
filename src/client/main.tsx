@@ -1323,7 +1323,7 @@ function App() {
           )
         ) : utilityPage === "governance" ? (
           <Suspense fallback={<LoadingStatus text={translateUi("Loading governance…")} />}>
-            <GovernancePage />
+            <GovernancePage styles={styles} />
           </Suspense>
         ) : utilityPage === "technologies" ? (
           <Suspense fallback={<LoadingStatus text={translateUi("Loading technologies…")} />}>
@@ -1545,7 +1545,7 @@ function App() {
             </Suspense>
           ) : page === "governance" ? (
             <Suspense fallback={<LoadingStatus text={translateUi("Loading governance…")} />}>
-              <GovernancePage />
+              <GovernancePage styles={styles} />
             </Suspense>
           ) : page === "technologies" ? (
             <Suspense fallback={<LoadingStatus text={translateUi("Loading technologies…")} />}>
