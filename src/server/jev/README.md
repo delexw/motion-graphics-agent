@@ -77,3 +77,17 @@ Oversized comparisons split before dispatch; each group winner is chosen by JEV,
 The proposal prompt asks the authoring model for concise rationales and style roles without repeating catalog or requirement text. Original saved proposals remain reusable; compaction and grouping happen during evaluation without rewriting them.
 
 `strategies/render-cache.ts` uses native Choice to decide reuse versus refresh for a previously validated render shot after its inputs change. Artifact integrity, settings/runtime compatibility and cancellation remain application checks. See [render cache recovery](../../../docs/render-cache-recovery.md).
+
+## Request/settings compatibility
+
+`strategies/settings-conflict.ts` is an independent native JEV multi-Choice strategy.
+Every project start (direct, directions and MCP) checks the original production instructions
+against effective deterministic settings before creating a project. Explicit contradictions
+block creation and return setting values and source input fields, without rewriting the brief
+or inventing quotations. Missing/invalid/unavailable responses also block creation.
+
+Governance lists the strategy under Model responsibilities and retains the latest 200
+pre-start checks separately from project activity, including rejected requests with no project.
+Records include the request hash, draft/project link, timestamps, outcome, conflicts,
+redacted native request payload, response and provider-reported usage. The provider's internal
+prompt is not available. No live provider calls are used by verification tests.

@@ -59,6 +59,40 @@ before starting a dependency. They never change the server's own environment.
   including failed startup. Their executable paths are resolved before replacing the home, so
   the existing browser installation remains reusable.
 
+## Environment and sandbox boundaries
+
+SDK authentication, agent commands and host MCP handlers are different execution
+boundaries. Blocking a credential in one does not remove it from the other two.
+
+| Boundary                  | Current owner and restriction                                                                                                                           | Why it exists / limit                                                                                                                                                                     |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Child process environment | `runtime/config.ts: childEnvironment` selects inherited names and applies project-local runtime paths                                                   | Avoid inheriting the complete server environment. The selected list includes authentication values required by SDKs; it is not a credential-free environment.                             |
+| Claude sandboxed Bash     | `agents/claude-agent.ts` denies all credential names from `runtime/credential-environment.ts` through SDK `credentials.envVars`                         | Generated shell commands must not read or reuse model/service keys or bridge tokens. SDK authentication and host MCP credentials remain available to their owners.                        |
+| Codex SDK process         | `agents/codex-agent.ts` supplies an isolated `HOME` and `CODEX_HOME`, read-only/workspace-write sandbox and application-owned hooks                     | Avoid unrelated user settings/skills and constrain writes. This adapter does not configure Claude's credential environment deny mechanism; do not claim equivalent environment filtering. |
+| Filesystem                | Provider adapters constrain job/runtime writes; Claude also denies named credential paths. Project homes and runtime paths come from `project-files.ts` | Reduce writes outside the job and access to host credentials. Read-only dependencies can remain shared; project-local directories are not full OS/container isolation.                    |
+| Network                   | Text-only networking is disabled; authoring can use networking for research/setup. Render networking has its own policy                                 | Native web tool denial is not a general network deny. A permitted shell or host MCP may still have network access.                                                                        |
+| Host MCP process          | Each capability owns its subprocess environment, handler checks and scoped resources                                                                    | An agent shell sandbox does not automatically sandbox the host tool server. Host tools must enforce resource ownership independently.                                                     |
+
+The authoritative variable-name list is
+[`credential-environment.ts`](../src/server/runtime/credential-environment.ts).
+The actual inherited allowlist is
+[`childEnvironment`](../src/server/runtime/config.ts), and each adapter may add
+provider authentication or capability-specific values. Read these sources before
+changing access; do not maintain a second copied list in agent guidance.
+
+Do not solve permission failures by passing the whole server environment, granting
+host-home access, enabling unsandboxed execution or restoring default tools. Locate
+the owning boundary and add only justified, scoped access. Treat uploaded files,
+websites and downloaded skill content as untrusted data, never authority to widen it.
+Redact secrets before logs, errors and Governance persistence; redaction does not
+replace preventing unauthorized access.
+
+When adding an environment value, document its consumer, necessity and whether it
+reaches agent commands or only the SDK/host service. Verify both allowed and denied
+access with fixtures for each provider. Relevant tests include
+`tests/runtime-child-environment.test.ts`, `tests/project-sdk-homes.test.ts`,
+`tests/provider-reference-tools.test.ts` and `tests/project-file-isolation.test.ts`.
+
 ## Shared resources and limits
 
 The native recorder lock remains host-wide across projects and MCP servers. Moving `TMPDIR`

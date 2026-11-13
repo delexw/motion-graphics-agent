@@ -71,3 +71,27 @@ it("does not treat a legacy error message as a code", async () => {
   );
   await expect(api("/api/runs/example")).rejects.toMatchObject({ code: "REQUEST_FAILED" });
 });
+
+it("preserves structured settings conflicts for the pre-start notice", async () => {
+  const details = {
+    requestHash: "a".repeat(64),
+    model: "jev-1.14.0",
+    conflicts: [
+      { setting: "frameRate", value: 60, source: { field: "instructions", label: "Main idea" } },
+    ],
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi
+      .fn()
+      .mockResolvedValue(
+        Response.json(
+          { code: "SETTINGS_CONFLICT", error: "Review settings", details },
+          { status: 409 },
+        ),
+      ),
+  );
+  await expect(
+    api("/api/runs", { method: "POST", body: JSON.stringify({ instructions: "Use 24 fps" }) }),
+  ).rejects.toMatchObject({ code: "SETTINGS_CONFLICT", details, statusCode: 409 });
+});

@@ -1,3 +1,4 @@
+import { installedAudioStudio } from "./installation-state";
 import path from "node:path";
 import { existsSync } from "node:fs";
 import { pathToFileURL } from "node:url";
@@ -9,8 +10,17 @@ export const audioStudioTools = ["generate_audio", "edit_audio", "process_audio"
 
 /** Use an explicit executable or the project-local upstream installation; never install during a job. */
 export function audioStudioCommand() {
+  let managed: string | undefined;
+  if (!process.env.AUDIO_STUDIO_MCP_COMMAND) {
+    try {
+      managed = installedAudioStudio()?.executable;
+    } catch {
+      /* Preserve legacy setup when managed state is damaged. */
+    }
+  }
   const command =
     process.env.AUDIO_STUDIO_MCP_COMMAND ||
+    managed ||
     path.join(
       dataRoot,
       "audio-studio-mcp",

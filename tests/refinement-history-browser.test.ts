@@ -6,6 +6,7 @@ import react from "@vitejs/plugin-react";
 import { createServer } from "vite";
 import puppeteer from "puppeteer-core";
 import { expect, it } from "vitest";
+import { VideoRequestSchema } from "../src/shared/domains/video";
 import { RequestSchema, type Run } from "../src/shared/contracts";
 import { browserExecutablePath } from "../src/server/runtime/browser";
 import { appRoot } from "../src/server/runtime/config";
@@ -19,7 +20,11 @@ it.skipIf(!browserExecutablePath())(
       id: "example-project",
       createdAt: "2026-01-01",
       phase: "ready",
-      request: RequestSchema.parse({ instructions: "Explain a concept" }),
+      request: RequestSchema.parse({
+        instructions: "Explain a concept",
+        outputLanguage: "zh",
+        speech: { mode: "narration", engine: "kokoro", voice: "zf_xiaobei", language: "zh" },
+      }),
       candidates: [],
       jobs: [1, 2, 3].map((n) => ({
         id: `v${n}`,
@@ -33,6 +38,22 @@ it.skipIf(!browserExecutablePath())(
         workspace: "/unused",
         video: "film.mp4",
         ...(n > 1 ? { refinementPrompt: `Request ${n}` } : {}),
+        ...(n === 3
+          ? {
+              effectiveRequest: VideoRequestSchema.parse({
+                instructions: "Explain a concept",
+                outputLanguage: "zh",
+                speech: {
+                  mode: "narration",
+                  engine: "ming-tts",
+                  voice: "ming_xiaorou",
+                  language: "zh",
+                },
+                frameRate: 60,
+                resolution: "1440p",
+              }),
+            }
+          : {}),
       })),
     };
     const submissions: Record<string, unknown>[] = [];
@@ -105,6 +126,14 @@ createRoot(document.getElementById('root')).render(h(App));</script>`,
       for (const route of ["review-test", "review-test?room"]) {
         const submissionCount = submissions.length;
         await page.goto(server.resolvedUrls!.local[0] + route);
+        await page.waitForSelector(".video-version-settings summary");
+        await page.locator(".video-version-settings summary").click();
+        expect(await page.$eval(".video-version-settings", (node) => node.textContent)).toContain(
+          "Ming-3.0-TTS",
+        );
+        expect(await page.$eval(".video-version-settings", (node) => node.textContent)).toContain(
+          "灵小柔",
+        );
         await page.waitForSelector(".refinement-history-review .ant-collapse-header");
         await page.click(".refinement-history-review .ant-collapse-header");
         const checkbox = 'input[aria-label="Keep request from version 2"]';
@@ -127,6 +156,9 @@ createRoot(document.getElementById('root')).render(h(App));</script>`,
         await expect
           .poll(() => page.$eval(sourceSelector, (node) => node.textContent))
           .toMatch(/version 2.*Cancelled/);
+        expect(await page.$eval(".video-version-settings", (node) => node.textContent)).toContain(
+          "Xiaobei",
+        );
         await page.type(
           'textarea[aria-label="Fine-tune instructions"]',
           "Keep the selected requests",

@@ -20,6 +20,9 @@ subworkflows/
 │   └── handoff.ts        # Validated capture results shared with narration and assembly
 ├── title-brief/
 │   └── workflow.ts       # Text-only project title extraction for direct builds
+├── refinement-settings/
+│   ├── workflow.ts       # Governed main-model interpretation of explicit version settings
+│   └── prompt.ts         # Exact request scope and supported voice/settings rules
 ├── shared/
 │   └── brief-title-guidance.ts  # Title instruction used by both brief variants
 ├── website-reference.ts
@@ -207,3 +210,7 @@ Workflow roots supply the persistence callback and cancellation signal. `activit
 Persisted `activity_scope` events carry the tracing ID, parent ID, label and lifecycle state. Leaf events carry `activityScopeId` for correlation. The customer activity model hides execution-scope records and groups actual events by their named work in `client/activity-display.ts`, using the same presentation for old and new records. Preparation checkpoints, chapter progress, timing-correction attempts, narration and rendering retain their event-based groups. Repeated named actions within a group show the latest result and timestamp; execution depth never adds UI nesting. Scope-engine tests cover tracing; activity-display and browser tests cover customer grouping.
 
 Chapter timing retries live in `chapter-capture/timing-retry.ts` (`captureWithTimingRetries`). This module consumes the approved capture plan and retries only `ChapterTimingConflictError` within the per-chapter retry budget; it does not create or revise the full-film plan. `domains/video/build-plan.ts` owns full-film and capture-plan generation, and `chapter-capture/workflow.ts` owns capture execution and validation.
+
+Refinement settings run before workspace setup and video implementation, with validated
+version-local handoffs and a separate Governance purpose. See the owning
+[refinement settings policy](../../../../docs/video-refinement.md#explicit-settings-changes).

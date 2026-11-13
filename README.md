@@ -33,328 +33,69 @@ and Motion Graphics, save an Assistant draft, and explicitly start a build.
 
 Switch the interface instantly with **EN / 中文**; see [interface language](docs/ui-language.md). Video language remains a separate project setting.
 
+## Demo showcase
+
+Real Kiteva outputs: five MP4 films and two full-page HTML screenshots. The generated
+HTML projects are not included. [Open the video gallery](docs/showcase.html) locally
+for native players and full-length page captures.
+
+<table>
+  <tr>
+    <th width="50%">Ocean research · video</th>
+    <th width="50%">Stack / Turn / Pack · video</th>
+  </tr>
+  <tr>
+    <td valign="top"><video controls playsinline preload="metadata" width="100%" src="docs/assets/showcase/ocean-research-film.mp4"></video><p><a href="docs/assets/showcase/ocean-research-film.mp4">Play MP4</a> · 10-second scientific/editorial film: currents, sampling and a synthetic heatmap.</p></td>
+    <td valign="top"><video controls playsinline preload="metadata" width="100%" src="docs/assets/showcase/stack-turn-pack.mp4"></video><p><a href="docs/assets/showcase/stack-turn-pack.mp4">Play MP4</a> · 10-second Bauhaus/Swiss film: introduce three shapes, assemble them and pack the result.</p></td>
+  </tr>
+  <tr>
+    <th>Character animation · Playful Cat</th>
+    <th>Product demo · Stageshow + Swiss</th>
+  </tr>
+  <tr>
+    <td valign="top"><video controls playsinline preload="metadata" width="100%" src="docs/assets/showcase/playful-cat.mp4"></video><p><a href="docs/assets/showcase/playful-cat.mp4">Play MP4</a> · A 50-second pixel-art cat story with Chinese narration and on-screen subtitles.</p></td>
+    <td valign="top"><video controls playsinline preload="metadata" width="100%" src="docs/assets/showcase/stageshow-swiss-demo.mp4"></video><p><a href="docs/assets/showcase/stageshow-swiss-demo.mp4">Play MP4</a> · A 12-second simulated task-board walkthrough: open a task, assign a teammate and mark it ready. Stageshow-style light UI with Swiss framing and motion; silent.</p></td>
+  </tr>
+  <tr>
+    <th>Ocean research · interactive HTML</th>
+    <th>Fold Lab · interactive HTML</th>
+  </tr>
+  <tr>
+    <td valign="top"><a href="docs/assets/showcase/ocean-research-full-page.png"><img src="docs/assets/showcase/ocean-research-full-page.png" width="100%" alt="Full 2820-pixel-tall ocean research page with a 3D current sculpture, heatmap, sampling diagram and signal controls"></a><p>Full-page capture of the interactive research exhibit. All data is explicitly synthetic.</p></td>
+    <td valign="top"><a href="docs/assets/showcase/fold-lab-full-page.png"><img src="docs/assets/showcase/fold-lab-full-page.png" width="100%" alt="Full 5529-pixel-tall Fold Lab page with folding, cutting diagram, pattern and palette controls"></a><p>Full-page capture of the packaging exhibit: interactive folds, dimensions, a Python-generated dot pattern and a palette mixer.</p></td>
+  </tr>
+  <tr><th colspan="2">Fire truck · multilingual subtitles</th></tr>
+  <tr><td colspan="2"><video controls playsinline preload="metadata" width="100%" src="docs/assets/showcase/fire-truck-multilingual.mp4"></video><p><a href="docs/assets/showcase/fire-truck-multilingual.mp4">Play MP4</a> · A user-created 90-second children's explainer with English narration and English/Chinese on-screen subtitles. This is a 720p showcase copy; the original remains unchanged.</p></td></tr>
+</table>
+
+GitHub's README renderer does not play repository-relative video embeds; the MP4
+links remain available. The [local gallery](docs/showcase.html) uses real video
+players, without replacing films with screenshots. Hosted inline GitHub playback
+requires [uploaded video attachments](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/attaching-files).
+
 ## Recent updates
 
-Dates below use New Zealand time.
+Only the latest three calendar days are listed here (New Zealand time). See the [changelog](CHANGELOG.md#daily-update-archive) for earlier daily updates and [release history](CHANGELOG.md).
+
+<details>
+<summary>2026-11-13</summary>
+
+- **Governance and project technologies:** Server-side pagination, indexed project search and per-call costs make the reporting pages easier to inspect. Project filters retain the complete selector, and dependency readiness is separate from source and runtime usage evidence.
+- **Project-owned dependencies:** Build manifests declare the selected tools and required runtime packages. Governance reports which technologies were selected, prepared and observed, including Python utilities.
+- **Per-language media and refinements:** Narration and subtitles start disabled and are confirmed independently for each language. Version refinements can change supported voice providers and output settings without silently keeping an older profile.
+- **Stageshow appearance boundaries:** User UI styling overrides Stageshow defaults; otherwise the demo retains its native appearance. Selected Motion Graphics contribute motion inside the demo. Planning, repair and result review use the same scene ownership rule.
+- **Showcase and dependency maintenance:** The gallery includes the Playful Cat film and Swiss product demo as playable MP4s. Startup and installation share the dependency upgrade lifecycle, including Audio Studio; [agent guidance](AGENTS.md) documents module ownership, tool limits and mocked third-party tests.
+
+</details>
 
 <details>
 <summary>2026-11-12</summary>
 
+- **Stageshow product demos:** An optional startup-installed skill for authored UI walkthroughs with the selected MG contributing motion only. Upstream files stay Git-ignored; source contains only registration, adaptation guidance and tests. It preserves real-capture boundaries, renderer timing and third-party asset notices. See [integration and licensing](docs/stageshow.md).
+
 - **Open motion discovery:** Direct builds and generated directions share a route table for reading selected Motion Graphics, resolving explicit `@` references and searching the full motion pool. Style candidates and motion `good_fit` lists are recommendations, not allowlists. The model preserves the selected visual identity, user requirements and scene scope; it need not inspect every motion or use one.
 
 - **Five composable motion techniques:** Metaball Merge & Split (`motion-051`), Path Follow & Text on Path (`motion-052`), 3D Tile Flip (`motion-053`), Particle Glyph Assembly (`motion-054`) and Velocity Motion Blur (`motion-055`). Each has a seekable explorer preview, Chinese metadata and a frame-analysis record. A review of twelve common techniques found the other seven already covered. The catalog now has 55 motions.
-
-</details>
-
-<details>
-<summary>2026-11-10</summary>
-
-- **Upgradeable dependency ranges, tested in CI:** Python speech requirements use ranges up to the next major version instead of exact pins, like npm's `^`. A new CI job installs every speech engine's libraries at the newest allowed versions and checks them against Kiteva's adapters without downloading models, and Dependabot auto-merge now waits for all three CI jobs. Mandarin Pocket TTS stays below 3.1 because its checkpoint breaks on newer releases. See [dependency policy](docs/dependency-security.md).
-- **Ming TTS in the installer:** `./install.sh` installs Ming TTS on Apple Silicon by default, and `--speech ming` installs only Ming. A version mismatch that made Ming setup fail is fixed.
-- **Preview notifications:** a bell switch beside the language switch plays a chime and shows a browser notification when every preview direction of a project finishes. It is off by default.
-- **MCP asks about optional settings:** `get_idea_options` lists every optional idea setting with its default, and agents ask the user about each one before creating an idea.
-- **Style previews no longer stay paused:** a style preview that opened while the browser was busy could stay paused with no video. It now plays once it is in view.
-- **Cream Card Explainer Deck (`style-143`):** a cream-paper explainer deck with a walking presenter, a docking side panel and stepped flow diagrams. The catalog now has 143 Motion Graphics.
-
-</details>
-
-<details>
-<summary>2026-11-09</summary>
-
-- **Complete PR checks and Dependabot auto-merge:** every PR runs formatting, lint, build and the full test suite, alongside native Windows verification. All Dependabot ecosystems and version updates qualify after both jobs pass.
-
-</details>
-
-<details>
-<summary>2026-11-08</summary>
-
-- **Dependency security maintenance:** compatible npm ranges, daily grouped updates, Python/Actions monitoring and targeted transitive fixes. The lockfile stays reproducible and security alerts stay enabled. See [dependency policy](docs/dependency-security.md).
-- **v1.1.0 source release:** image-guided 3D authoring, project-owned MCP assets, 142 Motion Graphics and 50 motions. See the [release notes](CHANGELOG.md#110--2026-11-08).
-- **Executable test coverage:** run the local preview-repair and page-validation checks by default. Remove four smoke tests requiring interactive desktop recording or an externally prepared package runtime, plus the unused recording worker. Documentation distinguishes local fixture coverage from actual desktop-recording verification.
-- **Reference-image 3D authoring:** JEV can choose img2threejs alongside Anatomy and other resources, using the brief and scoped image evidence. Claude and Codex share the staged skill, absolute-time model/camera helpers and actual browser-review requirements. Like Anatomy, img2threejs updates from the latest default-branch commit at every backend startup, with verified offline reuse. See [the integration guide](docs/img2threejs.md).
-
-</details>
-
-<details>
-<summary>2026-11-03</summary>
-
-- **Printed Spark Collage and Boxed-Word Active Relay:** add a reviewed print-collage Motion Graphic, an authored video preview and a seekable word-highlighting motion. The catalog now contains 142 Motion Graphics and 50 motions, with Chinese metadata and supporting-style guidance. The preview uses the published prompt with explicit bindings; its review records visual differences from the reference.
-- **Focused Motion Graphic technology reviews:** assess 88 visual, motion and supporting tools separately from project composition and export. HyperFrames, Multiplane and Remotion remain project renderer choices and cannot be selected as per-MG technologies. Repeated reviews replace stale prompt guidance.
-
-</details>
-
-<details>
-<summary>2026-11-01</summary>
-
-- **MCP asset imports:** import local files or ComfyUI outputs into a saved draft or project through `import_asset`. Use `manage_idea_assets` to list available assets, attach them to the draft or remove their entries from the material shelf. MCP and the interface share file limits and attachment rules. Imported files are stored in Git-ignored runtime uploads. See [agent MCP](docs/agent-mcp.md).
-- **Linked draft, asset and project IDs:** when `start_idea` creates a project from a saved draft, Kiteva keeps its attachment IDs and associates the imported files with that project. Updates reject outdated draft revisions and files belonging to another project.
-- **Separate video references:** give MP4, MOV and WebM clips their own Videos section in the interface and MCP. Kiteva moves clips previously assigned to Images when loading a saved draft, preserving attachment IDs and notes. Music uploads also accept FLAC.
-- **Concise agent briefs:** tool descriptions ask calling agents to preserve the user's requirements and keep prompts concise, leaving unspecified creative decisions to the selected main model, Claude Opus 5.5 by default.
-
-</details>
-
-<details>
-<summary>2026-10-31</summary>
-
-- **HTTP MCP for external agents:** search saved ideas and Motion Graphics, inspect available settings, save an Assistant draft, and explicitly start its build through the bundled `/mcp` endpoint. Tools share typed results and request validation, protect concurrent draft edits, and default to Claude Opus 5.5, Multiplane, 2K, 60 fps, Explore and three preview directions. See [agent MCP](docs/agent-mcp.md).
-- **Dedicated local ports:** use `18419` for the interface and `18417` for the backend, with shared validation and matching proxies, origin checks and verification scripts. Invalid or colliding overrides fail explicitly; the frontend never silently takes another port.
-- **Language downloads and embedded subtitles:** place language-specific video, audio and subtitle downloads in a wrapping horizontal panel on the download action. Restore narration subtitles authored inside the video, respect the project's subtitle setting, and remove the separate playback subtitle selector and duplicate browser overlay.
-- **Full-build Desk artifacts:** read saved production and narration metadata directly, prefer current artifacts over inherited job metadata, and reject preview-length manifests and storyboards when inspecting a full build. Shared narration schemas keep browser and server readers aligned.
-- **Creative selection and stable development:** encourage meaningful combinations beyond the smallest familiar set; cap the history preference contribution in code even when evaluator scores exceed their expected range. Ignore generated runtime files and downloaded authoring skills in the development watcher to prevent unwanted page reloads.
-
-</details>
-
-<details>
-<summary>2026-10-30</summary>
-
-- **v1.0.0 source release:** publish the production workflow improvements below under the renamed `motion-graphics-agent` repository. See the [changelog](CHANGELOG.md#100--2026-10-30).
-
-- **Production Desk and inline storyboard:** open both viewers inside centered, nearly full-window dialogs. Desk provides read-only playback, seeking, zoom, clip inspection and real audio waveforms; its larger preview leaves tracks below. Saved production metadata is available during generation, before the agent returns its accepted response. See [Production Desk](docs/production-desk.md).
-- **Separate audio sources:** new full builds retain music-only and individual SFX files with timed placements and gains in a shared `audioTracks` manifest. The agent still prepares the final music/SFX mix through the existing renderer handoff; Desk inspects the separate sources rather than treating the merged soundtrack as music-only. Application-owned narration mixing is unchanged, and legacy projects keep their fallback.
-- **Playback synchronization:** move the Desk cursor with CSS transforms using the media clock, without frame-by-frame React updates or repeated layout positioning. Opening Desk pauses background audio; shared video players prevent competing audible playback while leaving silent previews running.
-- **Ming narration:** add the local Ming 3.0 TTS 0.5B provider, its supported-language voice catalog and neutral voice controls. Retire both Qwen providers, retain the original narrator reference for Ming cloning, and normalize saved legacy speech selections. Narration guidance now asks for a connected story with natural chapter transitions. See [Ming TTS](docs/ming-tts.md).
-- **Shared project workspace:** centralize artifact, asset, diagnostic and runtime paths for build agents, correctors, capture, narration, exports and cache recovery. Render inputs stay under artifacts; logs and task context remain separate. Existing workspaces and recovery checkpoints use explicit layout compatibility. See [project workspace](docs/project-workspace.md).
-- **Cache evidence and correction outcomes:** replace the Haiku change-summary step with bounded factual evidence for JEV, preserving hash checks and concrete cache-restore reporting. Corrections return structured fixed/refused/unresolved outcomes, escalate non-repairs to the main model and retain reasons for narrowly scoped bypasses. Renderer execution uses native defaults. See [cache recovery](docs/render-cache-recovery.md) and [correction outcomes](docs/video-correction-outcomes.md).
-- **Consistent project controls:** recover from a broken brief without losing the option to remove its draft, copy style metadata, and name downloads from the normalized style and version. Storyboard actions use matching icons and lowercase labels; activity grouping and render progress keep their task hierarchy.
-- **Credential boundaries and verification:** share credential environment names across SDK configuration, child processes and provider tests; deny credential access in agent shell tools while retaining required SDK authentication. Codebase tests clear provider credentials and block real external API calls. A separate live 10-second project verified the model-created music/SFX mix, saved source clips and Desk waveforms.
-
-</details>
-
-<details>
-<summary>2026-10-29</summary>
-
-- **Refinement continuity and versions:** preserve earlier requests, question/answer history and image references; allow excluding prior requests before submission. Resume verified build sessions, including cancelled versions, without letting helper sessions replace them. Versions can be deleted with confirmation, and their numbers are never reused. See [video refinement](docs/video-refinement.md).
-- **Activity history on demand:** expand any parent to load its immediate children through one recursive component and shared grouping logic. Remove manual paging buttons, load more siblings on scroll, release collapsed branches, virtualize long lists and use consistent indentation. Finished jobs no longer leave unresolved entries spinning while another version runs. See [activity history](docs/activity-history.md).
-- **Shared loading and result UI:** reuse loading indicators with visible text; group revisions in one card with wrapping version controls, overlay playback controls, generated timestamps and consistent icon actions. Conversation shows narration providers/voices and uses shared image/document attachment previews.
-- **Language and subtitle controls:** global selected languages govern matching narration and subtitle tracks, with one voice configuration per language and global subtitle visibility. Timed script items inherit these choices; subtitle generation reports progress in cues. See [video languages](docs/video-languages.md).
-- **Rendering and capture recovery:** accept video duration within five seconds of the requested target, preserve eligible render cache across repairs, and exclude runtime/dot-folder noise from change summaries. Separate chapter timing retries from planning, retain capture diagnostics and keep cancellation scoped to owned dependencies. See [render cache recovery](docs/render-cache-recovery.md).
-- **Portable style assets:** Production Theatre metadata includes its canonical crew CSS and role markup, without imports from application source. A JPEG logo is available alongside the existing brand assets.
-- **Governance and local configuration:** expose combination and render-cache decisions, keep Claude SDK costs and incremental Codex estimates distinct, and use `TYPESAFE_API_KEY` as the single JEV key. Tests use local fixtures/mocked transports and block external provider requests; downloaded agent skills remain outside Git.
-
-</details>
-
-<details>
-<summary>2026-10-28</summary>
-
-- **Human sign-in handoff:** protected local website references pause for human authentication with Sign in and Continue controls in the project. A token-protected project-scoped bridge keeps the wait alive; interrupted handoffs discard the failed browser session before another inspection. Device-authenticator network permissions are temporary, and project cancellation closes the handoff. See [application guide](docs/application-guide.md).
-- **Shared browser sizing:** recording and sign-in now use one launcher for profiles, environment, window sizing and startup defaults. Visible pages follow the actual window instead of a fixed viewport, preventing clipping and blank areas after sign-in.
-- **Claude login refresh:** synchronize the current login before each SDK call and pass its access token through the SDK environment. Project files and sessions stay isolated while avoiding attempts to save copied OAuth credentials into a nonexistent project Keychain. Explicit API keys and OAuth tokens retain precedence. See [project file isolation](docs/project-file-isolation.md).
-- **Compact combination evaluation:** Opus includes relevant asset coverage, suitability and limitations inside each complete combination brief. JEV receives these briefs with unchanged original requirements, facts and constraints, without a separate production asset map. Cross-batch comparison still considers every surviving candidate; proposal-policy revisions invalidate older cached proposals. See [JEV strategies](src/server/jev/README.md).
-- **Shared repair budgets:** bounded attempts use a common per-issue mechanism. Claude video corrections retain ten Haiku attempts with increasing effort before main-model escalation. Initial storyboard validation failures with a valid manifest now enter the same corrector for previews and full films, preserving unrelated content. See [retry budgets](docs/retry-budgets.md).
-- **Playback and result controls:** refine independent narration/subtitle language controls and language-specific downloads, add consistent icon actions and generated timestamps to result cards, show job-scoped progress, and keep unavailable preview cards at the normal size. See [language-track architecture](docs/language-tracks-architecture.md).
-- **Activity loading and recovery:** batch EventSource history and live updates to reduce repeated state updates and project fetches. Retry actions follow the displayed merged activity item. Renderer checks document font and clip-path constraints, with shared readiness retries across local tools and speech providers.
-
-</details>
-
-<details>
-<summary>2026-10-27</summary>
-
-- **Independent language tracks:** configure narration voices and subtitle languages separately from visual Video language. Full builds share the same picture/music timeline, create alternate narration and SRT/VTT tracks, and expose language selectors plus MP4/audio/subtitle downloads. Existing single-language projects retain their behavior. See [video languages](docs/video-languages.md).
-- **Project-local runtime files:** agent homes, temporary files, browser profiles and render caches live inside the project. Provider login credentials remain available without copying unrelated account data. Runtime files stay out of editable project exports. See [project file isolation](docs/project-file-isolation.md).
-- **Local Qwen narration:** add Qwen3-TTS VoiceDesign 1.7B and Base 1.7B providers with selectable female and male voices, Chinese/English speech, shared runtime handling and bundled Base reference recordings. Existing speech providers now own their adapters and requirements in provider folders. See [speech](docs/speech.md).
-- **Subtitle terminology:** rename on-screen lyrics to subtitles across settings, script items, prompts, storyboard fields and exports. Existing projects, drafts and narration profiles retain their text and settings through compatibility handling. Playback language tracks are configured separately.
-- **Automatic preview planning:** one shared preview plan feeds independent direction builders. The plan retains each direction's assigned styles and scene roles; full films reuse the selected preview's production context.
-- **JEV evaluation and visibility:** pass compact combination briefs instead of complete style metadata, keep cross-batch selection, and split oversized comparisons before dispatch. Governance expands selected combinations, scores and recorded calls. Future runs preserve evaluation certainty separately from Choice certainty, including compared options and probabilities.
-- **JEV cost reporting:** calculate token-based estimates from recorded input usage at the published rate, including retained project history; keep SDK-reported costs when available.
-- **Multiplane setup:** upgrade to 0.3.13. The installer explicitly installs its matching Chromium into Kiteva's browser cache and runs doctor; unavailable readiness results are rechecked after repair. Run `npm run multiplane:setup` to repair the installation. See [Multiplane](docs/multiplane-trial.md).
-- **Activity and regression coverage:** improve preparation grouping and recovered tool activity, and add coverage for project isolation, planning, browser setup, narration providers, subtitle migration and governance.
-
-</details>
-
-<details>
-<summary>2026-10-26</summary>
-
-- **Planning and session handoff:** one shared preview-planning call feeds independent direction builds; full films continue the selected preview's build session and plan their complete storyboard. Project settings and requirements are saved as files before planning, with concise Markdown instructions and generic system guidance. Build routes and creative approaches have separate responsibilities.
-- **Shared MCP capabilities:** reference-browser tools and context-recovery registration follow the capability registry used by both providers. Narration and Audio Studio adapters use native MCP registration while retaining service-owned validation, cancellation and activity.
-- **Project-wide cancellation:** stopping or deleting a project aborts queued and active SDK/MCP, browser, recording, render, audio and export work and waits for cleanup. Reported cleanup failures retain project files; other projects and shared services keep their own lifetimes. See [process lifecycle](docs/process-lifecycle.md).
-- **Recording reliability:** a cancellable cross-process lock serializes native recording and saving; editing and export remain independent. OpenScreen diagnostics stay in the job workspace, queued calls have longer timeouts, and owned recorder helpers are cleaned up after failures. The lock does not guarantee FIFO ordering.
-- **Clearer activity:** repeated narration and render retries update the latest result, recovered narration clears earlier failure status, and rendering uses recorded outcomes instead of leaving failed attempts as unfinished progress bars.
-- **Provider cost reporting:** Claude uses SDK-reported costs. Codex uses standard API estimates based on incremental thread usage, separating cache reads/writes and counting reasoning once. Real SDK calls verified cumulative resume behavior for both providers. See [cost reporting](docs/costs.md).
-- **Dependencies and regression coverage:** OpenAI and Anthropic SDK packages track `latest`; other dependencies use explicit versions, with grouped Dependabot updates. Added coverage for planning handoffs, shared preview correction paths, process ownership, recording concurrency and resumed-session costs.
-
-</details>
-
-<details>
-<summary>2026-10-25</summary>
-
-- **v0.4.0:** project-local MCP technology tools, AnySearch research, narration tools, shared corrections and the Pixel RPG Quest Explainer. See the [release notes](CHANGELOG.md#040--2026-10-25).
-
-- **Project-local technology tools:** both providers inspect availability through Creative Pool MCP, choose their own tools and run JavaScript, Python or other setup inside the project. Browser preparation bundles libraries, stylesheets and assets without installing packages or relying on Kiteva's dependency tree.
-- **Documentation research:** the bundled AnySearch skill reads tool documentation, CLI parameters, repository examples and source code. Native provider web search/fetch is disabled; sandbox networking supports research and model-owned setup, with project-local caches and isolated Codex skill discovery.
-- **Clearer provider activity:** reads, file updates, checks, installation and bundling share labels across GPT and Claude. Failed MCP calls and commands stay failed; equivalent workflow stages no longer disappear into generic build messages.
-- **Offset-print lyric graphics:** Printed Spark Collage and Boxed-Word Active Relay bring the catalog to 142 Motion Graphics and 50 motions, with Opus-authored previews and recorded exact-template inputs. Per-Motion-Graphic technology reviews exclude project composition/export pipelines.
-- **Pixel RPG Quest Explainer:** a reviewed Motion Graphic and preview plus Step-Tick Slot Refill. Pixel progress follows the explained concepts rather than decorative counters.
-- **Prompt and preview fixes:** document filenames and titles stay out of the finished video unless requested; unanswered questions pause before storyboard validation, mention previews keep stable dimensions, and new catalog details have Chinese translations.
-- **Architecture documentation:** updated capability ownership, technology setup and skill-staging diagrams. Full local verification: 1,843 tests passed, three skipped, with build, lint and formatting passing. Platform-specific release verification is reported separately.
-
-</details>
-
-<details>
-<summary>2026-10-24</summary>
-
-- **Narration as an internal tool:** models create and edit timed narration through MCP; the application retains measured speech scheduling, mixing and validation. Narration activity appears for actual narration-tool calls.
-- **Corrections preserve accepted work:** shared manifest merging retains omitted fields across generation and correction paths, protecting shot lists, soundtrack references and unrelated settings.
-- **Production controls:** event-based activity groups show the latest repeated action, timing retries stay grouped by cycle, capture timing recovery preserves accepted footage, and customer questions use plain language about the result.
-- **Usage and prompt settings:** Governance separates ordinary input, cache reads, cache writes and output, with API-rate estimates and explicit uncertainty. Claude prompt caches use a five-minute TTL. Shared color chips work in prompt displays and editors; selected Motion Graphic contributions are guided by the idea rather than selection order.
-
-</details>
-
-<details>
-<summary>2026-10-23</summary>
-
-- **v0.3.0:** chapter-based demos, timed narration, native cursor action logs, renderer reuse and grouped activity. See the [release notes](CHANGELOG.md#030--2026-10-23).
-
-- **Chapter-based application demos:** the main model saves a validated storyboard before recording. Fresh chapter sessions capture the planned interactions, and narration and assembly use the accepted footage and measured durations.
-
-- **Chapter timing recovery:** native OpenScreen speed regions fit complete action sequences to chapter budgets. Timing conflicts allow up to ten local retries while retaining accepted chapters and the approved film plan.
-
-- **Native cursor action logs:** browser actions supply timestamped events directly to OpenScreen’s `setPointerTrack` after recording stops. Fullscreen capture keeps page and window coordinates aligned without toolbar-offset calculations; OpenScreen renders the cursor and click effects.
-
-- **Timed narration:** script items have separate time windows, text or generation instructions, caption visibility and voice settings. Local Pocket TTS uses a persistent worker for repeated speech requests.
-
-- **Native Claude planning:** planning uses the SDK’s plan mode with an automatic handoff; structured validation and stage-specific tool controls remain in place before implementation.
-
-- **Chapter activity:** capture work is grouped under its chapter, with timing validation, retry counts and accepted export durations shown in the activity log.
-
-</details>
-
-<details>
-<summary>2026-10-22</summary>
-
-- **Fine-tune checkpoints:** revisions resume the completed video session with verified source-artifact context, retained authoring selections and inherited renderer-owned cache; conservative hash and byte validation still controls reuse.
-
-- **Capture cursor size:** new OpenScreen takes use a fixed cursor size of 1.5; historical recordings retain their saved sizes.
-
-- **Vintage Rubber Hose metadata:** the existing preview defines visual identity and motion, including mandatory environmental acting wherever scenery is present; project subjects stay flexible and colour overrides stay scoped to their scenes.
-
-- **Motion clip mentions:** the shared `@` picker, chips and hover previews now support motion clips alongside Motion Graphics; references retain explicit XML IDs for Creative Pool lookup.
-
-- **Explicit visual stages:** a shared, renderer-independent authoring helper separates calculate, decide, apply and commit; each renderer supplies its own calculation and application behaviour. Reuse is disabled by default; any input revision or visual-state change rebuilds the owned part. Browser tests cover backward and fresh direct seeking.
-
-- **Multiplane reuse trial:** provider-owned validated shot caching with conservative project-wide invalidation, checksum checks and an isolated real-render verification script.
-
-- **Clear attachment states:** material steps distinguish attached files from the asset pool with explicit labels, visible Add actions and green Attached badges.
-
-- **Narration start time:** set an explicit opening silence in Speech settings; synthesized audio and caption cues share the offset, and older workers are blocked from silently dropping it.
-
-- **Grouped rendering progress:** repeated code-driven shot checks and frame logs share one Ant Design X activity group with a measured progress bar; HyperFrames, Multiplane and the Remotion fallback share the same progress display, and viewing-copy exports also show their percentage. Completed measured operations show a green success icon at 100%, preserving failed/stopped states. Progress bars sit inline to the right of each parent label, followed by the percentage. Parent work nodes relay their current measured stage and omit duplicate rendering child rows. Each renderer owns its progress adapter; shared code only dispatches normalized progress to the common display.
-
-- **Lean Creative Pool responses:** omit source-review and provenance metadata; fixed-style previews and selected-direction planning, builds and repairs hide variants and suggested combinations through a shared MCP flag. Automatic style exploration retains those alternatives.
-
-- **README badges:** added releaseszn, latest release, MIT license and Native Windows CI badges beneath the logo.
-
-- **Governance authoring details:** visual and audio Jev choices share one details display, including selected resources and expandable probabilities for saved projects.
-
-- **v0.2.0:** release with 140 Motion Graphics and 48 motions, style-driven previews, shared planning, editable project exports, native capture and the MIT license. See the [release notes](CHANGELOG.md#020--2026-10-22).
-
-- **MIT license:** switched to standard MIT, removed the top license reminder and simplified the license section.
-
-- **Shared renderer policy:** each renderer owns its CLI flags, preview/full stages, output settings and audio guidance in `src/server/rendering/<renderer>/metadata.ts`. Execution, prompts and reproduction instructions consume those definitions; renderer authoring contracts live alongside them. A regression test verifies that changing one policy flag reaches all consumers.
-
-- **Multiplane full-film lint bypass:** full-film inspect, verify and render commands now also hardcode `--no-lint`, with the same requirement in the model prompt and reproduction instructions. Runtime determinism verification and full-film QA remain enabled.
-
-- **Multiplane preview lint bypass:** the preview route prompt explicitly requires `multiplane render --no-lint`, and the application always passes that flag for preview exports. This also skips the renderer’s built-in lint of bundled libraries such as GSAP; full films also skip lint as described above.
-
-- **Previews skip QA:** all preview routes plan, build and render without design/playback QA, finished-result review or automatic repair loops. Basic file/output checks remain; full films keep QA and repairs.
-
-- **Visual authoring details in Governance:** each JEV authoring-selection row shows the selected resource and probability for its preview/full-film job. Expand the row to inspect all compared resources and their probabilities; missing historical choices remain unreported rather than inferred.
-
-- **Style mentions throughout prompt displays:** Assistant replies, project conversations and board summaries, and Governance prompt views render explicit style references as the same `@` chips used by the editor. Hover or keyboard focus opens the same animated `StylePickerPreview` component used in Settings, sharing the application's already-loaded preview metadata. Stored prompts and model-facing XML remain unchanged.
-
-</details>
-
-<details>
-<summary>2026-10-21</summary>
-
-- **Plan validation recovery:** rejected video plans retain their response and SDK session so the same main model can correct exact layer-reference and timing errors before building (up to three total plan attempts). Cancellation and unrelated provider failures do not trigger correction. Activity distinguishes receiving a plan from validation and successful saving.
-
-- **Workflow diagrams:** document the [three video generation routes](docs/architecture.md#video-generation-routes), [prompt routes A–D](docs/architecture.md#prompt-routes) and [subworkflow calls and checkpoints](src/server/jobs/subworkflows/README.md#subworkflow-diagrams). Include shared planning, preview session continuation, audio behavior and the extra concept-planning call still present in selected-style previews.
-
-- **Shared main-model planning:** automatic-style previews, selected-style previews and direct full builds use the same validated plan-before-build step. Opus previews now plan in native Claude plan mode, with implementation continuing in the returned session; planning no longer depends on a model allowlist. Focused refinements keep their existing repair flow.
-
-- **Route-aware preparation activity:** selected-style routes display Project title and Preview planning rather than full Brief / Direction selection. Title-only and preview-planning calls have distinct activity labels, including historical title-only runs. Finished or interrupted projects stop unfinished preparation indicators without marking them successful.
-
-- **Full-width mention results:** style preview rows fill the `@` dropdown width, with IDs aligned to the trailing edge.
-
-- **One wizard action:** removed the redundant send arrow from onboarding replies; Continue remains the visible way to advance each step.
-
-- **Shared style-search previews:** the `@` suggestion list reuses the Settings picker’s existing `StylePickerPreview` row component and thumbnail source instead of rendering a separate text-only style list.
-
-- **Top-edge editor resize:** the idea reply box uses an Ant Design vertical Splitter; drag its top divider upward to expand the editor or downward to shrink it while keeping controls visible.
-
-- **Frontend rebuild recovery:** serve new frontend assets dynamically after a rebuild instead of retaining a startup filename snapshot. Missing asset requests return 404 rather than the HTML app shell, preventing blank pages from misleading 200 responses.
-
-- **Inline style mentions:** Type `@` in the idea editor to search Motion Graphics by name or ID with Ant Design X Suggestion. Sender renders the selected entry as an inline tag; the saved idea carries `<style id="style-140">Vintage Rubber Hose Animation</style>`. Both providers read embedded IDs through the creative-pool MCP. Mentions preserve local act/scene scope and do not change Settings selections.
-
-- Preserve “Skip previews” when restoring a draft with Settings-selected styles; submission keeps the exact selected IDs and original idea.
-
-- **Style lookup through MCP:** Authoring handoffs pass selected Motion Graphic IDs and roles; shared system guidance requires reading full canonical definitions by ID through `creative_pool.read_pool_entry` before planning or building. Names in the original idea are resolved through MCP search, without host-side extraction.
-
-- **Explicit-style previews:** styles selected in Settings can produce the requested preview directions without JEV style-combination proposals or ranking. Preview count is independent of style selection; zero directions keeps direct build. Saved settings, regeneration and act/scene style assignments are preserved. The original act/scene style rule is shared by preview and full-build prompts. Removed prompt-name matching: only Settings selections enter routing and count limits; the original idea goes unchanged to the model.
-
-- **Vintage Rubber Hose Animation:** a new Motion Graphic for early hand-inked cartoon drawing: strong irregular ink silhouettes, painterly shadow masses, expressive warped scenery and elastic, stepped acting at 12 drawings a second, adapted to the project's output settings. Any original subject works, with or without characters; the project's colours, story, renderer and audio settings stay in charge. Its only optional effects are film wear and a precise vintage film-leader countdown. The rendered preview is a Claude-authored sample, a crooked house at night followed by a 3-2-1 leader. The collection now has **140 Motion Graphics**.
-- **Capture lifecycle:** remove local and remote browser-call, native-edit, screenshot, take-count, recording-duration and output-size budgets. Recordings stop explicitly or on cancellation.
-- **Camera planning:** the main model explores the live application before choosing component focus, zoom amount and timing. Automatic zoom generation stays disabled, cursor smoothing is 0.15, and exports preserve reviewed zooms and wide intervals.
-- **Browser capability coverage:** unify tool names, schemas and handlers; add file uploads and browser session, pointer, frame, dialog, network, diagnostics and capture operations. Local mock workflows use normal HTTP(S) requests; hosted access retains its proxy boundary.
-- **Multiplane shots:** inspect, verify and render independently loaded shots, then join their visual output and apply the full-film soundtrack once to avoid film-wide frame preloads.
-- **Activity display:** consolidate recovered tool retries, order updates chronologically, preserve spacing without timestamps and follow appended activity.
-- **Editable project downloads:** expose available sources and media even from failed builds, with an OTIO timeline, SRT subtitles, audio files and streaming ZIP delivery. See the [export guide](docs/editable-projects.md).
-
-video planning, native capture and JEV selection.
-
-- **JEV selection:** retain the original idea and section instructions; compare visual authoring options using textual advantages, disadvantages and constraints. Style combinations are evaluated in batches, then JEV Choice compares all survivors repeatedly until the requested number of directions is selected. Preliminary scores no longer determine the final order.
-- **Audio authoring:** add [Audio Studio MCP](https://github.com/kanaworksai-hue/audio-studio-mcp) as a local capability, with independent JEV selection and renderer-owned audio contracts. Multiplane receives prepared audio assets before rendering; uploaded audio retains its own usage guidance.
-- **Planning and preparation:** separate full-brief and title-only workflows. Direct builds preserve the original idea and still receive a project title. Full videos use a main-model planning turn (Claude's native plan mode for Claude) and a prose plan before capture and implementation; renderer-specific demo routes preserve feature coverage, section titles and act-specific Motion Graphics.
-- **Native OpenScreen editing:** use the referenced upstream demo skill and document-scoped MCP tools for review, trims, speed regions, zooms and export. Remove custom idle-gap editing, automatic input scrolling/centering and the fixed 450 ms pause. Keep the captured frame fitted within the final composition.
-- **Assistant and activity:** add website references one URL per item, share the narration/subtitles script, apply each setting's source guidance through shared logic, pause generation for blocking questions and surface them in the Assistant. Activity follows appended logs and replaces recovered failures with the latest status without retry subtrees.
-- **Setup and organization:** add `install.sh` and an OpenScreen setup helper, simplify `.env.example`, update Claude Agent SDK through `latest`, and group capabilities, renderer metadata and JEV strategies in their own folders. React Bits discovery accepts current JS/TS-only registry entries.
-
-</details>
-
-<details>
-<summary>2026-10-20</summary>
-
-agent planning, capabilities and demo capture.
-
-- Added **Animate UI** component discovery for both providers and shared **JEV 1.14.0 Choice** selection of one primary authoring capability, bundled skill or local-code approach. Internal creative-pool tools expose complete Motion Graphic, motion and technology definitions; the main model retains production planning.
-- Split workflow guidance into application-demo, static-screen, concept-film and mixed-film route prompts. Mixed films apply the appropriate route to each section while preserving act boundaries, selected styles and required feature coverage; detailed timings are planned from the actual content and reference evidence.
-- Simplified preparation output so the application preserves original request data and settings. Guarded brief corrections report the exact rejected edit and retry against the unchanged valid draft.
-- Refined **OpenScreen capture**: a **450 ms** pause after pointer arrival, smooth input centering, native zoom framing that includes the full active field and label, and removal of automatic network-idle holds after each action. Auto-zoom remains enabled; other cursor controls retain native defaults unless supplied. Generation and review guidance also address clipped footage and decorative patterns obscuring text.
-- Added **Particle Flow Network**, bringing the collection to **139 Motion Graphics and 48 motions**, and rebuilt its preview and **Manga Production Theatre** with consistent role-specific crew. Removed the structured-score/MIDI/FluidSynth requirement; the main model composes instrumental music with the available local tools.
-
-</details>
-
-<details>
-<summary>2026-10-19</summary>
-
-- **English / 中文 interface switching**, translated catalog and Governance views, clearer activity grouping, and improvements to project, retry and video workflows. Interface language remains separate from generated-video language.
-- Added local **OpenScreen recording with an optional desktop worker**, cursor and zoom presentation controls, and smoother recorded browser interactions. Local recording uses a dedicated visible browser window.
-- Updated the agent SDK dependencies and added tool-call execution checks that disallow Blender, guarded leaf-level brief corrections, **uniform random creative directions**, a one-hour render timeout and SQLite lock-contention handling.
-
-</details>
-
-<details>
-<summary>2026-10-18</summary>
-
-- **v0.1.0 — first source release.** See the [release notes](CHANGELOG.md#010--2026-10-18). Includes 138 Motion Graphics, 48 motions, both agent providers, headless website capture and English / Chinese delivery. Native Windows sandbox and render verification passed in CI; Windows support remains experimental.
-
-- Added **English / 简体中文 video language**, translated narration and subtitles with preserved originals, and a separate Chinese Pocket TTS provider. Music and Narration / subtitles now have separate Assistant steps.
-- Added **Cassette Futurism**: hardware panels, phosphor screens, tape reels and stepped animation, with a rendered preview. The collection now has **137 Motion Graphics**.
-- Added **Terminal Lyric Duotone Anime**: flat blue, cream and black anime art in a CRT terminal frame, with bilingual decoding captions and ringed keyword titles, plus a code-drawn illustrative preview. Also added two motions, **Rotating Sonar-Sweep Reveal** and **Pixel-Tile Materialize & Targeted Delete**. The collection now has **138 Motion Graphics and 48 motions**.
-- Added an **experimental native Windows backend**, platform-aware setup and a render verification command. Actual Windows 10/11 testing is still pending; project creation on Windows requires a successful verification first. See the [Windows setup guide](docs/windows.md).
-
-- Published English and Chinese READMEs, a Kiteva-made introduction film, desktop and Storyboard screenshots, architecture diagrams, and technology and cost documentation.
-- Added contribution guidance and the [project license](LICENSE).
-
-</details>
-
-<details>
-<summary>2026-10-17</summary>
-
-- Expanded the collection to **136 Motion Graphics and 46 motions**, refreshed animated previews and cached Motion Graphic summaries, and upgraded [Multiplane](https://github.com/LBEILC/Multiplane) to **0.3.10**.
-- Made Activity labels specific to each task, separated preparation, review and repair, and indented updates under their task. Raw internal content stays hidden.
-- Anatomy is now installed or updated at launch, with verified offline fallback; upstream skill files are no longer bundled.
-- Added automatic narration loudness matching and a volume control, simplified Speech / vocals settings, and registered bundled skills through the Claude SDK.
 
 </details>
 
@@ -438,7 +179,7 @@ And it has nothing to do with the UI-component tool called [Storybook](https://s
 | Motion Graphics                   | **140** (`assets/catalog/video-style-catalog.json`)                                                                                                                                  |
 | Motions                           | **46** (`assets/catalog/motion-pattern-catalog.json`)                                                                                                                                |
 | Technology pool entries           | **92** recommendations across visual construction, motion, rendering and supporting tools                                                                                            |
-| Startup-installed authoring skill | **2** ([Anatomy](https://github.com/wheresryan22/anatomy), [img2threejs](https://github.com/img2threejs/img2threejs))                                                                |
+| Startup-installed authoring skill | **3** ([Anatomy](https://github.com/wheresryan22/anatomy), [img2threejs](https://github.com/img2threejs/img2threejs), [Stageshow](docs/stageshow.md))                                |
 | Renderers                         | [HyperFrames](https://github.com/heygen-com/hyperframes) (default), [Multiplane](https://github.com/LBEILC/Multiplane) (trial), [Remotion](https://www.remotion.dev) (fallback only) |
 
 Combinations are where it gets interesting. A direction can mix one primary Motion Graphic with
@@ -463,7 +204,7 @@ More detail, including the workflow diagrams, is in [docs/architecture.md](docs/
 
 Native Windows 10/11 setup is experimental and has its own [installation and verification guide](docs/windows.md); WSL is not required.
 
-On macOS, [install.sh](install.sh) installs missing system prerequisites, locked npm dependencies (with the Claude Agent SDK refreshed to `latest`), isolated Chrome for Testing, OpenScreen, Caveman, local speech providers and Audio Studio MCP with model weights, then builds the app. It uses Homebrew when system tools are missing and managed Python 3.11 for speech. Existing configuration and installed apps are preserved. The default setup includes large model downloads; see `./install.sh --help` for options. You still need two kinds of access:
+On macOS, [install.sh](install.sh) installs missing system prerequisites, locked npm dependencies (with Claude and Codex SDKs refreshed to `latest`), isolated Chrome for Testing, OpenScreen, Caveman, local speech providers and Audio Studio MCP with model weights, then builds the app. It uses Homebrew when system tools are missing and managed Python 3.11 for speech. Existing configuration and installed apps are preserved. The default setup includes large model downloads; see `./install.sh --help` for options. Setup and backend launches share the [managed dependency update lifecycle](docs/dependency-upgrades.md). You still need two kinds of access:
 
 - **A model provider, by API key or by an existing signed-in subscription.** For Claude, set
   `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`, or just be signed in to
@@ -509,6 +250,7 @@ Your projects, uploads, room layout, databases and credentials stay in Git-ignor
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | [Anatomy](https://github.com/wheresryan22/anatomy)                                                                                                                                                                                                                            | Isometric technical-illustration skill and drawing kit (3D mode is beta)                                                                             | Installed/updated from upstream at launch into Git-ignored `skills/anatomy/`; verified local fallback when offline; MIT                    |
 | [img2threejs](https://github.com/img2threejs/img2threejs)                                                                                                                                                                                                                     | Reference-image procedural Three.js reconstruction skill                                                                                             | Latest default-branch commit installed at every backend startup into Git-ignored `skills/img2threejs/`; verified offline reuse; Apache-2.0 |
+| [Stageshow](docs/stageshow.md)                                                                                                                                                                                                                                                | Authored product-UI illustrations, cursor interactions and walkthroughs                                                                              | Startup download into Git-ignored runtime storage; MIT source with separate asset notices; does not replace real application recording     |
 | [HyperFrames](https://github.com/heygen-com/hyperframes)                                                                                                                                                                                                                      | HTML video composition and export                                                                                                                    | npm dependency; compatible range and committed lockfile; default renderer                                                                  |
 | [Multiplane](https://github.com/LBEILC/Multiplane)                                                                                                                                                                                                                            | `render(t)` shot renderer with motion blur                                                                                                           | npm dependency; compatible range and committed lockfile; trial setting                                                                     |
 | [Remotion](https://www.remotion.dev) 4.x                                                                                                                                                                                                                                      | React video renderer                                                                                                                                 | npm dependency, fallback only (has its own license terms)                                                                                  |

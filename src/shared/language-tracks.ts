@@ -9,8 +9,17 @@ import {
 } from "./video-language";
 import type { VideoRequest } from "./domains/video";
 
+export const LanguageTrackRowSchema = z.object({
+  language: VideoLanguageSchema,
+  generateNarration: z.boolean().default(false),
+  showSubtitles: z.boolean().default(false),
+  speech: SpeechSettingsSchema.options[1],
+});
+export type LanguageTrackRow = z.infer<typeof LanguageTrackRowSchema>;
+
 export const LanguageTracksSchema = z
   .object({
+    languages: z.array(LanguageTrackRowSchema).max(videoLanguages.length).optional(),
     narration: z
       .array(z.object({ language: VideoLanguageSchema, speech: SpeechSettingsSchema.options[1] }))
       .max(videoLanguages.length),
@@ -37,6 +46,28 @@ export const LanguageTracksSchema = z
             path: ["narration", settings.narration.indexOf(track), "speech", ...issue.path],
             message: issue.message,
           });
+    }
+    if (settings.languages) {
+      const ids = settings.languages.map((row) => row.language);
+      if (new Set(ids).size !== ids.length)
+        ctx.addIssue({ code: "custom", message: "Each language must appear only once." });
+      const expectedNarration = settings.languages
+        .filter((row) => row.generateNarration)
+        .map((row) => row.language)
+        .sort();
+      const expectedSubtitles = settings.languages
+        .filter((row) => row.showSubtitles)
+        .map((row) => row.language)
+        .sort();
+      if (
+        JSON.stringify(expectedNarration) !==
+          JSON.stringify(settings.narration.map((row) => row.language).sort()) ||
+        JSON.stringify(expectedSubtitles) !== JSON.stringify([...settings.subtitles].sort())
+      )
+        ctx.addIssue({
+          code: "custom",
+          message: "Enabled language settings must match delivery tracks.",
+        });
     }
     const languages = settings.narration.map((track) => track.language);
     if (
@@ -113,6 +144,70 @@ export function selectLanguageTrackLanguages(
     defaultNarration: narrationEnabled ? defaultLanguage : undefined,
     defaultSubtitle: current?.showSubtitles === false ? "off" : defaultLanguage || "off",
   };
+}
+
+/** Retain disabled language profiles while delivery arrays contain only enabled tracks. */
+export function languageTrackRows(
+  request: Pick<VideoRequest, "languageTracks" | "speech" | "scriptItems" | "outputLanguage">,
+): LanguageTrackRow[] {
+  const settings = request.languageTracks;
+  if (settings?.languages) return settings.languages;
+  const languages = [
+    ...new Set([
+      ...(settings?.narration.map((track) => track.language) ?? []),
+      ...(settings?.subtitles ?? []),
+    ]),
+  ];
+  return languages.map((language) => ({
+    language,
+    generateNarration: Boolean(settings?.narration.some((track) => track.language === language)),
+    showSubtitles:
+      settings?.showSubtitles !== false && Boolean(settings?.subtitles.includes(language)),
+    speech: selectLanguageTrackLanguages(request, [language], { narrationEnabled: true })
+      .narration[0].speech,
+  }));
+}
+export function individualLanguageTracks(
+  request: Pick<VideoRequest, "languageTracks" | "speech" | "scriptItems" | "outputLanguage">,
+  rows: LanguageTrackRow[],
+): LanguageTracks {
+  const narration = rows
+    .filter((row) => row.generateNarration)
+    .map((row) => ({ language: row.language, speech: row.speech }));
+  const subtitles = rows.filter((row) => row.showSubtitles).map((row) => row.language);
+  const preferredNarration = request.languageTracks?.defaultNarration;
+  const preferredSubtitle = request.languageTracks?.defaultSubtitle;
+  return LanguageTracksSchema.parse({
+    languages: rows,
+    narration,
+    subtitles,
+    defaultNarration: narration.some((row) => row.language === preferredNarration)
+      ? preferredNarration
+      : narration[0]?.language,
+    defaultSubtitle:
+      preferredSubtitle && preferredSubtitle !== "off" && subtitles.includes(preferredSubtitle)
+        ? preferredSubtitle
+        : (subtitles[0] ?? "off"),
+    showSubtitles: subtitles.length > 0,
+  });
+}
+export function addLanguageTrack(
+  request: Pick<VideoRequest, "languageTracks" | "speech" | "scriptItems" | "outputLanguage">,
+  language: VideoLanguage,
+): LanguageTracks {
+  const rows = languageTrackRows(request);
+  if (rows.some((row) => row.language === language)) return individualLanguageTracks(request, rows);
+  const profile = selectLanguageTrackLanguages(request, [language], { narrationEnabled: true })
+    .narration[0];
+  return individualLanguageTracks(request, [
+    ...rows,
+    {
+      language,
+      generateNarration: false,
+      showSubtitles: false,
+      speech: profile.speech,
+    },
+  ]);
 }
 
 export function primaryNarrationProfile(settings: LanguageTracks) {

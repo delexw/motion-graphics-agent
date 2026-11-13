@@ -1,3 +1,4 @@
+import type { RequestSettingsReview } from "./request-settings-review";
 import type { assetLimits } from "./asset-limits";
 import type { AssetOwner } from "./asset-owner";
 import type { VideoRequest } from "./domains/video";
@@ -18,6 +19,7 @@ export type KitevaMcpResult =
       kind: "idea";
       id: string;
       request: Record<string, unknown>;
+      languageSettings?: import("./language-tracks").LanguageTrackRow[];
       revision?: number;
       draftId?: string;
       assets?: KitevaMcpAsset[];
@@ -26,6 +28,7 @@ export type KitevaMcpResult =
       kind: "created";
       id: string;
       request: VideoRequest;
+      languageSettings?: import("./language-tracks").LanguageTrackRow[];
       url: string;
       started: false;
       draftId: string;
@@ -36,6 +39,7 @@ export type KitevaMcpResult =
   | {
       kind: "options";
       defaults: Partial<VideoRequest>;
+      languageDefaults?: { generateNarration: boolean; showSubtitles: boolean };
       settingsSchema: Record<string, unknown>;
       uploadLimits: typeof assetLimits;
       supportedExtensions: string[];
@@ -44,6 +48,14 @@ export type KitevaMcpResult =
       kind: "styles";
       styles: { id: string; name: string; category: string; visualDirection: string }[];
     }
+  | {
+      kind: "settings_conflict";
+      message: string;
+      details: RequestSettingsReview;
+      draftId?: string;
+      revision: number;
+    }
+  | { kind: "settings_check_unavailable"; message: string }
   | { kind: "error"; message: string };
 
 export type KitevaMcpAsset = {

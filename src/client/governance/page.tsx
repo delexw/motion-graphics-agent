@@ -1,3 +1,8 @@
+import { GovernanceProjectSelect } from "./project-select";
+import { formatGovernanceCost } from "./format-cost";
+import { settingsCheckActivity } from "../../shared/settings-check-accounting";
+import { ProjectTechnologyExplorer } from "./technology-explorer";
+import { SettingsChecks } from "./settings-checks";
 import { LoadingStatus } from "../components/loading-status";
 import { normalizeSubtitleFields } from "../../shared/subtitle-compatibility";
 import { hasOnScreenSubtitles } from "../../shared/script-items";
@@ -6,7 +11,7 @@ import { buildRouteLabel, buildRouteOf } from "../../shared/build-route";
 import { PromptText } from "../components/style-mention";
 import { uiLanguage, translateUi, useUiLanguage } from "../i18n";
 import { PageTemplate } from "../components/page-template";
-import { Button, Card, Collapse, Select, Statistic, Table, Tag, Alert } from "antd";
+import { Button, Card, Collapse, Statistic, Table, Tag, Alert, Input, Pagination } from "antd";
 import { GovernanceUsageTable } from "./usage-table";
 import { ModelPromptBrowser } from "./model-prompts";
 import { aggregateModels } from "../../shared/governance";
@@ -29,16 +34,39 @@ export function GovernancePage() {
   const [selected, setSelected] = useState("all");
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [checksPage, setChecksPage] = useState(1);
+  const [checksPageSize, setChecksPageSize] = useState(10);
+  const [checksSearch, setChecksSearch] = useState("");
   useEffect(() => {
     const controller = new AbortController();
+    let loading = false;
     const load = async () => {
+      if (loading) return;
+      loading = true;
       try {
-        const response = await fetch("/api/admin/governance", { signal: controller.signal });
+        const query = new URLSearchParams({
+          page: String(page),
+          pageSize: String(pageSize),
+          search,
+          checksPage: String(checksPage),
+          checksPageSize: String(checksPageSize),
+          checksSearch,
+        });
+        if (selected !== "all") query.set("projectId", selected);
+        const response = await fetch(`/api/admin/governance?${query}`, {
+          signal: controller.signal,
+        });
         if (!response.ok) throw Error(translateUi("Unable to load governance data."));
         setReport(normalizeSubtitleFields(await response.json()));
         setError("");
       } catch (e) {
         if (!controller.signal.aborted) setError((e as Error).message);
+      } finally {
+        loading = false;
       }
     };
     void load();
@@ -47,7 +75,7 @@ export function GovernancePage() {
       controller.abort();
       clearInterval(timer);
     };
-  }, [revision]);
+  }, [revision, page, pageSize, search, selected, checksPage, checksPageSize, checksSearch]);
   if (!report)
     return (
       <PageTemplate
@@ -65,7 +93,13 @@ export function GovernancePage() {
   const projects = report.projects.filter(
     (project) => selected === "all" || project.id === selected,
   );
-  const activity = projects.flatMap((project) => project.activity);
+  const checks = (report.settingsChecks ?? []).filter(
+    (check) => selected === "all" || check.runId === selected,
+  );
+  const activity = [
+    ...projects.flatMap((project) => project.activity),
+    ...checks.map(settingsCheckActivity),
+  ];
   const totalTools = activity.reduce((sum, row) => sum + row.tools, 0);
   const totalTokens = activity.reduce(
     (sum, row) => sum + (row.inputTokens || 0) + (row.outputTokens || 0),
@@ -85,29 +119,28 @@ export function GovernancePage() {
       }
       controls={
         <div className="governance-filter">
-          <Select
-            aria-label={translateUi("Governance project")}
-            className="governance-ant-select"
-            styles={{ popup: { root: { maxWidth: "calc(100vw - 32px)", minWidth: 0 } } }}
+          <Input.Search
+            aria-label={translateUi("Search projects")}
+            placeholder={translateUi("Search project title or idea")}
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            allowClear
+            onSearch={(value) => {
+              setSearch(value);
+              setPage(1);
+              setSelected("all");
+            }}
+          />
+          <GovernanceProjectSelect
             value={selected}
-            onChange={setSelected}
-            showSearch={{ optionFilterProp: "label" }}
-            options={[
-              { value: "all", label: translateUi("All projects"), description: "" },
-              ...report.projects.map((project) => ({
-                value: project.id,
-                label: project.name,
-                description: `${project.request.outputType === "page" ? translateUi("HTML") : translateUi("Video")} · ${project.request.provider === "claude" ? translateUi("Claude") : translateUi("GPT")} · ${date(project.started)} · ${project.id}`,
-              })),
-            ]}
-            optionRender={(option) => (
-              <div className="governance-ant-option" data-project-id={option.value}>
-                <div className="governance-ant-option-name" title={option.data.label}>
-                  {option.data.label}
-                </div>
-                {option.data.description && <small>{option.data.description}</small>}
-              </div>
-            )}
+            selectedProject={report.projects.find((project) => project.id === selected)}
+            onChange={(value) => {
+              setSelected(value);
+              setSearch("");
+              setSearchInput("");
+              setPage(1);
+              setChecksPage(1);
+            }}
           />
           <span>
             {translateUi("Updated") + " "}
@@ -118,6 +151,9 @@ export function GovernancePage() {
       }
     >
       {error && <Alert type="error" title={error} showIcon />}
+      <p>
+        {translateUi("Usage and cost totals below cover only the loaded project and check pages.")}
+      </p>
       <div className="governance-stats">
         <Card size="small">
           <Statistic title={translateUi("Projects")} value={projects.length} />
@@ -132,12 +168,23 @@ export function GovernancePage() {
           <Statistic
             title={translateUi("Known cost subtotal · USD")}
             value={totalCost}
-            precision={4}
-            prefix="$"
+            formatter={(value) => formatGovernanceCost(Number(value))}
             suffix="+"
           />
         </Card>
       </div>
+      <SettingsChecks
+        records={report.settingsChecks ?? []}
+        pagination={report.checksPagination}
+        onPage={(page, size) => {
+          setChecksPage(page);
+          setChecksPageSize(size);
+        }}
+        onSearch={(value) => {
+          setChecksSearch(value);
+          setChecksPage(1);
+        }}
+      />
       <Card title={translateUi("Model responsibilities")} className="governance-ant-card">
         <Table
           dataSource={report.models}
@@ -175,6 +222,19 @@ export function GovernancePage() {
       >
         <GovernanceUsageTable rows={aggregateModels(activity)} />
       </Card>
+      {report.pagination && (
+        <Pagination
+          current={report.pagination.page}
+          pageSize={report.pagination.pageSize}
+          total={report.pagination.total}
+          showSizeChanger
+          pageSizeOptions={[5, 10, 25]}
+          onChange={(page, size) => {
+            setPage(page);
+            setPageSize(size);
+          }}
+        />
+      )}
       {projects.length === 0 && <p>{translateUi("No projects recorded yet.")}</p>}
       {projects.map((project) => (
         <Card
@@ -200,6 +260,7 @@ export function GovernancePage() {
             </Tag>
           }
         >
+          <ProjectTechnologyExplorer projectId={project.id} jobs={project.technologyJobs ?? []} />
           <dl className="governance-timing">
             <div>
               <dt>{translateUi("Started")}</dt>
@@ -392,7 +453,15 @@ export function GovernancePage() {
                 label: translateUi("Usage by model and function"),
                 children: (
                   <div className="governance-subsection-body">
-                    <GovernanceUsageTable rows={project.activity} byFunction />
+                    <GovernanceUsageTable
+                      rows={[
+                        ...project.activity,
+                        ...checks
+                          .filter((check) => check.runId === project.id)
+                          .map(settingsCheckActivity),
+                      ]}
+                      byFunction
+                    />
                   </div>
                 ),
               },

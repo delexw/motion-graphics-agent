@@ -1,3 +1,4 @@
+import { OpenPageButton } from "../domains/page/open-button";
 import { translateUi, useUiLanguage } from "../i18n";
 import { VideoPlayer } from "./video-player";
 import { useEffect, useRef, useState } from "react";
@@ -162,6 +163,7 @@ export function ProjectMediaStack({ project, onOpen }: { project: Run; onOpen: (
           ) : (
             <ProjectResultPending project={project} visible={visible} />
           )}
+          {media?.outputType === "page" && hasEnteredViewport && <OpenPageButton job={media} />}
           {media?.video && hasEnteredViewport && (
             <Button
               className="project-card-play"

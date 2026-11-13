@@ -52,7 +52,29 @@ it("requires all combination styles to appear within the same three-second previ
     width: 1280,
     height: 720,
   };
+  for (const provider of ["claude", "codex"] as const) {
+    for (const phase of ["preview", "full", "refinement", "repair"] as const) {
+      const staged = buildVideoPrompt({
+        ...input,
+        request: { ...input.request, provider },
+        job: {
+          ...job,
+          kind: phase === "preview" ? "preview" : "full",
+          refinementPrompt:
+            phase === "refinement" ? "Keep the demo UI, slow the cursor" : undefined,
+          authoringResources: { source: "jev", selectedIds: ["stageshow"], decisions: [] },
+        },
+        feedback: phase === "repair" ? "Fix a clipped label without restyling" : undefined,
+      });
+      expect(staged).toContain("STAGESHOW SCENE OWNERSHIP");
+      expect(staged).toContain("contribute motion only");
+      expect(staged).toContain(
+        "explicit user UI appearance instructions override Stageshow defaults",
+      );
+    }
+  }
   const prompt = buildVideoPrompt(input);
+  expect(prompt).not.toContain("STAGESHOW SCENE OWNERSHIP");
   const sixtyFps = buildVideoPrompt({
     ...input,
     request: { ...input.request, frameRate: 60, resolution: "1440p" },

@@ -59,7 +59,11 @@ it("reviews full videos with their selected main model and explicit evidence, ke
     const onEvent = vi.fn();
     expect(
       await reviewFinishedResult({
-        job: { ...job, workspace },
+        job: {
+          ...job,
+          workspace,
+          authoringResources: { source: "jev", selectedIds: ["stageshow"], decisions: [] },
+        },
         request,
         candidate,
         signal: new AbortController().signal,
@@ -78,6 +82,10 @@ it("reviews full videos with their selected main model and explicit evidence, ke
       "0–15s: one short headline holds throughout.",
     );
     expect(vi.mocked(agentTurn).mock.calls[0][0].prompt).toContain("needs_review");
+    expect(vi.mocked(agentTurn).mock.calls[0][0].prompt).toContain("STAGESHOW SCENE OWNERSHIP");
+    expect(vi.mocked(agentTurn).mock.calls[0][0].prompt).toContain(
+      "never repair an intact demo merely to impose an MG look",
+    );
     expect(vi.mocked(agentTurn).mock.calls[0][0].schema.safeParse(review).success).toBe(false);
     expect(onEvent).toHaveBeenCalledWith(
       expect.objectContaining({ data: { input_tokens: 20, resultReview: true } }),

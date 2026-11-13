@@ -32,6 +32,7 @@ function setup() {
       return { top: this.top, height: 200 };
     }
   }
+  const listeners = new Map<string, () => void>();
   const context = {
     window: {} as {
       KitevaMotion: {
@@ -43,7 +44,9 @@ function setup() {
     Element,
     innerHeight: 800,
     matchMedia: () => media,
-    addEventListener: () => {},
+    addEventListener: (event: string, callback: () => void) => {
+      listeners.set(event, callback);
+    },
     IntersectionObserver: class {
       constructor(callback: typeof observe) {
         observe = callback;
@@ -60,6 +63,7 @@ function setup() {
     visibility: (target: Element, visible: boolean) =>
       observe([{ target, isIntersecting: visible }]),
     runtime: context.window.KitevaMotion,
+    resize: () => listeners.get("resize")?.(),
   };
 }
 describe("HTML motion lifecycle", () => {
@@ -113,4 +117,29 @@ describe("HTML motion lifecycle", () => {
     expect(activity).toEqual([false, true, false]);
     expect(() => s.runtime.register(element)).toThrow("already registered");
   });
+});
+
+it("re-evaluates offscreen scroll layout after resize without resuming animations", () => {
+  const s = setup(),
+    element = new s.Element();
+  const progress: number[] = [];
+  const activity: boolean[] = [];
+  let reducedLayouts = 0;
+  s.runtime.register(element, {
+    mode: "scroll",
+    onProgress: (p: number) => progress.push(p),
+    onActive: (active: boolean) => activity.push(active),
+    onReducedMotion: (reduced: boolean) => {
+      if (reduced) reducedLayouts++;
+    },
+  });
+  element.top = -500;
+  s.resize();
+  expect(progress).toEqual([1]);
+  expect(activity).toEqual([false]);
+  s.media.matches = true;
+  s.media.change();
+  s.resize();
+  expect(reducedLayouts).toBe(2);
+  expect(progress).toEqual([1]);
 });

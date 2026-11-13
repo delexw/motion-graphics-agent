@@ -1,3 +1,5 @@
+import { observeProjectTechnologies } from "../../technology/observe";
+import { validateProjectDependencySelection } from "../../technology/project-dependencies";
 import { renderInputRoot } from "../../runtime/workspace";
 import { generationSessionEvents } from "../../jobs/generation-session";
 import { correctionIdentity } from "../../agents/correction-identity";
@@ -75,12 +77,19 @@ export async function generatePage(input: {
       job.phase = "validating";
       update();
       try {
+        await validateProjectDependencySelection(job.workspace);
         const validationStarted = Date.now();
         try {
           Object.assign(job, await validatePage(job, job.pageProduction, signal, emit));
         } finally {
           job.validationMs = (job.validationMs || 0) + Date.now() - validationStarted;
         }
+        await observeProjectTechnologies(
+          job.workspace,
+          job.pageProduction.sourceFile,
+          signal,
+          emit,
+        );
         job.resultReview = await reviewFinishedResult({
           job,
           request: input.request,

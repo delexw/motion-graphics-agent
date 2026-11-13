@@ -1,3 +1,5 @@
+import { SettingsConflictError } from "../../shared/request-settings-review";
+import { errorCode } from "../../shared/errors";
 import { assetLimits } from "../../shared/asset-limits";
 import { briefSectionFileAccept } from "../../shared/brief-sections";
 import { AssetSourceSchema, AssetTargetSchema, importMcpAsset } from "./assets";
@@ -17,6 +19,7 @@ import { VideoRequestSchema } from "../../shared/domains/video";
 import { validateBriefSections } from "../requests/brief-sections";
 import {
   ideaRequest,
+  confirmedLanguageSettings,
   ideaToolGuidance,
   IdeaSettingsSchema,
   kitevaIdeaDefaults,
@@ -68,10 +71,20 @@ export function createKitevaMcpTools({
         structuredContent: result,
       };
     } catch (error) {
-      const result: KitevaMcpResult = {
-        kind: "error",
-        message: error instanceof Error ? error.message : "Kiteva tool failed",
-      };
+      const message = error instanceof Error ? error.message : "Kiteva tool failed";
+      const room = store.room();
+      const result: KitevaMcpResult =
+        error instanceof SettingsConflictError
+          ? {
+              kind: "settings_conflict",
+              message,
+              details: error.details,
+              draftId: room.drafts.new?.id,
+              revision: room.revision,
+            }
+          : errorCode(error) === "SETTINGS_CHECK_UNAVAILABLE"
+            ? { kind: "settings_check_unavailable", message }
+            : { kind: "error", message };
       return {
         isError: true,
         content: [{ type: "text" as const, text: result.message }],
@@ -262,7 +275,7 @@ export function createKitevaMcpTools({
     "read_idea",
     {
       description:
-        "Read a saved idea's original request and dedicated settings. Drafts also return the room revision required by start_idea. No files, event logs, sessions, credentials or generated code are returned.",
+        "Read a saved idea's original request and dedicated settings, including languageSettings for each language's narration/subtitle switches and saved TTS profile. Use these to confirm the primary narration and subtitle languages with the user without silently enabling disabled functions. Drafts also return the room revision required by start_idea. No files, event logs, sessions, credentials or generated code are returned.",
       inputSchema: {
         id: z
           .string()
@@ -285,6 +298,7 @@ export function createKitevaMcpTools({
             id,
             draftId: draft.id,
             request: draft.request,
+            languageSettings: confirmedLanguageSettings(draft.request),
             revision: room.revision,
             assets: draft.assets.map((asset) =>
               publicAsset(
@@ -300,6 +314,7 @@ export function createKitevaMcpTools({
           kind: "idea",
           id,
           request: { ...project.request },
+          languageSettings: confirmedLanguageSettings({ ...project.request }),
           assets: scopedAssets({ kind: "project", id }).map((asset) =>
             publicAsset(asset, project.request.assetIds.includes(asset.id)),
           ),
@@ -317,6 +332,7 @@ export function createKitevaMcpTools({
       run(() => ({
         kind: "options",
         defaults: kitevaIdeaDefaults,
+        languageDefaults: { generateNarration: false, showSubtitles: false },
         optionalSettings: optionalIdeaSettings,
         settingsSchema: z.toJSONSchema(IdeaSettingsSchema),
         uploadLimits: assetLimits,
@@ -413,6 +429,7 @@ export function createKitevaMcpTools({
           kind: "created",
           id: "draft:new",
           request,
+          languageSettings: confirmedLanguageSettings({ ...request }),
           url: new URL("/", webUrl).href,
           started: false,
           draftId,

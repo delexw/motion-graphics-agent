@@ -1,3 +1,7 @@
+import {
+  SettingsCheckRecordSchema,
+  type SettingsCheckRecord,
+} from "../../shared/request-settings-review";
 import { randomUUID } from "node:crypto";
 import type { AssetOwner } from "../../shared/asset-owner";
 import { validateAssetLimits } from "../../shared/asset-limits";
@@ -47,6 +51,30 @@ export class Store {
     this.db.exec(
       "CREATE TABLE IF NOT EXISTS room_state(id INTEGER PRIMARY KEY CHECK(id=1),json TEXT NOT NULL); CREATE TABLE IF NOT EXISTS room_library(asset_id TEXT PRIMARY KEY); CREATE TABLE IF NOT EXISTS room_wallpapers(asset_id TEXT PRIMARY KEY);",
     );
+    this.db.exec(
+      "CREATE TABLE IF NOT EXISTS settings_checks(id TEXT PRIMARY KEY,json TEXT NOT NULL)",
+    );
+    this.db.exec(`
+      CREATE INDEX IF NOT EXISTS governance_runs_created ON runs(json_extract(json,'$.createdAt') DESC,id);
+      CREATE INDEX IF NOT EXISTS settings_checks_started ON settings_checks(json_extract(json,'$.startedAt') DESC,id);
+      CREATE INDEX IF NOT EXISTS settings_checks_run ON settings_checks(json_extract(json,'$.runId'));
+      CREATE VIRTUAL TABLE IF NOT EXISTS governance_run_search USING fts5(id UNINDEXED,text,tokenize='trigram');
+      CREATE TRIGGER IF NOT EXISTS governance_run_insert AFTER INSERT ON runs BEGIN
+        INSERT INTO governance_run_search(rowid,id,text) VALUES(new.rowid,new.id,new.id||' '||coalesce(json_extract(new.json,'$.brief.subject'),'')||' '||coalesce(json_extract(new.json,'$.request.instructions'),''));
+      END;
+      CREATE TRIGGER IF NOT EXISTS governance_run_update AFTER UPDATE ON runs
+      WHEN coalesce(json_extract(old.json,'$.brief.subject'),'') != coalesce(json_extract(new.json,'$.brief.subject'),'')
+        OR coalesce(json_extract(old.json,'$.request.instructions'),'') != coalesce(json_extract(new.json,'$.request.instructions'),'')
+      BEGIN
+        UPDATE governance_run_search SET text=new.id||' '||coalesce(json_extract(new.json,'$.brief.subject'),'')||' '||coalesce(json_extract(new.json,'$.request.instructions'),'') WHERE rowid=old.rowid;
+      END;
+      CREATE TRIGGER IF NOT EXISTS governance_run_delete AFTER DELETE ON runs BEGIN
+        DELETE FROM governance_run_search WHERE rowid=old.rowid;
+      END;
+      INSERT INTO governance_run_search(rowid,id,text)
+        SELECT rowid,id,id||' '||coalesce(json_extract(json,'$.brief.subject'),'')||' '||coalesce(json_extract(json,'$.request.instructions'),'') FROM runs
+        WHERE rowid NOT IN (SELECT rowid FROM governance_run_search);
+    `);
     this.db.exec("BEGIN IMMEDIATE");
     try {
       const room = this.room();
@@ -63,6 +91,20 @@ export class Store {
       throw error;
     }
     this.bus.setMaxListeners(100);
+  }
+  saveSettingsCheck(record: SettingsCheckRecord) {
+    const checked = SettingsCheckRecordSchema.parse(record);
+    this.db
+      .prepare(
+        "INSERT INTO settings_checks VALUES(?,?) ON CONFLICT(id) DO UPDATE SET json=excluded.json",
+      )
+      .run(checked.id, JSON.stringify(checked));
+  }
+  settingsChecks(): SettingsCheckRecord[] {
+    return this.db
+      .prepare("SELECT json FROM settings_checks ORDER BY rowid DESC LIMIT 200")
+      .all()
+      .map((row) => SettingsCheckRecordSchema.parse(JSON.parse(String(row.json))));
   }
   room(): RoomState {
     const row = this.db.prepare("SELECT json FROM room_state WHERE id=1").get();
@@ -192,6 +234,95 @@ export class Store {
       this.db.exec("ROLLBACK");
       throw error;
     }
+  }
+  governanceRuns(options: { page: number; pageSize: number; search: string; projectId?: string }) {
+    const { page, pageSize, projectId } = options;
+    const search = options.search.trim();
+    const parameters: string[] = [];
+    let join = "";
+    const conditions: string[] = [];
+    if (projectId) {
+      conditions.push("r.id=?");
+      parameters.push(projectId);
+    }
+    if (search) {
+      join = " JOIN governance_run_search s ON s.rowid=r.rowid";
+      if (Array.from(search).length >= 3) {
+        conditions.push("governance_run_search MATCH ?");
+        parameters.push('"' + search.replaceAll('"', '""') + '"');
+      } else {
+        conditions.push("instr(lower(s.text),lower(?))>0");
+        parameters.push(search);
+      }
+    }
+    const where = conditions.length ? " WHERE " + conditions.join(" AND ") : "";
+    const total = Number(
+      this.db.prepare("SELECT count(*) AS total FROM runs r" + join + where).get(...parameters)!
+        .total,
+    );
+    const rows = this.db
+      .prepare(
+        "SELECT r.json FROM runs r" +
+          join +
+          where +
+          " ORDER BY json_extract(r.json,'$.createdAt') DESC,r.id LIMIT ? OFFSET ?",
+      )
+      .all(...parameters, pageSize, (page - 1) * pageSize);
+    return {
+      runs: rows.map(
+        (row) =>
+          normalizeRetiredSpeechSelections(
+            normalizeSubtitleFields(JSON.parse(String(row.json))),
+          ) as Run,
+      ),
+      pagination: { page, pageSize, total, search },
+    };
+  }
+  settingsCheckPage(options: {
+    page: number;
+    pageSize: number;
+    projectId?: string;
+    search?: string;
+  }) {
+    const clauses: string[] = [];
+    const args: string[] = [];
+    if (options.projectId) {
+      clauses.push("json_extract(json,'$.runId')=?");
+      args.push(options.projectId);
+    }
+    if (options.search?.trim()) {
+      clauses.push(
+        "instr(lower(coalesce(json_extract(json,'$.model'),'')||' '||coalesce(json_extract(json,'$.status'),'')),lower(?))>0",
+      );
+      args.push(options.search.trim());
+    }
+    const where = clauses.length ? " WHERE " + clauses.join(" AND ") : "";
+    const total = Number(
+      this.db.prepare("SELECT count(*) AS total FROM settings_checks" + where).get(...args)!.total,
+    );
+    const records = this.db
+      .prepare(
+        "SELECT json FROM settings_checks" +
+          where +
+          " ORDER BY json_extract(json,'$.startedAt') DESC,id LIMIT ? OFFSET ?",
+      )
+      .all(...args, options.pageSize, (options.page - 1) * options.pageSize)
+      .map((row) => SettingsCheckRecordSchema.parse(JSON.parse(String(row.json))));
+    return {
+      records,
+      pagination: {
+        page: options.page,
+        pageSize: options.pageSize,
+        total,
+        search: options.search ?? "",
+      },
+    };
+  }
+  latestEventId(id: string) {
+    return Number(
+      this.db.prepare("SELECT coalesce(max(id),0) AS latest FROM events WHERE run_id=?").get(id)!
+        .latest,
+    );
   }
   allRuns(): Run[] {
     return this.db

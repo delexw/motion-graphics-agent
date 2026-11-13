@@ -18,6 +18,52 @@ calls (`readOnly: true`) get `search_components` and `read_component`; build/cor
 `install_component`. The planning server does not register the installation tool, independent of
 provider permissions or prompt compliance. No user/global MCP configuration is modified.
 
+## SDK tool security and stage selection
+
+Choose the smallest tool surface before dispatch. This table is the policy for new
+turns; the next table records current adapter behavior. Adding custom MCP servers
+does not disable SDK built-in tools.
+
+| Task needs                                                                             | Tool policy                                                                                                                                |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| All evidence is supplied; only classification, extraction or structured text is needed | No task tools. Use a text-only turn or a direct structured API such as JEV.                                                                |
+| The complete task is covered by bounded custom handlers                                | Custom tools only. Explicitly disable default shell, file mutation, native web and other unnecessary built-ins. No generic shell fallback. |
+| Local evidence inspection and scoped external inspection                               | Necessary native read tools plus read-only custom tools; no installation, mutation or generation.                                          |
+| Project implementation, local checks and capability-owned operations                   | Necessary native authoring tools plus stage-scoped custom tools within the job/runtime boundary.                                           |
+
+A new custom-tools-only mode requires explicit enforcement in both provider
+adapters. There is currently no shared `customToolsOnly` option. `textOnly` is not
+that mode: it removes task MCP tools too. If the SDK cannot enforce a requested
+restriction, block the turn or choose a supported narrower route. Never describe
+an enabled default tool as disabled because the prompt says not to use it.
+
+### Current adapter behavior
+
+| Mode                                          | Claude                                                                                                                                      | Codex                                                                                                                                                           |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `textOnly`                                    | Native `tools: []`; no task MCP servers or staged skills                                                                                    | No task MCP servers or staged skills; network off; forbidden tool activity is rejected from the event stream. This is not pre-dispatch removal of native tools. |
+| Ordinary `readOnly`, without native plan mode | Read/Glob/Grep/Skill, plus Agent only for enabled brief exploration; read-only task MCP tools                                               | Native read-only sandbox plus stage-scoped task MCP tools; not the same native allowlist as Claude                                                              |
+| Native `planMode`                             | Requires `readOnly`; SDK plan permissions and explicit planning handoff govern a broader native list, alongside stage-scoped task MCP tools | No separate native plan-mode mapping; read-only sandbox remains the boundary                                                                                    |
+| Authoring/build                               | Explicit native read/write/edit/shell/Skill list plus task MCP tools                                                                        | Workspace-write sandbox and native SDK tools plus task MCP tools                                                                                                |
+
+Configured Caveman context recovery is a separate MCP exception even in text-only
+turns; it does not authorize task tools. Narration and Audio Studio are unavailable
+in read-only/text-only turns. Native web tools remain disabled; research uses the
+verified AnySearch skill when file/command tools are permitted.
+
+Enforcement belongs to [Claude](../claude-agent.ts), [Codex](../codex-agent.ts), the
+[provider entry](../providers.ts) and [capability registration](registry.ts).
+Verify dispatch configuration and forbidden-tool behavior for both providers.
+Native plan mode is not equivalent to the ordinary read-only allowlist. Prompt
+instructions are not SDK permissions or handler access checks.
+
+For environment variables, credentials, filesystem/network isolation and their
+limits, read [environment and sandbox boundaries](../../../../docs/project-file-isolation.md#environment-and-sandbox-boundaries).
+For command networking and host MCP credentials, read
+[research and command execution](#research-and-command-execution).
+Tests use `tests/provider-reference-tools.test.ts`, `tests/react-bits-tools.test.ts`
+and `tests/sdk-execution-policy.test.ts`; never invoke real inference to verify policy.
+
 ## Capability architecture
 
 ```mermaid
@@ -160,6 +206,9 @@ separate model billing path. Customer Activity shows only curated component-acti
 
 ## Narration MCP
 
+Explicit refinement requests may amend the configured profile before this capability is
+registered. Follow the [version settings lifecycle](../../../../docs/video-refinement.md#explicit-settings-changes); the narration tools retain their scoped cue-edit contract.
+
 Configured narration jobs expose `create_narration` and `edit_narration` during build and correction
 turns for both SDK providers. Planning, review and text-only turns receive no narration tools.
 The orchestrator registers voice profiles without generating audio. The model creates initial speech
@@ -175,6 +224,9 @@ rendering, the workflow reloads the accepted narration track; Kiteva still owns 
 mixing and validation. The model must reconcile captions and visual timing with the returned cues.
 
 ## Audio Studio MCP
+
+Managed startup updates, version verification and fallback are documented in
+[Dependency upgrade lifecycle](../../../../docs/dependency-upgrades.md#audio-studio-managed-updates).
 
 [Audio Studio MCP](https://github.com/kanaworksai-hue/audio-studio-mcp) is a separate local audio
 capability for both SDK providers. It does not replace the renderer or the visual-resource selection.
@@ -241,6 +293,8 @@ operation. Read-only stages expose inspection, never preparation or installation
 The implementation owner is `src/server/technology/`; shared MCP result types live in
 `src/shared/technology-capabilities.ts`. Both providers use the same tools and concise guidance.
 Existing configured host executables remain optional fallbacks, not required package locations.
+
+## Research and command execution
 
 Research uses the bundled AnySearch skill registered in `agents/bundled-skills/anysearch.ts`.
 Startup installs and integrity-checks its canonical upstream repository; both providers receive

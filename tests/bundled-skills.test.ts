@@ -51,7 +51,12 @@ it("stages the complete installed skill and license and restores edited files", 
   ).toEqual({
     name: "bundled-authoring",
     version: "1.0.0",
-    skills: ["./skills/anatomy", "./skills/img2threejs", "./skills/anysearch"],
+    skills: [
+      "./skills/anatomy",
+      "./skills/img2threejs",
+      "./skills/stageshow",
+      "./skills/anysearch",
+    ],
   });
   await writeFile(path.join(root, "SKILL.md"), "changed");
   await prepareBundledSkills(workspace, signal, installation.root);
@@ -63,6 +68,7 @@ it("configures only the app-owned Claude plugin and disables skills for text-onl
     skills: [
       "bundled-authoring:anatomy",
       "bundled-authoring:img2threejs",
+      "bundled-authoring:stageshow",
       "bundled-authoring:anysearch",
     ],
   });

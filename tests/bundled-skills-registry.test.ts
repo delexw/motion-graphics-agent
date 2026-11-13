@@ -1,8 +1,33 @@
 import { img2threejsSkill } from "../src/server/agents/bundled-skills/img2threejs";
+import { stageshowSkill } from "../src/server/agents/bundled-skills/stageshow";
 import { expect, it } from "vitest";
-import { bundledSkills, bundledSkillsGuidance } from "../src/server/agents/bundled-skills/registry";
+import {
+  bundledSkills,
+  bundledSkillsGuidance,
+  selectedSkillSceneGuidance,
+} from "../src/server/agents/bundled-skills/registry";
 import { anatomySkill } from "../src/server/agents/bundled-skills/anatomy";
 import { anatomyPrompt } from "../src/server/agents/bundled-skills/anatomy-prompt";
+
+it("registers Stageshow as an MG-preserving simulated UI skill with explicit timing and license boundaries", () => {
+  expect(bundledSkills).toContain(stageshowSkill);
+  expect(stageshowSkill.repository).toBe("https://github.com/benjitaylor/skills.git");
+  expect(stageshowSkill.sourceDirectory).toBe("stageshow");
+  for (const rule of [
+    "bundled-authoring:stageshow",
+    "Codex: read",
+    "selected Motion Graphics",
+    "not recordings of a real application",
+    "forward-only virtual clock",
+    "absolute renderer time",
+    "backward",
+    "Third-party icons",
+    "one project-local React/ReactDOM/JSX-runtime instance",
+    "LICENSE/NOTICE.md",
+  ]) {
+    expect(stageshowSkill.guidance).toContain(rule);
+  }
+});
 import { claudeBundledSkills } from "../src/server/agents/bundled-skills";
 
 it("uses each skill registration for both prompt assembly and native Claude discovery", () => {
@@ -43,4 +68,16 @@ it("registers the startup-updated reconstruction skill with explicit video and e
   expect(img2threejsSkill.guidance).toContain("no --allow-nonstrict in production");
   expect(img2threejsSkill.guidance).toContain("vendor/procedural-model.ts");
   expect(img2threejsSkill.guidance).toContain("hidden sides as inferred");
+});
+
+it("applies appearance ownership only to the selected skill", () => {
+  expect(selectedSkillSceneGuidance()).toBe("");
+  expect(selectedSkillSceneGuidance(["anatomy", "unknown"])).toBe("");
+  const guidance = selectedSkillSceneGuidance(["stageshow", "stageshow"]);
+  expect(guidance).toBe(stageshowSkill.sceneGuidance);
+  expect(guidance).toContain(
+    "explicit user UI appearance instructions override Stageshow defaults",
+  );
+  expect(guidance).toContain("contribute motion only");
+  expect(guidance).toContain("never repair an intact demo merely to impose an MG look");
 });

@@ -9,8 +9,19 @@ import { appRoot } from "../../runtime/config";
 import type { BundledSkill } from "./types";
 
 export const authoringSkillRoot = path.join(appRoot, "skills");
+const sourceDirectorySchema = z
+  .string()
+  .min(1)
+  .refine(
+    (value) =>
+      value
+        .split("/")
+        .every((part) => /^[A-Za-z0-9_.-]+$/.test(part) && part !== "." && part !== ".."),
+    "Invalid skill source directory",
+  );
 const manifestSchema = z.object({
   repository: z.string(),
+  sourceDirectory: sourceDirectorySchema.optional(),
   revision: z.string().regex(/^[a-f0-9]{40}$/),
   files: z.record(z.string(), z.string().regex(/^[a-f0-9]{64}$/)),
 });
@@ -22,6 +33,8 @@ export async function installedSkill(skill: BundledSkill, root = authoringSkillR
     JSON.parse(await readFile(path.join(root, skill.id, "current.json"), "utf8")),
   );
   if (manifest.repository !== skill.repository) throw Error(`Unexpected ${skill.name} repository`);
+  if (manifest.sourceDirectory !== skill.sourceDirectory)
+    throw Error(`Unexpected ${skill.name} source directory`);
   const directory = path.join(root, skill.id, manifest.revision);
   await verifySkillFiles(directory, manifest, skill.name);
   return { directory, manifest };
@@ -61,6 +74,7 @@ async function verifySkillFiles(
 
 /** Download without running any upstream code; publish a complete immutable revision atomically. */
 export async function updateSkill(skill: BundledSkill, root = authoringSkillRoot) {
+  const sourceDirectory = sourceDirectorySchema.optional().parse(skill.sourceDirectory);
   const base = path.join(root, skill.id);
   await mkdir(base, { recursive: true });
   if (!(await lstat(base)).isDirectory()) throw Error("Skill installation must not be a link");
@@ -130,11 +144,16 @@ export async function updateSkill(skill: BundledSkill, root = authoringSkillRoot
         if (kind && kind !== (directory ? 0o040000 : 0o100000))
           throw Error("Skill archive must not contain links or special files");
         if (directory) continue;
-        const relative = segments.slice(1).join("/");
-        if (!relative || names.includes(relative))
-          throw Error("Invalid or duplicate skill archive file");
+        const repositoryRelative = segments.slice(1).join("/");
+        if (!repositoryRelative) throw Error("Invalid or duplicate skill archive file");
         expandedBytes += entry.uncompressedSize;
         if (expandedBytes > 64 * 1024 * 1024) throw Error("Expanded skill archive exceeds 64 MB");
+        if (sourceDirectory && !repositoryRelative.startsWith(`${sourceDirectory}/`)) continue;
+        const relative = sourceDirectory
+          ? repositoryRelative.slice(sourceDirectory.length + 1)
+          : repositoryRelative;
+        if (!relative || names.includes(relative))
+          throw Error("Invalid or duplicate skill archive file");
         const destination = path.join(checkout, relative);
         await mkdir(path.dirname(destination), { recursive: true });
         await pipeline(
@@ -154,7 +173,12 @@ export async function updateSkill(skill: BundledSkill, root = authoringSkillRoot
         .update(await readFile(source))
         .digest("hex");
     }
-    const manifest = manifestSchema.parse({ repository: skill.repository, revision, files });
+    const manifest = manifestSchema.parse({
+      repository: skill.repository,
+      sourceDirectory,
+      revision,
+      files,
+    });
     if (!files["SKILL.md"] || !files.LICENSE)
       throw Error(`${skill.name} installation needs SKILL.md and LICENSE`);
     if (!(await readFile(path.join(checkout, "SKILL.md"), "utf8")).includes(`name: ${skill.id}`))

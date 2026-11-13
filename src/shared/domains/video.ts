@@ -1,4 +1,5 @@
 import { normalizeRetiredSpeechSelections } from "../speech-compatibility";
+import type { RefinementSettingsPlan } from "../refinement-settings";
 import type { VideoCorrectionBypass } from "../agents/schemas/video-correction";
 import { LanguageTracksSchema, type LanguageMedia } from "../language-tracks";
 import { normalizeSubtitleFields } from "../subtitle-compatibility";
@@ -103,6 +104,9 @@ export type VideoRefinementInstruction = {
   assetIds?: string[];
 };
 export interface VideoGenerationJob extends JobState {
+  /** Version-local production settings; the original project request is unchanged. */
+  effectiveRequest?: VideoRequest;
+  refinementSettings?: RefinementSettingsPlan;
   refinementHistory?: VideoRefinementInstruction[];
   discardedRefinementJobIds?: string[];
   refinementAssetIds?: string[];

@@ -2417,6 +2417,11 @@ html,
   margin-left: 12px;
   text-decoration: underline;
 }
+
+.governance-panel .ant-pagination a {
+  margin-left: 0;
+  text-decoration: none;
+}
 @media (max-width: 800px) {
   .governance-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3506,7 +3511,11 @@ html,
 }
 .governance-page > .page-template-content {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
+}
+.governance-page > .page-template-content > * {
+  min-width: 0;
 }
 .project-workspace > .project-page-template {
   display: flex;
@@ -5876,4 +5885,103 @@ html:has(.storyboard-page) *::-webkit-scrollbar {
   left: 10px;
   bottom: 10px;
   z-index: 3;
+}
+
+/* Governance › Project technologies (layout only; colours come from the active Ant theme) */
+.technology-explorer {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.technology-explorer__toolbar {
+  display: grid;
+  grid-template-columns: minmax(160px, 240px) minmax(0, 1fr) minmax(140px, 200px);
+  gap: 12px;
+  align-items: end;
+  min-width: 0;
+}
+
+.technology-explorer__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.technology-explorer__label {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  cursor: pointer;
+}
+
+.technology-explorer__label .ant-typography {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.technology-explorer__control {
+  width: 100%;
+  min-width: 0;
+}
+
+@container (max-width: 600px) {
+  .technology-explorer__toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.technology-explorer__state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 96px;
+  padding: 24px 12px;
+  text-align: center;
+}
+
+.technology-explorer__state .ant-empty {
+  margin: 0;
+}
+
+.project-technologies,
+.project-technologies__job {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.project-technologies .project-technologies__note.ant-typography {
+  margin: 0;
+  max-width: 90ch;
+  font-size: 13px;
+}
+
+.project-technologies__meta {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.project-technologies__job .ant-alert,
+.project-technologies__job .ant-table-wrapper {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.governance-project-options-pagination {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 12px;
+}
+
+.project-media-stack .project-page-open {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 2;
 }

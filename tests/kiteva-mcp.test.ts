@@ -1,3 +1,5 @@
+import { SettingsConflictError } from "../src/shared/request-settings-review";
+import { CodedError } from "../src/shared/errors";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -394,4 +396,115 @@ it("rejects overlapping HTTP starts rather than creating duplicate builds", asyn
     release({ id: "http-project", phase: "queued" });
     await first;
   }
+});
+
+it("reports structured setting conflicts without clearing or starting the draft", async () => {
+  const { store, client, start } = await connect();
+  await client.callTool({
+    name: "create_idea",
+    arguments: { idea: "Make a vertical product video" },
+  });
+  const before = structuredClone(store.room());
+  const details = {
+    requestHash: "a".repeat(64),
+    model: "jev-1.14.0",
+    conflicts: [
+      {
+        setting: "aspectRatio" as const,
+        value: "16:9",
+        source: { field: "instructions", label: "Main idea" },
+      },
+    ],
+  };
+  start.mockRejectedValueOnce(new SettingsConflictError(details));
+  const response = await client.callTool({
+    name: "start_idea",
+    arguments: { revision: before.revision },
+  });
+  expect(response.isError).toBe(true);
+  expect(response.structuredContent).toMatchObject({
+    kind: "settings_conflict",
+    draftId: before.drafts.new?.id,
+    revision: before.revision,
+    details,
+  });
+  expect(store.room()).toEqual(before);
+  expect(store.allRuns()).toEqual([]);
+});
+it("reports an unavailable settings check without losing the draft", async () => {
+  const { store, client, start } = await connect();
+  await client.callTool({
+    name: "create_idea",
+    arguments: { idea: "An ordinary illustrated story" },
+  });
+  const before = structuredClone(store.room());
+  start.mockRejectedValueOnce(
+    new CodedError("SETTINGS_CHECK_UNAVAILABLE", "The check is unavailable", 503),
+  );
+  const response = await client.callTool({
+    name: "start_idea",
+    arguments: { revision: before.revision },
+  });
+  expect(response.isError).toBe(true);
+  expect(response.structuredContent).toMatchObject({ kind: "settings_check_unavailable" });
+  expect(store.room()).toEqual(before);
+});
+
+it("confirms each language independently and reports both new-language defaults disabled", async () => {
+  const { client, start } = await connect();
+  const options = await client.callTool({ name: "get_idea_options" });
+  expect(options.structuredContent).toMatchObject({
+    languageDefaults: { generateNarration: false, showSubtitles: false },
+  });
+  const result = await client.callTool({
+    name: "create_idea",
+    arguments: {
+      idea: "Explain an example concept",
+      settings: {
+        languageTracks: {
+          narration: [],
+          subtitles: ["zh"],
+          languages: [
+            { language: "en", speech: { mode: "narration", voice: "af_heart" } },
+            {
+              language: "zh",
+              showSubtitles: true,
+              speech: { mode: "narration", voice: "zf_xiaobei" },
+            },
+          ],
+          defaultSubtitle: "zh",
+        },
+      },
+    },
+  });
+  expect(result.isError).not.toBe(true);
+  expect(result.structuredContent).toMatchObject({
+    languageSettings: [
+      { language: "en", generateNarration: false, showSubtitles: false },
+      { language: "zh", generateNarration: false, showSubtitles: true },
+    ],
+  });
+  const read = await client.callTool({ name: "read_idea", arguments: { id: "draft:new" } });
+  expect(read.structuredContent).toMatchObject({
+    languageSettings: [
+      { language: "en", generateNarration: false, showSubtitles: false },
+      { language: "zh", generateNarration: false, showSubtitles: true },
+    ],
+  });
+  expect(start).not.toHaveBeenCalled();
+});
+
+it("guides agents to confirm primary narration/subtitle languages without enabling them by default", async () => {
+  const { client } = await connect();
+  const tools = (await client.listTools()).tools;
+  const create = tools.find((tool) => tool.name === "create_idea")!;
+  expect(create.description).toContain(
+    "at least one primary narration language and one primary subtitle language",
+  );
+  expect(create.description).toContain("ask the user to confirm");
+  expect(create.description).toContain("does not enable either function");
+  const input = create.inputSchema.properties?.settings as {
+    properties: Record<string, { description?: string }>;
+  };
+  expect(input.properties.languageTracks.description).toContain("default to false");
 });

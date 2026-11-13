@@ -1,3 +1,4 @@
+import { VideoVersionSettings } from "./video-version-settings";
 import { isVideoRefinementSource } from "../../shared/video-refinement-source";
 import { RefinementHistoryReview, useRefinementExclusions } from "./refinement-history-review";
 import { availableRefinementInstructions } from "../../shared/refinement-history";
@@ -39,7 +40,7 @@ export function VideoRefinement({ run, onUpdated }: { run: Run; onUpdated: (run:
       <h3>{translateUi("Fine-tune your video")}</h3>
       <p>
         {translateUi(
-          "Describe what to change. Your current video stays saved as a separate version.",
+          "Describe changes to the video, narration voice or provider, language settings, or output format. Only requested changes apply to a new version; your original video stays saved.",
         )}
       </p>
       <Select
@@ -59,6 +60,9 @@ export function VideoRefinement({ run, onUpdated }: { run: Run; onUpdated: (run:
             }) + (job.phase === "cancelled" ? ` · ${translateUi("Cancelled")}` : ""),
         }))}
       />
+      {run.request.outputType === "video" && (
+        <VideoVersionSettings job={selected} request={run.request} />
+      )}
       <RefinementHistoryReview
         run={run}
         sourceJobId={selected.id}

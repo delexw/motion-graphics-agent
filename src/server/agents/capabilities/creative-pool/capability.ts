@@ -29,7 +29,14 @@ export function creativePoolCapability(
       "search_pool",
       "read_pool_entry",
       "inspect_technologies",
-      ...(!readOnly && workspace ? ["prepare_technology", "prepare_technology_stylesheet"] : []),
+      ...(!readOnly && workspace
+        ? [
+            "run_python_asset",
+            "select_project_technologies",
+            "prepare_technology",
+            "prepare_technology_stylesheet",
+          ]
+        : []),
     ],
     toolTimeoutSeconds: 300,
   };

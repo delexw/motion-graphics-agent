@@ -123,3 +123,22 @@ Only one New idea draft exists in the current Assistant UI. Review, submit or re
 that draft before creating another. A failed creation never replaces it. Saving a
 draft does not inspect supplied URLs or prove source availability. Existing material
 IDs must already exist in Kiteva; the normal build validates attachments and settings.
+
+## Per-language narration and subtitles
+
+`languageTracks.languages` stores each language's `generateNarration`, `showSubtitles`
+and saved `speech` profile. Both switches default to **false** for a newly added
+language. Existing explicit settings are preserved. The `narration` and `subtitles`
+delivery arrays contain only the languages whose respective switch is enabled.
+Turning narration off retains that language's voice configuration for later use.
+`get_idea_options.languageDefaults` reports these defaults; `create_idea` and
+`read_idea` return `languageSettings` so agents can confirm each language separately.
+The old global visibility field is compatibility data derived from enabled subtitles,
+not a separate UI switch for new configurations.
+
+Before saving or starting an idea, the calling agent must propose and confirm at least
+one primary narration language and one primary subtitle language. Ask about enablement
+separately: language selection does not turn either switch on. Both default off until
+the user explicitly enables them. Reuse answers the user already gave. This is tool
+interaction guidance; it does not silently change production settings or add a new
+provider call.

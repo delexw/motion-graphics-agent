@@ -1,3 +1,13 @@
+import { projectName } from "../shared/project-name";
+import {
+  GovernanceProjectQuerySchema,
+  GovernanceQuerySchema,
+  TechnologyQuerySchema,
+} from "../shared/governance-query";
+import { GovernanceCache } from "./governance/cache";
+import { projectTechnologyMonitor } from "./technology/project-monitor";
+import { reviewRequestSettings, requestSettingsHash } from "./jev/strategies/settings-conflict";
+import { type SettingsCheckRecord, SettingsConflictError } from "../shared/request-settings-review";
 import { multiplaneVersion } from "./rendering/multiplane/version";
 import { writeUploadedAsset } from "./requests/asset-storage";
 import { credentialEnvironmentVariables } from "./runtime/credential-environment";
@@ -58,7 +68,6 @@ import {
 import { Store } from "./jobs/store.js";
 import { loadCatalog } from "./catalog/catalog.js";
 import { Workflow } from "./jobs/workflow.js";
-import { projectGovernance } from "./governance/report";
 import { videoMimeType } from "./rendering/webm-video";
 import { multiplaneStatus } from "./rendering/multiplane";
 import { multiplaneSettingCoverage, videoRenderers } from "../shared/video-renderers";
@@ -79,6 +88,8 @@ export async function createApp(options: { store?: Store } = {}) {
   store.recover();
   const workflow = new Workflow(store, catalog);
   const cache = new Map<string, Run>();
+  const pendingStarts = new Set<string>();
+  const governance = new GovernanceCache(store);
   const deletingRuns = new Set<string>();
   const getRun = (id: string) => {
     if (deletingRuns.has(id))
@@ -232,84 +243,131 @@ export async function createApp(options: { store?: Store } = {}) {
       return prompt || reply.code(404).send({ code: "NOT_FOUND" });
     },
   );
-  app.get("/api/admin/governance", async (): Promise<GovernanceReport> => ({
-    generatedAt: new Date().toISOString(),
-    pricingDate: "2026-10-24",
-    pricingSources: [
-      { label: "OpenAI pricing", url: "https://developers.openai.com/api/docs/pricing" },
-      {
-        label: "GPT Astra pricing",
-        url: "https://developers.openai.com/api/docs/models/gpt-6-astra",
-      },
-      { label: "Claude pricing", url: "https://platform.claude.com/docs/en/about-claude/pricing" },
-      { label: "Jev pricing", url: "https://docs.typesafe.ai/models" },
-    ],
-    models: [
-      {
-        function: "Brief asset self-review and alignment repair",
-        claude: textModels.claude,
-        codex: textModels.codex,
-      },
-      {
-        function: "Full-video result quality review",
-        claude: textModels.claude,
-        codex: textModels.codex,
-      },
-      {
-        function: "Preview video planning",
-        claude: "Not used",
-        codex: "gpt-6.1-sol before each preview",
-      },
-      {
-        function: "Full video planning",
-        claude: "Selected main model before implementation, in the same session",
-        codex: "Selected main model before implementation, in the same session",
-      },
-      {
-        function: "Previews and full generation",
-        claude: models.claude,
-        codex: models.codex,
-      },
-      {
-        function:
-          "Brief preparation, Motion Graphic information extraction and generated subtitles",
-        claude: textModels.claude,
-        codex: textModels.codex,
-      },
-      {
-        function: "Motion Graphic combination proposals",
-        claude: combinationModels.claude,
-        codex: combinationModels.codex,
-      },
-      {
-        function: "Combination evaluation and direction selection",
-        claude: jevModel,
-        codex: jevModel,
-      },
-      ...Object.entries(correctionTypeLabels).map(([focus, label]) => ({
-        function: label,
-        claude: ["pacing", "style"].includes(focus)
-          ? "Selected main model"
-          : `${textModels.claude} for eligible fixes; selected main model otherwise`,
-        codex: ["pacing", "style"].includes(focus)
-          ? "Selected main model"
-          : `${textModels.codex} for eligible fixes; selected main model otherwise`,
+  app.get("/api/admin/governance/projects", async (req) => {
+    const result = store.governanceRuns(GovernanceProjectQuerySchema.parse(req.query));
+    return {
+      pagination: result.pagination,
+      projects: result.runs.map((run) => ({
+        id: run.id,
+        name: projectName(run),
+        started: run.createdAt,
+        outputType: run.request.outputType,
+        provider: run.request.provider,
       })),
-    ],
-    projects: store.allRuns().map((run) => {
-      const project = projectGovernance(run, store.allEvents(run.id));
-      project.attachments = run.request.assetIds.map((id) => {
-        const asset = store.getAsset(id);
-        return asset
-          ? { name: asset.originalName || asset.name, kind: asset.kind, bytes: asset.bytes }
-          : { name: "Unavailable attachment", kind: "unknown", bytes: 0 };
-      });
-      project.selectedStyles = project.selectedStyles.map(
-        (id) => catalog.styles.find((style) => style.id === id)?.name_en || id,
-      );
-      return project;
-    }),
-  }));
+    };
+  });
+  app.get("/api/admin/governance", async (req): Promise<GovernanceReport> => {
+    const query = GovernanceQuerySchema.parse(req.query);
+    const runs = store.governanceRuns(query);
+    const checks = store.settingsCheckPage({
+      page: query.checksPage,
+      pageSize: query.checksPageSize,
+      projectId: query.projectId,
+      search: query.checksSearch,
+    });
+    return {
+      generatedAt: new Date().toISOString(),
+      settingsChecks: checks.records,
+      pagination: runs.pagination,
+      checksPagination: checks.pagination,
+      pricingDate: "2026-10-24",
+      pricingSources: [
+        { label: "OpenAI pricing", url: "https://developers.openai.com/api/docs/pricing" },
+        {
+          label: "GPT Astra pricing",
+          url: "https://developers.openai.com/api/docs/models/gpt-6-astra",
+        },
+        {
+          label: "Claude pricing",
+          url: "https://platform.claude.com/docs/en/about-claude/pricing",
+        },
+        { label: "Jev pricing", url: "https://docs.typesafe.ai/models" },
+      ],
+      models: [
+        { function: "Request/settings compatibility check", claude: jevModel, codex: jevModel },
+        {
+          function: "Refinement settings",
+          claude: "Selected main model; version-local explicit changes before implementation",
+          codex: "Selected main model; version-local explicit changes before implementation",
+        },
+        {
+          function: "Brief asset self-review and alignment repair",
+          claude: textModels.claude,
+          codex: textModels.codex,
+        },
+        {
+          function: "Full-video result quality review",
+          claude: textModels.claude,
+          codex: textModels.codex,
+        },
+        {
+          function: "Preview video planning",
+          claude: "Not used",
+          codex: "gpt-6.1-sol before each preview",
+        },
+        {
+          function: "Full video planning",
+          claude: "Selected main model before implementation, in the same session",
+          codex: "Selected main model before implementation, in the same session",
+        },
+        {
+          function: "Previews and full generation",
+          claude: models.claude,
+          codex: models.codex,
+        },
+        {
+          function:
+            "Brief preparation, Motion Graphic information extraction and generated subtitles",
+          claude: textModels.claude,
+          codex: textModels.codex,
+        },
+        {
+          function: "Motion Graphic combination proposals",
+          claude: combinationModels.claude,
+          codex: combinationModels.codex,
+        },
+        {
+          function: "Combination evaluation and direction selection",
+          claude: jevModel,
+          codex: jevModel,
+        },
+        ...Object.entries(correctionTypeLabels).map(([focus, label]) => ({
+          function: label,
+          claude: ["pacing", "style"].includes(focus)
+            ? "Selected main model"
+            : `${textModels.claude} for eligible fixes; selected main model otherwise`,
+          codex: ["pacing", "style"].includes(focus)
+            ? "Selected main model"
+            : `${textModels.codex} for eligible fixes; selected main model otherwise`,
+        })),
+      ],
+      projects: runs.runs.map((run) => {
+        const project = governance.get(run);
+        project.technologyJobs = run.jobs.map((job) => ({
+          id: job.id,
+          kind: job.kind,
+          phase: job.phase,
+        }));
+        project.attachments = run.request.assetIds.map((id) => {
+          const asset = store.getAsset(id);
+          return asset
+            ? { name: asset.originalName || asset.name, kind: asset.kind, bytes: asset.bytes }
+            : { name: "Unavailable attachment", kind: "unknown", bytes: 0 };
+        });
+        project.selectedStyles = project.selectedStyles.map(
+          (id) => catalog.styles.find((style) => style.id === id)?.name_en || id,
+        );
+        return project;
+      }),
+    };
+  });
+  app.get<{ Params: { id: string } }>("/api/admin/governance/:id/technologies", async (req) => {
+    const query = TechnologyQuerySchema.parse(req.query);
+    const run = getRun(req.params.id);
+    const job = run.jobs.find((entry) => entry.id === query.jobId);
+    if (!job) throw new CodedError("PROJECT_NOT_FOUND", "Job not found", 404);
+    return projectTechnologyMonitor(job, query);
+  });
   app.post("/api/runs", async (req, reply) => {
     const request = RequestSchema.parse(req.body);
     await assertWindowsRenderReady();
@@ -331,19 +389,78 @@ export async function createApp(options: { store?: Store } = {}) {
       request.assetIds,
       sourceDraftId ? { kind: "draft", id: sourceDraftId } : undefined,
     );
-    const run: Run = {
-      id: randomUUID(),
-      request,
-      phase: "queued",
-      createdAt: new Date().toISOString(),
-      candidates: [],
-      jobs: [],
+    const startKey = sourceDraftId || requestSettingsHash(request);
+    if (pendingStarts.has(startKey))
+      throw new CodedError(
+        "PROJECT_ACTIVE",
+        "This project request is already being checked. Please wait.",
+        409,
+      );
+    pendingStarts.add(startKey);
+    const draftBeforeCheck = JSON.stringify(store.room().drafts.new);
+    const controller = new AbortController();
+    const disconnect = () => {
+      if (!reply.raw.writableEnded) controller.abort(Error("Project start disconnected"));
     };
-    await writeProjectRequest(path.join(dataRoot, "runs", run.id), request);
-    store.saveProjectWithAssets(run, sourceDraftId);
-    cache.set(run.id, run);
-    void workflow.prepare(run);
-    return reply.code(202).send(run);
+    reply.raw.once("close", disconnect);
+    const check: SettingsCheckRecord = {
+      id: randomUUID(),
+      draftId: sourceDraftId,
+      requestHash: requestSettingsHash(request),
+      startedAt: new Date().toISOString(),
+      status: "checking",
+      model: jevModel,
+      events: [],
+    };
+    try {
+      store.saveSettingsCheck(check);
+      const review = await reviewRequestSettings(
+        request,
+        catalog.styles,
+        AbortSignal.any([controller.signal, AbortSignal.timeout(45000)]),
+        (event) => {
+          check.events.push(
+            z
+              .object({ type: z.string(), message: z.string(), data: z.json().optional() })
+              .parse(JSON.parse(JSON.stringify(event))),
+          );
+          store.saveSettingsCheck(check);
+        },
+      );
+      check.review = review;
+      check.model = review.model;
+      check.status = review.conflicts.length ? "conflict" : "compatible";
+      controller.signal.throwIfAborted();
+      if (JSON.stringify(store.room().drafts.new) !== draftBeforeCheck)
+        throw new CodedError(
+          "INVALID_REQUEST",
+          "Your draft changed during the check. Review the current brief and create again.",
+          409,
+        );
+      if (review.conflicts.length) throw new SettingsConflictError(review);
+      const run: Run = {
+        id: randomUUID(),
+        request,
+        phase: "queued",
+        createdAt: new Date().toISOString(),
+        candidates: [],
+        jobs: [],
+      };
+      await writeProjectRequest(path.join(dataRoot, "runs", run.id), request);
+      store.saveProjectWithAssets(run, sourceDraftId);
+      check.runId = run.id;
+      cache.set(run.id, run);
+      void workflow.prepare(run);
+      return reply.code(202).send(run);
+    } catch (error) {
+      if (!(error instanceof SettingsConflictError)) check.status = "failed";
+      throw error;
+    } finally {
+      check.finishedAt = new Date().toISOString();
+      store.saveSettingsCheck(check);
+      reply.raw.off("close", disconnect);
+      pendingStarts.delete(startKey);
+    }
   });
   app.get<{ Params: { id: string } }>("/api/runs/:id", async (req) => getRun(req.params.id));
   app.get<{ Params: { id: string } }>("/api/runs/:id/authentication", async (req) => {

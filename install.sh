@@ -96,8 +96,8 @@ done
 
 step 'Installing locked app dependencies'
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci
-step 'Refreshing Claude Agent SDK to the latest release'
-npm update @anthropic-ai/claude-agent-sdk
+step 'Refreshing Claude and Codex SDKs to their latest releases'
+npm update @anthropic-ai/claude-agent-sdk @openai/codex @openai/codex-sdk
 if [[ ! -f .env.local ]]; then
   cp .env.example .env.local
   echo 'Created .env.local. Add your JEV/provider configuration there.'
@@ -152,8 +152,14 @@ if [[ "$audio_studio" == 1 ]]; then
     echo 'Audio Studio generation requires Apple Silicon on macOS; skipped on this Intel Mac.'
   fi
 fi
+step 'Refreshing managed skills and installed MCP dependencies'
+if [[ "$audio_studio" == 1 ]]; then
+  npm run dependencies:update
+else
+  npm run dependencies:update -- --skip-audio-studio
+fi
 if [[ "$build" == 1 ]]; then step 'Building Kiteva'; npm run build; fi
 step 'Dependency setup finished'
 echo 'Next: configure .env.local, sign in to your chosen provider, then run npm start.'
 echo 'For demo recording, grant OpenScreen Screen Recording and Accessibility permissions in macOS Settings.'
-echo 'Anatomy is installed/updated automatically on the first app launch.'
+echo 'Managed skills and installed Audio Studio are checked for updates at setup and on every backend launch.'

@@ -120,5 +120,16 @@ export const roomTheme: ThemeConfig = {
       footerBg: roomColors.inset,
       stickyScrollBarBg: roomColors.borderStrong,
     },
+    Pagination: {
+      itemSize: 32,
+      itemBg: roomColors.raised,
+      itemActiveBg: roomColors.surface,
+      itemLinkBg: roomColors.raised,
+      itemInputBg: roomColors.inset,
+      colorText: roomColors.text,
+      colorPrimary: roomColors.primary,
+      colorPrimaryHover: roomColors.primaryHover,
+      colorBorder: roomColors.border,
+    },
   },
 };

@@ -1,4 +1,5 @@
 import { img2threejsSkill } from "../../src/server/agents/bundled-skills/img2threejs";
+import { stageshowSkill } from "../../src/server/agents/bundled-skills/stageshow";
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -62,6 +63,27 @@ export async function skillInstallationFixture() {
       repository: img2threejsSkill.repository,
       revision: modelRevision,
       files: modelFiles,
+    }),
+  );
+  const uiDirectory = path.join(root, stageshowSkill.id, revision);
+  const uiFiles: Record<string, string> = {};
+  for (const [name, content] of Object.entries({
+    "SKILL.md": "---\nname: stageshow\n---\nLocal UI fixture.\n",
+    LICENSE: "MIT License\nTest fixture only.\n",
+    "NOTICE.md": "Example artwork has separate rights; test fixture only.\n",
+    "kit/index.ts": "export const fixture = true;\n",
+  })) {
+    await mkdir(path.dirname(path.join(uiDirectory, name)), { recursive: true });
+    await writeFile(path.join(uiDirectory, name), content);
+    uiFiles[name] = createHash("sha256").update(content).digest("hex");
+  }
+  await writeFile(
+    path.join(root, stageshowSkill.id, "current.json"),
+    JSON.stringify({
+      repository: stageshowSkill.repository,
+      sourceDirectory: stageshowSkill.sourceDirectory,
+      revision,
+      files: uiFiles,
     }),
   );
   return { root, directory, manifest };

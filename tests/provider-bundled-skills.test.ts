@@ -111,6 +111,12 @@ it.each(["claude", "codex"] as const)(
       expect(
         await readFile(path.join(workspace, ".agents/skills/img2threejs/SKILL.md"), "utf8"),
       ).toContain("name: img2threejs");
+      expect(
+        await readFile(path.join(workspace, ".agents/skills/stageshow/SKILL.md"), "utf8"),
+      ).toContain("name: stageshow");
+      expect(
+        await readFile(path.join(workspace, ".agents/skills/stageshow/NOTICE.md"), "utf8"),
+      ).toContain("separate rights");
       const prompt =
         provider === "claude"
           ? sdk.query.mock.calls.at(-1)![0].options.systemPrompt
@@ -130,6 +136,7 @@ it.each(["claude", "codex"] as const)(
         expect(sdk.query.mock.calls.at(-1)![0].options.skills).toEqual([
           "bundled-authoring:anatomy",
           "bundled-authoring:img2threejs",
+          "bundled-authoring:stageshow",
           "bundled-authoring:anysearch",
         ]);
       } else expect(sdk.construct.mock.calls.at(-1)![0].config.project_doc_max_bytes).toBe(0);

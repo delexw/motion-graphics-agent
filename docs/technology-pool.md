@@ -18,16 +18,16 @@ Three different things are easy to mix up, so they are kept apart here:
 
 Counts reflect the source as of 2026-10-25. Native Windows verification remains separate from local macOS checks.
 
-| What                           |                             Count | Source                                                                        |
-| ------------------------------ | --------------------------------: | ----------------------------------------------------------------------------- |
-| Motion Graphics in the catalog |                               141 | `assets/catalog/video-style-catalog.json`                                     |
-| Motions in the catalog         |                                49 | `assets/catalog/motion-pattern-catalog.json`                                  |
-| Technology pool entries        |                                92 | `technologyPoolSize` in `src/shared/technology-pool.ts`                       |
-| Startup-installed skills       |         2 (Anatomy and AnySearch) | `src/server/agents/bundled-skills/registry.ts`, `skills/anatomy/current.json` |
-| Selectable renderers           | 2 (HyperFrames, Multiplane trial) | `src/shared/video-renderers.ts`                                               |
-| Fallback renderer              |      1 (Remotion, not selectable) | `src/server/domains/video/render.ts`                                          |
-| Local speech engines           |            2 (Kokoro, Pocket TTS) | `src/server/audio/providers`                                                  |
-| Direct npm dependencies        |               75 runtime + 22 dev | `package.json`                                                                |
+| What                           |                                          Count | Source                                                                        |
+| ------------------------------ | ---------------------------------------------: | ----------------------------------------------------------------------------- |
+| Motion Graphics in the catalog |                                            141 | `assets/catalog/video-style-catalog.json`                                     |
+| Motions in the catalog         |                                             49 | `assets/catalog/motion-pattern-catalog.json`                                  |
+| Technology pool entries        |                                             92 | `technologyPoolSize` in `src/shared/technology-pool.ts`                       |
+| Startup-installed skills       | 4 (Anatomy, img2threejs, Stageshow, AnySearch) | `src/server/agents/bundled-skills/registry.ts`, `skills/anatomy/current.json` |
+| Selectable renderers           |              2 (HyperFrames, Multiplane trial) | `src/shared/video-renderers.ts`                                               |
+| Fallback renderer              |                   1 (Remotion, not selectable) | `src/server/domains/video/render.ts`                                          |
+| Local speech engines           |                         2 (Kokoro, Pocket TTS) | `src/server/audio/providers`                                                  |
+| Direct npm dependencies        |                            75 runtime + 22 dev | `package.json`                                                                |
 
 ## Who does what
 
@@ -44,9 +44,9 @@ These are separate jobs. A single library can do more than one, but Kiteva recor
 The catalog's production policy puts it this way: the pipeline must not decide or simplify the visual
 style. HyperFrames is the first choice for composition and export, and Remotion is the conditional fallback.
 
-## Startup-installed skills: Anatomy and AnySearch
+## Startup-installed skills
 
-Kiteva registers two upstream skills and installs or updates them at server launch. Their upstream files are not tracked in this repository. Anatomy is a visual-authoring resource; AnySearch is research guidance available independently of visual-resource selection.
+Kiteva registers Anatomy, img2threejs and Stageshow as visual-authoring resources, plus AnySearch as independent research guidance. They install or update at server launch; upstream files are not tracked in this repository. Stageshow creates simulated product UI under the selected MG and renderer, not authentic application recordings. See [Stageshow integration and asset notices](stageshow.md).
 
 |                    |                                                                                                  |
 | ------------------ | ------------------------------------------------------------------------------------------------ |
@@ -428,3 +428,66 @@ Native Windows additions: [`@openai/codex`](https://github.com/openai/codex) (Ap
 - Speech models, Python packages, FFmpeg builds, Blender and browsers keep their own licenses. Check them before you use or share their output.
 
 Automatic OpenScreen zoom generation is always disabled for demo captures. The adapter removes inherited zooms and does not expose `addAutoZooms`; the main model explicitly plans scale, focus mode, target and timing through native zoom regions. Pointer-following focus remains available for a deliberately planned region.
+
+## Final project dependencies and usage monitoring
+
+Project setup creates a module package with only its fixed renderer runtime:
+HyperFrames uses `hyperframes` and `gsap`; pages and Multiplane do not inherit the
+old optional thirteen-package list. Only HyperFrames gets its required local GSAP
+script. Three/Pica and other optional browser libraries must be selected and prepared.
+
+After preparing dependencies, the model calls authoring-only
+`creative_pool.select_project_technologies` with its complete final choices, purposes
+and project-relative runtime paths. npm versions are read from the chosen local
+installation and written into project `package.json` alongside fixed dependencies.
+Python choices require a project virtual-environment executable; distribution versions
+come from `importlib.metadata` and are written to `requirements.txt`. Native browser
+features, algorithms, assets and external CLI tools remain technology records rather
+than fake npm/Python packages. The tool does not install packages or prove usage.
+Keep package-manager lockfiles in the actual project runtime.
+
+`PROJECT_TECHNOLOGIES.json` records the final selection. Calling the tool again replaces
+optional selections, so abandoned candidates are removed from managed dependency
+files. New projects must finalize even an empty selection. Before validation/rendering,
+Kiteva rejects disagreement between that record, `package.json` and `requirements.txt`.
+Existing projects without this policy retain their older validation route.
+
+Governance polls the job's saved selection and preparation records while it runs.
+It distinguishes selected, not selected, dependency-ready and browser-loaded states;
+missing history remains unknown. Local HTML observation records loaded resource hashes,
+blocks outside network/resources and treats script failures as unverified. Changed
+bundles invalidate their loading evidence. This proves loading, not use of every API
+or a visible contribution. Browser-native HTML/CSS, SVG and successful WebGL context creation
+have their own observations and no package-installation prerequisite. HyperFrames uses the
+completed job's validated render evidence rather than a browser-import test.
+
+For Python assets, the generation-only `creative_pool.run_python_asset` tool runs one
+project-local script in the existing isolated execution boundary, without installs,
+provider calls, network access or credential exposure. Inputs name the script, finalized
+Python technology IDs and render-input output files. The output records actual imported
+distributions/versions, successful execution and script/output hashes. Changed scripts or
+assets invalidate evidence. Governance distinguishes Python execution from the generated
+asset being loaded in the browser. Other CLI/unsupported runtimes remain unverified.
+The tool is absent in read-only/planning stages; it cannot change project settings.
+
+Authored JavaScript and inline HTML scripts also undergo scope-aware AST analysis.
+Governance records actual call/constructor sites with file, line, column and callee;
+imports alone, comments, strings, shadowed names and reassigned aliases do not count.
+Prepared module files and vendor/technology bundle directories are excluded from
+authored-source scanning. Verified local module imports and constant aliases
+are followed to their package; known browser globals require matching loaded-package
+provenance. Only unchanged, successfully observed local source is eligible.
+This is **static code evidence**, including calls in potentially unexecuted branches,
+not runtime invocation or visible-output proof. Parse failures and unsupported patterns
+remain unknown. Loading and version observations are neutral badges, static calls are
+blue, and separate execution/render evidence stays distinct. npm libraries without a
+verified source call explicitly show “Code usage unverified”; validated renderer
+execution is a separate path and does not require a browser API call. Custom bundles
+without verifiable package provenance and unsupported dynamic patterns remain unknown,
+not “unused”.
+
+Implementation owners are `src/server/technology/project-dependencies.ts`,
+`project-monitor.ts`, `evidence/source-code.ts`, `observe.ts`, and `src/shared/project-technologies.ts`.
+Model/tool calls keep the existing governed SDK activity. Codebase regression tests
+use synthetic package environments and mocked third-party boundaries; separately
+authorized product acceptance runs are not committed as live CI tests.

@@ -108,6 +108,10 @@ export const taskActivityLabels: Record<
     working: "Writing your on-screen text…",
     saving: "Saving your on-screen text…",
   },
+  "Refinement settings": {
+    working: "Resolving your requested settings…",
+    saving: "Saving version settings…",
+  },
   "Full video planning": {
     working: "Planning your full video…",
     saving: "Receiving the full video plan…",

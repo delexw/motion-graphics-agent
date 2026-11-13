@@ -16,7 +16,7 @@
 
 .language-track-voice-heading {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
 }
@@ -37,4 +37,13 @@
 
 .language-track-subtitles .ant-switch {
   flex: 0 0 auto;
+}
+
+.language-track-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.language-track-remove {
+  margin-left: auto;
 }

@@ -1,3 +1,7 @@
+import { runPythonAsset } from "../../../technology/python-execution";
+import { PythonAssetRequestSchema } from "../../../../shared/technology-executions";
+import { selectProjectTechnologies } from "../../../technology/project-dependencies";
+import { ProjectTechnologySelectionSchema } from "../../../../shared/project-technologies";
 import path from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -179,6 +183,34 @@ export function createCreativePoolTools(
 
   if (options.workspace && options.readOnly === false) {
     const workspace = options.workspace;
+    server.registerTool(
+      "run_python_asset",
+      {
+        description:
+          "Execute one project-local Python asset script with finalized Python dependencies in its isolated virtual environment. Network and credentials are blocked by the render sandbox. Declared outputs must be render-input files rewritten by this execution. Records actual imported distributions, versions and script/output hashes for Governance. No installation, inference or project settings changes. Generation stages only; failures do not claim runtime use.",
+        inputSchema: PythonAssetRequestSchema.shape,
+        annotations: { readOnlyHint: false, destructiveHint: false },
+      },
+      (input) =>
+        run(async () => ({
+          kind: "python_execution",
+          execution: await runPythonAsset(workspace, input, signal),
+        })),
+    );
+    server.registerTool(
+      "select_project_technologies",
+      {
+        description:
+          "Declare the complete final technology selection, after preparing chosen dependencies. Writes exact selected npm versions plus fixed runtime dependencies to project package.json, Python distributions to requirements.txt, and a technology record for Governance. Replaces previous optional selections. No installation or proof of runtime use. Include native/algorithm/CLI choices too; an empty list means no optional technologies.",
+        inputSchema: { selections: z.array(ProjectTechnologySelectionSchema).max(100) },
+        annotations: { readOnlyHint: false, destructiveHint: false },
+      },
+      ({ selections }) =>
+        run(async () => ({
+          kind: "selection",
+          selection: await selectProjectTechnologies(workspace, selections, signal),
+        })),
+    );
     server.registerTool(
       "prepare_technology",
       {

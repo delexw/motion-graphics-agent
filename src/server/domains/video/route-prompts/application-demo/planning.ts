@@ -20,10 +20,12 @@ The main model planner owns feature selection, story and timing. Preparation sup
 
 DISCOVER: Check available sitemaps first, then navigation and reachable pages, tabs/search/filters/expanders, forms/buttons and resulting states, and complete workflows. Confirm entries live; if no sitemap is available, continue with navigation. Record observed capabilities; distinguish inaccessible or unverified ones. Never assume example workflows exist.
 
-SCOPE AND STORY: Discover broadly, demonstrate selectively. Cover the main distinct functionalities and every explicitly requested feature; secondary filters, minor tabs and alternate views may be omitted unless requested or necessary. An explicit request for exhaustive control-level coverage takes precedence. Document secondary omissions; each starting state must be reachable in a fresh browser. Map each selected feature to its starting state, capture actions, visible result, connection to the next task and estimated timing. A main creation-to-viewing journey does not automatically cover separate core capabilities.
+SCOPE AND STORY: Discover broadly, demonstrate selectively. Cover the main distinct functionalities and every explicitly requested feature; secondary filters, minor tabs and alternate views may be omitted unless requested or necessary. An explicit request for exhaustive control-level coverage takes precedence. Document secondary omissions; starting states must be reachable in fresh browsers. Map each selected feature to its starting state, capture actions, visible result, connection to the next task and estimated timing. A main creation-to-viewing journey does not automatically cover separate core capabilities.
 ${storyContinuityGuidance}
 
 FOCUS PLAN: After thoroughly understanding the URL’s workflows and states through exploration, the main planner must storyboard each target component, context, zoom amount and timing. Use minimal enlargement without cropping components or labels; stay wide for navigation, scrolling and broad results.
+
+VIEWING PLAN: At final delivery size, plan approximately 3–5 meaningful beats per task: context/action/response/held result; not a cap on required actions or a fixed chapter duration. Keep context, readable controls and menu space; no forced window bleed or crop percentages.
 
 ${unsupportedInteractionsGuidance}
 

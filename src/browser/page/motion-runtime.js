@@ -2,7 +2,7 @@
 (() => {
   const preference = matchMedia("(prefers-reduced-motion: reduce)");
   const records = new Map();
-  const update = (record) => {
+  const update = (record, layoutChanged = false) => {
     const active = record.visible && !document.hidden && !preference.matches;
     record.element.dataset.motionActive = String(active);
     record.element.dataset.motionReduced = String(preference.matches);
@@ -10,7 +10,10 @@
       record.active = active;
       record.onActive?.(active);
     }
-    if (record.reduced !== preference.matches) {
+    if (
+      record.reduced !== preference.matches ||
+      (layoutChanged && preference.matches && record.mode === "scroll")
+    ) {
       record.reduced = preference.matches;
       record.onReducedMotion?.(preference.matches);
     }
@@ -25,7 +28,7 @@
       record.entered = true;
       record.onEnter?.();
     }
-    if (record.mode === "scroll" && active) {
+    if (record.mode === "scroll" && (active || (layoutChanged && !preference.matches))) {
       const bounds = record.element.getBoundingClientRect();
       const progress = Math.max(
         0,
@@ -48,7 +51,9 @@
     for (const record of records.values()) update(record);
   };
   addEventListener("scroll", refresh, { passive: true });
-  addEventListener("resize", refresh);
+  addEventListener("resize", () => {
+    for (const record of records.values()) update(record, true);
+  });
   document.addEventListener("visibilitychange", refresh);
   preference.addEventListener("change", refresh);
   window.KitevaMotion = {

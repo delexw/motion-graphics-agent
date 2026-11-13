@@ -1,4 +1,5 @@
 import { newBrowserPage } from "./fixtures/browser-page";
+import { videoLanguages } from "../src/shared/video-language";
 import { mingVoices } from "../src/shared/speech";
 import { nextSelectOption } from "./fixtures/select-options";
 import { mkdtemp, rm } from "node:fs/promises";
@@ -73,7 +74,7 @@ function Fixture(){const[state,setState]=React.useState(request);return React.cr
       const page = await newBrowserPage(browser);
       await page.setViewport({ width: 1200, height: 900 });
       await page.goto(`${server.resolvedUrls!.local[0]}layout`);
-      await page.waitForSelector('[aria-label="Generate narration"]');
+      await page.waitForSelector(`[aria-label="Generate narration ${fixture.languages[0]}"]`);
       if (fixture.subtitleOnly) {
         await page.waitForFunction(
           () => document.querySelectorAll(".language-track-voice").length === 2,
@@ -82,7 +83,8 @@ function Fixture(){const[state,setState]=React.useState(request);return React.cr
         const initial = await page.$eval("#state", (el) => JSON.parse(el.textContent || "{}"));
         expect(initial.languageTracks.narration).toEqual([]);
         expect(initial.languageTracks.subtitles).toEqual(["zh", "ja"]);
-        await page.click('[aria-label="Generate narration"]');
+        for (const language of fixture.languages)
+          await page.click(`[aria-label="Generate narration ${language}"]`);
       }
       await page.waitForSelector(".speech-ready");
       if (fixture.engine === "ming-tts") {
@@ -105,12 +107,22 @@ function Fixture(){const[state,setState]=React.useState(request);return React.cr
         await page.keyboard.press("Escape");
       }
 
-      const subtitleSpacing = await page.$eval(".language-track-subtitles", (el) => ({
+      expect(await page.$$(".language-track-settings > label .ant-switch")).toHaveLength(0);
+      const headers = await page.$$eval(".language-track-voice-heading", (nodes) =>
+        nodes.map((node) => ({
+          switches: node.querySelectorAll('[role="switch"]').length,
+          first: node.firstElementChild?.tagName,
+        })),
+      );
+      expect(headers.every((header) => header.switches === 2 && header.first === "STRONG")).toBe(
+        true,
+      );
+      const subtitleSpacing = await page.$eval(".language-track-toggle", (el) => ({
         display: getComputedStyle(el).display,
         gap: parseFloat(getComputedStyle(el).gap),
         alignItems: getComputedStyle(el).alignItems,
       }));
-      expect(subtitleSpacing).toEqual({ display: "flex", gap: 12, alignItems: "center" });
+      expect(subtitleSpacing).toEqual({ display: "flex", gap: 8, alignItems: "center" });
       for (const width of [1200, 420]) {
         await page.setViewport({ width, height: 900 });
         const layouts = await page.$$eval(".speech-settings", (sections) =>
@@ -157,18 +169,56 @@ function Fixture(){const[state,setState]=React.useState(request);return React.cr
           fullPage: true,
         });
       }
-      await page.click('[aria-label="Generate narration"]');
+      const first = fixture.languages[0];
+      await page.click(`[aria-label="Generate narration ${first}"]`);
+      await page.waitForFunction(
+        (expected) => document.querySelectorAll(".speech-settings").length === expected,
+        {},
+        fixture.languages.length - 1,
+      );
+      const independent = await page.$eval("#state", (el) => JSON.parse(el.textContent || "{}"));
+      expect(
+        independent.languageTracks.narration.map((track: { language: string }) => track.language),
+      ).toEqual(fixture.languages.slice(1));
+      await page.click(`[aria-label="Generate narration ${first}"]`);
+      await page.waitForFunction(
+        (expected) => document.querySelectorAll(".speech-settings").length === expected,
+        {},
+        fixture.languages.length,
+      );
+      for (const language of fixture.languages)
+        await page.click(`[aria-label="Generate narration ${language}"]`);
       await page.waitForFunction(() => document.querySelectorAll(".speech-settings").length === 0);
       const silent = await page.$eval("#state", (el) => JSON.parse(el.textContent || "{}"));
       expect(silent.languageTracks.narration).toEqual([]);
       expect(silent.languageTracks.subtitles).toEqual(fixture.languages);
       expect(silent.subtitles).toEqual({ mode: "provided", text: "光を連れて" });
-      await page.click('[aria-label="Show subtitles on screen"]');
-      await page.click('[aria-label="Show subtitles on screen"]');
+      await page.click(`[aria-label="Show subtitles on screen ${fixture.languages[0]}"]`);
+      const captions = await page.$eval("#state", (el) => JSON.parse(el.textContent || "{}"));
+      expect(captions.languageTracks.subtitles).toEqual(fixture.languages.slice(1));
+      await page.click(`[aria-label="Show subtitles on screen ${fixture.languages[0]}"]`);
       const restored = await page.$eval("#state", (el) => JSON.parse(el.textContent || "{}"));
       expect(restored.languageTracks.narration).toEqual([]);
       expect(restored.languageTracks.subtitles).toEqual(fixture.languages);
       expect(restored.languageTracks.showSubtitles).toBe(true);
+      const added = videoLanguages.find((entry) => !fixture.languages.includes(entry.value));
+      if (added) {
+        await page.click(".language-track-add .ant-select");
+        await page.waitForSelector(".ant-select-dropdown .ant-select-item-option");
+        await page.keyboard.press("Enter");
+        await page.waitForSelector(`[aria-label="Generate narration ${added.value}"]`);
+        expect(
+          await page.$eval(`[aria-label="Generate narration ${added.value}"]`, (node) =>
+            node.getAttribute("aria-checked"),
+          ),
+        ).toBe("false");
+        expect(
+          await page.$eval(`[aria-label="Show subtitles on screen ${added.value}"]`, (node) =>
+            node.getAttribute("aria-checked"),
+          ),
+        ).toBe("false");
+        expect(await page.$$(".speech-settings")).toHaveLength(0);
+      }
     } finally {
       await browser.close();
       await server.close();

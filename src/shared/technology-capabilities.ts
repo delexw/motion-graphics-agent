@@ -23,6 +23,8 @@ export interface PreparedTechnology {
 }
 
 export type TechnologyToolResult =
+  | { kind: "python_execution"; execution: import("./technology-executions").TechnologyExecution }
+  | { kind: "selection"; selection: import("./project-technologies").ProjectTechnologyRecord }
   | { kind: "availability"; technologies: TechnologyAvailability[] }
   | { kind: "prepared"; technology: PreparedTechnology }
   | {

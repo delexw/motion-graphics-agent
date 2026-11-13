@@ -1,3 +1,6 @@
+import { SettingsConflictNotice } from "../components/settings-conflict-notice";
+import { SettingsConflictError, type SettingsConflict } from "../../shared/request-settings-review";
+import { errorCode } from "../../shared/errors";
 import { applyLanguageTracks } from "../../shared/language-tracks";
 import { LanguageTrackSettings } from "../components/language-track-settings";
 import { ScriptItems } from "../components/script-items";
@@ -104,6 +107,7 @@ export function RoomOnboarding({
   onCreated,
   onUpload,
   onDeleteMaterial,
+  onBeforeStart,
 }: {
   draft: RoomDraft;
   onChange: (next: RoomDraft) => void;
@@ -111,12 +115,16 @@ export function RoomOnboarding({
   styles: Parameters<typeof StylePicker>[0]["styles"];
   examples: StyleExample[];
   onCreated: (run: Run) => void;
+  onBeforeStart?: () => Promise<unknown>;
   onUpload: (files: File[]) => Promise<RoomLibraryAsset[]>;
   onDeleteMaterial?: (asset: RoomLibraryAsset) => Promise<void>;
 }) {
   useUiLanguage();
   const request = roomDraftRequest(draft);
   const [error, setError] = useState("");
+  const [startIssue, setStartIssue] = useState<{ error: unknown; signature: string }>();
+  const startInFlight = useRef(false);
+  const signature = JSON.stringify(request);
   const [busy, setBusy] = useState(false);
   const [deletingId, setDeletingId] = useState<string>();
   const deleting = useRef(false);
@@ -250,9 +258,13 @@ export function RoomOnboarding({
           type="primary"
           loading={busy}
           onClick={async () => {
+            if (startInFlight.current) return;
+            startInFlight.current = true;
+            setStartIssue(undefined);
             setBusy(true);
             setError("");
             try {
+              await onBeforeStart?.();
               if (request.outputType === "video") await ensureSpeechGenerationReady(request);
               const run = await api<Run>("/api/runs", {
                 method: "POST",
@@ -260,15 +272,23 @@ export function RoomOnboarding({
               });
               onCreated(run);
             } catch (e) {
-              setError(errorMessage(e));
+              if (
+                e instanceof SettingsConflictError ||
+                errorCode(e) === "SETTINGS_CHECK_UNAVAILABLE"
+              )
+                setStartIssue({ error: e, signature });
+              else setError(errorMessage(e));
             } finally {
+              startInFlight.current = false;
               setBusy(false);
             }
           }}
         >
-          {request.candidateCount === 0
-            ? translateUi("Create my project")
-            : translateUi("Create previews")}
+          {busy
+            ? translateUi("Checking settings…")
+            : request.candidateCount === 0
+              ? translateUi("Create my project")
+              : translateUi("Create previews")}
         </Button>
       )}
       {step < 8 && (
@@ -765,6 +785,35 @@ export function RoomOnboarding({
             )}
           </div>
         )}
+        {startIssue && (
+          <SettingsConflictNotice
+            error={startIssue.error}
+            stale={startIssue.signature !== signature}
+            onEditSetting={(setting: SettingsConflict["setting"]) =>
+              go(
+                ["speech", "subtitles", "scriptItems", "languageTracks", "outputLanguage"].includes(
+                  setting,
+                )
+                  ? 6
+                  : 7,
+              )
+            }
+            onEditSource={(field) =>
+              go(
+                field === "instructions"
+                  ? 0
+                  : field === "speech.instructions" || field.startsWith("scriptItems.")
+                    ? 6
+                    : ((
+                        { main: 1, images: 2, videos: 3, urls: 4, music: 5 } as Record<
+                          string,
+                          number
+                        >
+                      )[field.split(".")[1]] ?? 0),
+              )
+            }
+          />
+        )}
         {error && (
           <Alert title={error} type="error" showIcon closable onClose={() => setError("")} />
         )}
@@ -772,44 +821,49 @@ export function RoomOnboarding({
     </div>
   );
   return (
-    <div className="room-onboarding">
-      <nav className="room-step-tabs" aria-label={translateUi("Brief steps")}>
-        {roomQuestions.map((question, index) => (
-          <button
-            type="button"
-            key={question.label}
-            className={index === step ? "is-current" : index < step ? "is-done" : ""}
-            aria-current={index === step ? "step" : undefined}
-            disabled={index !== 0 && !ideaReady}
-            title={index !== 0 && !ideaReady ? translateUi("Describe your idea first") : undefined}
-            onClick={() => go(index)}
+    <>
+      {busy && <p role="status">{translateUi("Checking your brief against your settings…")}</p>}
+      <div className="room-onboarding" aria-busy={busy} inert={busy}>
+        <nav className="room-step-tabs" aria-label={translateUi("Brief steps")}>
+          {roomQuestions.map((question, index) => (
+            <button
+              type="button"
+              key={question.label}
+              className={index === step ? "is-current" : index < step ? "is-done" : ""}
+              aria-current={index === step ? "step" : undefined}
+              disabled={index !== 0 && !ideaReady}
+              title={
+                index !== 0 && !ideaReady ? translateUi("Describe your idea first") : undefined
+              }
+              onClick={() => go(index)}
+            >
+              {translateUi(question.label)}
+            </button>
+          ))}
+        </nav>
+        {step === 0 ? (
+          <Splitter
+            className="room-idea-splitter"
+            orientation="vertical"
+            styles={{ dragger: { default: { height: 18 } } }}
+            draggerIcon={
+              <GripHorizontal size={24} aria-label={translateUi("Drag to resize idea editor")} />
+            }
           >
-            {translateUi(question.label)}
-          </button>
-        ))}
-      </nav>
-      {step === 0 ? (
-        <Splitter
-          className="room-idea-splitter"
-          orientation="vertical"
-          styles={{ dragger: { default: { height: 18 } } }}
-          draggerIcon={
-            <GripHorizontal size={24} aria-label={translateUi("Drag to resize idea editor")} />
-          }
-        >
-          <Splitter.Panel defaultSize="35%" min="10%">
+            <Splitter.Panel defaultSize="35%" min="10%">
+              {chatLog}
+            </Splitter.Panel>
+            <Splitter.Panel min="25%">
+              <StylePromptInput {...replyProps} styles={styles} />
+            </Splitter.Panel>
+          </Splitter>
+        ) : (
+          <>
             {chatLog}
-          </Splitter.Panel>
-          <Splitter.Panel min="25%">
-            <StylePromptInput {...replyProps} styles={styles} />
-          </Splitter.Panel>
-        </Splitter>
-      ) : (
-        <>
-          {chatLog}
-          {step < 6 ? <Sender {...replyProps} /> : actions}
-        </>
-      )}
-    </div>
+            {step < 6 ? <Sender {...replyProps} /> : actions}
+          </>
+        )}
+      </div>
+    </>
   );
 }

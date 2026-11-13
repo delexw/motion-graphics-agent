@@ -20,6 +20,7 @@ it("keeps research skills available independently of visual authoring selection"
     "react_bits",
     "anatomy",
     "img2threejs",
+    "stageshow",
     "local_code",
   ]);
 });
@@ -64,7 +65,7 @@ async function input() {
     onEvent: vi.fn(),
   };
 }
-it.each(["animate_ui", "react_bits", "anatomy", "img2threejs", "local_code"])(
+it.each(["animate_ui", "react_bits", "anatomy", "img2threejs", "stageshow", "local_code"])(
   "uses the native Choice API winner %s, preserving renderer, MGs and usage attribution",
   async (winner) => {
     vi.stubEnv(credentialEnvironmentVariables.typesafeApiKey, "test-placeholder");
@@ -95,6 +96,8 @@ it.each(["animate_ui", "react_bits", "anatomy", "img2threejs", "local_code"])(
         expect(body.state.renderer.visuals.frameContract).toContain("GSAP");
         expect(body.state.renderer.audio.generatesMusic).toBe(false);
         expect(body.state.policy).toContain("Do not change selected styles");
+        expect(body.state.policy).toContain("selected MG contributes motion only within that demo");
+        expect(body.questions.resource.criteria.stageshow).toContain("STAGESHOW SCENE OWNERSHIP");
         expect(body.state.resources.map((r: { id: string }) => r.id)).toEqual(
           authoringResources.map((r) => r.id),
         );

@@ -1,3 +1,4 @@
+import { VideoVersionSettings } from "../components/video-version-settings";
 import { ProductionDesk } from "../components/production-desk/production-desk";
 import type { VideoGenerationJob } from "../../shared/domains/video";
 import { PanelsTopLeft, GalleryVerticalEnd } from "lucide-react";
@@ -123,6 +124,7 @@ export function RoomProject({
     ? view.refineJobId
     : (refinementSources.filter((job) => job.phase === "ready").at(-1) || refinementSources.at(-1))
         ?.id;
+  const refinementSource = refinementSources.find((job) => job.id === refineId);
   const storyboards = full.filter(
     (job) => job.outputType !== "page" && (job.storyboardReady || job.phase === "ready"),
   );
@@ -434,6 +436,9 @@ export function RoomProject({
       </div>
       {refinementSources.length > 0 && (
         <section className="room-refinement" aria-label={translateUi("Fine-tune a video version")}>
+          {run.request.outputType === "video" && refinementSource && (
+            <VideoVersionSettings job={refinementSource!} request={run.request} />
+          )}
           <RefinementHistoryReview
             run={run}
             sourceJobId={refineId}

@@ -6,6 +6,9 @@ export interface BundledSkill {
   workspacePath: string;
   claudeName: string;
   repository: string;
+  /** Optional skill directory inside the upstream repository. */
+  sourceDirectory?: string;
   guidance: string;
+  sceneGuidance?: string;
   nodePackageType?: "commonjs" | "module";
 }

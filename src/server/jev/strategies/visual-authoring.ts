@@ -3,6 +3,7 @@ import { reactBitsAuthoring } from "../../agents/capabilities/react-bits/metadat
 import { img2threejsAuthoring } from "../../agents/bundled-skills/img2threejs-metadata";
 import { briefAttachmentKind } from "../../requests/brief-attachments";
 import { anatomyAuthoring } from "../../agents/bundled-skills/anatomy-metadata";
+import { stageshowAuthoring } from "../../agents/bundled-skills/stageshow-metadata";
 import { localAuthoring } from "../../agents/local-authoring";
 import { rendererMetadataFor } from "../../rendering/renderer-metadata";
 import { runJevChoice } from "../choice";
@@ -33,7 +34,9 @@ export const authoringResources: AuthoringResource[] = [
     .filter((skill) => skill.purpose === "visual_authoring")
     .map(
       (skill) =>
-        [anatomyAuthoring, img2threejsAuthoring].find((resource) => resource.id === skill.id) ?? {
+        [anatomyAuthoring, img2threejsAuthoring, stageshowAuthoring].find(
+          (resource) => resource.id === skill.id,
+        ) ?? {
           id: skill.id,
           name: skill.name,
           kind: "bundled_skill" as const,
@@ -85,7 +88,7 @@ export async function selectAuthoringResources(input: {
       .map((s) => ({ id: s.id, name: s.name_en, visualDirection: s.visual_cues })),
     resources: authoringResources.map(({ id, name, kind }) => ({ id, name, kind })),
     policy:
-      "Choose one primary authoring resource by comparing the advantages, disadvantages and costs written in the Choice option descriptions against the original idea, image instructions, selected Motion Graphics and renderer contract. Honor explicit compatible resource requests. Local code remains available with any choice. Do not change selected styles, renderer, settings, explicit act assignments or user exclusions. No option has a fixed preference. Compare img2threejs for reconstructing a specific pictured object against Anatomy for explanatory mechanisms; retain local code and other candidates. Image instructions alone do not establish an available reconstruction image. Use imageReferences observations/evidence and supplied metadata, and never infer unseen geometry as verified. Evaluate visual fit and adaptation effort rather than novelty or catalog size. These descriptions explain capabilities, not runtime readiness: the main model must inspect current source/skills, dependencies and license constraints before use. Video effects must support seekable composition time. The main model owns production planning and reads selected styles through creative_pool.",
+      "Choose one primary authoring resource by comparing the advantages, disadvantages and costs written in the Choice option descriptions against the original idea, image instructions, selected Motion Graphics and renderer contract. Honor explicit compatible resource requests. Local code remains available with any choice. Do not change selected styles, renderer, settings, explicit act assignments or user exclusions. Respect each resource's scene ownership: a Stageshow demo keeps its native appearance unless the user requests UI styling; selected MG contributes motion only within that demo. No option has a fixed preference. Compare img2threejs for reconstructing a specific pictured object against Anatomy for explanatory mechanisms; retain local code and other candidates. Image instructions alone do not establish an available reconstruction image. Use imageReferences observations/evidence and supplied metadata, and never infer unseen geometry as verified. Evaluate visual fit and adaptation effort rather than novelty or catalog size. These descriptions explain capabilities, not runtime readiness: the main model must inspect current source/skills, dependencies and license constraints before use. Video effects must support seekable composition time. The main model owns production planning and reads selected styles through creative_pool.",
   };
   try {
     const result = await runJevChoice({

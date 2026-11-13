@@ -52,7 +52,26 @@ export interface ModelActivity {
     resources: { id: string; name: string; selected: boolean; probability: number | null }[];
   }[];
 }
+export interface GovernancePagination {
+  page: number;
+  pageSize: number;
+  total: number;
+  search: string;
+}
+export interface GovernanceProjectOption {
+  id: string;
+  name: string;
+  started: string;
+  outputType: string;
+  provider: string;
+}
+export interface GovernanceProjectOptions {
+  projects: GovernanceProjectOption[];
+  pagination: GovernancePagination;
+}
 export interface GovernanceProject {
+  technologyJobs?: { id: string; kind: string; phase: string }[];
+  technologies?: import("./project-technologies").ProjectTechnologyMonitor[];
   id: string;
   name: string;
   status: string;
@@ -67,6 +86,9 @@ export interface GovernanceProject {
   incompleteHistory: boolean;
 }
 export interface GovernanceReport {
+  pagination?: GovernancePagination;
+  checksPagination?: GovernancePagination;
+  settingsChecks?: import("./request-settings-review").SettingsCheckRecord[];
   generatedAt: string;
   projects: GovernanceProject[];
   models: { function: string; claude: string; codex: string }[];

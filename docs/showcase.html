@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kiteva demo showcase</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font:
+          16px/1.6 system-ui,
+          sans-serif;
+        background: #171614;
+        color: #f5f0e8;
+      }
+      body {
+        max-width: 1200px;
+        margin: auto;
+        padding: 32px 20px;
+      }
+      a {
+        color: #f6b778;
+      }
+      h1 {
+        margin-bottom: 8px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+      }
+      .card {
+        min-width: 0;
+        background: #24211d;
+        border: 1px solid #494137;
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .copy {
+        padding: 20px;
+      }
+      .copy h2 {
+        margin: 0 0 8px;
+        font-size: 1.25rem;
+      }
+      .copy p {
+        margin: 0 0 10px;
+      }
+      video,
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      video {
+        background: #000;
+      }
+      .wide {
+        grid-column: 1/-1;
+      }
+      @media (max-width: 700px) {
+        .grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Kiteva demo showcase</h1>
+    <p>
+      Actual generated videos and full-page screenshots. Videos play on demand; no autoplay.
+      <a href="../README.md">Back to README</a>
+    </p>
+    <main class="grid">
+      <article class="card">
+        <div class="copy">
+          <h2>Ocean research · video</h2>
+          <p>A ten-second animated research explainer.</p>
+          <a href="assets/showcase/ocean-research-film.mp4">Download MP4</a>
+        </div>
+        <video
+          controls
+          playsinline
+          preload="metadata"
+          src="assets/showcase/ocean-research-film.mp4"
+        ></video>
+      </article>
+      <article class="card">
+        <div class="copy">
+          <h2>Stack / Turn / Pack · video</h2>
+          <p>A ten-second Bauhaus assembly animation.</p>
+          <a href="assets/showcase/stack-turn-pack.mp4">Download MP4</a>
+        </div>
+        <video
+          controls
+          playsinline
+          preload="metadata"
+          src="assets/showcase/stack-turn-pack.mp4"
+        ></video>
+      </article>
+      <article class="card">
+        <div class="copy">
+          <h2>Character animation · Playful Cat</h2>
+          <p>A 50-second pixel-art cat story with Chinese narration and on-screen subtitles.</p>
+          <a href="assets/showcase/playful-cat.mp4">Download MP4</a>
+        </div>
+        <video
+          controls
+          playsinline
+          preload="metadata"
+          src="assets/showcase/playful-cat.mp4"
+        ></video>
+      </article>
+      <article class="card">
+        <div class="copy">
+          <h2>Product demo · Stageshow + Swiss</h2>
+          <p>
+            A 12-second simulated task-board walkthrough: open, assign and mark ready. Light
+            Stageshow-style UI with Swiss framing and motion; silent.
+          </p>
+          <a href="assets/showcase/stageshow-swiss-demo.mp4">Download MP4</a>
+        </div>
+        <video
+          controls
+          playsinline
+          preload="metadata"
+          src="assets/showcase/stageshow-swiss-demo.mp4"
+        ></video>
+      </article>
+      <article class="card">
+        <div class="copy">
+          <h2>Ocean research · interactive page</h2>
+          <p>Complete page screenshot, including charts and controls.</p>
+          <a href="assets/showcase/ocean-research-full-page.png">Open full-resolution screenshot</a>
+        </div>
+        <img
+          alt="Complete ocean research interactive page"
+          src="assets/showcase/ocean-research-full-page.png"
+        />
+      </article>
+      <article class="card">
+        <div class="copy">
+          <h2>Fold Lab · interactive page</h2>
+          <p>
+            Complete packaging exhibit screenshot, including the folding, palette and pattern
+            controls.
+          </p>
+          <a href="assets/showcase/fold-lab-full-page.png">Open full-resolution screenshot</a>
+        </div>
+        <img
+          alt="Complete Fold Lab interactive page"
+          src="assets/showcase/fold-lab-full-page.png"
+        />
+      </article>
+      <article class="card wide">
+        <div class="copy">
+          <h2>Meet the fire truck · multilingual subtitles</h2>
+          <p>
+            The complete 90-second film, with English narration and English/Chinese captions visible
+            in the picture. This 720p showcase copy preserves the original content.
+          </p>
+          <a href="assets/showcase/fire-truck-multilingual.mp4">Download MP4</a>
+        </div>
+        <video
+          controls
+          playsinline
+          preload="metadata"
+          src="assets/showcase/fire-truck-multilingual.mp4"
+        ></video>
+      </article>
+    </main>
+  </body>
+</html>

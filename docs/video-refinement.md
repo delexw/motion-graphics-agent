@@ -26,6 +26,44 @@ When an older saved version has a contaminated session ID, `Store.generationSess
 
 Tests use mocked generation calls and local image/workspace fixtures for both Claude and Codex. They cover stopped requests, attachments, repeated refinements, direction isolation, session provenance and helper exclusion. No real provider API is called.
 
+## Explicit settings changes
+
+Before authoring a refinement, the selected main model interprets the latest request in a
+separate tool-free, text-only settings step. `Refinement settings` has its own Activity
+and Governance invocation, token usage and cost; its helper session never replaces the
+verified builder session. No extra call runs for previews or ordinary first builds.
+
+Supported amendments include narration engine and compatible preset voice, speed and
+volume, independent narration/subtitle switches for each language, named timed speech
+items, output language, aspect ratio, resolution, frame rate and target duration.
+The model receives the full supported voice catalog rather than only the source voice.
+For example, “use Ming TTS Chinese female” can select a valid Chinese female Ming preset
+without asking the user to enable Ming merely because the previous version used Kokoro.
+Actual synthesis still checks the provider's readiness and reports genuine failures.
+
+Each amendment must quote the user's actual request and passes the same speech, language
+and delivery validators as creation. Unmentioned settings and unrelated language profiles
+remain unchanged. Unsupported renderer/model-routing changes fail explicitly rather than
+silently switching execution routes. Quoted dialogue is not a production-setting change.
+
+The accepted plan and effective request are saved in this version's diagnostics and on
+its job (`refinementSettings`, `effectiveRequest`). Descendants inherit the selected
+source version's effective settings. The original project request, earlier versions and
+media files stay unchanged. Setup, narration, authoring, output validation and language
+exports all consume the new version settings. Changed voice profiles invalidate copied
+narration state. Its accepted cues are retained in `audio/previous-narration.json` as source
+copy, not as valid new audio. This keeps the original words available when switching
+voices while requiring a new accepted track. Stale Kokoro speech cannot be accepted
+for a Ming refinement; cue text
+and unrelated visuals remain the author's preservation obligations. Existing renderer cache
+compatibility checks govern reuse when output settings change.
+
+Both refinement interfaces show **Version settings** for the selected source version.
+The settings implementation is owned by `src/shared/refinement-settings.ts`, interpretation
+by `src/server/jobs/subworkflows/refinement-settings/`, routing by `jobs/workflow.ts`, and
+presentation by the shared `video-version-settings.tsx` component. Regression tests mock
+both SDK providers and local speech preparation; no external inference or downloads run.
+
 ## Deleting versions
 
 A trash icon beside the version buttons deletes the selected finished, failed or stopped video version after confirmation. Deletion is unavailable while any project work is running. The server checks this again, removes only the version’s owned workspace, and saves a deletion record so its refinement request cannot return through a later version’s copied history. Other version workspaces and the event audit remain intact.

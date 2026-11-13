@@ -1,3 +1,5 @@
+import { observeProjectTechnologies } from "../../technology/observe";
+import { validateProjectDependencySelection } from "../../technology/project-dependencies";
 import { remainingCorrectionFindings, videoFailureFindings } from "./correction-bypass";
 import { createVideoBuildTurn } from "./execution/build-turn";
 import { executeInitialBuild } from "./execution/initial-build";
@@ -223,6 +225,7 @@ export async function generateVideo(input: {
       const production = job.production!;
       job.speechTrack = await currentNarrationTrack(job.workspace, job.speechTrack);
       try {
+        await validateProjectDependencySelection(job.workspace);
         if (production.fps !== undefined && production.fps !== fps)
           throw Error("Agent manifest does not match requested frame rate");
         production.fps = fps;
@@ -274,6 +277,7 @@ export async function generateVideo(input: {
             }
           }),
         );
+        await observeProjectTechnologies(job.workspace, production.sourceFile, signal, emit);
         Object.assign(job, artifacts);
         if (job.kind === "full" && request.languageTracks) {
           job.languageMedia = await activityScope("Preparing language tracks", () =>

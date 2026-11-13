@@ -357,3 +357,43 @@ it("cancels an active narration tool and releases its shared operation queue", a
     await server.close();
   }
 });
+
+it("invalidates copied narration after a provider change and synthesizes with the new version profile", async () => {
+  const f = await fixture();
+  await prepareNarrationCapability(f.workspace, f.request, 10);
+  const cue = { id: "same-copy", text: "Same narration text", startSeconds: 0 };
+  await f.service.create({ cues: [cue] }, signal());
+  const revisedRequest = VideoRequestSchema.parse({
+    ...f.request,
+    speech: {
+      ...f.config.profiles.default,
+      engine: "ming-tts",
+      voice: "ming_xiaorou",
+      language: "zh",
+    },
+  });
+  await prepareNarrationCapability(f.workspace, revisedRequest, 10);
+  expect(await readNarrationState(f.workspace)).toBeUndefined();
+  expect(
+    JSON.parse(await readFile(path.join(f.workspace, "audio/previous-narration.json"), "utf8"))
+      .segments[0].text,
+  ).toBe(cue.text);
+  const config = NarrationConfigSchema.parse(
+    JSON.parse(await readFile(path.join(f.workspace, "audio/narration-config.json"), "utf8")),
+  );
+  const revisedService = narrationService(f.workspace, config, {
+    prepare: f.prepare,
+    run: command,
+  });
+  const state = await revisedService.create({ cues: [cue] }, signal());
+  expect(state.segments[0].text).toBe(cue.text);
+  expect(f.prepare).toHaveBeenCalledTimes(2);
+  expect(f.prepare).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      request: expect.objectContaining({
+        speech: expect.objectContaining({ engine: "ming-tts", voice: "ming_xiaorou" }),
+      }),
+    }),
+  );
+  expect(f.config.profiles.default).toMatchObject({ engine: "kokoro", voice: "af_heart" });
+});

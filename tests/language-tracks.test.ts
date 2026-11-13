@@ -2,6 +2,9 @@ import { roomSubmission } from "../src/client/room/onboarding";
 import { expect, it, vi } from "vitest";
 import {
   LanguageTracksSchema,
+  languageTrackRows,
+  individualLanguageTracks,
+  addLanguageTrack,
   selectLanguageTrackLanguages,
   applyLanguageTracks,
   languageTracksDirection,
@@ -286,4 +289,73 @@ it("retains language choices when both narration and subtitle visibility are off
     ["zh", "ja"],
   );
   expect(visible).toMatchObject({ narration: [], subtitles: ["zh", "ja"], defaultSubtitle: "zh" });
+});
+
+it("keeps narration and subtitles independent for each language, preserving disabled profiles across serialization", () => {
+  const request = VideoRequestSchema.parse({
+    instructions: "Example concept",
+    languageTracks: {
+      narration: [
+        { language: "en", speech: { mode: "narration", voice: "af_heart", speed: 1.2 } },
+        { language: "zh", speech: { mode: "narration", voice: "zf_xiaobei" } },
+      ],
+      subtitles: ["en", "zh"],
+      defaultNarration: "en",
+      defaultSubtitle: "en",
+    },
+  });
+  const rows = languageTrackRows(request);
+  const settings = individualLanguageTracks(
+    request,
+    rows.map((row) =>
+      row.language === "en" ? { ...row, generateNarration: false, showSubtitles: false } : row,
+    ),
+  );
+  expect(settings.narration.map((track) => track.language)).toEqual(["zh"]);
+  expect(settings.subtitles).toEqual(["zh"]);
+  expect(settings.defaultNarration).toBe("zh");
+  expect(settings.defaultSubtitle).toBe("zh");
+  const restored = VideoRequestSchema.parse(
+    JSON.parse(JSON.stringify({ ...request, languageTracks: settings })),
+  );
+  const saved = languageTrackRows(restored);
+  expect(saved.find((row) => row.language === "en")?.speech).toMatchObject({
+    voice: "af_heart",
+    speed: 1.2,
+  });
+  const disabled = individualLanguageTracks(
+    restored,
+    saved.map((row) => ({ ...row, generateNarration: false, showSubtitles: false })),
+  );
+  expect(disabled.languages).toHaveLength(2);
+  expect(disabled.narration).toEqual([]);
+  expect(disabled.subtitles).toEqual([]);
+  expect(applyLanguageTracks({ ...restored, languageTracks: disabled }).speech?.mode).toBe("off");
+  const added = addLanguageTrack({ ...restored, languageTracks: disabled }, "ja");
+  expect(added.languages?.find((row) => row.language === "en")).toMatchObject({
+    generateNarration: false,
+    showSubtitles: false,
+  });
+});
+it("rejects inconsistent per-language flags and delivery arrays", () => {
+  const request = VideoRequestSchema.parse({
+    instructions: "Example concept",
+    languageTracks: settings,
+  });
+  const configured = individualLanguageTracks(request, languageTrackRows(request));
+  expect(LanguageTracksSchema.safeParse({ ...configured, narration: [] }).success).toBe(false);
+});
+
+it("defaults both switches off for a newly added language without changing existing enabled languages", () => {
+  const request = VideoRequestSchema.parse({
+    instructions: "Example concept",
+    languageTracks: settings,
+  });
+  const added = addLanguageTrack(request, "ja");
+  expect(added.languages?.find((row) => row.language === "ja")).toMatchObject({
+    generateNarration: false,
+    showSubtitles: false,
+  });
+  expect(added.narration.map((row) => row.language)).toEqual(["en"]);
+  expect(added.subtitles).toEqual(["zh"]);
 });

@@ -1,3 +1,4 @@
+import { formatGovernanceCost } from "./format-cost";
 import { translateUi, useUiLanguage } from "../i18n";
 import { Table, Typography, type TableColumnsType } from "antd";
 import type { ModelActivity } from "../../shared/governance";
@@ -9,8 +10,8 @@ const money = (row: ModelActivity) =>
   row.costLow === null
     ? translateUi("Unavailable")
     : row.costHigh !== row.costLow
-      ? `$${row.costLow.toFixed(4)}–$${row.costHigh!.toFixed(4)}`
-      : `$${row.costLow.toFixed(4)}`;
+      ? `${formatGovernanceCost(row.costLow)}–${formatGovernanceCost(row.costHigh!)}`
+      : formatGovernanceCost(row.costLow);
 export function GovernanceUsageTable({
   rows,
   byFunction = false,

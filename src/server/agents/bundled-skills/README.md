@@ -20,6 +20,15 @@ AnySearch uses the same installation and staging lifecycle. Its registration spe
 
 Each registration declares its purpose. Only `visual_authoring` skills participate in visual-resource selection; `research` skills remain available independently of that choice.
 
+## Stageshow
+
+`stageshow.ts`, `stageshow-prompt.ts` and `stageshow-metadata.ts` register the
+`stageshow/` subdirectory of `benjitaylor/skills` for both providers and JEV.
+Registrations may specify `sourceDirectory`; extraction, integrity manifests and
+offline reuse remain bound to that directory as well as the repository.
+See [Stageshow integration](../../../../docs/stageshow.md) for MG precedence,
+video timing, simulated-versus-recorded boundaries and third-party asset notices.
+
 ## img2threejs
 
 `img2threejs.ts`, `img2threejs-prompt.ts` and `img2threejs-metadata.ts` own its upstream source, both-provider guidance and JEV comparison description. The upstream installer is not executed. Like Anatomy, it downloads the latest default-branch commit on every backend startup, records the resolved commit and file hashes, and uses the last verified local installation when updates fail. A missing first installation uses the existing setup error; it is never advertised as an installed successful fallback.

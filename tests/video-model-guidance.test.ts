@@ -17,6 +17,31 @@ import { multiplaneDemoRoutePrompt } from "../src/server/domains/video/route-pro
 import { websiteCaptureInstructions } from "../src/server/agents/capabilities/reference-browser/prompt";
 
 it.each(["hyperframes", "multiplane"] as const)(
+  "routes real-application viewing guidance to %s planning and legacy capture",
+  (renderer) => {
+    for (const stage of ["planning", "legacy"] as const) {
+      const prompt = buildApplicationDemoRoutePrompt(renderer, stage);
+      expect(prompt).toContain("VIEWING PLAN:");
+      expect(prompt).toContain("approximately 3–5 meaningful beats");
+      expect(prompt).toContain("not a cap on required actions or a fixed chapter duration");
+      expect(prompt).toContain("At final delivery size");
+      expect(prompt).toContain("readable controls and menu space");
+      expect(prompt).toContain("stay wide for navigation, scrolling and broad results");
+      expect(prompt).toContain("no forced window bleed");
+    }
+    expect(buildApplicationDemoRoutePrompt(renderer, "assembly")).not.toContain("VIEWING PLAN:");
+    const capture = buildApplicationDemoRoutePrompt(renderer, "legacy");
+    expect(capture).toContain("Rehearse the approved task before recording");
+    expect(capture).toContain("park away from changing text and results");
+    expect(capture).toContain("never synthesize a successful response");
+    expect(capture).toContain("Review complete exported playback");
+    expect(capture).toContain("record full-playback review as not checked");
+    expect(capture).toContain("Do not invent a playback operation");
+    expect(capture).toContain("Never add trims, skip actions or cut out waiting/typing");
+  },
+);
+
+it.each(["hyperframes", "multiplane"] as const)(
   "includes the adapted OpenScreen capture workflow once in the %s demo route",
   (renderer) => {
     const prompt = buildVideoWorkflowRoutingPrompt(renderer);

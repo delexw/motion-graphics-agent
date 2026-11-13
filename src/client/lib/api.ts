@@ -1,4 +1,8 @@
 import {
+  SettingsConflictError,
+  RequestSettingsReviewSchema,
+} from "../../shared/request-settings-review";
+import {
   normalizeSubtitleFields,
   subtitleCompatibilityPayload,
 } from "../../shared/subtitle-compatibility";
@@ -18,6 +22,10 @@ export async function api<T>(url: string, options?: RequestInit): Promise<T> {
       : options?.body;
   const response = await fetch(url, { ...options, body: requestBody, headers });
   const body = normalizeSubtitleFields(await response.json());
+  if (!response.ok && body.code === "SETTINGS_CONFLICT") {
+    const details = RequestSettingsReviewSchema.safeParse(body.details);
+    if (details.success) throw new SettingsConflictError(details.data);
+  }
   if (!response.ok)
     throw new CodedError(
       parseErrorCode(body.code),

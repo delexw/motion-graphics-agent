@@ -274,15 +274,11 @@ it("retries interrupted rendering without repeating a completed provider turn", 
     expect(agentTurn).not.toHaveBeenCalled();
     expect(renderJob).toHaveBeenCalledOnce();
     expect(run.jobs[0].phase).toBe("ready");
-    expect(
-      JSON.parse(await readFile(path.join(workspace, "package.json"), "utf8")).dependencies.three,
-    ).toBeTruthy();
-    expect(
-      JSON.parse(await readFile(path.join(workspace, "package.json"), "utf8")).dependencies.pica,
-    ).toBeTruthy();
-    expect(await readFile(path.join(workspace, "vendor/pica.min.js"), "utf8")).toContain(
-      "https://github.com/nodeca/pica",
-    );
+    const dependencies = JSON.parse(
+      await readFile(path.join(workspace, "package.json"), "utf8"),
+    ).dependencies;
+    expect(Object.keys(dependencies).sort()).toEqual(["gsap", "hyperframes"]);
+    await expect(readFile(path.join(workspace, "vendor/pica.min.js"))).rejects.toThrow();
     expect(run.jobs[0].sessionId).toBe("session");
     expect(run.jobs[0].renderMs).toBeGreaterThanOrEqual(0);
     expect(run.jobs[0].authoringResources).toBeUndefined();

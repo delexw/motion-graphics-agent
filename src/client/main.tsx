@@ -1,3 +1,7 @@
+import { OpenPageButton } from "./domains/page/open-button";
+import { focusSettingControl } from "./lib/settings-conflict-navigation";
+import { SettingsConflictNotice } from "./components/settings-conflict-notice";
+import { SettingsConflictError } from "../shared/request-settings-review";
 import { jobDownloadBasename } from "../shared/job-download-name";
 import { StyleDetailActions } from "./components/style-detail-actions";
 import { LoadingStatus } from "./components/loading-status";
@@ -172,6 +176,8 @@ function App() {
 
   const [setup, setSetup] = useState<Setup>();
   const [error, setError] = useState("");
+  const [startIssue, setStartIssue] = useState<{ error: unknown; signature: string }>();
+  const startInFlight = useRef(false);
   useEffect(() => {
     const controller = new AbortController();
     void loadMotionCatalog(controller.signal)
@@ -495,8 +501,79 @@ function App() {
     setDuration(nextDuration);
     setSelectedStyleIds((ids) => trimStylesForDuration(ids, outputType, nextDuration));
   }
+  const startSignature = JSON.stringify({
+    instructions,
+    sectionInstructions,
+    urls,
+    outputType,
+    provider,
+    count,
+    selectedStyleIds,
+    duration,
+    aspect,
+    resolution,
+    frameRate,
+    subtitlesEnabled,
+    subtitlesText,
+    speech,
+    scriptItems,
+    languageTracks,
+    preference,
+    viewport,
+  });
+  function editStartSetting(setting: string) {
+    const label =
+      (
+        {
+          duration: "Full video duration",
+          resolution: "Video resolution",
+          candidateCount: "Preview options",
+          viewport: "Preview viewport",
+          provider: "Model",
+          mainModel: "Model",
+        } as Record<string, string>
+      )[setting] ||
+      (
+        {
+          frameRate: "Frame rate",
+          aspectRatio: "Aspect ratio",
+          outputType: "Output type",
+          subtitles: "Subtitles",
+        } as Record<string, string>
+      )[setting];
+    const root = document.querySelector<HTMLElement>(".idea-composer");
+    if (label && focusSettingControl(root, translateUi(label))) return;
+    root?.querySelector<HTMLElement>(".composer-toolbar")?.scrollIntoView({ block: "center" });
+  }
+  function editStartSource(field: string) {
+    const section = field.split(".")[1];
+    const label =
+      field === "instructions" || section === "main"
+        ? "Project instructions"
+        : section === "music"
+          ? "Music / instrumental requirements"
+          : section === "images"
+            ? "Image requirements"
+            : section === "videos"
+              ? "Video requirements"
+              : section === "urls"
+                ? "URL requirements"
+                : "Your subtitles";
+    const root = document.querySelector<HTMLElement>(".idea-composer");
+    if (field === "speech.instructions")
+      focusSettingControl(root, translateUi("Narration writing direction"));
+    else if (!focusSettingControl(root, translateUi(label))) {
+      const group = Array.from(
+        root?.querySelectorAll<HTMLElement>("section[aria-label]") ?? [],
+      ).find((node) => node.getAttribute("aria-label") === label);
+      const control = group?.querySelector<HTMLElement>("textarea, input, [contenteditable=true]");
+      control?.scrollIntoView({ block: "center" });
+      control?.focus();
+    }
+  }
   async function start(message?: PromptInputMessage) {
     if (
+      startInFlight.current ||
       busy ||
       uploading ||
       selectedStyleIds.length > styleLimit ||
@@ -505,6 +582,8 @@ function App() {
     )
       return;
     const revision = draftRevision.current;
+    startInFlight.current = true;
+    setStartIssue(undefined);
     setBusy(true);
     setError("");
     try {
@@ -589,8 +668,13 @@ function App() {
       setRun(next);
       navigate(`/projects/${next.id}`);
     } catch (e) {
-      if (revision === draftRevision.current) setError(errorCode(e));
+      if (revision === draftRevision.current) {
+        if (e instanceof SettingsConflictError || errorCode(e) === "SETTINGS_CHECK_UNAVAILABLE")
+          setStartIssue({ error: e, signature: startSignature });
+        else setError(errorCode(e));
+      }
     } finally {
+      startInFlight.current = false;
       if (revision === draftRevision.current) setBusy(false);
     }
   }
@@ -806,6 +890,7 @@ function App() {
                 aria-label={translateUi("Result actions")}
               >
                 {job.kind === "full" && <ProjectDownload run={run} job={job} />}
+                <OpenPageButton job={job} />
                 {job.phase === "ready" && (
                   <>
                     <Popover
@@ -926,17 +1011,6 @@ function App() {
           )}
           {!active && (
             <div className="candidate-actions">
-              {job.outputType === "page" && job.page && (
-                <a
-                  className="secondary compact"
-                  href={`/api/pages/${run!.id}/${job.id}/index.html`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {translateUi("Open interactive page") + " "}
-                  <ArrowUpRight size={14} />
-                </a>
-              )}
               {job.phase === "ready" && job.kind === "preview" && (
                 <Button
                   type="primary"
@@ -1616,7 +1690,20 @@ function App() {
                     <h2>{translateUi("What are we making?")}</h2>
                     <span className="small-label">{translateUi("YOUR BRIEF")}</span>
                   </div>
+                  {startIssue && (
+                    <SettingsConflictNotice
+                      error={startIssue.error}
+                      stale={startIssue.signature !== startSignature}
+                      onEditSetting={editStartSetting}
+                      onEditSource={editStartSource}
+                    />
+                  )}
+                  {busy && (
+                    <p role="status">{translateUi("Checking your brief against your settings…")}</p>
+                  )}
                   <PromptInput
+                    inert={busy}
+                    aria-busy={busy}
                     key={composerRevision}
                     className="idea-composer"
                     aria-label={translateUi("Create a project")}
@@ -1972,7 +2059,7 @@ function App() {
                           ) : (
                             <Sparkles size={16} />
                           )}{" "}
-                          {translateUi("Generate") + " "}
+                          {translateUi(busy ? "Checking settings…" : "Generate") + " "}
                           <ArrowRight size={16} />
                         </PromptInputSubmit>
                       </div>

@@ -514,3 +514,33 @@ it.each([
     );
   },
 );
+
+it("registers final technology selection only for authoring and writes real project dependency files", async () => {
+  const workspace = await mkdtemp(path.join(os.tmpdir(), "pool-final-selection-"));
+  cleanup.push(() => rm(workspace, { recursive: true, force: true }));
+  const { setupProjectDependencies } =
+    await import("../src/server/technology/project-dependencies");
+  const { RequestSchema } = await import("../src/shared/contracts");
+  await setupProjectDependencies(
+    workspace,
+    RequestSchema.parse({ instructions: "Build an example", outputType: "page" }),
+  );
+  const { client } = await connect(true, { workspace, readOnly: false });
+  const result = await client.callTool({
+    name: "select_project_technologies",
+    arguments: { selections: [{ id: "svg", purpose: "Native vector illustration" }] },
+  });
+  expect(result.isError).not.toBe(true);
+  expect(result.structuredContent).toMatchObject({
+    kind: "selection",
+    selection: { selected: [{ id: "svg", ecosystem: "native" }] },
+  });
+  expect(
+    JSON.parse(await readFile(path.join(workspace, "package.json"), "utf8")).dependencies,
+  ).toEqual({});
+  expect(await readFile(path.join(workspace, "requirements.txt"), "utf8")).toBe("");
+  const readOnly = await connect(true, { workspace, readOnly: true });
+  expect((await readOnly.client.listTools()).tools.map((tool) => tool.name)).not.toContain(
+    "select_project_technologies",
+  );
+});

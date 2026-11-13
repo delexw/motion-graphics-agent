@@ -2,6 +2,9 @@ import { translateUi } from "./i18n/service";
 import { parseErrorCode, type ErrorCode } from "../shared/errors";
 const customerErrors: Record<ErrorCode, string> = {
   REQUEST_FAILED: "Something went wrong. Please try again.",
+  SETTINGS_CONFLICT: "Your brief disagrees with your project settings. Nothing has started.",
+  SETTINGS_CHECK_UNAVAILABLE:
+    "We couldn’t check your brief against your settings. Nothing has started. Your brief is kept; please try again.",
   INVALID_REQUEST: "Please check your project settings and try again.",
   FILE_TOO_LARGE: "Images and documents: up to 10 MB each. Audio: up to 25 MB each.",
   TOO_MANY_ATTACHMENTS: "Use up to 12 attachments per project.",

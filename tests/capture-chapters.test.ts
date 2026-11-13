@@ -269,6 +269,11 @@ it("injects shared interaction rules exactly once in every chapter and retry cal
     expect(options.prompt.split("FILE PICKERS:")).toHaveLength(2);
     expect(options.sessionId).toBeUndefined();
     expect(options.prompt).toContain("Shared rules apply to every chapter and retry");
+    expect(options.prompt).toContain("Rehearse the approved task before recording");
+    expect(options.prompt).toContain("park away from changing text and results");
+    expect(options.prompt).toContain("Review complete exported playback");
+    expect(options.prompt).toContain("record full-playback review as not checked");
+    expect(options.prompt).toContain("Preserve the complete recorded sequence");
     if (interruptReview && options.captureChapterId === "review") {
       interruptReview = false;
       throw Error("Interrupted chapter");

@@ -13,6 +13,7 @@ import {
   NarrationStateSchema,
   narrationConfigPath,
   narrationStatePath,
+  previousNarrationStatePath,
   type NarrationConfig,
   type NarrationState,
   CreateNarrationSchema,
@@ -61,7 +62,12 @@ export async function prepareNarrationCapability(
       if (item.speech.mode === "narration")
         profiles[item.id] = SpeechSettingsSchema.parse(item.speech);
   } else if (request.speech?.mode === "narration") profiles.default = request.speech;
+  const preservePrevious = async () => {
+    const previous = await readNarrationState(workspace);
+    if (previous) await saveJson(workspace, previousNarrationStatePath, previous);
+  };
   if (!Object.keys(profiles).length) {
+    await preservePrevious();
     await rm(path.join(workspace, narrationConfigPath), { force: true });
     await rm(path.join(workspace, narrationStatePath), { force: true });
     return false;
@@ -80,7 +86,10 @@ export async function prepareNarrationCapability(
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
   }
   await saveJson(workspace, narrationConfigPath, config);
-  if (!unchanged) await rm(path.join(workspace, narrationStatePath), { force: true });
+  if (!unchanged) {
+    await preservePrevious();
+    await rm(path.join(workspace, narrationStatePath), { force: true });
+  }
   return true;
 }
 

@@ -285,6 +285,15 @@ function Page(){const[request,setRequest]=React.useState(VideoRequestSchema.pars
         )
         .click();
       await page.keyboard.press("Escape");
+      await page.waitForSelector('[aria-label="Generate narration zh"]');
+      const added = await page.$eval("#request", (el) => JSON.parse(el.textContent!));
+      expect(added.languageTracks.subtitles).toEqual(["en"]);
+      expect(
+        added.languageTracks.narration.map((track: { language: string }) => track.language),
+      ).toEqual(["en"]);
+      expect(await page.$('section[aria-label="Narration voice zh"]')).toBeNull();
+      await page.click('[aria-label="Generate narration zh"]');
+      await page.click('[aria-label="Show subtitles on screen zh"]');
       await page.waitForFunction(() =>
         JSON.parse(
           document.querySelector("#request")!.textContent!,
@@ -316,10 +325,12 @@ function Page(){const[request,setRequest]=React.useState(VideoRequestSchema.pars
       expect(chinese.languageTracks.subtitles).toEqual(["zh"]);
       expect(chinese.languageTracks.defaultNarration).toBe("zh");
       expect(chinese.languageTracks.defaultSubtitle).toBe("zh");
-      await page.click('.language-track-settings [aria-label="Show subtitles on screen"]');
-      const global = await page.$eval("#request", (element) => JSON.parse(element.textContent!));
-      expect(global.languageTracks.showSubtitles).toBe(false);
-      expect(global.languageTracks.defaultSubtitle).toBe("off");
+      await page.click('.language-track-settings [aria-label="Show subtitles on screen zh"]');
+      const subtitleDisabled = await page.$eval("#request", (element) =>
+        JSON.parse(element.textContent!),
+      );
+      expect(subtitleDisabled.languageTracks.showSubtitles).toBe(false);
+      expect(subtitleDisabled.languageTracks.defaultSubtitle).toBe("off");
       expect(
         await page.$$('section[aria-label="Narration voice en"] [aria-label="Speech mode"]'),
       ).toHaveLength(0);

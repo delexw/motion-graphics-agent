@@ -591,6 +591,7 @@ export function CreativeRoom({
     if (conversation === "new" || conversation.startsWith("edit:"))
       return (
         <RoomOnboarding
+          onBeforeStart={saved.retry}
           key={conversation}
           draft={room.drafts[conversation] || emptyRoomDraft()}
           onChange={(draft) => setDraft(conversation, draft)}

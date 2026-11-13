@@ -1,3 +1,6 @@
+import { resolveRefinementSettings } from "./subworkflows/refinement-settings/workflow";
+import { VideoRequestSchema } from "../../shared/domains/video";
+import { setupProjectDependencies } from "../technology/project-dependencies";
 import {
   prepareProjectLayout,
   projectArtifactPath,
@@ -74,7 +77,7 @@ import { videoRendererOf } from "../../shared/video-renderers";
 import { generatePage } from "../domains/page/workflow";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import { mkdir, writeFile, readFile, copyFile, cp } from "node:fs/promises";
+import { mkdir, writeFile, copyFile, cp } from "node:fs/promises";
 import {
   ReferenceScreenshotSchema,
   type ReferenceScreenshot,
@@ -865,6 +868,10 @@ export class Workflow {
     };
   }
   private async setup(run: Run, job: GenerationJob, signal: AbortSignal) {
+    const request =
+      job.outputType !== "page" && run.request.outputType === "video"
+        ? VideoRequestSchema.parse(job.effectiveRequest ?? run.request)
+        : run.request;
     if (job.workspaceLayoutVersion === 1) await prepareProjectLayout(job.workspace);
     await mkdir(path.join(job.workspace, workspacePaths(job.workspace).assets), {
       recursive: true,
@@ -877,7 +884,7 @@ export class Workflow {
       path.join(job.workspace, "node_modules"),
     );
     const scopedAssetIds = assetIdsForQuestionScope(
-      run.request.assetIds,
+      request.assetIds,
       scopedAssetQuestions(run),
       assetQuestionBuildScope(job, run.jobs),
     );
@@ -888,7 +895,7 @@ export class Workflow {
         path.join(job.workspace, projectArtifactPath(job.workspace, "assets", a.name)),
       );
     }
-    if (run.request.selectedStyleIds?.length) {
+    if (request.selectedStyleIds?.length) {
       const assets = scopedAssetIds.map((id) => this.store.getAsset(id)!);
       const images = await prepareBriefImages(
         job.workspace,
@@ -903,55 +910,12 @@ export class Workflow {
         path.join(job.workspace, projectArtifactPath(job.workspace, "assets", screenshot.name)),
       );
     }
-    await copyFile(
-      path.join(appRoot, "node_modules/gsap/dist/gsap.min.js"),
-      path.join(job.workspace, projectArtifactPath(job.workspace, "vendor", "gsap.min.js")),
+    await setupProjectDependencies(
+      job.workspace,
+      request,
+      Boolean(job.production || job.pageProduction),
     );
-    await copyFile(
-      path.join(appRoot, "node_modules/three/build/three.module.js"),
-      path.join(job.workspace, projectArtifactPath(job.workspace, "vendor", "three.module.js")),
-    );
-    await copyFile(
-      path.join(appRoot, "node_modules/three/build/three.core.js"),
-      path.join(job.workspace, projectArtifactPath(job.workspace, "vendor", "three.core.js")),
-    );
-    await copyFile(
-      path.join(appRoot, "node_modules/pica/dist/pica.min.js"),
-      path.join(job.workspace, projectArtifactPath(job.workspace, "vendor", "pica.min.js")),
-    );
-    await writeFile(
-      path.join(job.workspace, "package.json"),
-      JSON.stringify({
-        name: run.request.outputType === "page" ? "interactive-page" : "video-composition",
-        private: true,
-        type: "module",
-        dependencies: Object.fromEntries(
-          await Promise.all(
-            [
-              "hyperframes",
-              "gsap",
-              "three",
-              "chroma-js",
-              "pica",
-              "pixi.js",
-              "roughjs",
-              "paper",
-              "motion",
-              "react",
-              "react-dom",
-              "remotion",
-              "@remotion/cli",
-            ].map(async (name) => [
-              name,
-              JSON.parse(
-                await readFile(path.join(appRoot, "node_modules", name, "package.json"), "utf8"),
-              ).version,
-            ]),
-          ),
-        ),
-      }),
-    );
-    await writeProjectRequest(job.workspace, run.request);
+    await writeProjectRequest(job.workspace, request);
     if (job.kind === "preview") {
       const planFile = path.resolve(job.workspace, previewPlanArtifact);
       try {
@@ -967,8 +931,7 @@ export class Workflow {
       path.join(job.workspace, "style-context.json"),
       JSON.stringify(
         {
-          request:
-            run.request.outputType === "video" ? applyLanguageTracks(run.request) : run.request,
+          request: request.outputType === "video" ? applyLanguageTracks(request) : request,
           brief: run.brief,
           authoringResources: job.authoringResources,
           audioAuthoring: job.audioAuthoring,
@@ -983,7 +946,7 @@ export class Workflow {
           }),
           candidate: run.candidates.find((c) => c.id === job.candidateId),
           production_policy:
-            run.request.outputType === "page"
+            request.outputType === "page"
               ? "Responsive user-driven interactions; no video timeline or composition framework"
               : this.catalog.production_policy,
           motionIds: this.catalog.motions.map((motion) => motion.id),
@@ -1042,14 +1005,43 @@ export class Workflow {
         job.startedAt = new Date().toISOString();
         job.finishedAt = undefined;
         this.update(run);
+        if (
+          job.outputType !== "page" &&
+          run.request.outputType === "video" &&
+          job.refinementPrompt &&
+          !job.refinementSettings
+        ) {
+          const resolved = await activityScope("Resolving refinement settings", () =>
+            resolveRefinementSettings({
+              request: VideoRequestSchema.parse(job.effectiveRequest ?? run.request),
+              prompt: feedback || job.refinementPrompt!,
+              model: job.model,
+              workspace: job.workspace,
+              signal: controller.signal,
+              onEvent: this.providerEvent(run, job, "Refinement settings"),
+            }),
+          );
+          job.effectiveRequest = resolved.effectiveRequest;
+          job.refinementSettings = resolved.plan;
+          const duration = resolved.plan.delivery?.settings.duration;
+          if (typeof duration === "number") {
+            job.duration = duration;
+            job.targetDuration = duration;
+          }
+          this.update(run);
+        }
+        const request =
+          job.outputType !== "page" && run.request.outputType === "video"
+            ? VideoRequestSchema.parse(job.effectiveRequest ?? run.request)
+            : run.request;
         if (!job.authoringResources && !job.production && !job.pageProduction) {
           job.authoringResources = await selectAuthoringResources({
-            request: run.request,
+            request: request,
             brief: run.brief!,
             candidate: run.candidates.find((candidate) => candidate.id === job.candidateId)!,
             styles: this.catalog.styles,
             assets: assetIdsForQuestionScope(
-              run.request.assetIds,
+              request.assetIds,
               scopedAssetQuestions(run),
               assetQuestionBuildScope(job, run.jobs),
             )
@@ -1060,9 +1052,9 @@ export class Workflow {
           });
           this.update(run);
         }
-        if (run.request.outputType !== "page" && !job.audioAuthoring) {
+        if (request.outputType !== "page" && !job.audioAuthoring) {
           job.audioAuthoring = await selectAudioAuthoring({
-            request: run.request,
+            request: request,
             workspace: job.workspace,
             preview: job.kind === "preview",
             signal: controller.signal,
@@ -1073,10 +1065,10 @@ export class Workflow {
         await this.setup(run, job, controller.signal);
         controller.signal.throwIfAborted();
         if (job.outputType === "page") {
-          if (run.request.outputType !== "page") throw Error("Page job requires a page request");
+          if (request.outputType !== "page") throw Error("Page job requires a page request");
           await generatePage({
             job,
-            request: run.request,
+            request: request,
             brief: run.brief!,
             styles: this.catalog.styles,
             candidate: run.candidates.find((c) => c.id === job.candidateId)!,
@@ -1093,15 +1085,15 @@ export class Workflow {
           controller.signal.throwIfAborted();
           return;
         }
-        if (run.request.outputType === "page") throw Error("Video job requires a video request");
+        if (request.outputType === "page") throw Error("Video job requires a video request");
         if (
-          run.request.scriptItems === undefined &&
-          run.request.subtitles?.mode === "write" &&
+          request.scriptItems === undefined &&
+          request.subtitles?.mode === "write" &&
           !run.generatedSubtitles
         ) {
           this.emit(run, "subtitles", "Writing your subtitles…");
           run.generatedSubtitles = await prepareSubtitles({
-            request: run.request,
+            request: request,
             brief: BriefSchema.parse(run.brief),
             workspace: path.join(dataRoot, "runs", run.id, "brief"),
             signal: controller.signal,
@@ -1112,7 +1104,7 @@ export class Workflow {
         }
         await generateVideo({
           job,
-          request: resolvedSubtitlesRequest(run.request, run.generatedSubtitles),
+          request: resolvedSubtitlesRequest(request, run.generatedSubtitles),
           brief: BriefSchema.parse(run.brief),
           candidate: run.candidates.find((c) => c.id === job.candidateId)!,
           styles: this.catalog.styles,
@@ -1354,6 +1346,7 @@ export class Workflow {
     job.discardedRefinementJobIds = [...new Set([...deleted, ...discarded])];
     job.sourceJobId = source.id;
     job.refinementPrompt = feedback;
+    job.effectiveRequest = structuredClone(source.effectiveRequest ?? run.request);
     job.refinementAssetIds = references.map((asset) => asset.id);
     run.discardedRefinementJobIds = [
       ...new Set([

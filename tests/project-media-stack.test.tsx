@@ -1,5 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
+import { OpenPageButton } from "../src/client/domains/page/open-button";
 import { ProjectMediaStack } from "../src/client/components/project-media-stack";
 import { RequestSchema, type Run, type GenerationJob } from "../src/shared/contracts";
 const viewport = vi.hoisted(() => ({ visible: true }));
@@ -138,4 +139,55 @@ it("does not attach media or poster URLs until the project enters the viewport",
   expect(html).not.toContain("<video");
   expect(html).not.toContain("/api/artifacts/");
   expect(html).not.toContain("<iframe");
+});
+
+it("offers a direct page launch on a ready HTML card without downloading a bundle", () => {
+  const page: GenerationJob = {
+    id: "page-result",
+    runId: project.id,
+    candidateId: "page",
+    kind: "full",
+    phase: "ready",
+    outputType: "page",
+    workspace: "/tmp/example",
+    model: "fixture",
+    page: "artifacts/index.html",
+  };
+  const html = renderToStaticMarkup(
+    <ProjectMediaStack
+      project={{
+        ...project,
+        request: RequestSchema.parse({ instructions: "Example exhibit", outputType: "page" }),
+        jobs: [page],
+      }}
+      onOpen={() => {}}
+    />,
+  );
+  expect(html).toContain('aria-label="Open interactive page"');
+  expect(html).toContain("/api/pages/example-project/page-result/index.html");
+  expect(html).toContain('target="_blank"');
+  expect(html).toContain("noopener noreferrer");
+  expect(html).not.toContain("download=");
+  expect(html).not.toContain("Play film");
+});
+
+it("does not offer an HTML launch for videos, unfinished pages or missing output", () => {
+  expect(
+    renderToStaticMarkup(<OpenPageButton job={job("video", "full", "ready", "2026-01-01")} />),
+  ).toBe("");
+  const page: GenerationJob = {
+    id: "page",
+    runId: project.id,
+    candidateId: "page",
+    kind: "full",
+    phase: "generating",
+    outputType: "page",
+    workspace: "/tmp/example",
+    model: "fixture",
+    page: "artifacts/index.html",
+  };
+  expect(renderToStaticMarkup(<OpenPageButton job={page} />)).toBe("");
+  expect(
+    renderToStaticMarkup(<OpenPageButton job={{ ...page, phase: "ready", page: undefined }} />),
+  ).toBe("");
 });

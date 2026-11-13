@@ -2,6 +2,7 @@ import { z } from "zod";
 import { SpeechSettingsSchema, SpeechTrackSchema } from "./speech";
 
 export const narrationStatePath = "audio/narration.json";
+export const previousNarrationStatePath = "audio/previous-narration.json";
 export const narrationConfigPath = "audio/narration-config.json";
 export const NarrationConfigSchema = z.object({
   duration: z.number().positive().max(300),

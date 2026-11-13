@@ -77,6 +77,62 @@ it("installs an HTTPS archive and atomically updates to a new revision", async (
   expect((await installedSkill(fixture.skill, fixture.root)).manifest).toEqual(second.manifest);
   expect((await updateSkill(fixture.skill, fixture.root)).manifest).toEqual(second.manifest);
 });
+it("extracts only the registered repository subdirectory and retains notices and offline provenance", async () => {
+  const fixture = await repository();
+  const skill = { ...fixture.skill, sourceDirectory: "skills/example" };
+  fixture.update({
+    "skills/example/SKILL.md": "name: example\nFirst nested revision",
+    "skills/example/LICENSE": "MIT License",
+    "skills/example/NOTICE.md": "Third-party notices",
+    "skills/example/kit/index.ts": "export const example = true;",
+    "skills/example-other/SKILL.md": "not selected",
+    "SKILL.md": "name: unrelated",
+    LICENSE: "unrelated license",
+  });
+  const first = await updateSkill(skill, fixture.root);
+  expect(first.manifest.sourceDirectory).toBe("skills/example");
+  expect(Object.keys(first.manifest.files).sort()).toEqual([
+    "LICENSE",
+    "NOTICE.md",
+    "SKILL.md",
+    "kit/index.ts",
+  ]);
+  expect(await readFile(path.join(first.directory, "NOTICE.md"), "utf8")).toBe(
+    "Third-party notices",
+  );
+  await expect(
+    installedSkill({ ...skill, sourceDirectory: "skills/other" }, fixture.root),
+  ).rejects.toThrow("source directory");
+  fixture.download.mockRejectedValue(Error("Offline"));
+  await refreshSkills([skill], fixture.root, vi.fn());
+  expect((await installedSkill(skill, fixture.root)).manifest).toEqual(first.manifest);
+});
+
+it.each(["../example", "/example", "skills/../example", "skills\\example", "skills//example", "."])(
+  "rejects unsafe repository subdirectory %s before downloading",
+  async (sourceDirectory) => {
+    const fixture = await repository();
+    await expect(
+      updateSkill({ ...fixture.skill, sourceDirectory }, fixture.root),
+    ).rejects.toThrow();
+    expect(fixture.download).not.toHaveBeenCalled();
+  },
+);
+
+it("does not use a repository root license for a missing or unlicensed subdirectory", async () => {
+  const fixture = await repository();
+  fixture.update({
+    "SKILL.md": "name: example",
+    LICENSE: "MIT",
+    "nested/SKILL.md": "name: example",
+  });
+  await expect(
+    updateSkill({ ...fixture.skill, sourceDirectory: "nested" }, fixture.root),
+  ).rejects.toThrow("needs SKILL.md and LICENSE");
+  await expect(
+    updateSkill({ ...fixture.skill, sourceDirectory: "missing" }, fixture.root),
+  ).rejects.toThrow("needs SKILL.md and LICENSE");
+});
 it("keeps a verified installation when the upstream becomes unavailable", async () => {
   const fixture = await repository();
   await updateSkill(fixture.skill, fixture.root);

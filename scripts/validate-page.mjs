@@ -98,6 +98,21 @@ try {
       )
         failures.push("Offscreen motion is still running");
     }
+    // Reload-only checks miss stale pixel transforms after resizing an already-used page.
+    const resizedWidth = width === 1280 ? 390 : 1280;
+    await page.setViewportSize({ width: resizedWidth, height: 800 });
+    await page.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+    );
+    const resizeOverflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > innerWidth + 2,
+    );
+    if (resizeOverflow)
+      failures.push(`Horizontal overflow after live resize from ${width}px to ${resizedWidth}px`);
+    await page.setViewportSize({ width, height: 800 });
+    await page.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+    );
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.waitForTimeout(80);
     const reducedMotion = await page.evaluate(() =>
@@ -122,7 +137,14 @@ try {
       );
     await page.emulateMedia({ reducedMotion: "no-preference" });
     await page.evaluate(() => scrollTo(0, 0));
-    checks.push({ width, ...layout, motionTargets: await targets.count(), reducedMotion });
+    checks.push({
+      width,
+      ...layout,
+      resizedWidth,
+      resizeOverflow,
+      motionTargets: await targets.count(),
+      reducedMotion,
+    });
     await page.screenshot({
       path: path.join(
         outputWorkspace,

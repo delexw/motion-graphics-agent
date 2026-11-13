@@ -478,6 +478,8 @@ it.each(["claude", "codex"] as const)(
             "search_pool",
             "read_pool_entry",
             "inspect_technologies",
+            "run_python_asset",
+            "select_project_technologies",
             "prepare_technology",
             "prepare_technology_stylesheet",
           ],
