@@ -34,6 +34,10 @@ before starting a dependency. They never change the server's own environment.
 
 ## SDK and command behavior
 
+- DeepSeek uses the official Harness SDK with a project-local home, per-invocation
+  policy overlay and explicit environment. Its [provider guide](../src/server/agents/deepseek/README.md)
+  records tool-stage enforcement, authentication and current limitations.
+
 - Claude uses its project-local home. Existing file-based credentials are copied, not linked;
   the normal macOS Keychain login can seed a private project credential file containing only
   the Claude login. Before each SDK call, the login is synchronized and its access token is

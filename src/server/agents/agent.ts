@@ -43,5 +43,6 @@ export interface AgentExecutionOptions extends Omit<
 
 export interface Agent {
   readonly provider: Provider;
+  readonly defaultReasoningEffort?: AgentTurnOptions<unknown>["reasoningEffort"];
   run(options: AgentExecutionOptions): Promise<{ result: unknown; sessionId?: string }>;
 }

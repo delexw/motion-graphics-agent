@@ -96,8 +96,8 @@ done
 
 step 'Installing locked app dependencies'
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci
-step 'Refreshing Claude and Codex SDKs to their latest releases'
-npm update @anthropic-ai/claude-agent-sdk @openai/codex @openai/codex-sdk
+step 'Refreshing agent SDKs and the DeepSeek cost plugin within compatible ranges'
+npm update @anthropic-ai/claude-agent-sdk @openai/codex @openai/codex-sdk @deepseek-ai/dsh-sdk-client @deepseek-ai/dsh @deepseek-ai/dsh-llm dsh-cost-meter
 if [[ ! -f .env.local ]]; then
   cp .env.example .env.local
   echo 'Created .env.local. Add your JEV/provider configuration there.'

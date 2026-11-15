@@ -285,58 +285,75 @@ export async function createApp(options: { store?: Store } = {}) {
         { label: "Jev pricing", url: "https://docs.typesafe.ai/models" },
       ],
       models: [
-        { function: "Request/settings compatibility check", claude: jevModel, codex: jevModel },
+        {
+          function: "Request/settings compatibility check",
+          claude: jevModel,
+          codex: jevModel,
+          deepseek: jevModel,
+        },
         {
           function: "Refinement settings",
           claude: "Selected main model; version-local explicit changes before implementation",
           codex: "Selected main model; version-local explicit changes before implementation",
+          deepseek: "Selected main model; version-local explicit changes before implementation",
         },
         {
           function: "Brief asset self-review and alignment repair",
           claude: textModels.claude,
           codex: textModels.codex,
+          deepseek: textModels.deepseek,
         },
         {
           function: "Full-video result quality review",
-          claude: textModels.claude,
-          codex: textModels.codex,
+          claude: "Selected main model",
+          codex: "Selected main model",
+          deepseek: "Selected main model",
         },
         {
           function: "Preview video planning",
           claude: "Not used",
           codex: "gpt-6.1-sol before each preview",
+          deepseek: "Selected main model before each preview",
         },
         {
           function: "Full video planning",
           claude: "Selected main model before implementation, in the same session",
           codex: "Selected main model before implementation, in the same session",
+          deepseek: "Selected main model before implementation, in the same session",
         },
         {
           function: "Previews and full generation",
           claude: models.claude,
           codex: models.codex,
+          deepseek: models.deepseek,
         },
         {
           function:
             "Brief preparation, Motion Graphic information extraction and generated subtitles",
           claude: textModels.claude,
           codex: textModels.codex,
+          deepseek: textModels.deepseek,
         },
         {
           function: "Motion Graphic combination proposals",
           claude: combinationModels.claude,
           codex: combinationModels.codex,
+          deepseek: combinationModels.deepseek,
         },
         {
           function: "Combination evaluation and direction selection",
           claude: jevModel,
           codex: jevModel,
+          deepseek: jevModel,
         },
         ...Object.entries(correctionTypeLabels).map(([focus, label]) => ({
           function: label,
           claude: ["pacing", "style"].includes(focus)
             ? "Selected main model"
             : `${textModels.claude} for eligible fixes; selected main model otherwise`,
+          deepseek: ["pacing", "style"].includes(focus)
+            ? "Selected main model"
+            : `${textModels.deepseek} for eligible fixes; selected main model otherwise`,
           codex: ["pacing", "style"].includes(focus)
             ? "Selected main model"
             : `${textModels.codex} for eligible fixes; selected main model otherwise`,

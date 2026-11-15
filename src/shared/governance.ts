@@ -91,7 +91,7 @@ export interface GovernanceReport {
   settingsChecks?: import("./request-settings-review").SettingsCheckRecord[];
   generatedAt: string;
   projects: GovernanceProject[];
-  models: { function: string; claude: string; codex: string }[];
+  models: { function: string; claude: string; codex: string; deepseek?: string }[];
   pricingDate: string;
   pricingSources: { label: string; url: string }[];
 }

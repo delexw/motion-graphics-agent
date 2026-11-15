@@ -22,6 +22,8 @@ Project npm defaults save caret ranges (`save-exact=false`, `save-prefix=^`). np
 
 The Chinese Pocket TTS requirements allow compatible library upgrades and require PyTorch 2.13.0+ within major 2 to cover the three reported PyTorch advisories. Current PyTorch metadata requires Python 3.11+. This changes future dependency resolution; it does not replace or certify an already installed speech environment. Rebuild it with the setup command before relying on synthesis. Pocket TTS stays below 3.1 for Mandarin because the community checkpoint's inference code breaks on 3.1 and later. Model/code revisions and dependency-library version policies are separate contracts.
 
+- DeepSeek Harness has scoped compatible overrides for Undici 8.12.2+, MCP client 2.3.0+ and the root-supported `fflate` version. They patch the added runtime chain without downgrading unrelated dependencies; reassess when upstream minimums change.
+
 ## Dismissal policy
 
 Keep an alert open while a reachable or potentially relevant vulnerable dependency remains. A lower severity, development scope or lack of a fix alone does not establish that it is safe to dismiss. Dismiss only with package/advisory-specific evidence and a recorded reason, such as a verified false-positive dependency match or proof that the vulnerable functionality is not used. Accepted risk is a separate documented decision. Do not add blanket ignores or disable security updates to reduce the alert count.

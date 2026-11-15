@@ -1,6 +1,6 @@
 # Built-in agent capabilities
 
-These are MCP tools registered directly with the Claude Agent SDK and Codex SDK on each turn.
+These are MCP tools registered with the Claude, Codex and DeepSeek SDK adapters on each turn.
 They are separate from authoring skills (`../bundled-skills/`), Motion Graphics and rendering engines.
 
 | Capability                                                              | Registration                                     | Guidance                                 | Implementation                                                                                                                                                                   |
@@ -31,8 +31,8 @@ does not disable SDK built-in tools.
 | Local evidence inspection and scoped external inspection                               | Necessary native read tools plus read-only custom tools; no installation, mutation or generation.                                          |
 | Project implementation, local checks and capability-owned operations                   | Necessary native authoring tools plus stage-scoped custom tools within the job/runtime boundary.                                           |
 
-A new custom-tools-only mode requires explicit enforcement in both provider
-adapters. There is currently no shared `customToolsOnly` option. `textOnly` is not
+A new custom-tools-only mode requires explicit enforcement in every provider
+adapter. There is currently no shared `customToolsOnly` option. `textOnly` is not
 that mode: it removes task MCP tools too. If the SDK cannot enforce a requested
 restriction, block the turn or choose a supported narrower route. Never describe
 an enabled default tool as disabled because the prompt says not to use it.
@@ -51,9 +51,12 @@ turns; it does not authorize task tools. Narration and Audio Studio are unavaila
 in read-only/text-only turns. Native web tools remain disabled; research uses the
 verified AnySearch skill when file/command tools are permitted.
 
-Enforcement belongs to [Claude](../claude-agent.ts), [Codex](../codex-agent.ts), the
+DeepSeek uses the same capability registry through a separate [Harness SDK adapter](../deepseek/README.md). It restricts native and MCP tool names before request assembly and checks them again at dispatch; unsupported MCP registration blocks the turn.
+
+Enforcement belongs to [Claude](../claude-agent.ts), [Codex](../codex-agent.ts),
+[DeepSeek](../deepseek/README.md), the
 [provider entry](../providers.ts) and [capability registration](registry.ts).
-Verify dispatch configuration and forbidden-tool behavior for both providers.
+Verify dispatch configuration and forbidden-tool behavior for every supported provider.
 Native plan mode is not equivalent to the ordinary read-only allowlist. Prompt
 instructions are not SDK permissions or handler access checks.
 

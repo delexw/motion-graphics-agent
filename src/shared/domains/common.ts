@@ -1,3 +1,4 @@
+import { agentProviderIds } from "../agent-providers";
 import { ProjectReuseOriginSchema } from "../project-reuse";
 import type { AudioAuthoringSelection } from "../agents/audio-authoring";
 import type { AuthoringResourceSelection } from "../agents/authoring-resources";
@@ -8,7 +9,7 @@ import type { ErrorCode } from "../errors";
 
 import { z } from "zod";
 import { BriefRequirementsSchema } from "../brief-sections";
-export const ProviderSchema = z.enum(["codex", "claude"]);
+export const ProviderSchema = z.enum(agentProviderIds);
 export type Provider = z.infer<typeof ProviderSchema>;
 export const SharedRequestSchema = z.object({
   projectReuse: ProjectReuseOriginSchema.optional(),

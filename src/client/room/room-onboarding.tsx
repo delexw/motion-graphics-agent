@@ -1,3 +1,4 @@
+import { agentProviderIds } from "../../shared/agent-providers";
 import { SettingsConflictNotice } from "../components/settings-conflict-notice";
 import { SettingsConflictError, type SettingsConflict } from "../../shared/request-settings-review";
 import { errorCode } from "../../shared/errors";
@@ -585,11 +586,11 @@ export function RoomOnboarding({
               <Select
                 aria-label={translateUi("Model")}
                 value={request.provider}
-                options={(["codex", "claude"] as const).map((value) => ({
+                options={agentProviderIds.map((value) => ({
                   value,
                   label: providerDisplayName(value),
                 }))}
-                onChange={(provider) => patch({ provider })}
+                onChange={(provider) => patch({ provider, mainModel: undefined })}
               />
             </label>
             <label>

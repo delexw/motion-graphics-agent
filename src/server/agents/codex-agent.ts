@@ -73,6 +73,7 @@ const codexTransportRetries = { request_max_retries: 6, stream_max_retries: 8 } 
 
 export const codexAgent: Agent = {
   provider: "codex",
+  defaultReasoningEffort: "medium",
   async run(options) {
     const { workspace, signal, prompt, systemPrompt, jsonSchema, onEvent, model } = options;
     signal.throwIfAborted();
@@ -139,7 +140,7 @@ export const codexAgent: Agent = {
         ...(!options.readOnly
           ? { additionalDirectories: [projectRuntimeFiles(workspace, "agent").root] }
           : {}),
-        ...(options.reasoningEffort ? { modelReasoningEffort: options.reasoningEffort } : {}),
+        modelReasoningEffort: options.reasoningEffort ?? codexAgent.defaultReasoningEffort,
       };
       signal.throwIfAborted();
       const thread = sessionId ? client.resumeThread(sessionId, opts) : client.startThread(opts);

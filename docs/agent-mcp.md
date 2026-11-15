@@ -196,3 +196,12 @@ separately: language selection does not turn either switch on. Both default off 
 the user explicitly enables them. Reuse answers the user already gave. This is tool
 interaction guidance; it does not silently change production settings or add a new
 provider call.
+
+## DeepSeek projects
+
+The creation settings accept `provider: "deepseek"` and the optional
+`mainModel: "deepseek-flash"`. The backend reads `DEEPSEEK_API_KEY`; never put keys
+in the idea, tool arguments or project attachments. Dedicated language, renderer
+and output settings keep their normal contracts. See [DeepSeek setup and limits](../src/server/agents/deepseek/README.md)
+for the SDK runtime, image support, API-key-only authentication and labelled cost
+estimates. This does not imply that the external MCP client uses DeepSeek.

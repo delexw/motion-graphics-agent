@@ -16,7 +16,7 @@
 
 <p align="center">
   <b>一个私人的创作小房间，把一个想法变成一段动态图形短片。</b><br>
-  使用 <a href="https://platform.claude.com/docs/en/about-claude/models/overview">Claude Opus 5.5</a> 或 <a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol">GPT-6.1 Sol</a>。
+  使用 <a href="https://platform.claude.com/docs/en/about-claude/models/overview">Claude Opus 5.5</a>、<a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol">GPT-6.1 Sol</a> 或 <a href="https://api-docs.deepseek.com/">DeepSeek Flash</a>。
 </p>
 
 <p align="center">
@@ -66,6 +66,16 @@
 这里只保留最近三条按日期归档的更新记录，不按连续自然日计算。更早的记录见[变更日志](CHANGELOG.md#daily-update-archive)，版本发布记录见[完整 changelog](CHANGELOG.md)。
 
 <details>
+<summary>2026-11-16</summary>
+
+- **DeepSeek 提供方：**通过官方 Harness SDK，使用 DeepSeek Flash 进行文本和图像辅助创作。配置 `DEEPSEEK_API_KEY`；界面、MCP 和 Governance 共用模型路由，暂未接入 OAuth。
+- **费用记录：**隔离运行时加载社区 `dsh-cost-meter` 插件。Governance 展示每次调用的美元估算，按会话与事件序号去重，缺少用量或价格时保留未知。详见[配置、安全与限制](src/server/agents/deepseek/README.md)。
+- **SDK 执行修复：**DeepSeek 修改版本时显式切换工作目录，并授予当前创作目录写权限；工具完成与失败事件保留调用 ID。Codex 默认使用 medium 推理，显式指定的级别仍然有效。
+- **准备活动：**复用已有检查点组件展示已保存的准备步骤，避免完成后出现空活动列表。
+
+</details>
+
+<details>
 <summary>2026-11-15</summary>
 
 - **从成品版本新建项目：**分别选择继承设计、输出、语音和配乐设置，同时替换主题与脚本。界面与 MCP 共用草稿创建、所有权检查和重试保护；保留视觉方向时直接制作全片，不再生成方向预览。
@@ -85,17 +95,6 @@
 - **逐语言媒体与版本修改：**旁白和字幕默认关闭，按语言分别确认。修改版本可切换受支持的语音提供方及输出设置，不再静默沿用旧版本配置。
 - **Stageshow 样式边界：**用户的界面样式要求优先；未指定时保留 Stageshow 默认外观，所选 MG 只负责 demo 内动效。规划、修复和结果审阅共用同一职责规则。
 - **成品展示与依赖维护：**展示页加入 Playful Cat 和 Swiss 产品演示的实际 MP4。启动与安装共用依赖升级流程，包含 Audio Studio；[开发指导](AGENTS.md)记录模块归属、工具边界及第三方调用的 mock 测试要求。
-
-</details>
-
-<details>
-<summary>2026-11-12</summary>
-
-- **Stageshow 产品 demo：**通过现有安装器下载到 Git 忽略的运行目录，源码只保留注册、适配指导和测试。JEV 可选择它创作模拟 UI；用户要求可覆盖默认界面样式，所选 MG 只负责 demo 内的动效、节奏和转场；不替代真实录制或渲染器。保留 MIT 与第三方素材 notices，视频采用绝对时间状态。[接入说明](docs/stageshow.md)。
-
-- **开放的动作检索：**直接制作和生成方向共用路由表，指导模型读取所选 Motion Graphic、解析明确的 `@` 引用，并按场景需要搜索完整动作库。风格的候选动作和动作的 `good_fit` 列表只是建议，不是白名单；保留所选视觉风格、用户要求及场景范围，无须遍历或强制使用动作。
-
-- **五种可组合的动效技法：**液态融合与分裂（`motion-051`）、路径跟随与路径文字（`motion-052`）、三维瓷砖翻转（`motion-053`）、粒子聚合成字（`motion-054`）和速度动态模糊（`motion-055`）。每种都有可跳转的浏览器预览、中文元数据和逐帧分析记录。对十二种常见技法的审阅发现，其余七种已有覆盖。目录现有 55 个动作。
 
 </details>
 
@@ -179,13 +178,13 @@ Storyboard 页面把它回放成一段小小的“幕后排练”：一位火柴
 
 ## 分工
 
-| 工作                                                | Claude 项目                                                                             | Codex 项目                                                               |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| 简报、参考核对、Motion Graphic 摘要、歌词、简单修复 | [Claude Haiku 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)    | [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna)   |
-| 组合提案、预览、完整成片、节奏/风格修复             | **[Claude Opus 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)** | [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol) |
-| 成片结果审阅                                        | 与构建该结果的主模型相同                                                                | 与构建该结果的主模型相同                                                 |
-| 给方向打分并挑选                                    | [JEV](https://docs.typesafe.ai/models)（[Typesafe](https://docs.typesafe.ai)）          | [JEV](https://docs.typesafe.ai/models)                                   |
-| 记录每次调用、token 数和费用估算                    | 治理报告（Governance）                                                                  | 治理报告                                                                 |
+| 工作                                                | Claude 项目                                                                             | Codex 项目                                                               | DeepSeek 项目                          |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------- |
+| 简报、参考核对、Motion Graphic 摘要、歌词、简单修复 | [Claude Haiku 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)    | [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna)   | DeepSeek Flash                         |
+| 组合提案、预览、完整成片、节奏/风格修复             | **[Claude Opus 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)** | [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol) | DeepSeek Flash                         |
+| 成片结果审阅                                        | 与构建该结果的主模型相同                                                                | 与构建该结果的主模型相同                                                 | 与构建成品相同的模型                   |
+| 给方向打分并挑选                                    | [JEV](https://docs.typesafe.ai/models)（[Typesafe](https://docs.typesafe.ai)）          | [JEV](https://docs.typesafe.ai/models)                                   | [JEV](https://docs.typesafe.ai/models) |
+| 记录每次调用、token 数和费用估算                    | 治理报告（Governance）                                                                  | 治理报告                                                                 | 治理报告（Governance）                 |
 
 更多细节和流程图见 [docs/architecture.md](docs/architecture.md)（英文）。
 
@@ -193,11 +192,13 @@ Storyboard 页面把它回放成一段小小的“幕后排练”：一位火柴
 
 ## 快速开始
 
-macOS 可以运行 [install.sh](install.sh)，一次安装缺少的系统工具、锁定版本的 npm 依赖（Claude 和 Codex SDK 更新到 `latest`）、独立的 Chrome for Testing、OpenScreen、Caveman、本地旁白，以及 Audio Studio MCP 和模型权重，然后构建应用。缺少系统工具时使用 Homebrew，旁白使用托管的 Python 3.11。已有配置和应用会保留。默认包含较大的模型下载，可用 `./install.sh --help` 查看选项。安装和后端启动使用同一套[托管依赖更新流程](docs/dependency-upgrades.md)（英文）。另外还需要两类访问权限：
+macOS 可以运行 [install.sh](install.sh)，一次安装缺少的系统工具、锁定版本的 npm 依赖（刷新 Claude/Codex SDK，以及兼容范围内的 DeepSeek SDK、运行时和费用插件）、独立的 Chrome for Testing、OpenScreen、Caveman、本地旁白，以及 Audio Studio MCP 和模型权重，然后构建应用。缺少系统工具时使用 Homebrew，旁白使用托管的 Python 3.11。已有配置和应用会保留。默认包含较大的模型下载，可用 `./install.sh --help` 查看选项。安装和后端启动使用同一套[托管依赖更新流程](docs/dependency-upgrades.md)（英文）。另外还需要两类访问权限：
 
 - **模型提供方：用 API key，或者用已经登录的订阅账号都可以。** Claude：设置 `ANTHROPIC_API_KEY` 或
   `CLAUDE_CODE_OAUTH_TOKEN`，或者直接在这台 Mac 上登录 [Claude Code](https://code.claude.com/docs/en/overview)。
   Codex：设置 `CODEX_API_KEY` 或 `OPENAI_API_KEY`，或者登录 [Codex CLI](https://developers.openai.com/codex)（`~/.codex/auth.json`）。
+  DeepSeek：在 `.env.local` 设置 `DEEPSEEK_API_KEY`，暂未接入 Harness OAuth。
+  [DeepSeek 配置与限制](src/server/agents/deepseek/README.md)说明 Flash 默认模型、工具权限和费用估算。
   订阅可以用，但订阅用量和剩余百分比的显示我还没测过。
 - **[JEV](https://docs.typesafe.ai/models) 需要单独配置。** 在 `.env.local` 里填 `TYPESAFE_API_KEY`。
   它用于风格方向评估以及视觉、音频能力选择。手动选择 Motion Graphic 会跳过风格排名，能力选择仍独立进行。

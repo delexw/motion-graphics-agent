@@ -19,7 +19,8 @@ const node=(id,text,hasChildren=false)=>({id,scope:'project:job:',jobId:'job',ki
 window.fetch=async(url,options)=>{window.calls.push(String(url));if(window.holdActivity)await new Promise(resolve=>window.releaseActivity=()=>{window.holdActivity=false;resolve();});const query=new URL(String(url),'http://localhost').searchParams;const parents=query.get('path');const items=parents==='10.11'?[node(12,'Checking playback…')]:parents==='10'?[node(11,'Rendering your video…',true)]:[node(10,'Creating your video…',true),{...node(20,'Something interrupted this step. You can retry it.'),retryable:true,status:'stopped'}];if(!parents&&window.appendActivity)items.push(node(30,'New activity'));return new Response(JSON.stringify({items,lastEventId:501,retryItemId:20}),{headers:{'Content-Type':'application/json'}});};
 const run={id:'project',createdAt:'2026-01-01',phase:'generating',request:RequestSchema.parse({instructions:'Explain an original topic'}),candidates:[{id:'direction',displayTitle:'Example',styleId:'example'}],jobs:[{id:'job',runId:'project',candidateId:'direction',kind:'full',phase:'failed',workspace:'/unused',model:'example',duration:20}]};
 run.jobs.push({...run.jobs[0],id:'earlier-job',phase:'rendering'});
-function App(){const[active,setActive]=useState(false);return React.createElement(React.Fragment,null,React.createElement('button',{id:'activity',onClick:()=>setActive(true)},'Activity'),React.createElement('button',{id:'conversation',onClick:()=>setActive(false)},'Conversation'),active&&React.createElement('div',{className:'room-project-scroll',style:{height:500,overflow:'auto'}},React.createElement(ProjectActivityPanel,{run,onRetry:id=>window.retries.push(id)})));}
+const preparationRun={...run,preparation:{fingerprint:'fixture',checkpoints:{inputs:{state:'completed',completedAt:'2026-01-01T00:00:00Z',output:{}},brief:{state:'completed',completedAt:'2026-01-01T00:00:01Z',output:{variant:'title-only',value:{subject:'An example topic'}}}}}};
+function App(){const[active,setActive]=useState(false);const[preparation,setPreparation]=useState(false);return React.createElement(React.Fragment,null,React.createElement('button',{id:'preparation',onClick:()=>{setPreparation(true);setActive(true);}},'Preparation'),React.createElement('button',{id:'activity',onClick:()=>setActive(true)},'Activity'),React.createElement('button',{id:'conversation',onClick:()=>setActive(false)},'Conversation'),active&&React.createElement('div',{className:'room-project-scroll',style:{height:500,overflow:'auto'}},React.createElement(ProjectActivityPanel,{run:preparation?preparationRun:run,onRetry:id=>window.retries.push(id)})));}
 createRoot(document.getElementById('root')).render(React.createElement(App));</script>`;
 it.skipIf(!browserExecutablePath())(
   "loads only visible activity pages, retries the right job and disposes streams on leaving",
@@ -171,6 +172,28 @@ it.skipIf(!browserExecutablePath())(
       await page.waitForFunction(() => Reflect.get(window, "streams")[0].closed);
       await page.click("#conversation");
       await page.waitForFunction(() => !document.querySelector(".activity-context-history"));
+      const previousCalls = await page.evaluate(() => Reflect.get(window, "calls").length);
+      await page.click("#preparation");
+      await page.waitForFunction(() =>
+        [...document.querySelectorAll(".room-activity-heading")].find((el) =>
+          el.textContent?.includes("Project preparation"),
+        ),
+      );
+      await page.evaluate(() => {
+        const element = [...document.querySelectorAll(".room-activity-heading")].find((el) =>
+          el.textContent?.includes("Project preparation"),
+        );
+        if (!(element instanceof HTMLElement)) throw Error("Preparation header not found");
+        element.click();
+      });
+      await page.waitForFunction(() =>
+        document.querySelector(".room-activity-detail")?.textContent?.includes("Project title"),
+      );
+      const preparationText = await page.$eval(".room-activity-detail", (el) => el.textContent!);
+      expect(preparationText).toContain("Reference material");
+      expect(preparationText).toContain("Project title");
+      expect(preparationText).not.toContain("No activity has been recorded yet.");
+      expect(await page.evaluate(() => Reflect.get(window, "calls").length)).toBe(previousCalls);
       expect(errors).toEqual([]);
     } finally {
       await browser.close();

@@ -1,5 +1,5 @@
 import type { Run } from "../../shared/contracts";
-import { RoomActivity } from "./room-activity";
+import { RoomActivity, RoomActivityContextDetail } from "./room-activity";
 import type { RoomActivityContext } from "./project-stages";
 import { ActivityBranchView } from "./activity-branch";
 
@@ -19,13 +19,17 @@ export function ProjectActivityPanel({
         run={run}
         events={[]}
         contexts={contexts}
-        renderContext={(context) => (
-          <ActivityBranchView
-            run={run}
-            jobId={run.jobs.some((job) => job.id === context.key) ? context.key : ""}
-            onRetry={onRetry}
-          />
-        )}
+        renderContext={(context) =>
+          context.checkpoints.length ? (
+            <RoomActivityContextDetail run={run} context={context} onRetry={onRetry} />
+          ) : (
+            <ActivityBranchView
+              run={run}
+              jobId={run.jobs.some((job) => job.id === context.key) ? context.key : ""}
+              onRetry={onRetry}
+            />
+          )
+        }
       />
     </div>
   );

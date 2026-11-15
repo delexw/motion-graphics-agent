@@ -829,7 +829,7 @@ it("does not carry an earlier overload across a later native retry with a differ
 });
 
 it.each(["claude", "codex"] as const)(
-  "leaves %s reasoning effort unset by default and forwards explicit task overrides",
+  "uses the %s SDK effort default and preserves explicit task overrides",
   async (provider) => {
     sdk.query.mockImplementation(async function* () {
       yield {
@@ -849,7 +849,7 @@ it.each(["claude", "codex"] as const)(
       };
       yield { type: "turn.completed", usage: {} };
     });
-    for (const reasoningEffort of [undefined, "low", "medium"] as const) {
+    for (const reasoningEffort of [undefined, "low", "medium", "high", "xhigh"] as const) {
       const onEvent = vi.fn();
       await agentTurn({
         provider,
@@ -865,12 +865,13 @@ it.each(["claude", "codex"] as const)(
           ? sdk.query.mock.calls.at(-1)![0].options
           : sdk.threadOptions.mock.calls.at(-1)![0];
       const field = provider === "claude" ? "effort" : "modelReasoningEffort";
-      if (reasoningEffort) expect(native[field]).toBe(reasoningEffort);
+      const effectiveEffort = reasoningEffort ?? (provider === "codex" ? "medium" : undefined);
+      if (effectiveEffort) expect(native[field]).toBe(effectiveEffort);
       else expect(native).not.toHaveProperty(field);
       const invocation = onEvent.mock.calls
         .map(([event]) => event)
         .find((event) => event.type === "invocation");
-      expect(invocation.data.prompt.reasoningEffort).toBe(reasoningEffort ?? null);
+      expect(invocation.data.prompt.reasoningEffort).toBe(effectiveEffort ?? null);
     }
   },
 );

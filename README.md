@@ -16,7 +16,7 @@ and Motion Graphics, save an Assistant draft, and explicitly start a build.
 
 <p align="center">
   <b>A personal creative room where an idea turns into a short motion-graphics film.</b><br>
-  Create with <a href="https://platform.claude.com/docs/en/about-claude/models/overview">Claude Opus 5.5</a> or <a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol">GPT-6.1 Sol</a>.
+  Create with <a href="https://platform.claude.com/docs/en/about-claude/models/overview">Claude Opus 5.5</a>, <a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol">GPT-6.1 Sol</a> or <a href="https://api-docs.deepseek.com/">DeepSeek Flash</a>.
 </p>
 
 <p align="center">
@@ -76,6 +76,16 @@ links and [local gallery](docs/showcase.html) remain available for local viewing
 The three most recent dated entries are listed here, regardless of gaps between dates. See the [changelog](CHANGELOG.md#daily-update-archive) for older entries and [release history](CHANGELOG.md).
 
 <details>
+<summary>2026-11-16</summary>
+
+- **DeepSeek provider:** Select DeepSeek Flash for text and image-based authoring through the official Harness SDK. Configure `DEEPSEEK_API_KEY`; UI, MCP and Governance share provider routing. OAuth is not integrated.
+- **Cost accounting:** The isolated SDK runtime loads the community `dsh-cost-meter` plugin. Governance labels per-call USD estimates, counts stable session/sequence records once, and preserves unknown usage and prices. See [setup, security and limits](src/server/agents/deepseek/README.md).
+- **SDK execution fixes:** Resumed DeepSeek refinements explicitly switch working directory and grant the current authoring workspace. Tool completion/error events retain their call IDs. Codex defaults to medium reasoning while preserving explicit effort overrides.
+- **Preparation activity:** Completed preparation displays the existing saved checkpoints instead of an empty generic event list.
+
+</details>
+
+<details>
 <summary>2026-11-15</summary>
 
 - **New project from a finished version:** Choose which design, output, voice and music settings to retain while replacing the topic and script. UI and MCP share draft creation, ownership checks and retry protection; keeping the visual direction builds the full film directly without new direction previews.
@@ -95,17 +105,6 @@ The three most recent dated entries are listed here, regardless of gaps between 
 - **Per-language media and refinements:** Narration and subtitles start disabled and are confirmed independently for each language. Version refinements can change supported voice providers and output settings without silently keeping an older profile.
 - **Stageshow appearance boundaries:** User UI styling overrides Stageshow defaults; otherwise the demo retains its native appearance. Selected Motion Graphics contribute motion inside the demo. Planning, repair and result review use the same scene ownership rule.
 - **Showcase and dependency maintenance:** The gallery includes the Playful Cat film and Swiss product demo as playable MP4s. Startup and installation share the dependency upgrade lifecycle, including Audio Studio; [agent guidance](AGENTS.md) documents module ownership, tool limits and mocked third-party tests.
-
-</details>
-
-<details>
-<summary>2026-11-12</summary>
-
-- **Stageshow product demos:** An optional startup-installed skill for authored UI walkthroughs with the selected MG contributing motion only. Upstream files stay Git-ignored; source contains only registration, adaptation guidance and tests. It preserves real-capture boundaries, renderer timing and third-party asset notices. See [integration and licensing](docs/stageshow.md).
-
-- **Open motion discovery:** Direct builds and generated directions share a route table for reading selected Motion Graphics, resolving explicit `@` references and searching the full motion pool. Style candidates and motion `good_fit` lists are recommendations, not allowlists. The model preserves the selected visual identity, user requirements and scene scope; it need not inspect every motion or use one.
-
-- **Five composable motion techniques:** Metaball Merge & Split (`motion-051`), Path Follow & Text on Path (`motion-052`), 3D Tile Flip (`motion-053`), Particle Glyph Assembly (`motion-054`) and Velocity Motion Blur (`motion-055`). Each has a seekable explorer preview, Chinese metadata and a frame-analysis record. A review of twelve common techniques found the other seven already covered. The catalog now has 55 motions.
 
 </details>
 
@@ -200,13 +199,13 @@ an evaluator and repairs.
 
 ## Who does what
 
-| Job                                                                          | Claude projects                                                                         | Codex projects                                                           |
-| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Brief, reference checks, Motion Graphic summaries, subtitles, simple repairs | [Claude Haiku 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)    | [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna)   |
-| Combination proposals, previews, the full film, pacing/style repairs         | **[Claude Opus 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)** | [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol) |
-| Finished-result review                                                       | Same model that built the result                                                        | Same model that built the result                                         |
-| Scoring and choosing directions                                              | [JEV](https://docs.typesafe.ai/models) via [Typesafe](https://docs.typesafe.ai)         | [JEV](https://docs.typesafe.ai/models)                                   |
-| Recording every call, token count and cost estimate                          | Governance report                                                                       | Governance report                                                        |
+| Job                                                                          | Claude projects                                                                         | Codex projects                                                           | DeepSeek projects                      |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------- |
+| Brief, reference checks, Motion Graphic summaries, subtitles, simple repairs | [Claude Haiku 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)    | [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna)   | DeepSeek Flash                         |
+| Combination proposals, previews, the full film, pacing/style repairs         | **[Claude Opus 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)** | [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol) | DeepSeek Flash                         |
+| Finished-result review                                                       | Same model that built the result                                                        | Same model that built the result                                         | Same model that built the result       |
+| Scoring and choosing directions                                              | [JEV](https://docs.typesafe.ai/models) via [Typesafe](https://docs.typesafe.ai)         | [JEV](https://docs.typesafe.ai/models)                                   | [JEV](https://docs.typesafe.ai/models) |
+| Recording every call, token count and cost estimate                          | Governance report                                                                       | Governance report                                                        | Governance report                      |
 
 More detail, including the workflow diagrams, is in [docs/architecture.md](docs/architecture.md).
 
@@ -214,12 +213,14 @@ More detail, including the workflow diagrams, is in [docs/architecture.md](docs/
 
 Native Windows 10/11 setup is experimental and has its own [installation and verification guide](docs/windows.md); WSL is not required.
 
-On macOS, [install.sh](install.sh) installs missing system prerequisites, locked npm dependencies (with Claude and Codex SDKs refreshed to `latest`), isolated Chrome for Testing, OpenScreen, Caveman, local speech providers and Audio Studio MCP with model weights, then builds the app. It uses Homebrew when system tools are missing and managed Python 3.11 for speech. Existing configuration and installed apps are preserved. The default setup includes large model downloads; see `./install.sh --help` for options. Setup and backend launches share the [managed dependency update lifecycle](docs/dependency-upgrades.md). You still need two kinds of access:
+On macOS, [install.sh](install.sh) installs missing system prerequisites, locked npm dependencies (refreshing Claude/Codex SDKs plus the compatible DeepSeek SDK/runtime and cost-plugin ranges), isolated Chrome for Testing, OpenScreen, Caveman, local speech providers and Audio Studio MCP with model weights, then builds the app. It uses Homebrew when system tools are missing and managed Python 3.11 for speech. Existing configuration and installed apps are preserved. The default setup includes large model downloads; see `./install.sh --help` for options. Setup and backend launches share the [managed dependency update lifecycle](docs/dependency-upgrades.md). You still need two kinds of access:
 
 - **A model provider, by API key or by an existing signed-in subscription.** For Claude, set
   `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`, or just be signed in to
   [Claude Code](https://code.claude.com/docs/en/overview) on this Mac. For Codex, set `CODEX_API_KEY` or
   `OPENAI_API_KEY`, or be signed in to the [Codex CLI](https://developers.openai.com/codex) (`~/.codex/auth.json`).
+  For DeepSeek, set `DEEPSEEK_API_KEY` in `.env.local`; Harness OAuth is not integrated.
+  [DeepSeek setup and limits](src/server/agents/deepseek/README.md) cover the Flash default, tools and cost estimates.
   Subscriptions work, but I haven't tested how subscription usage or remaining percentage is reported.
 - **[JEV](https://docs.typesafe.ai/models), configured separately.** Put `TYPESAFE_API_KEY` in `.env.local`.
   It is used for generated style directions and visual/audio capability selection. Manually selecting Motion Graphics skips style ranking, while capability decisions remain separate.

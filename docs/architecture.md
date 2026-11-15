@@ -4,12 +4,13 @@
 
 Kiteva is a single-user app that runs on your own computer. A [Fastify](https://fastify.dev)
 server on `127.0.0.1:18417` serves a [React](https://react.dev) desktop-style UI, drives the
-[Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-typescript) or the
-[Codex SDK](https://github.com/openai/codex/tree/main/sdk/typescript) inside job workspaces it
+[Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-typescript),
+[Codex SDK](https://github.com/openai/codex/tree/main/sdk/typescript) or
+[DeepSeek Harness SDK](../src/server/agents/deepseek/README.md) inside job workspaces it
 controls, and renders films locally. There is no hosted service, no account system and no multi-user
 mode. The server refuses requests whose host or origin isn't local.
 
-This page is based on the source as of 2026-10-25. File paths are relative to the repository root.
+Core architecture was recorded on 2026-10-25; provider routing and DeepSeek integration were updated on 2026-11-16. File paths are relative to the repository root.
 
 ## Components
 
@@ -49,6 +50,7 @@ flowchart LR
   subgraph External["Outside the app"]
     Claude["Claude models"]
     Codex["OpenAI models"]
+    DeepSeek["DeepSeek models"]
     JEV["Typesafe JEV API"]
     Chrome["Headless Chrome"]
     FF["FFmpeg / ffprobe"]
@@ -80,6 +82,7 @@ flowchart LR
   Activity --> API
   Providers -- "via local Caveman proxy" --> Claude
   Providers -- "via local Caveman proxy" --> Codex
+  Providers -- "official Harness SDK; no Caveman" --> DeepSeek
   Rank --> JEV
   RefMCP --> Chrome
   Sub --> Chrome
@@ -357,7 +360,10 @@ executable workflows from the shared title-prompt helper and callable browser ca
 Full-film finished-result review uses the same selected main model that built the job, using the provider’s default reasoning effort. It runs as a separate read-only invocation with the existing QA evidence and Governance tracking.
 
 The default main models come from `src/shared/model-display-name.ts` and can be overridden with
-`VIDEO_CLAUDE_MODEL` / `VIDEO_CODEX_MODEL`.
+`VIDEO_CLAUDE_MODEL` / `VIDEO_CODEX_MODEL` / `VIDEO_DEEPSEEK_MODEL`.
+DeepSeek uses Flash for lightweight and default main work. Its [adapter guide](../src/server/agents/deepseek/README.md)
+owns the API-key, permission, image and cost limits. Codex defaults to medium reasoning unless
+a task explicitly selects another level.
 
 ## Renderer, motion engine, visual construction, tools, skills
 
@@ -374,7 +380,7 @@ These responsibilities are kept separate in the code and in the prompts:
 - **Built-in agent tools** are job-scoped MCP capabilities: Creative Pool lookup and technology inspection,
   reference browsing and capture, React Bits and Animate UI, Narration, and Audio Studio.
   `agents/capabilities/reference-browser/` owns the browser registration, guidance, contracts and
-  tools; both SDK adapters consume its shared registration. Optional Caveman context retrieval
+  tools; all supported SDK adapters consume its shared registration. Optional Caveman context retrieval
   is registered by `agents/capabilities/context-recovery/`; its provider proxy lifecycle stays separate. The
   capability registry controls which tools exist for each stage; providers adapt the same contracts.
 - **Startup-installed skills** supply instructions, not renderers. Anatomy provides a drawing kit;
@@ -411,7 +417,7 @@ flowchart TB
   Probe --> Footage["Silent WebM + cursor JSON<br/>→ job assets"]
 ```
 
-- Both Claude and Codex get these tools through a job-scoped stdio MCP server built on the
+- Claude, Codex and DeepSeek get these tools through a job-scoped stdio MCP server built on the
   [Model Context Protocol SDK](https://modelcontextprotocol.io). The browser is driven by
   [Puppeteer](https://pptr.dev) (`puppeteer-core`).
 - Preparation can only inspect and take screenshots. `capture_video` is offered in video
@@ -432,6 +438,7 @@ flowchart LR
   Hash -- yes --> Copy["Stage .agents/skills/id<br/>inside the job workspace"]
   Copy --> ClaudeP["Claude: bundled-authoring plugin<br/>native Skill tool; verify SDK init"]
   Copy --> CodexP["Codex: same guidance and files<br/>isolated HOME and CODEX_HOME"]
+  Copy --> DeepSeekP["DeepSeek: same guidance and files<br/>isolated Harness skill roots"]
   Registry --> Choice["Visual-resource choice<br/>visual_authoring entries only"]
 ```
 
@@ -445,7 +452,7 @@ skills and SDK settings are excluded; configured provider authentication remains
 
 ```mermaid
 sequenceDiagram
-  participant Model as Claude or Codex model
+  participant Model as Selected provider model
   participant Pool as Creative Pool MCP
   participant Runtime as Project-local runtime
   participant Research as Skill(anysearch)

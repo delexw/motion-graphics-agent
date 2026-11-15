@@ -1,3 +1,5 @@
+import { ProviderSchema } from "../../shared/domains/common";
+import { agentProviderIds } from "../../shared/agent-providers";
 import type { ProviderEvent } from "../agents/providers";
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
@@ -21,7 +23,7 @@ const ExtractionSummarySchema = StyleSummarySchema.extend({ decisionGuidance: z.
 const CachedSummarySchema = z.object({
   summary: StyleSummarySchema,
   model: z.string(),
-  provider: z.enum(["claude", "codex"]),
+  provider: ProviderSchema,
 });
 type CachedSummary = z.infer<typeof CachedSummarySchema>;
 
@@ -72,9 +74,12 @@ export async function summarizeStyle(
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
   }
-  // Both providers contribute to the same source-keyed cache. Preserve attribution
+  // All providers contribute to the same source-keyed cache. Preserve attribution
   // when migrating either legacy layout, including the temporary isolated layout.
-  for (const previousProvider of [provider, provider === "claude" ? "codex" : "claude"] as const) {
+  for (const previousProvider of [
+    provider,
+    ...agentProviderIds.filter((candidate) => candidate !== provider),
+  ]) {
     const previousModel = summaryModels[previousProvider];
     const previousHash = createHash("sha256")
       .update(JSON.stringify({ revision, model: previousModel, source }))

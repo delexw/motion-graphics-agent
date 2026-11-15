@@ -23,12 +23,16 @@ sample, and it isn't a price list or a benchmark. Please read it that way.
 
 The report reads SDK-reported costs from saved usage events whenever it is requested. Claude costs come directly from the SDK. Codex, whose SDK reports tokens but no amount,
 uses the current standard short-context API rates without inferring a cost range.
+DeepSeek uses the installed community `dsh-cost-meter` plugin's per-call API estimate,
+not an SDK-reported invoice. See the [accounting contract](../src/server/agents/deepseek/README.md#governance-and-verification)
+for cache buckets, stable usage IDs, compaction and unknown-price handling.
 
 | Basis label                                   | Meaning                                                                                                     |
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `SDK estimate · session increments`           | Reported cumulative cost, differenced between results in the same session so resumed spend is counted once. |
 | `SDK reported cost`                           | A reported amount for a non-cumulative invocation.                                                          |
 | `Standard API estimate · short-context rates` | Codex usage increments at standard input, cached-read, cache-write and output rates.                        |
+| `Plugin API estimate · dsh-cost-meter (USD)`  | Per-call plugin API estimate; not a provider bill or subscription charge.                                   |
 | `Not reported`                                | No SDK amount or supported Codex estimate is available. Unknown cost is not zero.                           |
 
 Claude's per-model `costUSD` is used directly. For older records without per-model cost,
@@ -46,7 +50,7 @@ The estimate uses short-context standard rates and 30-minute cache writes; aggre
 do not establish request lengths, write retention or service tiers, so no premiums are inferred.
 It is an API-equivalent estimate, not a billed amount. Unknown models or missing input/output
 and cached-read counters remain unpriced. JEV token-only records remain unpriced.
-Totals combine SDK-reported costs and known Codex estimates. SDK estimates are not invoices or subscription-allowance meters, and
+Totals combine SDK-reported costs, known Codex estimates and matched DeepSeek per-call plugin estimates. SDK estimates are not invoices or subscription-allowance meters, and
 may reflect the SDK's own pricing assumptions. The historical examples below describe their
 recorded snapshot, including its then-published JEV-rate calculation; that calculation is no
 longer used by the current report.

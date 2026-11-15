@@ -661,11 +661,19 @@ it("exposes governance inputs, settings and complete model activity only on the 
     function: "Brief preparation, Motion Graphic information extraction and generated subtitles",
     claude: "claude-haiku-5-5",
     codex: "gpt-6-luna",
+    deepseek: "deepseek-flash",
   });
   expect(response.json().models).toContainEqual({
     function: "Motion Graphic combination proposals",
     claude: "claude-opus-5-5",
     codex: "gpt-6.1-sol",
+    deepseek: "deepseek-flash",
+  });
+  expect(response.json().models).toContainEqual({
+    function: "Full-video result quality review",
+    claude: "Selected main model",
+    codex: "Selected main model",
+    deepseek: "Selected main model",
   });
   expect(project.request).toMatchObject({
     duration: 30,

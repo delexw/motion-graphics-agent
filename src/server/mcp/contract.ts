@@ -37,7 +37,7 @@ const fieldGuidance: Record<string, string> = {
     .map(([id, entry]) => `${id}: ${entry.description}`)
     .join(" ")} Default: creative (Explore creative ideas).`,
   provider:
-    "Main model provider. Default: claude. If explicitly choosing codex, its default main model is used unless overridden.",
+    "Main agent provider: claude, codex or deepseek. Default: claude. The selected provider uses its own default main model unless overridden.",
   mainModel: `Main model identifier. Default for Claude: ${defaultProviderModels.claude} (Opus 5.5). Must belong to the chosen provider; no silent substitution.`,
   candidateCount:
     "Number of preview directions, default 3. Zero means direct build and requires selectedStyleIds, according to Kiteva's standard request validation.",

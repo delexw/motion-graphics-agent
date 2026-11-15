@@ -1,3 +1,4 @@
+import { agentProviderIds, agentProviderDefinitions } from "../../shared/agent-providers";
 import type { Style } from "../../shared/contracts";
 import { GovernanceProjectSelect } from "./project-select";
 import { formatGovernanceCost } from "./format-cost";
@@ -199,16 +200,11 @@ export function GovernancePage({ styles = [] }: { styles?: Pick<Style, "id" | "n
               dataIndex: "function",
               render: (value: string) => translateUi(value),
             },
-            {
-              title: translateUi("Claude selection"),
-              dataIndex: "claude",
-              render: (value: string) => translateUi(value),
-            },
-            {
-              title: translateUi("GPT selection"),
-              dataIndex: "codex",
-              render: (value: string) => translateUi(value),
-            },
+            ...agentProviderIds.map((provider) => ({
+              title: translateUi(`${agentProviderDefinitions[provider].name} selection`),
+              dataIndex: provider,
+              render: (value?: string) => (value ? translateUi(value) : "—"),
+            })),
           ]}
         />
         <p className="governance-table-note">

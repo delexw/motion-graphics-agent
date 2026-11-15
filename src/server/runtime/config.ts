@@ -13,6 +13,7 @@ dotenv.config({ path: path.join(appRoot, ".env.local"), quiet: true });
 mkdirSync(dataRoot, { recursive: true, mode: 0o700 });
 export const catalogRoot = path.join(appRoot, "assets", "catalog");
 export const models = {
+  deepseek: process.env.VIDEO_DEEPSEEK_MODEL || defaultProviderModels.deepseek,
   codex: process.env.VIDEO_CODEX_MODEL || defaultProviderModels.codex,
   claude: process.env.VIDEO_CLAUDE_MODEL || defaultProviderModels.claude,
 };

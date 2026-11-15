@@ -1,3 +1,4 @@
+import { agentProviderName } from "../../shared/agent-providers";
 import { useEffect, useState } from "react";
 import { Alert, Select, Typography } from "antd";
 import type { GovernanceProjectOption, GovernanceProjectOptions } from "../../shared/governance";
@@ -61,7 +62,7 @@ export function GovernanceProjectSelect({
     ...projects.map((project) => ({
       value: project.id,
       label: project.name,
-      description: `${translateUi(project.outputType === "page" ? "HTML" : "Video")} · ${translateUi(project.provider === "claude" ? "Claude" : "GPT")} · ${uiLanguage.date(project.started)} · ${project.id}`,
+      description: `${translateUi(project.outputType === "page" ? "HTML" : "Video")} · ${translateUi(agentProviderName(project.provider))} · ${uiLanguage.date(project.started)} · ${project.id}`,
     })),
   ];
   if (

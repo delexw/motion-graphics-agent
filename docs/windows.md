@@ -47,6 +47,8 @@ npx.cmd vite --host 127.0.0.1
 
 Open the local URL printed by Vite. Configure your provider using an API key or an
 existing native Windows Claude/Codex subscription login as described in the README.
+DeepSeek uses `DEEPSEEK_API_KEY`; see its [adapter limits](../src/server/agents/deepseek/README.md).
+Its native Windows end-to-end generation has not been verified.
 If Claude cannot find Git Bash, set `CLAUDE_CODE_GIT_BASH_PATH` to the installed
 `bash.exe` path before starting Kiteva. Provider access is verified by the first brief
 turn; the local render check does not test login, subscriptions or model generation.

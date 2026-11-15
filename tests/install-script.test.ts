@@ -75,7 +75,7 @@ it("runs the complete fresh-clone setup in order using isolated command fixtures
     const commands = await readFile(f.log, "utf8");
     for (const command of [
       "npm ci",
-      "npm update @anthropic-ai/claude-agent-sdk @openai/codex @openai/codex-sdk",
+      "npm update @anthropic-ai/claude-agent-sdk @openai/codex @openai/codex-sdk @deepseek-ai/dsh-sdk-client @deepseek-ai/dsh @deepseek-ai/dsh-llm dsh-cost-meter",
       "npx --no-install browsers install chrome@stable",
       "npm run multiplane:setup",
       "node --import tsx scripts/setup-openscreen.ts",
@@ -133,7 +133,7 @@ it("supports opting out of optional runtimes without skipping app dependencies",
       "--skip-build",
     ]);
     expect(await readFile(f.log, "utf8")).toBe(
-      "npm ci\nnpm update @anthropic-ai/claude-agent-sdk @openai/codex @openai/codex-sdk\nnpm run dependencies:update -- --skip-audio-studio\n",
+      "npm ci\nnpm update @anthropic-ai/claude-agent-sdk @openai/codex @openai/codex-sdk @deepseek-ai/dsh-sdk-client @deepseek-ai/dsh @deepseek-ai/dsh-llm dsh-cost-meter\nnpm run dependencies:update -- --skip-audio-studio\n",
     );
   } finally {
     await f.close();

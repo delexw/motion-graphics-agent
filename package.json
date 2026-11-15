@@ -39,6 +39,9 @@
     "@babel/parser": "^7.29.13",
     "@babel/traverse": "^7.29.13",
     "@caveman-ai/cli": "^4.0.1",
+    "@deepseek-ai/dsh": "^0.2.2-rc.3",
+    "@deepseek-ai/dsh-llm": "^0.2.2-rc.3",
+    "@deepseek-ai/dsh-sdk-client": "^0.2.2-rc.3",
     "@fastify/deepmerge": "^3.2.4",
     "@fastify/multipart": "^10.1.6",
     "@fastify/static": "^10.1.10",
@@ -65,6 +68,7 @@
     "cn": "^0.5.1",
     "d3-polygon": "^3.0.1",
     "dotenv": "^18.0.9",
+    "dsh-cost-meter": "^1.9.65",
     "esbuild": "^0.28.2",
     "fast-xml-parser": "^5.11.2",
     "fastify": "^5.12.7",
@@ -144,6 +148,11 @@
     "yaml": "^2.9.1"
   },
   "overrides": {
+    "@deepseek-ai/dsh": {
+      "undici@^8.0.0": "^8.12.2",
+      "@modelcontextprotocol/client": "^2.3.0",
+      "fflate": "$fflate"
+    },
     "@remotion/bundler": {
       "webpack": "^5.112.2"
     },

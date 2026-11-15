@@ -1,3 +1,4 @@
+import { defaultProviderModels } from "../../shared/model-display-name";
 import { hasOnScreenSubtitles } from "../../shared/script-items";
 import { creativeApproachLabel } from "../../shared/creative-approach";
 import { buildRouteLabel, buildRouteOf } from "../../shared/build-route";
@@ -57,9 +58,7 @@ export function ProjectSettings({
   const selectedStyles = styleIds.flatMap((id) => styles.filter((style) => style.id === id));
   const settings = [
     request.outputType === "page" ? "Interactive page" : "Video",
-    modelDisplayName(
-      request.mainModel || (request.provider === "claude" ? "claude-opus-5-5" : "gpt-6.1-sol"),
-    ),
+    modelDisplayName(request.mainModel || defaultProviderModels[request.provider]),
     ...(request.outputType === "video"
       ? [
           request.duration === "auto"

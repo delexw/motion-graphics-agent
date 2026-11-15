@@ -121,6 +121,9 @@ export function projectGovernance(
     )
       continue;
     const model =
+      (d.provider === "deepseek" && typeof d.responseModel === "string"
+        ? d.responseModel
+        : undefined) ||
       resolvedModels.get(String(d.invocationId)) ||
       (typeof d.model === "string" ? d.model : job?.model || "Unrecorded model");
     const purpose =
@@ -174,7 +177,7 @@ export function projectGovernance(
       continue;
     }
     if (event.type === "invocation" || event.type === "usage") {
-      const key = `${model}|${scope}`;
+      const key = `${model}|${scope}${d.usageKind === "compaction/summary" ? "|compaction" : ""}`;
       if (!calls.has(key)) {
         row.calls++;
         calls.add(key);
@@ -196,7 +199,12 @@ export function projectGovernance(
       }
     }
     if (event.type !== "usage") continue;
-    const usageKey = d.invocationId ? String(d.invocationId) : String(event.id);
+    const usageKey =
+      d.provider === "deepseek" && typeof d.usageId === "string"
+        ? d.usageId
+        : d.invocationId
+          ? String(d.invocationId)
+          : String(event.id);
     if (usageEvents.has(usageKey)) continue;
     usageEvents.add(usageKey);
     const modelUsage = record(d.modelUsage);
@@ -296,7 +304,10 @@ export function projectGovernance(
         basis = "SDK estimate · session increments";
       } else {
         low = high = cost;
-        basis = "SDK reported cost";
+        basis =
+          d.costSource === "dsh-cost-meter"
+            ? "Plugin API estimate · dsh-cost-meter (USD)"
+            : "SDK reported cost";
       }
     } else if (codex && input !== null && output !== null && cached !== null) {
       low = high = codexApiCost(model, {

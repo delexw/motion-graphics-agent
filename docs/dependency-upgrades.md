@@ -2,13 +2,13 @@
 
 ## Update owners and triggers
 
-| Dependency                               | Update trigger                                                                                               | Owner                                                                                 |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| Managed Audio Studio MCP                 | Every backend startup and `install.sh`, for installed managed runtimes; manual `npm run audio-studio:update` | `src/server/agents/capabilities/audio-studio/installation.ts`                         |
-| Explicit `AUDIO_STUDIO_MCP_COMMAND`      | Operator-managed; Kiteva never replaces it                                                                   | Configured external installation                                                      |
-| Bundled skills                           | Every backend startup and `install.sh`, using verified immutable revisions                                   | [Bundled skill installation](../src/server/agents/bundled-skills/README.md)           |
-| React Bits / Animate UI registry content | Upstream reads when a new registry client requests content; cached within that client                        | [Component capabilities](../src/server/agents/capabilities/README.md)                 |
-| npm dependencies and SDKs                | `install.sh` refreshes Claude/Codex SDKs; other packages use lockfile install/update; no runtime hot swap    | `package.json`, `package-lock.json` and [dependency security](dependency-security.md) |
+| Dependency                               | Update trigger                                                                                                                                    | Owner                                                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Managed Audio Studio MCP                 | Every backend startup and `install.sh`, for installed managed runtimes; manual `npm run audio-studio:update`                                      | `src/server/agents/capabilities/audio-studio/installation.ts`                         |
+| Explicit `AUDIO_STUDIO_MCP_COMMAND`      | Operator-managed; Kiteva never replaces it                                                                                                        | Configured external installation                                                      |
+| Bundled skills                           | Every backend startup and `install.sh`, using verified immutable revisions                                                                        | [Bundled skill installation](../src/server/agents/bundled-skills/README.md)           |
+| React Bits / Animate UI registry content | Upstream reads when a new registry client requests content; cached within that client                                                             | [Component capabilities](../src/server/agents/capabilities/README.md)                 |
+| npm dependencies and SDKs                | `install.sh` refreshes Claude/Codex and the compatible DeepSeek SDK/runtime pair; other packages use lockfile install/update; no runtime hot swap | `package.json`, `package-lock.json` and [dependency security](dependency-security.md) |
 
 Restarting an MCP connection discovers its tools; it does not itself upgrade the
 server or prove model readiness. Keep executable/package versions, source revisions,
@@ -113,3 +113,18 @@ MCP code updates do not request weight downloads. Weight provisioning and first 
 generation retain upstream license and device requirements. FFmpeg and other host
 prerequisites follow the installer/platform setup, not the MCP handshake. Updating
 one layer does not prove the remaining layers are installed or generation-ready.
+
+## DeepSeek Harness SDK
+
+The npm SDK and runtime are a matched release-candidate pair, recorded in the lockfile.
+The same installer update step maintains the `dsh-cost-meter` plugin; its public
+cost service and saved per-call result contract are checked by local fixtures.
+The provider's [setup guide](../src/server/agents/deepseek/README.md) owns execution
+limits. `install.sh` refreshes them through the normal dependency update step; backend
+startup does not install or replace them. Never upgrade from the SDK's older `latest`
+tag without checking its actual API and matching runtime. Run local SDK/permission
+fixtures before accepting an update. Runtime subprocesses retain their loaded modules;
+finish active jobs before dependency maintenance or restart. Failed installation must
+not trigger a generation-time download or silently select another provider. The SDK/runtime and the `dsh-cost-meter` host plugin
+are MIT licensed; upstream files and notices remain intact. Compatible nested overrides
+keep the runtime's HTTP, MCP client and ZIP dependencies on patched releases.
