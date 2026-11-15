@@ -78,6 +78,7 @@ The three most recent dated entries are listed here, regardless of gaps between 
 <details>
 <summary>2026-11-16</summary>
 
+- **v1.2.0 released:** DeepSeek authoring, finished-project reuse and governed media workflows. See the [release notes](https://github.com/delexw/motion-graphics-agent/releases/tag/v1.2.0).
 - **DeepSeek provider:** Select DeepSeek Flash for text and image-based authoring through the official Harness SDK. Configure `DEEPSEEK_API_KEY`; UI, MCP and Governance share provider routing. OAuth is not integrated.
 - **Cost accounting:** The isolated SDK runtime loads the community `dsh-cost-meter` plugin. Governance labels per-call USD estimates, counts stable session/sequence records once, and preserves unknown usage and prices. See [setup, security and limits](src/server/agents/deepseek/README.md).
 - **SDK execution fixes:** Resumed DeepSeek refinements explicitly switch working directory and grant the current authoring workspace. Tool completion/error events retain their call IDs. Codex defaults to medium reasoning while preserving explicit effort overrides.

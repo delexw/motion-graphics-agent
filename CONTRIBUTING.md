@@ -10,7 +10,7 @@ Contributions are licensed under the project’s [MIT license](LICENSE).
 Open a GitHub issue for:
 
 - **Bugs.** Say what you did, what you expected and what happened. Include your macOS version, Node
-  version, provider (Claude or Codex) and whether you use an API key or a signed-in subscription, renderer and, if it's about a film, the requested length and
+  version, provider (Claude, Codex or DeepSeek) and whether you use an API key or a signed-in subscription, renderer and, if it's about a film, the requested length and
   settings. Redacted error text from the project's activity line helps a lot.
 - **Motion Graphic or motion catalog problems.** The catalog is a personal collection. Some of it is
   great and some of it is probably wrong 😄 If a description, palette or technology suggestion looks
@@ -34,7 +34,8 @@ You'll need macOS, [Node.js](https://nodejs.org) 24 (see `.tool-versions`), [Chr
 
 ```sh
 npm ci
-cp .env.example .env.local     # add TYPESAFE_API_KEY (JEV); providers use an API key or your signed-in subscription
+cp .env.example .env.local     # add TYPESAFE_API_KEY (JEV); DeepSeek uses DEEPSEEK_API_KEY
+# Claude/Codex use an API key or your signed-in subscription
 npm run build
 npm start                      # http://127.0.0.1:4317
 ```

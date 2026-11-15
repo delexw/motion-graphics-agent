@@ -68,6 +68,7 @@
 <details>
 <summary>2026-11-16</summary>
 
+- **v1.2.0 发布：**新增 DeepSeek 创作、成品项目复用及媒体工作流治理。详见[发布说明](https://github.com/delexw/motion-graphics-agent/releases/tag/v1.2.0)。
 - **DeepSeek 提供方：**通过官方 Harness SDK，使用 DeepSeek Flash 进行文本和图像辅助创作。配置 `DEEPSEEK_API_KEY`；界面、MCP 和 Governance 共用模型路由，暂未接入 OAuth。
 - **费用记录：**隔离运行时加载社区 `dsh-cost-meter` 插件。Governance 展示每次调用的美元估算，按会话与事件序号去重，缺少用量或价格时保留未知。详见[配置、安全与限制](src/server/agents/deepseek/README.md)。
 - **SDK 执行修复：**DeepSeek 修改版本时显式切换工作目录，并授予当前创作目录写权限；工具完成与失败事件保留调用 ID。Codex 默认使用 medium 推理，显式指定的级别仍然有效。
