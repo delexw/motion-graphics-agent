@@ -83,6 +83,8 @@ Only the latest three calendar days are listed here (New Zealand time). See the 
 - **Source previews and clearer settings:** Reused projects show their source version beneath Settings. Source and MG previews use the same dotted-underlined button; source navigation stays in the app. Version settings, refinement controls and dialog scrollbars follow the shared layout and theme.
 - **Narration protection:** Replacing old content no longer writes an empty script that disables inherited narration. Enabled language narration without a usable profile fails before rendering.
 
+- **Deterministic cache checks:** Cache tests use local runtime fixtures instead of installed package trees, retaining dependency and runtime-change invalidation checks without machine-dependent hashing timeouts.
+
 </details>
 
 <details>

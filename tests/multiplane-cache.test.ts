@@ -1,4 +1,4 @@
-import { afterEach, expect, it } from "vitest";
+import { afterAll, afterEach, expect, it, vi } from "vitest";
 import { mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import { prepareVideoRefinement } from "../src/server/domains/video/refinement";
@@ -9,6 +9,25 @@ import {
   restoreMultiplaneShot,
   storeMultiplaneShot,
 } from "../src/server/rendering/multiplane/cache";
+
+const runtimeFixture = vi.hoisted(() => ({ root: "", cli: "", three: "" }));
+vi.mock("../src/server/rendering/multiplane", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../src/server/rendering/multiplane")>();
+  const { mkdtemp, mkdir, writeFile } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const path = await import("node:path");
+  runtimeFixture.root = await mkdtemp(path.join(tmpdir(), "cache-runtime-"));
+  runtimeFixture.cli = path.join(runtimeFixture.root, "multiplane/bin/cli.js");
+  runtimeFixture.three = path.join(runtimeFixture.root, "three/index.js");
+  await mkdir(path.dirname(runtimeFixture.cli), { recursive: true });
+  await mkdir(path.dirname(runtimeFixture.three), { recursive: true });
+  await writeFile(runtimeFixture.cli, "export const renderer = 'example';");
+  await writeFile(runtimeFixture.three, "export const engine = 'example';");
+  return { ...original, multiplaneCli: runtimeFixture.cli };
+});
+afterAll(async () => {
+  if (runtimeFixture.root) await rm(runtimeFixture.root, { recursive: true, force: true });
+});
 
 const directories: string[] = [];
 const signal = AbortSignal.timeout(120000);
@@ -36,6 +55,21 @@ it("fingerprints contents, new files and settings, not timestamps; generated ren
   expect(withAsset).not.toBe(original);
   await writeFile(path.join(workspace, "dynamic-asset.txt"), "two");
   expect(await multiplaneInputFingerprint(workspace, signal)).not.toBe(withAsset);
+});
+it("invalidates fingerprints when either installed runtime changes", async () => {
+  const workspace = await fixture();
+  for (const file of [runtimeFixture.cli, runtimeFixture.three]) {
+    const original = await readFile(file, "utf8");
+    const before = await multiplaneInputFingerprint(workspace, signal);
+    expect(before).toMatch(/^[a-f0-9]{64}$/);
+    try {
+      await writeFile(file, `${original}\nexport const revision = 'changed';`);
+      expect(await multiplaneInputFingerprint(workspace, signal)).not.toBe(before);
+    } finally {
+      await writeFile(file, original);
+    }
+    expect(await multiplaneInputFingerprint(workspace, signal)).toBe(before);
+  }
 });
 it("restores exact bytes and refuses corrupt, missing and interrupted cache records", async () => {
   const workspace = await fixture();

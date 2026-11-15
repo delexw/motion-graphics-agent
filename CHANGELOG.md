@@ -45,6 +45,8 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Fixed
 
+- Cache dependency tests fingerprint small local renderer/Three.js fixtures instead of the installed package trees, removing machine-dependent timeouts while explicitly checking that changes to either runtime invalidate the cache.
+
 - Fresh reuse requests no longer write an empty timed script that suppresses inherited narration. Enabled language narration without a usable profile is rejected before rendering.
 - Reuse character endpoints and draft creation register through the same owner in the backend and development API, avoiding development-only missing routes.
 - Version settings/refinement layout and themed dialog scrollbars; build diagrams now include the completed-version reuse route.
