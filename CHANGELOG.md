@@ -29,7 +29,7 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 - Version refinements can update supported narration providers and production settings through a dedicated validated subworkflow.
 - Stageshow owns its demo appearance unless the user specifies UI styling. Selected MGs contribute motion within that demo; planning, refinement, repair and review share the same ownership guidance.
 - Startup and installation share managed dependency updates, including Audio Studio, with documented upgrade and offline fallback behavior.
-- README daily history retains the latest three calendar days in New Zealand time and links to the archived daily history below.
+- README recent updates retain the three most recent dated entries, regardless of gaps between dates, and link to older entries in the archive below.
 
 - Both direct builds and generated directions now receive a shared motion-discovery route table. Motion Graphic candidates and motion `compatibility.good_fit` lists are recommendations rather than allowlists: models may search the full pool while preserving selected Motion Graphics, explicit `@` references, user requirements, exclusions and scene scope. Reading every motion or using a recommendation is not mandatory.
 
@@ -225,25 +225,7 @@ Kiteva uses the [MIT License](LICENSE). Third-party components retain their own 
 
 ## Daily update archive
 
-README recent updates cover today and the preceding two calendar days in New Zealand time. Move older daily entries here when updating the READMEs. Historical English and Simplified Chinese entries are preserved below; the versioned release notes above remain unchanged.
-
-### 2026-11-12
-
-**English**
-
-- **Stageshow product demos:** An optional startup-installed skill for authored UI walkthroughs with the selected MG contributing motion only. Upstream files stay Git-ignored; source contains only registration, adaptation guidance and tests. It preserves real-capture boundaries, renderer timing and third-party asset notices. See [integration and licensing](docs/stageshow.md).
-
-- **Open motion discovery:** Direct builds and generated directions share a route table for reading selected Motion Graphics, resolving explicit `@` references and searching the full motion pool. Style candidates and motion `good_fit` lists are recommendations, not allowlists. The model preserves the selected visual identity, user requirements and scene scope; it need not inspect every motion or use one.
-
-- **Five composable motion techniques:** Metaball Merge & Split (`motion-051`), Path Follow & Text on Path (`motion-052`), 3D Tile Flip (`motion-053`), Particle Glyph Assembly (`motion-054`) and Velocity Motion Blur (`motion-055`). Each has a seekable explorer preview, Chinese metadata and a frame-analysis record. A review of twelve common techniques found the other seven already covered. The catalog now has 55 motions.
-
-**简体中文**
-
-- **Stageshow 产品 demo：**通过现有安装器下载到 Git 忽略的运行目录，源码只保留注册、适配指导和测试。JEV 可选择它创作模拟 UI；用户要求可覆盖默认界面样式，所选 MG 只负责 demo 内的动效、节奏和转场；不替代真实录制或渲染器。保留 MIT 与第三方素材 notices，视频采用绝对时间状态。[接入说明](docs/stageshow.md)。
-
-- **开放的动作检索：**直接制作和生成方向共用路由表，指导模型读取所选 Motion Graphic、解析明确的 `@` 引用，并按场景需要搜索完整动作库。风格的候选动作和动作的 `good_fit` 列表只是建议，不是白名单；保留所选视觉风格、用户要求及场景范围，无须遍历或强制使用动作。
-
-- **五种可组合的动效技法：**液态融合与分裂（`motion-051`）、路径跟随与路径文字（`motion-052`）、三维瓷砖翻转（`motion-053`）、粒子聚合成字（`motion-054`）和速度动态模糊（`motion-055`）。每种都有可跳转的浏览器预览、中文元数据和逐帧分析记录。对十二种常见技法的审阅发现，其余七种已有覆盖。目录现有 55 个动作。
+README recent updates show the three most recent dated entries, regardless of gaps between dates. Move entries beyond those three here when updating the READMEs. Historical English and Simplified Chinese entries are preserved below; the versioned release notes above remain unchanged.
 
 ### 2026-11-10
 
