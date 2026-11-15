@@ -4,30 +4,36 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-11-16
+
+DeepSeek authoring, finished-project reuse and governed multilingual media workflows.
+
+This is a source release. Native Windows support remains experimental.
+
 ### Added
 
-- DeepSeek Flash provider through the official Harness SDK, with shared UI/MCP routing, isolated stage-scoped native/custom tools, persisted sessions, image inputs and cancellation. API-key authentication uses `DEEPSEEK_API_KEY`; OAuth is not integrated.
+- [DeepSeek Flash provider](https://github.com/delexw/motion-graphics-agent/commit/75780c7) through the official Harness SDK, with shared UI/MCP routing, isolated stage-scoped native/custom tools, persisted sessions, image inputs and cancellation. API-key authentication uses `DEEPSEEK_API_KEY`; OAuth is not integrated.
 - The community MIT-licensed `dsh-cost-meter` host plugin supplies per-call USD estimates to Governance. Stable session/sequence identities avoid duplicate usage and costs, including retries and context compaction; unknown values remain unknown.
 
-- Finished-version project reuse through the UI and MCP, with independent inherited facets, source ownership checks, copied attachment ownership, idempotent draft creation and direct full-film builds when keeping the visual direction.
+- [Finished-version project reuse](https://github.com/delexw/motion-graphics-agent/commit/1422fbf) through the UI and MCP, with independent inherited facets, source ownership checks, copied attachment ownership, idempotent draft creation and direct full-film builds when keeping the visual direction.
 - Recorded character and mascot inheritance, enabled by default for new reuse requests. Preview and choose identities independently of the topic/script; carry appearance, established personality, narrative role and evidence into planning. Historical profiles require inspected metadata rather than automatic identity inference.
 - A shared source/MG preview button with persistent dotted underlines, hover/focus previews and client-side source-project navigation beneath Settings.
 
-- Stageshow product-demo authoring, installed from its MIT-licensed upstream subdirectory at startup for Claude and Codex. Upstream files remain outside source control; installation retains revision hashes and asset notices.
+- [Stageshow product-demo authoring](https://github.com/delexw/motion-graphics-agent/commit/2f8b0d5), installed from its MIT-licensed upstream subdirectory at startup for Claude and Codex. Upstream files remain outside source control; installation retains revision hashes and asset notices.
 - A pre-project JEV settings compatibility check with conflict reporting and Governance cost accounting.
 - Server-side Governance pagination, indexed project search, persistent project filters and modular technology usage reporting.
 - Shared backend/frontend agent guidance for module ownership, SDK permissions, tool boundaries, dependency maintenance and mocked third-party tests.
 - A showcase of five actual MP4 films and two full-page HTML captures, including Playful Cat and the Swiss product walkthrough.
 
-- Five composable motion techniques: Metaball Merge & Split (`motion-051`), Path Follow & Text on Path (`motion-052`), 3D Tile Flip (`motion-053`), Particle Glyph Assembly (`motion-054`) and Velocity Motion Blur (`motion-055`). Each entry has reusable prompt and implementation guidance, a seekable explorer preview, Chinese metadata and a frame-analysis record of a twelve-technique tutorial. The record also maps the seven techniques that existing motions and Motion Graphics already cover. The catalog now contains 55 motions.
+- [Five composable motion techniques](https://github.com/delexw/motion-graphics-agent/commit/e0df0df): Metaball Merge & Split (`motion-051`), Path Follow & Text on Path (`motion-052`), 3D Tile Flip (`motion-053`), Particle Glyph Assembly (`motion-054`) and Velocity Motion Blur (`motion-055`). Each entry has reusable prompt and implementation guidance, a seekable explorer preview, Chinese metadata and a frame-analysis record of a twelve-technique tutorial. The record also maps the seven techniques that existing motions and Motion Graphics already cover. The catalog now contains 55 motions.
 
-- Cream Card Explainer Deck (`style-143`): a cream-paper explainer deck with a walking presenter character, layered entrances and exits, a side panel that docks into a floating white card, an attached mascot lower-third and stepped flow diagrams, learned from a source video's motion design only. Includes a reviewed technology choice, Chinese metadata, a frame-analysis record and a rendered preview built from the exact catalog prompt on the catalog's shared preview subject. The catalog now contains 143 Motion Graphics.
+- [Cream Card Explainer Deck (`style-143`)](https://github.com/delexw/motion-graphics-agent/commit/cde621e): a cream-paper explainer deck with a walking presenter character, layered entrances and exits, a side panel that docks into a floating white card, an attached mascot lower-third and stepped flow diagrams, learned from a source video's motion design only. Includes a reviewed technology choice, Chinese metadata, a frame-analysis record and a rendered preview built from the exact catalog prompt on the catalog's shared preview subject. The catalog now contains 143 Motion Graphics.
 
 - Optional preview notifications: a bell switch beside the language switch plays a short chime and shows a browser notification when every preview direction of a project finishes. Clicking the notification opens the project. Off by default; the choice is remembered in this browser.
 
 ### Changed
 
-- Codex SDK calls default to medium reasoning, retaining explicit per-task effort overrides and recording the effective level in Governance.
+- [Codex SDK calls default to medium reasoning](https://github.com/delexw/motion-graphics-agent/commit/75780c7), retaining explicit per-task effort overrides and recording the effective level in Governance.
 - Installer updates include the compatible DeepSeek SDK/runtime packages and cost plugin, with patched nested dependency ranges.
 
 - Project dependency manifests include model-selected technologies and required runtime packages. Source usage, runtime observations and dependency readiness are reported separately, including Python execution evidence.
@@ -55,7 +61,7 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 - Resumed DeepSeek refinements set the current working directory and grant that exact authoring workspace while retaining read-only stage restrictions.
 - Project preparation reuses saved checkpoint rendering instead of showing an empty activity history.
 
-- Cache dependency tests fingerprint small local renderer/Three.js fixtures instead of the installed package trees, removing machine-dependent timeouts while explicitly checking that changes to either runtime invalidate the cache.
+- [Cache dependency tests](https://github.com/delexw/motion-graphics-agent/commit/37efe10) fingerprint small local renderer/Three.js fixtures instead of the installed package trees, removing machine-dependent timeouts while explicitly checking that changes to either runtime invalidate the cache.
 
 - Fresh reuse requests no longer write an empty timed script that suppresses inherited narration. Enabled language narration without a usable profile is rejected before rendering.
 - Reuse character endpoints and draft creation register through the same owner in the backend and development API, avoiding development-only missing routes.
@@ -793,3 +799,4 @@ agent planning, capabilities and demo capture.
 [0.3.0]: https://github.com/delexw/motion-graphics-agent/releases/tag/v0.3.0
 [0.4.0]: https://github.com/delexw/motion-graphics-agent/releases/tag/v0.4.0
 [1.0.0]: https://github.com/delexw/motion-graphics-agent/releases/tag/v1.0.0
+[1.2.0]: https://github.com/delexw/motion-graphics-agent/releases/tag/v1.2.0
