@@ -14,6 +14,7 @@ export type KitevaIdeaSummary = {
 
 /** Public agent-facing data only: no workspaces, credentials, source code or event logs. */
 export type KitevaMcpResult =
+  | import("./project-reuse").ProjectReuseMcpResult
   | { kind: "search"; ideas: KitevaIdeaSummary[] }
   | {
       kind: "idea";
@@ -26,6 +27,7 @@ export type KitevaMcpResult =
     }
   | {
       kind: "created";
+      revision?: number;
       id: string;
       request: VideoRequest;
       languageSettings?: import("./language-tracks").LanguageTrackRow[];
@@ -65,4 +67,10 @@ export type KitevaMcpAsset = {
   bytes: number;
   owner?: AssetOwner;
   attached: boolean;
+};
+
+export type KitevaMcpToolResponse = {
+  content: { type: "text"; text: string }[];
+  structuredContent: KitevaMcpResult;
+  isError?: boolean;
 };

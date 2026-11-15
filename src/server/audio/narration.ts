@@ -62,6 +62,10 @@ export async function prepareNarrationCapability(
       if (item.speech.mode === "narration")
         profiles[item.id] = SpeechSettingsSchema.parse(item.speech);
   } else if (request.speech?.mode === "narration") profiles.default = request.speech;
+  if (request.languageTracks?.narration.length && !Object.keys(profiles).length)
+    throw Error(
+      "Narration is enabled, but no narration profile is available. Review language and script settings before rendering.",
+    );
   const preservePrevious = async () => {
     const previous = await readNarrationState(workspace);
     if (previous) await saveJson(workspace, previousNarrationStatePath, previous);

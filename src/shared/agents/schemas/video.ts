@@ -5,8 +5,12 @@ import { ContentBriefSchema } from "./content-brief";
 import { CandidateCopySchema } from "./candidate-copy";
 import { MAX_VIDEO_DURATION, videoDurationRange } from "../../video-duration";
 import { AudioTracksSchema } from "../../audio-tracks";
+import { ProjectCharactersSchema } from "../../project-characters";
 export { MAX_VIDEO_DURATION } from "../../video-duration";
 export const ProductionSchema = z.object({
+  characters: ProjectCharactersSchema.optional().describe(
+    "Record the actual recurring characters/mascots: name, appearance, established personality, narrative role and supporting evidence. Use [] if none; do not invent unobserved details. Preserve inherited character profiles independently of a new topic or script.",
+  ),
   assetNeeds: z.array(AssetNeedSchema).max(6).optional(),
   displayTitle: CandidateCopySchema.shape.displayTitle.optional(),
   displayDescription: CandidateCopySchema.shape.displayDescription.optional(),

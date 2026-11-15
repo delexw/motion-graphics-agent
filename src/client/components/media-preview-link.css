@@ -1,0 +1,15 @@
+.media-preview-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.media-preview-link:hover,
+.media-preview-link:focus-visible {
+  color: var(--accent);
+  text-decoration: underline dotted;
+}

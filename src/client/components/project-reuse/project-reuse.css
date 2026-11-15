@@ -1,0 +1,38 @@
+.project-reuse-content {
+  width: 100%;
+}
+.project-reuse-choice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+}
+.project-reuse-choice > div {
+  min-width: 0;
+}
+.project-reuse-choice .ant-segmented {
+  flex-shrink: 0;
+}
+.project-reuse-choice .ant-typography-secondary {
+  font-size: 12px;
+}
+.project-reuse-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+@media (max-width: 600px) {
+  .project-reuse-choice {
+    flex-wrap: wrap;
+  }
+  .project-reuse-choice > .ant-segmented {
+    margin-left: auto;
+  }
+  .project-reuse-footer > .ant-space {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

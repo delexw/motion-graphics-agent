@@ -69,6 +69,60 @@ project files, workspaces, credentials or Activity logs.
   requests a build. First read `draft:new`, then pass its current room `revision`.
   This can consume provider credit. Do not automatically retry an uncertain submission.
 
+## Preview project style reuse
+
+`preview_project_reuse` is the read-only counterpart of the completed video's
+**New project from this style** action. It uses the same version eligibility and
+inheritance defaults as the interface (`src/shared/project-reuse.ts`).
+
+1. Supply `projectId` and `action: "list_versions"` to discover eligible completed
+   video versions. `offset` and `limit` bound the results (default 20, maximum 50).
+2. Ask which exact version to use; call `action: "preview"` with its `jobId`.
+3. Supply `choices` booleans (`true` keeps, `false` replaces) for `visual`, `palette`,
+   `typography`, `motion`, `output`, `voice`, `music`, `content`, `assets` and
+   `musicRecording`. Appearance, output, voice and music direction default to keep;
+   content, source files and the actual music recording default to replace.
+4. `selectedAssetIds` must belong to that source version and require `assets: true`.
+
+Character/mascot inheritance is independent of topic/script inheritance and defaults
+to enabled for new reuse requests. The preview returns recorded `characters` with
+names, appearance, established personality, narrative role and evidence. Omit
+`selectedCharacterIds` to keep all recorded identities, or pass the reviewed IDs;
+set `choices.characters: false` to carry none over. Unrecorded IDs are rejected.
+New manifests may record `characters`; inspected historical versions may provide a
+validated `CHARACTER_REFERENCES.json` in their own workspace. Missing metadata
+means no recorded identities, not automatic discovery or a guarantee that no
+characters appear in the video. Old saved reuse projects do not retroactively gain
+character inheritance. The application does not infer identities from names in code.
+
+The result contains a typed version list or preview, source names and public asset
+metadata, effective version settings, requested choices and an in-app URL. Legacy
+settings fallback is labelled. Workspace paths, sessions, generated source and
+Activity records are excluded. Unknown choice fields, unfinished/non-video
+versions, missing projects and foreign asset selections fail explicitly.
+
+`preview_project_reuse` remains read-only: `canCreateDraft: true` describes the
+available next operation; `persisted: false` and `started: false` describe the preview.
+Use `create_project_from_version` with the exact project/version, a stable
+`operationId`, the reviewed choices, selected source asset IDs and the new idea.
+It creates a real New idea draft through the same owner as the UI and returns
+`draftId` and `revision`; it never calls a model or starts generation. Selected files
+receive new IDs, independent copies and draft ownership. Existing nonempty drafts
+and concurrent edits are not overwritten. Repeat an uncertain creation only with
+the same operation ID and unchanged arguments; a changed retry or an already-started
+operation is rejected rather than duplicated.
+
+Keeping the visual direction always uses direct full build (`candidateCount: 0`),
+without regenerating directions or previews. Replacing it uses normal style discovery.
+Creation clears replaced script, subtitle and per-language narration text while
+retaining the chosen language and voice profiles. The request retains source
+provenance, chosen catalog definitions/palettes and saved rendering/motion references.
+`PROJECT_REQUEST.json` carries the inheritance policy into existing planning/build
+stages. Missing independent design snapshots are labelled; exact visual replication
+is not promised. Use the existing `start_idea` with the returned draft ID and revision
+only when the user asks to start; it retains the normal settings review and governed
+production pipeline. Do not reconstruct the source by manually calling `create_idea`.
+
 ## Import and attach generated assets
 
 Use the same draft and attachment rules as the UI. `create_idea` returns a stable

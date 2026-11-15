@@ -1,4 +1,5 @@
 import { registerActivityChildrenRoute } from "../jobs/activity-routes";
+import { registerProjectReuseRoutes } from "../project-reuse/routes";
 import Fastify from "fastify";
 import multipart from "@fastify/multipart";
 import { Store } from "../jobs/store";
@@ -16,9 +17,11 @@ export async function createRoomDevelopmentApp() {
   app.setErrorHandler(apiErrorHandler);
   await app.register(multipart, { limits: { fileSize: assetLimits.audio.bytes, files: 1 } });
   await registerRoomRoutes(app, store);
+  const catalog = await loadCatalog();
+  registerProjectReuseRoutes(app, store, catalog);
   registerKitevaMcpRoutes(app, {
     store,
-    catalog: await loadCatalog(),
+    catalog,
     webUrl: `http://127.0.0.1:${webPort}`,
     start: startIdeaThroughBackend,
   });

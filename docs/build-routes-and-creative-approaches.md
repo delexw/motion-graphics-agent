@@ -19,6 +19,17 @@ become Settings selections and do not change the route.
 The route owns whether styles come from pool selection or the user's selections, whether previews
 are produced, and when full-video planning starts.
 
+## Reuse a completed video version
+
+The UI and MCP share the version-reuse creation policy. Keeping the source visual
+direction fixes its actual primary/supporting Motion Graphics and sets the new
+request's preview count to **zero**, regardless of how many directions the source
+project originally requested. It follows **Direct build**: no new direction,
+preview-planning call, preview render, or user selection gate. Only replacing the
+visual direction returns to the normal automatic-styles route. Other inheritance
+choices, including palette, narration, music and output settings, do not re-enable
+previews. Original projects and completed versions remain unchanged.
+
 ## Creative approaches: how pool styles are chosen
 
 The three creative approaches apply within the automatic-styles route:
@@ -41,6 +52,14 @@ inactive; the model determines their creative roles from the idea and explicit a
 
 ```mermaid
 flowchart TD
+  Existing["Completed video version"] --> Reuse["UI / MCP: choose inheritance and replacement"]
+  Reuse --> Draft["Create independent draft; preserve source"]
+  Draft --> Inherit{"Keep source visual direction?"}
+  Inherit -->|Yes| Fixed["Fix source MG combination; preview count = 0"]
+  Fixed --> Review["Existing draft review + settings validation"]
+  Review --> Direct
+  Inherit -->|No| Fresh["Choose fresh styles; normal preview route"]
+  Fresh --> Request
   Request["Idea + Settings"] --> Route{"Build route"}
   Route --> Automatic["Automatic styles with previews"]
   Automatic --> Brief["Shared content preparation: no invented style combinations"]

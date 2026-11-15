@@ -15,6 +15,7 @@ export function roomDevelopmentApi(): Plugin {
         if (
           request.url?.split("?")[0] !== kitevaMcpPath &&
           !request.url?.startsWith("/api/room") &&
+          !/^\/api\/project-reuse(?:\/|\?|$)/.test(request.url || "") &&
           !/^\/api\/runs\/[^/]+\/activity\/children(?:\?|$)/.test(request.url || "")
         )
           return next();

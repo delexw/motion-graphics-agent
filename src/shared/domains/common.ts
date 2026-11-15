@@ -1,3 +1,4 @@
+import { ProjectReuseOriginSchema } from "../project-reuse";
 import type { AudioAuthoringSelection } from "../agents/audio-authoring";
 import type { AuthoringResourceSelection } from "../agents/authoring-resources";
 import { CreativeApproachSchema } from "../creative-approach";
@@ -10,6 +11,7 @@ import { BriefRequirementsSchema } from "../brief-sections";
 export const ProviderSchema = z.enum(["codex", "claude"]);
 export type Provider = z.infer<typeof ProviderSchema>;
 export const SharedRequestSchema = z.object({
+  projectReuse: ProjectReuseOriginSchema.optional(),
   requirements: BriefRequirementsSchema.optional(),
   instructions: z.string().trim().min(8).max(24000),
   assetIds: z.array(z.string().uuid()).max(20).default([]),

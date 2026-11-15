@@ -1,3 +1,4 @@
+import { registerProjectReuseTool } from "./project-reuse";
 import { SettingsConflictError } from "../../shared/request-settings-review";
 import { errorCode } from "../../shared/errors";
 import { assetLimits } from "../../shared/asset-limits";
@@ -12,9 +13,13 @@ import MiniSearch from "minisearch";
 import { z } from "zod";
 import type { Store } from "../jobs/store";
 import type { Catalog } from "../catalog/catalog";
-import type { KitevaIdeaSummary, KitevaMcpResult } from "../../shared/kiteva-mcp";
+import type {
+  KitevaIdeaSummary,
+  KitevaMcpResult,
+  KitevaMcpToolResponse,
+} from "../../shared/kiteva-mcp";
 import { projectName } from "../../shared/project-name";
-import { RoomPatchSchema } from "../../shared/room";
+import { RoomPatchSchema, hasRoomDraftContent } from "../../shared/room";
 import { VideoRequestSchema } from "../../shared/domains/video";
 import { validateBriefSections } from "../requests/brief-sections";
 import {
@@ -63,7 +68,9 @@ export function createKitevaMcpTools({
     { name: "kiteva", version: "1.0.0" },
     { instructions: kitevaMcpInstructions },
   );
-  async function run(action: () => KitevaMcpResult | Promise<KitevaMcpResult>) {
+  async function run(
+    action: () => KitevaMcpResult | Promise<KitevaMcpResult>,
+  ): Promise<KitevaMcpToolResponse> {
     try {
       const result = await action();
       return {
@@ -92,6 +99,7 @@ export function createKitevaMcpTools({
       };
     }
   }
+  registerProjectReuseTool(server, { store, catalog, webUrl }, run);
   const publicAsset = (asset: Asset, attached: boolean) => ({
     id: asset.id,
     originalName: asset.originalName || asset.name,
@@ -401,14 +409,7 @@ export function createKitevaMcpTools({
           );
         const room = store.room();
         const previous = room.drafts.new;
-        if (
-          previous &&
-          (String(previous.request.instructions || "").trim() ||
-            previous.assets.length ||
-            Object.keys(previous.request).some(
-              (key) => !["instructions", "outputLanguage", "scriptItems"].includes(key),
-            ))
-        )
+        if (hasRoomDraftContent(previous))
           throw Error(
             "The Assistant already has a New idea draft. Review or remove it in Kiteva before creating another; it was not overwritten.",
           );

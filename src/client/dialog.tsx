@@ -1,5 +1,5 @@
 import { translateUi } from "./i18n";
-import { Modal } from "antd";
+import { Modal, theme } from "antd";
 import type { ReactNode } from "react";
 export function Dialog({
   title,
@@ -14,6 +14,7 @@ export function Dialog({
   wide?: boolean;
   footer?: ReactNode;
 }) {
+  const { token } = theme.useToken();
   return (
     <Modal
       open
@@ -39,7 +40,12 @@ export function Dialog({
       destroyOnHidden
       closeIcon={<span aria-label={translateUi("Close dialog")}>×</span>}
     >
-      <div className="dialog-body">{children}</div>
+      <div
+        className="dialog-body"
+        style={{ scrollbarColor: `${token.colorBorder} transparent`, scrollbarWidth: "thin" }}
+      >
+        {children}
+      </div>
     </Modal>
   );
 }

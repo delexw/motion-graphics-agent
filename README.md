@@ -76,6 +76,16 @@ links and [local gallery](docs/showcase.html) remain available for local viewing
 Only the latest three calendar days are listed here (New Zealand time). See the [changelog](CHANGELOG.md#daily-update-archive) for earlier daily updates and [release history](CHANGELOG.md).
 
 <details>
+<summary>2026-11-15</summary>
+
+- **New project from a finished version:** Choose which design, output, voice and music settings to retain while replacing the topic and script. UI and MCP share draft creation, ownership checks and retry protection; keeping the visual direction builds the full film directly without new direction previews.
+- **Independent character inheritance:** Recorded characters and mascots are preselected by default, with appearance, established personality and narrative roles shown before creation. Missing identity metadata remains unrecorded; older projects are not automatically identified.
+- **Source previews and clearer settings:** Reused projects show their source version beneath Settings. Source and MG previews use the same dotted-underlined button; source navigation stays in the app. Version settings, refinement controls and dialog scrollbars follow the shared layout and theme.
+- **Narration protection:** Replacing old content no longer writes an empty script that disables inherited narration. Enabled language narration without a usable profile fails before rendering.
+
+</details>
+
+<details>
 <summary>2026-11-13</summary>
 
 - **Governance and project technologies:** Server-side pagination, indexed project search and per-call costs make the reporting pages easier to inspect. Project filters retain the complete selector, and dependency readiness is separate from source and runtime usage evidence.
@@ -83,17 +93,6 @@ Only the latest three calendar days are listed here (New Zealand time). See the 
 - **Per-language media and refinements:** Narration and subtitles start disabled and are confirmed independently for each language. Version refinements can change supported voice providers and output settings without silently keeping an older profile.
 - **Stageshow appearance boundaries:** User UI styling overrides Stageshow defaults; otherwise the demo retains its native appearance. Selected Motion Graphics contribute motion inside the demo. Planning, repair and result review use the same scene ownership rule.
 - **Showcase and dependency maintenance:** The gallery includes the Playful Cat film and Swiss product demo as playable MP4s. Startup and installation share the dependency upgrade lifecycle, including Audio Studio; [agent guidance](AGENTS.md) documents module ownership, tool limits and mocked third-party tests.
-
-</details>
-
-<details>
-<summary>2026-11-12</summary>
-
-- **Stageshow product demos:** An optional startup-installed skill for authored UI walkthroughs with the selected MG contributing motion only. Upstream files stay Git-ignored; source contains only registration, adaptation guidance and tests. It preserves real-capture boundaries, renderer timing and third-party asset notices. See [integration and licensing](docs/stageshow.md).
-
-- **Open motion discovery:** Direct builds and generated directions share a route table for reading selected Motion Graphics, resolving explicit `@` references and searching the full motion pool. Style candidates and motion `good_fit` lists are recommendations, not allowlists. The model preserves the selected visual identity, user requirements and scene scope; it need not inspect every motion or use one.
-
-- **Five composable motion techniques:** Metaball Merge & Split (`motion-051`), Path Follow & Text on Path (`motion-052`), 3D Tile Flip (`motion-053`), Particle Glyph Assembly (`motion-054`) and Velocity Motion Blur (`motion-055`). Each has a seekable explorer preview, Chinese metadata and a frame-analysis record. A review of twelve common techniques found the other seven already covered. The catalog now has 55 motions.
 
 </details>
 

@@ -29,6 +29,7 @@ it("keeps room routes local while speech status, samples and generation pass to 
     "/api/speech/samples/example",
     "/api/runs",
     "/api/setup",
+    "/api/project-reuse-other",
   ]) {
     const next = vi.fn();
     middleware({ url }, response, next);
@@ -40,6 +41,11 @@ it("keeps room routes local while speech status, samples and generation pass to 
   middleware(roomRequest, response, next);
   expect(routing).toHaveBeenCalledWith(roomRequest, response);
   expect(next).not.toHaveBeenCalled();
+  for (const url of ["/api/project-reuse", "/api/project-reuse/example/full/characters"]) {
+    const request = { url };
+    middleware(request, response, next);
+    expect(routing).toHaveBeenCalledWith(request, response);
+  }
 });
 
 it("routes read-only activity branches locally without intercepting build or event-stream requests", async () => {

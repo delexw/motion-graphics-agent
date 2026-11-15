@@ -85,6 +85,23 @@ async function fixture() {
   return { workspace, config, service, prepare, request };
 }
 const signal = () => new AbortController().signal;
+it("blocks enabled language narration without a usable profile before rendering", async () => {
+  const f = await fixture();
+  const request = VideoRequestSchema.parse({
+    ...f.request,
+    scriptItems: [],
+    languageTracks: {
+      narration: [{ language: "en", speech: f.request.speech }],
+      subtitles: [],
+      defaultNarration: "en",
+      defaultSubtitle: "off",
+    },
+  });
+  await expect(prepareNarrationCapability(f.workspace, request, 10)).rejects.toThrow(
+    "Narration is enabled, but no narration profile is available",
+  );
+  expect(f.prepare).not.toHaveBeenCalled();
+});
 it("preserves narration when a refinement extends its time window and accepts later cues", async () => {
   const f = await fixture();
   await prepareNarrationCapability(f.workspace, f.request, 10);

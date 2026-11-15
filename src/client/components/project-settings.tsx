@@ -3,7 +3,8 @@ import { creativeApproachLabel } from "../../shared/creative-approach";
 import { buildRouteLabel, buildRouteOf } from "../../shared/build-route";
 import { translateUi, useUiLanguage } from "../i18n";
 import { videoLanguageLabel } from "../../shared/video-language";
-import { Popover } from "antd";
+import { MediaPreviewLink } from "./media-preview-link";
+import { ProjectSourceLink } from "./project-reuse/source-link";
 import { videoRendererOf, videoRenderers } from "../../shared/video-renderers";
 import { Fragment } from "react";
 import { StyleExampleMedia } from "../style-card";
@@ -106,6 +107,11 @@ export function ProjectSettings({
           <span key={setting}>{translateUi(setting)}</span>
         ))}
       </div>
+      {request.projectReuse && (
+        <p>
+          {translateUi("Created from:")} <ProjectSourceLink source={request.projectReuse} />
+        </p>
+      )}
       {selectedStyles.length > 0 && (
         <p>
           {translateUi("Motion Graphics:")}{" "}
@@ -114,36 +120,24 @@ export function ProjectSettings({
             return (
               <Fragment key={style.id}>
                 {index > 0 && " + "}
-                <Popover
-                  trigger={["hover", "focus"]}
-                  placement="bottom"
-                  mouseEnterDelay={0.1}
-                  mouseLeaveDelay={0}
-                  destroyOnHidden
+                <MediaPreviewLink
                   title={translateUi(style.name_en)}
+                  label={translateUi("Preview {{value0}}", {
+                    value0: translateUi(style.name_en),
+                  })}
                   content={
-                    <div className="project-style-hover-preview">
-                      <StyleExampleMedia
-                        styleId={style.id}
-                        version={example?.generatedAt}
-                        video={example?.video}
-                        videoVersion={example?.videoGeneratedAt}
-                        motionStatus={example?.motionStatus}
-                        playOnOpen
-                      />
-                    </div>
+                    <StyleExampleMedia
+                      styleId={style.id}
+                      version={example?.generatedAt}
+                      video={example?.video}
+                      videoVersion={example?.videoGeneratedAt}
+                      motionStatus={example?.motionStatus}
+                      playOnOpen
+                    />
                   }
                 >
-                  <button
-                    type="button"
-                    className="project-style-preview-trigger"
-                    aria-label={translateUi("Preview {{value0}}", {
-                      value0: translateUi(style.name_en),
-                    })}
-                  >
-                    {translateUi(style.name_en)}
-                  </button>
-                </Popover>
+                  {translateUi(style.name_en)}
+                </MediaPreviewLink>
               </Fragment>
             );
           })}

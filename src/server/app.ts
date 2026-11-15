@@ -1,3 +1,4 @@
+import { registerProjectReuseRoutes } from "./project-reuse/routes";
 import { projectName } from "../shared/project-name";
 import {
   GovernanceProjectQuerySchema,
@@ -368,6 +369,7 @@ export async function createApp(options: { store?: Store } = {}) {
     if (!job) throw new CodedError("PROJECT_NOT_FOUND", "Job not found", 404);
     return projectTechnologyMonitor(job, query);
   });
+  registerProjectReuseRoutes(app, store, catalog);
   app.post("/api/runs", async (req, reply) => {
     const request = RequestSchema.parse(req.body);
     await assertWindowsRenderReady();

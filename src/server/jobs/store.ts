@@ -1,3 +1,4 @@
+import { hasRoomDraftContent, type RoomDraft } from "../../shared/room";
 import {
   SettingsCheckRecordSchema,
   type SettingsCheckRecord,
@@ -159,6 +160,46 @@ export class Store {
       this.saveRoom(state);
       this.db.exec("COMMIT");
       return { state, conflicts: result.conflicts };
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  projectForReuseOperation(operationId: string) {
+    const row = this.db
+      .prepare(
+        "SELECT id FROM runs WHERE json_extract(json,'$.request.projectReuse.operationId')=? LIMIT 1",
+      )
+      .get(operationId);
+    return row ? String(row.id) : undefined;
+  }
+  saveReusedDraft(draft: RoomDraft, assets: Asset[], baseRevision: number) {
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const room = this.room();
+      if (hasRoomDraftContent(room.drafts.new))
+        throw Error("A New idea draft already exists; it was not overwritten.");
+      for (const asset of assets) {
+        if (asset.owner?.kind !== "draft" || asset.owner.id !== draft.id)
+          throw Error("Invalid copied asset owner");
+        this.asset(asset);
+      }
+      const result = applyRoomPatch(room, {
+        client: "project-reuse",
+        baseRevision,
+        drafts: { new: draft },
+        windows: {},
+        views: {},
+        questionDrafts: {},
+        dismissedQuestions: [],
+        force: [],
+      });
+      if (result.conflicts.length)
+        throw Error("The draft changed concurrently; it was not overwritten.");
+      this.saveRoom(RoomStateSchema.parse(result.state));
+      for (const asset of assets) this.addLibraryAsset(asset.id);
+      this.db.exec("COMMIT");
+      return result.state;
     } catch (error) {
       this.db.exec("ROLLBACK");
       throw error;

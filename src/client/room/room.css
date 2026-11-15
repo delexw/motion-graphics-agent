@@ -1355,9 +1355,28 @@
   font-weight: 600;
 }
 .room-refinement {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   flex: none;
   padding: 10px 20px 14px;
   border-top: 1px solid var(--room-hairline);
+}
+
+.room-refinement-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.room-refinement-footer .refinement-images {
+  min-width: 0;
+  max-width: 100%;
+}
+.room-refinement-version-select {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* Activity: one vertical gap for checkpoints, log rows and message groups. */

@@ -17,6 +17,7 @@ it.skipIf(!browserExecutablePath())(
       applicationDemoCapturePrompt,
       buildApplicationDemoRoutePrompt("multiplane", "assembly"),
       await readFile(path.join(appRoot, "docs/chapter-capture-timing.md"), "utf8"),
+      await readFile(path.join(appRoot, "docs/build-routes-and-creative-approaches.md"), "utf8"),
     ];
     const diagrams = prompts.map((prompt) => {
       const matches = [...prompt.matchAll(/```mermaid\n([\s\S]*?)```/g)];
@@ -73,7 +74,7 @@ try {
       );
       expect(
         await page.evaluate(() => (window as unknown as { diagramResult: unknown }).diagramResult),
-      ).toEqual({ count: 4 });
+      ).toEqual({ count: diagrams.length });
     } finally {
       await browser.close();
       await server.close();

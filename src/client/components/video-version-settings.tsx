@@ -1,4 +1,5 @@
-import { Descriptions } from "antd";
+import { Descriptions, theme } from "antd";
+import "./video-version-settings.css";
 import type { VideoGenerationJob, VideoRequest } from "../../shared/domains/video";
 import { languageTrackRows } from "../../shared/language-tracks";
 import { speechEngines, speechVoices } from "../../shared/speech";
@@ -12,6 +13,7 @@ export function VideoVersionSettings({
   job: VideoGenerationJob;
   request: VideoRequest;
 }) {
+  const { token } = theme.useToken();
   const effective = job.effectiveRequest ?? request;
   const rows = languageTrackRows(effective);
   const profiles = rows
@@ -20,11 +22,23 @@ export function VideoVersionSettings({
   if (!profiles.length && !effective.languageTracks && effective.speech?.mode === "narration")
     profiles.push({ language: effective.outputLanguage ?? "en", speech: effective.speech });
   return (
-    <details className="video-version-settings">
+    <details
+      className="video-version-settings"
+      style={{
+        borderColor: token.colorBorderSecondary,
+        background: token.colorFillAlter,
+        borderRadius: token.borderRadius,
+      }}
+    >
       <summary>{translateUi("Version settings")}</summary>
       <Descriptions
         size="small"
         column={1}
+        colon={false}
+        styles={{
+          label: { width: 88, flexShrink: 0 },
+          content: { overflowWrap: "anywhere", minWidth: 0 },
+        }}
         items={[
           {
             key: "output",

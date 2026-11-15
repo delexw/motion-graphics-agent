@@ -93,6 +93,7 @@ it.skipIf(!browserExecutablePath())(
                   req.url,
                   `<div id="root"></div><script type="module">
 import '/src/client/style.css';
+import '/src/client/room/room.css';
 import React,{useState}from'react';import{createRoot}from'react-dom/client';
 import{VideoRefinement}from'/src/client/components/video-refinement.tsx';
 import{RoomProject}from'/src/client/room/room-project.tsx';
@@ -134,6 +135,27 @@ createRoot(document.getElementById('root')).render(h(App));</script>`,
         expect(await page.$eval(".video-version-settings", (node) => node.textContent)).toContain(
           "灵小柔",
         );
+        if (route.includes("?room")) {
+          const layout = await page.evaluate(() => {
+            const settings = document.querySelector(".video-version-settings")!;
+            const sender = document.querySelector(".room-refinement .ant-sender")!;
+            const footer = document.querySelector(".room-refinement-footer")!;
+            const upload = footer.querySelector(".refinement-images")!.getBoundingClientRect();
+            const selector = footer
+              .querySelector(".room-refinement-version-select")!
+              .getBoundingClientRect();
+            return {
+              gap: sender.getBoundingClientRect().top - settings.getBoundingClientRect().bottom,
+              footerDisplay: getComputedStyle(footer).display,
+              aligned:
+                Math.abs((upload.top + upload.bottom) / 2 - (selector.top + selector.bottom) / 2) <
+                2,
+            };
+          });
+          expect(layout.gap).toBeGreaterThanOrEqual(12);
+          expect(layout.footerDisplay).toBe("flex");
+          expect(layout.aligned).toBe(true);
+        }
         await page.waitForSelector(".refinement-history-review .ant-collapse-header");
         await page.click(".refinement-history-review .ant-collapse-header");
         const checkbox = 'input[aria-label="Keep request from version 2"]';

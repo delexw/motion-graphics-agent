@@ -1,3 +1,4 @@
+import { ProjectReuseButton } from "./components/project-reuse/button";
 import { OpenPageButton } from "./domains/page/open-button";
 import { focusSettingControl } from "./lib/settings-conflict-navigation";
 import { SettingsConflictNotice } from "./components/settings-conflict-notice";
@@ -891,6 +892,13 @@ function App() {
               >
                 {job.kind === "full" && <ProjectDownload run={run} job={job} />}
                 <OpenPageButton job={job} />
+                <ProjectReuseButton
+                  run={run}
+                  job={job}
+                  styles={styles}
+                  onCreated={(draftId) => navigate(`/?newDraft=${encodeURIComponent(draftId)}`)}
+                  previewOpen={new URLSearchParams(location.search).get("reuse") === job.id}
+                />
                 {job.phase === "ready" && (
                   <>
                     <Popover
@@ -1351,6 +1359,7 @@ function App() {
 
       <MotionConfig reducedMotion="user">
         <CreativeRoom
+          key={new URLSearchParams(location.search).get("newDraft") || "room"}
           projects={history}
           active={projectId && page === "create" ? run : undefined}
           styles={styles}

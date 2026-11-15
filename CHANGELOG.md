@@ -6,6 +6,10 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Added
 
+- Finished-version project reuse through the UI and MCP, with independent inherited facets, source ownership checks, copied attachment ownership, idempotent draft creation and direct full-film builds when keeping the visual direction.
+- Recorded character and mascot inheritance, enabled by default for new reuse requests. Preview and choose identities independently of the topic/script; carry appearance, established personality, narrative role and evidence into planning. Historical profiles require inspected metadata rather than automatic identity inference.
+- A shared source/MG preview button with persistent dotted underlines, hover/focus previews and client-side source-project navigation beneath Settings.
+
 - Stageshow product-demo authoring, installed from its MIT-licensed upstream subdirectory at startup for Claude and Codex. Upstream files remain outside source control; installation retains revision hashes and asset notices.
 - A pre-project JEV settings compatibility check with conflict reporting and Governance cost accounting.
 - Server-side Governance pagination, indexed project search, persistent project filters and modular technology usage reporting.
@@ -40,6 +44,10 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 - Use compatible npm dependency ranges, separate daily compatible updates from majors, and monitor Python requirements and GitHub Actions. Keep security alerts enabled.
 
 ### Fixed
+
+- Fresh reuse requests no longer write an empty timed script that suppresses inherited narration. Enabled language narration without a usable profile is rejected before rendering.
+- Reuse character endpoints and draft creation register through the same owner in the backend and development API, avoiding development-only missing routes.
+- Version settings/refinement layout and themed dialog scrollbars; build diagrams now include the completed-version reuse route.
 
 - Style previews could stay paused with no video after opening. When the browser was busy it delivered several visibility changes at once, and the viewport visibility check read the oldest one. It now reads the newest.
 
@@ -216,6 +224,24 @@ Kiteva uses the [MIT License](LICENSE). Third-party components retain their own 
 ## Daily update archive
 
 README recent updates cover today and the preceding two calendar days in New Zealand time. Move older daily entries here when updating the READMEs. Historical English and Simplified Chinese entries are preserved below; the versioned release notes above remain unchanged.
+
+### 2026-11-12
+
+**English**
+
+- **Stageshow product demos:** An optional startup-installed skill for authored UI walkthroughs with the selected MG contributing motion only. Upstream files stay Git-ignored; source contains only registration, adaptation guidance and tests. It preserves real-capture boundaries, renderer timing and third-party asset notices. See [integration and licensing](docs/stageshow.md).
+
+- **Open motion discovery:** Direct builds and generated directions share a route table for reading selected Motion Graphics, resolving explicit `@` references and searching the full motion pool. Style candidates and motion `good_fit` lists are recommendations, not allowlists. The model preserves the selected visual identity, user requirements and scene scope; it need not inspect every motion or use one.
+
+- **Five composable motion techniques:** Metaball Merge & Split (`motion-051`), Path Follow & Text on Path (`motion-052`), 3D Tile Flip (`motion-053`), Particle Glyph Assembly (`motion-054`) and Velocity Motion Blur (`motion-055`). Each has a seekable explorer preview, Chinese metadata and a frame-analysis record. A review of twelve common techniques found the other seven already covered. The catalog now has 55 motions.
+
+**简体中文**
+
+- **Stageshow 产品 demo：**通过现有安装器下载到 Git 忽略的运行目录，源码只保留注册、适配指导和测试。JEV 可选择它创作模拟 UI；用户要求可覆盖默认界面样式，所选 MG 只负责 demo 内的动效、节奏和转场；不替代真实录制或渲染器。保留 MIT 与第三方素材 notices，视频采用绝对时间状态。[接入说明](docs/stageshow.md)。
+
+- **开放的动作检索：**直接制作和生成方向共用路由表，指导模型读取所选 Motion Graphic、解析明确的 `@` 引用，并按场景需要搜索完整动作库。风格的候选动作和动作的 `good_fit` 列表只是建议，不是白名单；保留所选视觉风格、用户要求及场景范围，无须遍历或强制使用动作。
+
+- **五种可组合的动效技法：**液态融合与分裂（`motion-051`）、路径跟随与路径文字（`motion-052`）、三维瓷砖翻转（`motion-053`）、粒子聚合成字（`motion-054`）和速度动态模糊（`motion-055`）。每种都有可跳转的浏览器预览、中文元数据和逐帧分析记录。对十二种常见技法的审阅发现，其余七种已有覆盖。目录现有 55 个动作。
 
 ### 2026-11-10
 

@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router-dom";
 import { expect, it } from "vitest";
 import { RequestSchema, type Run } from "../src/shared/contracts";
 import { ProjectSettings } from "../src/client/components/project-settings";
@@ -12,7 +13,11 @@ function summary(settings: Record<string, unknown>) {
     candidates: [],
     request: RequestSchema.parse({ instructions: "Explain a useful idea", ...settings }),
   };
-  return renderToStaticMarkup(<ProjectSettings run={run} />);
+  return renderToStaticMarkup(
+    <MemoryRouter>
+      <ProjectSettings run={run} />
+    </MemoryRouter>,
+  );
 }
 const voice = { mode: "narration", engine: "kokoro", voice: "bf_isabella" };
 const scriptItems = [0, 1].map((index) => ({
@@ -60,4 +65,36 @@ it("uses legacy global narration only when timed script and track settings are a
   );
   expect(summary({ speech: { mode: "off" } })).not.toContain("Narration:");
   expect(summary({ outputType: "page" })).not.toContain("Narration:");
+});
+
+it("links a reused project's settings to its source and shows the recorded version", () => {
+  const html = summary({
+    projectReuse: {
+      projectId: "example-source",
+      jobId: "example-full",
+      version: 2,
+      operationId: "example-reuse",
+      choices: {},
+      styles: [],
+    },
+  });
+  expect(html).toContain("Created from:");
+  expect(html).toContain('aria-label="Source project"');
+  expect(html).toContain("Source project · Version 2");
+});
+
+it("omits source provenance for an original project and avoids inventing an unknown version", () => {
+  expect(summary({})).not.toContain("Created from:");
+  const html = summary({
+    projectReuse: {
+      projectId: "example/source",
+      jobId: "example-full",
+      operationId: "example-reuse",
+      choices: {},
+      styles: [],
+    },
+  });
+  expect(html).toContain('aria-label="Source project"');
+  expect(html).toContain("Source project");
+  expect(html).not.toContain("Version ");
 });

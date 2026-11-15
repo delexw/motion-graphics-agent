@@ -4728,35 +4728,21 @@ html,
   line-height: 1.5;
 }
 
-.project-style-preview-trigger {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  text-decoration: underline dotted;
-  text-underline-offset: 3px;
-}
-.project-style-preview-trigger:hover,
-.project-style-preview-trigger:focus-visible {
-  color: var(--accent);
-}
-.project-style-hover-preview {
+.media-hover-preview {
   width: 260px;
   max-width: 70vw;
 }
-.project-style-hover-preview .example-media {
+.media-hover-preview .example-media {
   aspect-ratio: 16 / 9;
   border-radius: 8px;
   overflow: hidden;
 }
-.project-style-hover-preview .example {
+.media-hover-preview .example {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-.project-style-hover-preview .motion-label {
+.media-hover-preview .motion-label {
   font-size: 10px;
   padding: 4px 6px;
 }

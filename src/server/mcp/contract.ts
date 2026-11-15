@@ -68,6 +68,7 @@ const fieldGuidance: Record<string, string> = {
 const {
   instructions: _instructions,
   outputType: _outputType,
+  projectReuse: _projectReuse,
   ...fields
 } = VideoRequestSchema.out.shape;
 const describedFields: Record<string, z.ZodType> = Object.fromEntries(

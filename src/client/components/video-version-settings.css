@@ -1,0 +1,13 @@
+.video-version-settings {
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid;
+}
+.video-version-settings > summary {
+  cursor: pointer;
+  font-weight: 600;
+  line-height: 22px;
+}
+.video-version-settings > .ant-descriptions {
+  margin-top: 12px;
+}

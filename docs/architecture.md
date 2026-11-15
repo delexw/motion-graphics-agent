@@ -211,10 +211,17 @@ fixed styles before preview jobs are created. Each preview reads its assigned di
 `PREVIEW_PLAN.json` in a fresh build session; there is no per-preview planning call.
 This route does not propose or rank style combinations through JEV.
 
+Completed-version reuse with its visual direction kept also enters this direct
+route, using the source MG combination and zero previews. It does not inherit the
+source project's direction count. The shared UI/MCP draft service prepares fresh
+content and retained settings; the normal startup check still runs. See
+[the reuse branch in the build diagram](build-routes-and-creative-approaches.md#flow-and-planning).
+
 #### 3. Selected styles with direct full build
 
 ```mermaid
 flowchart TD
+  Reuse["Completed version reuse: fixed MGs, zero previews"] --> Input
   Input["Full prompt + selected styles + settings + references"] --> Title["Extract project title"]
   Title --> Session["Start main-model session"]
   Session --> Plan["Plan and validate the full film"]

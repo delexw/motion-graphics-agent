@@ -227,3 +227,16 @@ export function copyRoomEntry(target: RoomState, source: RoomState, entry: strin
   else records[key] = value;
   return { ...target, [collection]: records };
 }
+
+/** Same empty-draft boundary for ordinary creation and version reuse. */
+export function hasRoomDraftContent(draft?: RoomDraft) {
+  return Boolean(
+    draft &&
+    (String(draft.request.instructions || "").trim() ||
+      (Array.isArray(draft.request.scriptItems) && draft.request.scriptItems.length) ||
+      draft.assets.length ||
+      Object.keys(draft.request).some(
+        (key) => !["instructions", "outputLanguage", "scriptItems"].includes(key),
+      )),
+  );
+}

@@ -1,3 +1,4 @@
+import { buildRouteOf } from "../../shared/build-route";
 import { VideoVersionSettings } from "../components/video-version-settings";
 import { ProductionDesk } from "../components/production-desk/production-desk";
 import type { VideoGenerationJob } from "../../shared/domains/video";
@@ -112,7 +113,11 @@ export function RoomProject({
       candidate ? run.candidates.indexOf(candidate) + 1 : undefined,
     );
   };
-  const tab = view.tab || (full.length ? "full" : "previews");
+  const directBuild = buildRouteOf(run.request) === "direct-build";
+  const tab =
+    directBuild && view.tab === "previews"
+      ? "full"
+      : view.tab || (directBuild || full.length ? "full" : "previews");
   const setTab = (next: string) =>
     onView({ ...view, tab: roomProjectTabs.find((item) => item === next) });
   const refine = view.refine;
@@ -305,28 +310,32 @@ export function RoomProject({
                 </div>
               ),
             },
-            {
-              key: "previews",
-              label: translateUi("Directions"),
-              children: (
-                <>
-                  {!run.jobs.some((j) => j.kind === "preview") && (
-                    <ProjectResultPending project={run} />
-                  )}
-                  {controls}
-                  <div className="room-preview-grid">
-                    {run.jobs
-                      .filter((j) => j.kind === "preview")
-                      .map((job) => (
-                        <section key={job.id}>
-                          {renderPreview(job)}
-                          {pending(job.id)}
-                        </section>
-                      ))}
-                  </div>
-                </>
-              ),
-            },
+            ...(!directBuild
+              ? [
+                  {
+                    key: "previews",
+                    label: translateUi("Directions"),
+                    children: (
+                      <>
+                        {!run.jobs.some((j) => j.kind === "preview") && (
+                          <ProjectResultPending project={run} />
+                        )}
+                        {controls}
+                        <div className="room-preview-grid">
+                          {run.jobs
+                            .filter((j) => j.kind === "preview")
+                            .map((job) => (
+                              <section key={job.id}>
+                                {renderPreview(job)}
+                                {pending(job.id)}
+                              </section>
+                            ))}
+                        </div>
+                      </>
+                    ),
+                  },
+                ]
+              : []),
             {
               key: "full",
               label: translateUi("Full versions{{value0}}", {
@@ -334,13 +343,16 @@ export function RoomProject({
               }),
               children: (
                 <div className="room-preview-grid">
-                  {!full.length && (
-                    <p className="room-hint">
-                      {translateUi(
-                        "Choose a direction to make the full version. Your previews stay saved.",
-                      )}
-                    </p>
-                  )}
+                  {!full.length &&
+                    (directBuild ? (
+                      <ProjectResultPending project={run} />
+                    ) : (
+                      <p className="room-hint">
+                        {translateUi(
+                          "Choose a direction to make the full version. Your previews stay saved.",
+                        )}
+                      </p>
+                    ))}
                   {fullGroups.map((group) => (
                     <section key={group.key}>
                       <RevisionStack
@@ -458,12 +470,13 @@ export function RoomProject({
                 : translateUi("Fine-tune: what would you like to change?")
             }
             footer={
-              <div>
+              <div className="room-refinement-footer">
                 <RefinementImages
                   attachments={refinementImages}
                   disabled={overview.active || busy}
                 />
                 <Select
+                  className="room-refinement-version-select"
                   size="small"
                   variant="borderless"
                   aria-label={translateUi("Version to fine-tune")}
