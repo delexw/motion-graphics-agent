@@ -11,7 +11,7 @@
 
 <h1 align="center">Kiteva — AI Motion Graphics Agent</h1>
 
-Use Kiteva from external agents through its [MCP server](docs/agent-mcp.md): search ideas
+Use the motion graphic agent from external agents through its [MCP server](docs/agent-mcp.md): search ideas
 and Motion Graphics, save an Assistant draft, and explicitly start a build.
 
 <p align="center">
