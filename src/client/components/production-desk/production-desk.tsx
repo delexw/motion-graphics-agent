@@ -30,6 +30,10 @@ import { AudioWaveform } from "../audio-waveform";
 import { useArtifactJson } from "../../use-artifact-json";
 import { ProductionSchema } from "../../../shared/agents/schemas/video";
 import { NarrationStateSchema, narrationStatePath } from "../../../shared/narration";
+import { useMusicBeats } from "../../use-music-beats";
+import { adjacentDeskBeat, deskMusicBeatTimes } from "../../lib/desk-music-beats";
+import { MusicBeatInspector, MusicBeatStrip } from "./music-beats";
+import { uiLanguage } from "../../i18n";
 import "./production-desk.css";
 
 const trackIcons = { video: Film, narration: Mic, sfx: Sparkles, music: Music2 };
@@ -54,6 +58,13 @@ export function ProductionDesk({ projectId, job }: { projectId: string; job: Vid
       ),
     [job, savedProduction, savedNarration, storyboard],
   );
+  const musicClips = model.tracks.find((track) => track.id === "music")!.clips;
+  const musicBeats = useMusicBeats(
+    projectId,
+    job.id,
+    musicClips.flatMap((clip) => (clip.source ? [clip.source] : [])),
+  );
+  const [beatAnnouncement, setBeatAnnouncement] = useState("");
   const player = useRef<HTMLVideoElement>(null);
   const timeline = useRef<HTMLDivElement>(null);
   const playheadInput = useRef<HTMLInputElement>(null);
@@ -126,6 +137,22 @@ export function ProductionDesk({ projectId, job }: { projectId: string; job: Vid
       } catch {
         setMediaError(true);
       }
+  }
+  function navigateBeat(clip: DeskClip, direction: -1 | 1) {
+    const times = deskMusicBeatTimes(clip, clip.source ? musicBeats[clip.source] : undefined);
+    const index = adjacentDeskBeat(times, player.current?.currentTime ?? time, direction);
+    if (index < 0) {
+      setBeatAnnouncement(translateUi(direction < 0 ? "First beat" : "Last beat"));
+      return;
+    }
+    seek(times[index]);
+    setBeatAnnouncement(
+      translateUi("Beat {{index}} of {{count}} at {{time}}s", {
+        index: uiLanguage.number(index + 1),
+        count: uiLanguage.number(times.length),
+        time: uiLanguage.number(Number(times[index].toFixed(3))),
+      }),
+    );
   }
   function select(clip: DeskClip) {
     setSelectedId(clip.id);
@@ -200,6 +227,13 @@ export function ProductionDesk({ projectId, job }: { projectId: string; job: Vid
                 <dt>{translateUi("Timing")}</dt>
                 <dd>{translateUi(selected.timing)}</dd>
               </dl>
+              {musicClips.some((clip) => clip.id === selected.id) && (
+                <MusicBeatInspector
+                  clip={selected}
+                  state={selected.source ? musicBeats[selected.source] : undefined}
+                  navigate={(direction) => navigateBeat(selected, direction)}
+                />
+              )}
               {selected.source && (
                 <>
                   <h4>{translateUi("Source")}</h4>
@@ -254,6 +288,9 @@ export function ProductionDesk({ projectId, job }: { projectId: string; job: Vid
           {iconButton("Fit timeline", <Maximize2 size={15} />, () => setZoom(1))}
         </div>
       </div>
+      <span className="desk-beat-announcement" role="status" aria-live="polite">
+        {beatAnnouncement}
+      </span>
       <div className="desk-timeline-scroll" aria-label={translateUi("Production timeline")}>
         <div className="desk-timeline" ref={timeline} style={{ minWidth: `${zoom * 100}%` }}>
           <div className="desk-row desk-ruler-row">
@@ -321,6 +358,14 @@ export function ProductionDesk({ projectId, job }: { projectId: string; job: Vid
                       onClick={() => select(clip)}
                       onDoubleClick={() => seek(clip.start)}
                       onKeyDown={(event) => {
+                        if (
+                          track.id === "music" &&
+                          selectedId === clip.id &&
+                          (event.key === "[" || event.key === "]")
+                        ) {
+                          event.preventDefault();
+                          navigateBeat(clip, event.key === "[" ? -1 : 1);
+                        }
                         if (event.key === "Enter") {
                           event.preventDefault();
                           select(clip);
@@ -333,6 +378,9 @@ export function ProductionDesk({ projectId, job }: { projectId: string; job: Vid
                         <AudioWaveform src={url(clip.source)} />
                       ) : (
                         <small>{translateUi(statusLabels[clip.status])}</small>
+                      )}
+                      {track.id === "music" && clip.source && (
+                        <MusicBeatStrip clip={clip} state={musicBeats[clip.source]} />
                       )}
                     </button>
                   ))}

@@ -346,3 +346,57 @@
     justify-content: space-between;
   }
 }
+
+.desk-track-music .desk-lane {
+  height: 74px;
+}
+.desk-track-music .desk-clip {
+  height: 58px;
+}
+.desk-beat-strip {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  pointer-events: none;
+}
+.desk-beat-tick {
+  position: absolute;
+  width: 1px;
+  height: 7px;
+  bottom: 0;
+  background: var(--desk-text);
+  opacity: 0.85;
+}
+.desk-beat-state {
+  position: absolute;
+  bottom: 0;
+  left: 6px;
+  font-size: 9px;
+  white-space: nowrap;
+  color: #eef4ff;
+  line-height: 10px;
+}
+.desk-beat-inspector {
+  margin-top: 12px;
+  border-top: 1px solid var(--desk-border);
+}
+.desk-beat-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.desk-beat-estimate {
+  font-size: 10px;
+}
+.desk-beat-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

@@ -162,6 +162,7 @@ export const taskActivityLabels: Record<
   },
 };
 export function customerToolActivity(name: string, type: string, purpose?: string): string {
+  if (/music_analysis.*analyze_music/.test(name)) return "Analyzing music beats…";
   if (/creative_pool.*inspect_technologies/.test(name)) return "Checking tool availability…";
   if (/creative_pool.*prepare_technology_stylesheet/.test(name))
     return "Bundling stylesheets and assets…";

@@ -811,3 +811,53 @@ it("keeps narration language visible instead of replacing it with generic prepar
   expect(html).toContain("Preparing English narration…");
   expect(html).toContain("Preparing Chinese narration…");
 });
+
+it.each(["mcp__music_analysis__analyze_music", "music_analysis: analyze_music"])(
+  "labels music analysis before generic production activity: %s",
+  (toolName) => {
+    expect(customerToolActivity(toolName, "tool", "full video generation")).toBe(
+      "Analyzing music beats…",
+    );
+    const recorded = [
+      event(1, "tool", "internal tool name", "a", {
+        toolName,
+        itemId: "music-analysis",
+        purpose: "full video generation",
+        invocationId: "build",
+      }),
+      event(2, "tool_progress", "heartbeat", "a", {
+        toolName,
+        itemId: "music-analysis",
+        purpose: "full video generation",
+        invocationId: "build",
+      }),
+      event(3, "tool_result", "private beat data", "a", {
+        results: [{ itemId: "music-analysis", failed: false, output: "private beat data" }],
+        purpose: "full video generation",
+        invocationId: "build",
+      }),
+    ];
+    const items = activityItems(recorded, false);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      text: "Analyzing music beats…",
+      itemId: "music-analysis",
+      status: "complete",
+      jobId: "a",
+      invocationId: "build",
+    });
+    expect(JSON.stringify(items)).not.toContain("private beat data");
+    const failed = activityItems(
+      [
+        ...recorded.slice(0, 2),
+        event(3, "tool_result", "failure", "a", {
+          results: [{ itemId: "music-analysis", failed: true, output: "failure" }],
+          purpose: "full video generation",
+          invocationId: "build",
+        }),
+      ],
+      false,
+    );
+    expect(failed[0]).toMatchObject({ text: "Analyzing music beats…", status: "failed" });
+  },
+);

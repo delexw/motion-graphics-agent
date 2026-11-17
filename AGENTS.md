@@ -23,6 +23,8 @@ For changes spanning scopes, read every matching guide. Keep detailed rules in t
 topic files and this entry point short. Do not inject development instructions into
 generated projects' production prompts.
 
+New agent tools must satisfy the [Activity label requirements](.agents/backend/tools.md#activity-labels).
+
 ## Modular implementation
 
 Modularity is required for every change, including UI, MCP, verification and shared

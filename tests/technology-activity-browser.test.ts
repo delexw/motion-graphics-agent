@@ -35,9 +35,9 @@ it.skipIf(!browserExecutablePath())(
 import '/src/client/style.css';
 import React from 'react';import {createRoot} from 'react-dom/client';
 import {AgentActivity} from '/src/client/agent-activity.tsx';
-const tools=['mcp__creative_pool__inspect_technologies','Bash','mcp__creative_pool__prepare_technology','mcp__creative_pool__prepare_technology_stylesheet'];
+const tools=['mcp__creative_pool__inspect_technologies','Bash','mcp__creative_pool__prepare_technology','mcp__creative_pool__prepare_technology_stylesheet','mcp__music_analysis__analyze_music'];
 const events=tools.map((toolName,index)=>({id:index+1,runId:'example',jobId:'build',type:'tool',message:toolName,time:'2026-01-01T10:00:00Z',data:{toolName,itemId:'tool-'+index,purpose:'full video generation',invocationId:'build',state:'item.completed',...(index===1?{activity:'dependencies'}:{})}}));
-const codexEvents=events.map(event=>({...event,type:'mcp_tool_call',data:{...event.data,toolName:event.data.toolName.replace('mcp__creative_pool__','creative_pool: ')}}));
+const codexEvents=events.map(event=>({...event,type:'mcp_tool_call',data:{...event.data,toolName:event.data.toolName.replace('mcp__creative_pool__','creative_pool: ').replace('mcp__music_analysis__','music_analysis: ')}}));
 const planningEvents=['plan_ready','storyboard_ready','capture_plan_ready'].map((type,index)=>({id:20+index,runId:'example',jobId:'plan',type,message:['Plan ready','Storyboard ready','Capture plan ready'][index],time:'2026-01-01T10:00:00Z',data:{purpose:'Full video planning',videoBuildPlanning:true,audience:'internal'}}));
 createRoot(document.getElementById('root')).render(React.createElement(React.Fragment,null,React.createElement('section',{id:'claude'},React.createElement(AgentActivity,{events})),React.createElement('section',{id:'codex'},React.createElement(AgentActivity,{events:codexEvents})),React.createElement('section',{id:'planning'},React.createElement(AgentActivity,{events:planningEvents}))));
 </script>`,
@@ -71,6 +71,7 @@ createRoot(document.getElementById('root')).render(React.createElement(React.Fra
         "Installing project dependencies…",
         "Bundling browser dependencies…",
         "Bundling stylesheets and assets…",
+        "Analyzing music beats…",
       ])
         expect(text).toContain(label);
       expect(await page.$eval("#claude", (section) => section.textContent)).toBe(

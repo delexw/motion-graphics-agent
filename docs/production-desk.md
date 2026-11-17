@@ -56,3 +56,24 @@ An empty array records no separate music/SFX clips; omitting the field preserves
 legacy inspection behavior. Desk uses the source manifest instead of the merged
 soundtrack whenever present. Existing projects are not automatically separated
 or regenerated.
+
+## Measured music beats
+
+Music clips lazily read their saved `<source>.beats.json` through the read-only
+`GET /api/music-analysis/:projectId/:jobId?file=...` endpoint. The server validates
+the version, analyzer, timestamps and source SHA-256. Opening Desk never runs
+analysis or generation. Each unique source is fetched once per Desk session; repeated
+placements share the map and add their own film start time. Source files already
+contain their trims and loops, so their source offset is zero.
+
+Valid maps appear as equal ticks below music waveforms. If ticks would be closer
+than 6 px, a zoom-in label replaces them; ticks are never downsampled into invented
+bar lines. The selected clip's inspector shows estimated BPM and the beat count.
+Previous/Next beat buttons, or `[` / `]` on the selected music clip, seek the
+existing video and announce the selected beat. No stems play separately.
+
+Missing, invalid, unavailable or fingerprint-mismatched maps show explicit status
+text and no ticks. Empty maps remain valid. Beat estimates do not establish
+verified downbeats, bars or perceptual synchronization. Closing Desk cancels reads
+and disconnects marker resize observers. Beat handling lives in `use-music-beats.ts`,
+`lib/desk-music-beats.ts` and `components/production-desk/music-beats.tsx`.

@@ -30,6 +30,7 @@ import { userHome } from "./runtime/platform";
 import { registerRoomRoutes } from "./room/routes";
 import { registerKitevaMcpRoutes } from "./mcp/routes";
 import { startIdeaThroughBackend } from "./mcp/client";
+import { registerMusicAnalysisRoutes } from "./audio/music-analysis-routes";
 import { registerSpeechRoutes } from "./audio/routes";
 import { speechConfigurationProblem, activeSpeech } from "../shared/speech";
 import { assetLimitKind } from "../shared/asset-limits";
@@ -100,6 +101,7 @@ export async function createApp(options: { store?: Store } = {}) {
     cache.set(id, run);
     return run;
   };
+  registerMusicAnalysisRoutes(app, getRun);
   for (const saved of store.list())
     for (const job of saved.jobs)
       if (

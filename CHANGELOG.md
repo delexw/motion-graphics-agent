@@ -4,6 +4,12 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ## [Unreleased]
 
+### Added
+
+- Local music beat analysis through the build-only `music_analysis.analyze_music` tool, using the installed HyperFrames CLI. Saved beat maps include estimated tempo, measured timestamps and a source fingerprint.
+- Production Desk music beat ticks, estimated BPM, beat counts and previous/next beat controls, with keyboard shortcuts. Desk validates saved maps and reports missing, stale or invalid analysis without running generation.
+- A distinct English/Chinese Activity label for music analysis, with agent guidance requiring a distinct label for each new tool.
+
 ## [1.2.0] — 2026-11-16
 
 DeepSeek authoring, finished-project reuse and governed multilingual media workflows.

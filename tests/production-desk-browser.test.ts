@@ -1,3 +1,4 @@
+import type { ServerResponse } from "node:http";
 import { newBrowserPage } from "./fixtures/browser-page";
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
@@ -19,6 +20,8 @@ it.skipIf(!browserExecutablePath())(
     const board: Storyboard = validStoryboard(3);
     board.scenes[0].beats[0].audio.effects = ["Paper sound"];
     const requests: string[] = [];
+    const beatRequests: string[] = [];
+    let heldBeatResponse: ServerResponse | undefined;
     const server = await createServer({
       configFile: false,
       cacheDir: directory,
@@ -33,6 +36,49 @@ it.skipIf(!browserExecutablePath())(
           configureServer(server) {
             server.middlewares.use(async (req, res, next) => {
               if (req.url?.startsWith("/api/")) requests.push(req.method || "GET");
+              if (req.url?.startsWith("/api/music-analysis/")) {
+                beatRequests.push(req.url);
+                const file = new URL(req.url, "http://localhost").searchParams.get("file") || "";
+                res.setHeader("Content-Type", "application/json");
+                if (file.includes("held")) {
+                  heldBeatResponse = res;
+                  return;
+                }
+                const status = file.includes("stale")
+                  ? "stale"
+                  : file.includes("missing")
+                    ? "missing"
+                    : file.includes("invalid")
+                      ? "invalid"
+                      : undefined;
+                if (status) res.end(JSON.stringify({ status }));
+                else if (file.includes("unavailable")) {
+                  res.statusCode = 503;
+                  res.end('{"error":"Unavailable"}');
+                } else {
+                  const beatTimes = file.includes("dense")
+                    ? Array.from({ length: 300 }, (_, index) => 0.005 + index * 0.01)
+                    : file.includes("empty")
+                      ? []
+                      : [0.25, 0.75, 1.25, 1.75, 2.25, 2.75];
+                  res.end(
+                    JSON.stringify({
+                      status: "ready",
+                      analysisFile: `${file}.beats.json`,
+                      analysis: {
+                        version: 1,
+                        analyzer: "hyperframes beats",
+                        sourceFile: file,
+                        sourceSha256: "0".repeat(64),
+                        count: beatTimes.length,
+                        bpm: beatTimes.length ? 120 : null,
+                        beatTimes,
+                      },
+                    }),
+                  );
+                }
+                return;
+              }
               if (req.url?.endsWith("/authentication")) {
                 res.setHeader("Content-Type", "application/json");
                 res.end("[]");
@@ -131,7 +177,7 @@ it.skipIf(!browserExecutablePath())(
                 req.url = "/assets/style-previews/style-136.webm";
                 return next();
               }
-              if (req.url?.endsWith("/score.wav")) {
+              if (req.url && /\/score(?:-[a-z]+)?\.wav$/.test(req.url)) {
                 req.url = "/assets/speech/ming-tts/original-narrator.wav";
                 return next();
               }
@@ -148,11 +194,15 @@ it.skipIf(!browserExecutablePath())(
                   `<!doctype html><style>body{background:#0f0d0b}</style><div id="root"></div><script type="module">
 import '/src/client/style.css';import '/src/client/room/room.css';
 import React,{useState}from'react';import{createRoot}from'react-dom/client';import{ConfigProvider}from'antd';import{roomTheme}from'/src/client/theme.ts';
+import{uiLanguage}from'/src/client/i18n/service.ts';
+window.setFixtureLanguage=language=>uiLanguage.change(language);
 import{VideoPlayer}from'/src/client/components/video-player.tsx';import{RoomProject}from'/src/client/room/room-project.tsx';import{RequestSchema}from'/src/shared/contracts.ts';
-const missing=location.search.includes('missing');const pending=location.search.includes('pending');const id=missing?'missing':pending?'pending':'example';
+const missing=new URLSearchParams(location.search).has('missing');const pending=new URLSearchParams(location.search).has('pending');const id=missing?'missing':pending?'pending':'example';
 const production={pipeline:'Multiplane',fallbackReason:null,sourceFile:'artifacts/shots/one.html',duration:3,width:320,height:180,fps:30,styleRenderer:['HTML'],motionEngine:['Time'],audioDescription:'Saved mix',audioFile:'artifacts/assets/audio/score.wav',limitations:[]};
 if(location.search.includes('brokenAudio'))production.audioFile='artifacts/assets/audio/broken.wav';
 if(location.search.includes('sourceTracks'))production.audioTracks=[{id:'music',kind:'music',label:'Music source',file:'artifacts/assets/audio/score.wav',startSeconds:0,durationSeconds:3,volume:1},{id:'hit',kind:'sfx',label:'Effect source',file:'artifacts/assets/audio/score.wav',startSeconds:0.5,durationSeconds:0.25,volume:1}];
+const beatCase=new URLSearchParams(location.search).get('beatCase');
+if(beatCase)production.audioTracks=[{id:'music-a',kind:'music',label:'First music placement',file:'artifacts/assets/audio/score-'+beatCase+'.wav',startSeconds:0,durationSeconds:beatCase==='repeated'?1.5:3,volume:1},...(beatCase==='repeated'?[{id:'music-b',kind:'music',label:'Second music placement',file:'artifacts/assets/audio/score-repeated.wav',startSeconds:1.5,durationSeconds:1.5,volume:1}]:[])];
 const speechTrack={file:'artifacts/assets/audio/narration.wav',durationSeconds:3,source:'narration',cues:[{text:'Saved narration words',startSeconds:0.5,endSeconds:2}]};
 const job={id:'full',runId:id,candidateId:'direction',kind:'full',phase:missing?'failed':pending?'generating':'ready',duration:3,workspace:'/tmp/fixture',model:'fixture',storyboardReady:true,...(!missing?{...(!pending?{production,video:'renders/full.webm',speechTrack}:{})}:{})};
 const run={id,createdAt:'2026-01-01',phase:missing?'failed':'ready',request:RequestSchema.parse({instructions:'Example film'}),jobs:[job],candidates:[]};
@@ -227,6 +277,37 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
           Boolean(el.firstElementChild?.shadowRoot?.querySelector("canvas")),
         ),
       ).toBe(true);
+      await page.waitForSelector('.desk-track-music [data-beat-status="ready"] .desk-beat-tick');
+      expect(await page.$$(".desk-beat-tick")).toHaveLength(6);
+      await page.click(".desk-track-music .desk-clip");
+      expect(await page.$eval(".desk-beat-inspector", (el) => el.textContent)).toContain(
+        "120 BPM (estimated)",
+      );
+      await page.click('[aria-label="Next beat"]');
+      await page.waitForFunction(
+        () =>
+          Math.abs(
+            document.querySelector<HTMLVideoElement>(".desk-preview video")!.currentTime - 0.25,
+          ) < 0.02,
+      );
+      await page.focus(".desk-track-music .desk-clip");
+      await page.keyboard.press("]");
+      await page.waitForFunction(
+        () =>
+          Math.abs(
+            document.querySelector<HTMLVideoElement>(".desk-preview video")!.currentTime - 0.75,
+          ) < 0.02,
+      );
+      await page.keyboard.press("[");
+      await page.waitForFunction(
+        () =>
+          Math.abs(
+            document.querySelector<HTMLVideoElement>(".desk-preview video")!.currentTime - 0.25,
+          ) < 0.02,
+      );
+      expect(await page.$eval(".desk-beat-announcement", (el) => el.textContent)).toContain(
+        "Beat 1 of 6",
+      );
       await page.click(".desk-track-narration .desk-clip");
       expect(await page.$eval(".desk-inspector", (el) => el.textContent)).toContain(
         "Saved narration words",
@@ -378,6 +459,63 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
           ?.textContent?.includes("Narration saved during generation"),
       );
       expect(await page.$('.desk-transport [aria-label="Play movie"][disabled]')).not.toBeNull();
+      await page.goto(`${server.resolvedUrls!.local[0]}desk-fixture?beatCase=repeated`);
+      const readCount = beatRequests.length;
+      await page.click(".room-desk-open");
+      await page.waitForFunction(() => document.querySelectorAll(".desk-beat-tick").length === 6);
+      expect(beatRequests.length - readCount).toBe(1);
+      await page.click(".desk-track-music .desk-clip:last-of-type");
+      await page.click('[aria-label="Go to start"]');
+      await page.click('[aria-label="Next beat"]');
+      await page.waitForFunction(
+        () =>
+          Math.abs(
+            document.querySelector<HTMLVideoElement>(".desk-preview video")!.currentTime - 1.75,
+          ) < 0.02,
+      );
+      await page.goto(`${server.resolvedUrls!.local[0]}desk-fixture?beatCase=dense`);
+      await page.click(".room-desk-open");
+      await page.waitForSelector('.desk-track-music [data-beat-status="ready"]');
+      expect(await page.$$(".desk-beat-tick")).toHaveLength(0);
+      expect(await page.$eval(".desk-beat-state", (el) => el.textContent)).toBe("Beats: zoom in");
+      await page.click('[aria-label="Zoom in"]');
+      await page.click('[aria-label="Zoom in"]');
+      await page.click('[aria-label="Zoom in"]');
+      await page.click('[aria-label="Zoom in"]');
+      await page.click('[aria-label="Zoom in"]');
+      await page.waitForFunction(() => document.querySelectorAll(".desk-beat-tick").length === 300);
+      for (const [status, label] of [
+        ["missing", "No beat analysis"],
+        ["stale", "Beat analysis out of date"],
+        ["invalid", "Beat analysis invalid"],
+        ["unavailable", "Beat analysis unavailable"],
+        ["empty", "No beats in this range"],
+      ]) {
+        await page.goto(`${server.resolvedUrls!.local[0]}desk-fixture?beatCase=${status}`);
+        await page.click(".room-desk-open");
+        await page.waitForFunction(
+          (expected) => document.querySelector(".desk-beat-state")?.textContent === expected,
+          {},
+          label,
+        );
+        expect(await page.$$(".desk-beat-tick")).toHaveLength(0);
+      }
+      await page.goto(`${server.resolvedUrls!.local[0]}desk-fixture?beatCase=ready`);
+      await page.click(".room-desk-open");
+      await page.waitForSelector('.desk-track-music [data-beat-status="ready"]');
+      await page.click(".desk-track-music .desk-clip");
+      await page.evaluate(async () => {
+        await Reflect.get(window, "setFixtureLanguage")("zh-CN");
+      });
+      await page.waitForSelector('[aria-label="下一拍"]');
+      expect(await page.$eval(".desk-beat-inspector", (el) => el.textContent)).toContain("估计");
+      await page.goto(`${server.resolvedUrls!.local[0]}desk-fixture?beatCase=held`);
+      await page.click(".room-desk-open");
+      await page.waitForSelector('[data-beat-status="loading"]');
+      await expect.poll(() => heldBeatResponse !== undefined).toBe(true);
+      await page.click(".ant-modal-close");
+      await page.waitForFunction(() => !document.querySelector(".production-desk"));
+      await expect.poll(() => heldBeatResponse?.destroyed).toBe(true);
       expect(requests.every((method) => method === "GET")).toBe(true);
       expect(errors).toEqual([]);
     } finally {

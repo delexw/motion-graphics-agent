@@ -12,6 +12,7 @@ They are separate from authoring skills (`../bundled-skills/`), Motion Graphics 
 | Creative Pool                                                           | [capability.ts](creative-pool/capability.ts)     | [prompt.ts](creative-pool/prompt.ts)     | [tools.ts](creative-pool/tools.ts), [server.ts](creative-pool/server.ts)                                                                                                         |
 | Narration                                                               | [capability.ts](narration/capability.ts)         | [prompt.ts](narration/prompt.ts)         | [tools.ts](narration/tools.ts), [server.ts](narration/server.ts)                                                                                                                 |
 | [Audio Studio MCP](https://github.com/kanaworksai-hue/audio-studio-mcp) | [capability.ts](audio-studio/capability.ts)      | [prompt.ts](audio-studio/prompt.ts)      | [tools.ts](audio-studio/tools.ts), [server.ts](audio-studio/server.ts), [client.ts](audio-studio/client.ts)                                                                      |
+| Music analysis                                                          | [capability.ts](music-analysis/capability.ts)    | [prompt.ts](music-analysis/prompt.ts)    | [tools.ts](music-analysis/tools.ts), [server.ts](music-analysis/server.ts), [audio service](../../audio/music-analysis.ts)                                                       |
 
 `registry.ts` collects registrations and guidance. Text-only calls receive neither. Planning/review
 calls (`readOnly: true`) get `search_components` and `read_component`; build/correction calls also get
@@ -225,6 +226,31 @@ the job workspace. Tools return readable text and typed structured content. Shar
 `audio/narration-types.ts`, alongside the service consumed by both MCP and orchestration. Before
 rendering, the workflow reloads the accepted narration track; Kiteva still owns final speech/music
 mixing and validation. The model must reconcile captions and visual timing with the returned cues.
+
+## Music analysis MCP
+
+`music-analysis/capability.ts` registers `analyze_music` for build/correction turns on all
+providers, independently of Audio Studio and the selected renderer. Planning/review and
+text-only turns do not receive it; read-only tool servers also omit the handler.
+`music-analysis/tools.ts` exposes the shared contract from `src/shared/music-analysis.ts`;
+`src/server/audio/music-analysis.ts` owns execution and persistence. The shared Activity
+label in `src/shared/activity-model.ts` is “Analyzing music beats…”. Existing provider tool
+events record its running/completed/failed outcome under the owning job and invocation.
+
+The tool runs the already-installed `hyperframes beats <file> --json` in the existing
+isolated process runner (180-second timeout and cancellation). It accepts a workspace-relative
+WAV, MP3, FLAC, OGG, M4A, AAC, AIFF or Opus file up to 256 MiB inside render inputs;
+traversal and symlink escapes are rejected. It neither installs dependencies nor uses inference
+or network services. It preserves the audio and selected renderer. The validated response and
+adjacent `<audio>.beats.json` contain source-relative beat timestamps, estimated BPM, count and
+source SHA-256. Sidecars are replaced atomically only after successful analysis and a source
+fingerprint recheck; failures/cancellation preserve the prior file. Repeated calls replace the
+same sidecar, with no extra audio artifacts. Empty beat maps are valid, not invented timing.
+
+Build guidance orders soundtrack preparation, analysis, then visual synchronization. Reanalyze
+after audio edits and add the clip's film start to source-relative cue times. Beat estimates do
+not establish downbeats, musical sections, listening quality or final sync. Review the delivered
+sound and picture; preserve reading holds, natural narration and essential captured actions.
 
 ## Audio Studio MCP
 

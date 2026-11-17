@@ -7,6 +7,8 @@ import { narrationCapability } from "./narration/capability";
 import { narrationGuidance } from "./narration/prompt";
 import { audioStudioCapability } from "./audio-studio/capability";
 import { audioStudioGuidance } from "./audio-studio/prompt";
+import { musicAnalysisCapability } from "./music-analysis/capability";
+import { musicAnalysisGuidance } from "./music-analysis/prompt";
 import { animateUiCapability } from "./animate-ui/capability";
 import { animateUiGuidance } from "./animate-ui/prompt";
 import { reactBitsCapability } from "./react-bits/capability";
@@ -38,6 +40,7 @@ export function agentCapabilities(
         animate_ui: animateUiCapability(workspace, readOnly),
         creative_pool: creativePoolCapability(includeCreativeAlternatives, workspace, readOnly),
         ...(audioStudio ? { audio_studio: audioStudio } : {}),
+        ...(!readOnly ? { music_analysis: musicAnalysisCapability(workspace) } : {}),
         ...(narration ? { narration } : {}),
       };
   return {
@@ -47,6 +50,7 @@ export function agentCapabilities(
       : [
           narration ? `### Narration\n\n${narrationGuidance}` : "",
           `### Audio Studio\n\n${audioStudioGuidance}`,
+          `### Music analysis\n\n${musicAnalysisGuidance}`,
           `### React Bits\n\n${reactBitsGuidance}`,
           `### Animate UI\n\n${animateUiGuidance}`,
           `### Creative Pool\n\n${creativePoolGuidance}`,

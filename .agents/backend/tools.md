@@ -22,6 +22,20 @@ Document these fields in the tool's description, schema and owning capability gu
 | Exclusions        | Actions this tool cannot perform and the owner of those actions          |
 | Recovery          | Cancellation, timeout, retry/idempotency behavior and retained artifacts |
 
+## Activity labels
+
+Every new agent tool must have a distinct, user-facing Activity label in
+`src/shared/activity-model.ts` (`customerToolActivity`), with English and Chinese
+translations. Match the tool before generic task-purpose labels so its operation
+remains visible during generation, planning and repair. Do not expose raw tool names,
+commands, prompts or result payloads as the label.
+
+Use the existing provider tool events to preserve running, completed, failed and
+stopped outcomes under the owning project, job and invocation. Verify supported
+provider name formats, result matching, failure/cancellation, and the rendered
+Activity label with fixtures. A tool is not complete while it appears only as
+generic project work in Activity.
+
 ## Enforcement
 
 - Give each tool a dedicated handler owned by its capability. Register it through
