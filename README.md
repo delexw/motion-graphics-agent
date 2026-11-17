@@ -76,6 +76,15 @@ links and [local gallery](docs/showcase.html) remain available for local viewing
 The three most recent dated entries are listed here, regardless of gaps between dates. See the [changelog](CHANGELOG.md#daily-update-archive) for older entries and [release history](CHANGELOG.md).
 
 <details>
+<summary>2026-11-17</summary>
+
+- **Music beat analysis:** The agent can analyze prepared music locally with the installed HyperFrames CLI and save measured beat timestamps, estimated tempo and a source fingerprint. [Implementation](https://github.com/delexw/motion-graphics-agent/commit/af9e4d7).
+- **Beats in Production Desk:** Music clips show beat ticks, estimated BPM and beat counts. Select a clip to jump to the previous or next beat with buttons or `[` / `]`. Missing or stale analysis is labeled; opening Desk does not run generation. See [Desk controls and limits](docs/production-desk.md#measured-music-beats).
+- **Tool activity labels:** Music analysis has its own English/Chinese Activity label. Agent guidance requires a distinct customer-facing label for each new tool.
+
+</details>
+
+<details>
 <summary>2026-11-16</summary>
 
 - **v1.2.0 released:** DeepSeek authoring, finished-project reuse and governed media workflows. See the [release notes](https://github.com/delexw/motion-graphics-agent/releases/tag/v1.2.0).
@@ -95,17 +104,6 @@ The three most recent dated entries are listed here, regardless of gaps between 
 - **Narration protection:** Replacing old content no longer writes an empty script that disables inherited narration. Enabled language narration without a usable profile fails before rendering.
 
 - **Deterministic cache checks:** Cache tests use local runtime fixtures instead of installed package trees, retaining dependency and runtime-change invalidation checks without machine-dependent hashing timeouts.
-
-</details>
-
-<details>
-<summary>2026-11-13</summary>
-
-- **Governance and project technologies:** Server-side pagination, indexed project search and per-call costs make the reporting pages easier to inspect. Project filters retain the complete selector, and dependency readiness is separate from source and runtime usage evidence.
-- **Project-owned dependencies:** Build manifests declare the selected tools and required runtime packages. Governance reports which technologies were selected, prepared and observed, including Python utilities.
-- **Per-language media and refinements:** Narration and subtitles start disabled and are confirmed independently for each language. Version refinements can change supported voice providers and output settings without silently keeping an older profile.
-- **Stageshow appearance boundaries:** User UI styling overrides Stageshow defaults; otherwise the demo retains its native appearance. Selected Motion Graphics contribute motion inside the demo. Planning, repair and result review use the same scene ownership rule.
-- **Showcase and dependency maintenance:** The gallery includes the Playful Cat film and Swiss product demo as playable MP4s. Startup and installation share the dependency upgrade lifecycle, including Audio Studio; [agent guidance](AGENTS.md) documents module ownership, tool limits and mocked third-party tests.
 
 </details>
 

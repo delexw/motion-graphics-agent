@@ -66,6 +66,15 @@
 这里只保留最近三条按日期归档的更新记录，不按连续自然日计算。更早的记录见[变更日志](CHANGELOG.md#daily-update-archive)，版本发布记录见[完整 changelog](CHANGELOG.md)。
 
 <details>
+<summary>2026-11-17</summary>
+
+- **音乐节拍分析：**智能体可通过已安装的 HyperFrames CLI 在本地分析准备好的配乐，保存检测到的节拍时间、估算速度和音源指纹。详见[实现记录](https://github.com/delexw/motion-graphics-agent/commit/af9e4d7)。
+- **Production Desk 节拍显示：**音乐片段显示节拍刻度、估算 BPM 和节拍数量。选中片段后，可用按钮或 `[` / `]` 跳到上一拍或下一拍。缺失或过期的分析会明确标注；打开 Desk 不会触发生成。详见[控件与限制](docs/production-desk.md#measured-music-beats)（英文）。
+- **工具活动标签：**音乐分析使用独立的中英文 Activity 标签，开发指导要求每个新工具提供独立的用户可见标签。
+
+</details>
+
+<details>
 <summary>2026-11-16</summary>
 
 - **v1.2.0 发布：**新增 DeepSeek 创作、成品项目复用及媒体工作流治理。详见[发布说明](https://github.com/delexw/motion-graphics-agent/releases/tag/v1.2.0)。
@@ -85,17 +94,6 @@
 - **旁白保护：**替换旧内容不再写入会禁用继承旁白的空脚本。已开启语言旁白却没有可用配置时，在渲染前拦截。
 
 - **稳定的缓存测试：**使用本地运行库夹具替代已安装的软件包目录，保留依赖变化与运行库变化导致缓存失效的检查，消除依赖机器环境的哈希超时。
-
-</details>
-
-<details>
-<summary>2026-11-13</summary>
-
-- **Governance 与项目技术：**使用服务端分页、索引项目搜索和逐次模型调用费用；筛选项目后仍保留完整选择列表，区分依赖就绪、源码使用和运行时使用证据。
-- **项目独立依赖：**构建清单记录模型选择的工具及必需运行库。Governance 分别报告技术是否选中、准备完成和实际观察到使用，包括 Python 工具。
-- **逐语言媒体与版本修改：**旁白和字幕默认关闭，按语言分别确认。修改版本可切换受支持的语音提供方及输出设置，不再静默沿用旧版本配置。
-- **Stageshow 样式边界：**用户的界面样式要求优先；未指定时保留 Stageshow 默认外观，所选 MG 只负责 demo 内动效。规划、修复和结果审阅共用同一职责规则。
-- **成品展示与依赖维护：**展示页加入 Playful Cat 和 Swiss 产品演示的实际 MP4。启动与安装共用依赖升级流程，包含 Audio Studio；[开发指导](AGENTS.md)记录模块归属、工具边界及第三方调用的 mock 测试要求。
 
 </details>
 

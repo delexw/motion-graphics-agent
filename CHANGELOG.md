@@ -249,6 +249,24 @@ Kiteva uses the [MIT License](LICENSE). Third-party components retain their own 
 
 README recent updates show the three most recent dated entries, regardless of gaps between dates. Move entries beyond those three here when updating the READMEs. Historical English and Simplified Chinese entries are preserved below; the versioned release notes above remain unchanged.
 
+### 2026-11-13
+
+**English**
+
+- **Governance and project technologies:** Server-side pagination, indexed project search and per-call costs make the reporting pages easier to inspect. Project filters retain the complete selector, and dependency readiness is separate from source and runtime usage evidence.
+- **Project-owned dependencies:** Build manifests declare the selected tools and required runtime packages. Governance reports which technologies were selected, prepared and observed, including Python utilities.
+- **Per-language media and refinements:** Narration and subtitles start disabled and are confirmed independently for each language. Version refinements can change supported voice providers and output settings without silently keeping an older profile.
+- **Stageshow appearance boundaries:** User UI styling overrides Stageshow defaults; otherwise the demo retains its native appearance. Selected Motion Graphics contribute motion inside the demo. Planning, repair and result review use the same scene ownership rule.
+- **Showcase and dependency maintenance:** The gallery includes the Playful Cat film and Swiss product demo as playable MP4s. Startup and installation share the dependency upgrade lifecycle, including Audio Studio; [agent guidance](AGENTS.md) documents module ownership, tool limits and mocked third-party tests.
+
+**简体中文**
+
+- **Governance 与项目技术：**使用服务端分页、索引项目搜索和逐次模型调用费用；筛选项目后仍保留完整选择列表，区分依赖就绪、源码使用和运行时使用证据。
+- **项目独立依赖：**构建清单记录模型选择的工具及必需运行库。Governance 分别报告技术是否选中、准备完成和实际观察到使用，包括 Python 工具。
+- **逐语言媒体与版本修改：**旁白和字幕默认关闭，按语言分别确认。修改版本可切换受支持的语音提供方及输出设置，不再静默沿用旧版本配置。
+- **Stageshow 样式边界：**用户的界面样式要求优先；未指定时保留 Stageshow 默认外观，所选 MG 只负责 demo 内动效。规划、修复和结果审阅共用同一职责规则。
+- **成品展示与依赖维护：**展示页加入 Playful Cat 和 Swiss 产品演示的实际 MP4。启动与安装共用依赖升级流程，包含 Audio Studio；[开发指导](AGENTS.md)记录模块归属、工具边界及第三方调用的 mock 测试要求。
+
 ### 2026-11-12
 
 **English**
