@@ -110,3 +110,19 @@ it("does not infer long-context premiums from many requests' aggregate tokens", 
     }),
   ).toBe(3);
 });
+
+it("prices GPT-6.2 Astra with its verified rates while retaining historical Sol prices", () => {
+  const usage = {
+    input_tokens: 1000,
+    cached_input_tokens: 600,
+    cache_write_input_tokens: 100,
+    output_tokens: 100,
+  };
+  expect(codexApiCost("gpt-6.2-astra", usage)).toBeCloseTo(0.00764, 10);
+  expect(codexApiCost("gpt-6.1-sol", usage)).toBeCloseTo(0.00191, 10);
+  expect(
+    projectGovernance(run, [
+      event(1, { ...usage, reasoning_output_tokens: 80 }, { model: "gpt-6.2-astra" }),
+    ]).activity[0].costLow,
+  ).toBeCloseTo(0.00764, 10);
+});

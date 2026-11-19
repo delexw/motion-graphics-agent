@@ -1867,7 +1867,7 @@ function App() {
                             onValueChange={(value) => setProvider(value as Provider)}
                           >
                             <StudioSelectOption value="codex">
-                              {translateUi("GPT-6.1 Sol")}
+                              {translateUi("GPT-6.2 Astra")}
                             </StudioSelectOption>
                             <StudioSelectOption value="claude">
                               {translateUi("Opus 5.5")}

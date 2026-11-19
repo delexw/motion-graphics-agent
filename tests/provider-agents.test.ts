@@ -461,7 +461,7 @@ it.each([false, true])(
         provider: "codex",
         workspace: "/job",
         prompt: "Summarize",
-        model: "gpt-6.1-sol",
+        model: "gpt-6.2-astra",
         schema: z.object({ message: z.string() }),
         signal: new AbortController().signal,
         onEvent: vi.fn(),
@@ -489,7 +489,7 @@ function capacityAttemptOptions(
 ) {
   return {
     provider: "codex" as const,
-    model: "gpt-6.1-sol",
+    model: "gpt-6.2-astra",
     workspace: "/job",
     prompt: "Build this direction",
     schema: z.object({ message: z.string() }),
@@ -528,7 +528,7 @@ it("retries a terminal capacity response in the captured session and meters a fr
     .filter((event) => event.type === "invocation");
   expect(invocations).toHaveLength(2);
   expect(new Set(invocations.map((event) => event.data.invocationId)).size).toBe(2);
-  expect(invocations.every((event) => event.data.model === "gpt-6.1-sol")).toBe(true);
+  expect(invocations.every((event) => event.data.model === "gpt-6.2-astra")).toBe(true);
   expect(onEvent).toHaveBeenCalledWith(
     expect.objectContaining({
       type: "retry",

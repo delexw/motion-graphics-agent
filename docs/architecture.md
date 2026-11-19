@@ -116,7 +116,7 @@ sequenceDiagram
   participant Room as Creative room
   participant WF as Workflow
   participant Small as Small model<br/>(Haiku / Luna)
-  participant Main as Main model<br/>(Opus 5.5 / GPT-6.1 Sol)
+  participant Main as Main model<br/>(Opus 5.5 / GPT-6.2 Astra)
   participant JEV as JEV
   participant R as Renderer + QA
 
@@ -352,7 +352,7 @@ executable workflows from the shared title-prompt helper and callable browser ca
 | Step                                                                   | Claude projects                                                  | Codex projects                                                   | Why                                                                                                               |
 | ---------------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | Brief, attachment review, summaries, subtitles, eligible small repairs | `claude-haiku-5-5`                                               | `gpt-6-luna`                                                     | Simple preparation and checking. Cheap and fast enough                                                            |
-| Combination proposals                                                  | `claude-opus-5-5`                                                | `gpt-6.1-sol`                                                    | The main creative judgement                                                                                       |
+| Combination proposals                                                  | `claude-opus-5-5`                                                | `gpt-6.2-astra`                                                  | The main creative judgement                                                                                       |
 | Preview and full-film planning                                         | shared preview direction plan; selected main model for full film | shared preview direction plan; selected main model for full film | Previews use independent build sessions; full films validate a read-only plan before building in the same session |
 | Previews, full film, pacing/style repairs                              | selected main model                                              | selected main model                                              | Creative implementation                                                                                           |
 | Choosing directions                                                    | JEV                                                              | JEV                                                              | A separate evaluator, not the model that proposed the options                                                     |

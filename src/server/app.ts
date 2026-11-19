@@ -273,12 +273,12 @@ export async function createApp(options: { store?: Store } = {}) {
       settingsChecks: checks.records,
       pagination: runs.pagination,
       checksPagination: checks.pagination,
-      pricingDate: "2026-10-24",
+      pricingDate: "2026-11-19",
       pricingSources: [
         { label: "OpenAI pricing", url: "https://developers.openai.com/api/docs/pricing" },
         {
           label: "GPT Astra pricing",
-          url: "https://developers.openai.com/api/docs/models/gpt-6-astra",
+          url: "https://developers.openai.com/api/docs/models/gpt-6.2-astra",
         },
         {
           label: "Claude pricing",
@@ -314,7 +314,7 @@ export async function createApp(options: { store?: Store } = {}) {
         {
           function: "Preview video planning",
           claude: "Not used",
-          codex: "gpt-6.1-sol before each preview",
+          codex: "gpt-6.2-astra before each preview",
           deepseek: "Selected main model before each preview",
         },
         {

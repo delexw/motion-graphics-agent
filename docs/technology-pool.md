@@ -164,13 +164,13 @@ generated singing. Weights and voice files are downloaded only by the setup comm
 
 ## Models and services
 
-| Job                                                                                               | Claude projects                                                                      | Codex projects                              |
-| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------- |
-| Brief preparation, Motion Graphic summaries, subtitles, brief self-review, eligible small repairs | `claude-haiku-5-5`                                                                   | `gpt-6-luna`                                |
-| Motion Graphic combination proposals                                                              | `claude-opus-5-5`                                                                    | `gpt-6.1-sol`                               |
-| Preview planning                                                                                  | not used                                                                             | `gpt-6.1-sol`                               |
-| Previews, full films, pacing/style repairs                                                        | selected main model (default `claude-opus-5-5`)                                      | selected main model (default `gpt-6.1-sol`) |
-| Combination evaluation and direction selection                                                    | JEV via [`@typesafe-ai/sdk`](https://docs.typesafe.ai/sdk/javascript) (`jev-1.14.0`) | same                                        |
+| Job                                                                                               | Claude projects                                                                      | Codex projects                                |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------- |
+| Brief preparation, Motion Graphic summaries, subtitles, brief self-review, eligible small repairs | `claude-haiku-5-5`                                                                   | `gpt-6-luna`                                  |
+| Motion Graphic combination proposals                                                              | `claude-opus-5-5`                                                                    | `gpt-6.2-astra`                               |
+| Preview planning                                                                                  | not used                                                                             | `gpt-6.2-astra`                               |
+| Previews, full films, pacing/style repairs                                                        | selected main model (default `claude-opus-5-5`)                                      | selected main model (default `gpt-6.2-astra`) |
+| Combination evaluation and direction selection                                                    | JEV via [`@typesafe-ai/sdk`](https://docs.typesafe.ai/sdk/javascript) (`jev-1.14.0`) | same                                          |
 
 Finished-result review uses the same selected main model that built the job, using the provider’s default reasoning effort. It runs as a separate read-only invocation with the existing QA evidence and Governance tracking.
 

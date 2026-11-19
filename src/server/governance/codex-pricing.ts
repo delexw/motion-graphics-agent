@@ -1,9 +1,10 @@
 import type { Usage } from "@openai/codex-sdk";
 
-// Standard short-context API USD per million tokens, verified 2026-10-26.
+// Standard short-context API USD per million tokens, GPT-6.2 Astra verified 2026-11-19; legacy rates retained.
 // https://developers.openai.com/api/docs/pricing
 const rates: Record<string, { input: number; cached: number; write: number; output: number }> = {
   "gpt-6-astra": { input: 10, cached: 1, write: 12.5, output: 50 },
+  "gpt-6.2-astra": { input: 8, cached: 0.4, write: 10, output: 40 },
   "gpt-6.1-sol": { input: 2, cached: 0.1, write: 2.5, output: 10 },
   "gpt-6-luna": { input: 0.1, cached: 0.01, write: 0.125, output: 0.5 },
 };

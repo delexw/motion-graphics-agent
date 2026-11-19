@@ -40,7 +40,7 @@
   "Usage unavailable or unpriced model": "用量不可用或模型未定价",
   "Not used": "未使用",
   "Selected main model": "所选主模型",
-  "gpt-6.1-sol before each preview; full video reuses the selected preview session": "每次预览前使用 gpt-6.1-sol；完整视频复用所选预览会话",
+  "gpt-6.2-astra before each preview; full video reuses the selected preview session": "每次预览前使用 gpt-6.2-astra；完整视频复用所选预览会话",
   "claude-haiku-5-5 for eligible fixes; selected main model otherwise": "适用修正使用 claude-haiku-5-5，其余使用所选主模型",
   "gpt-6-luna for eligible fixes; selected main model otherwise": "适用修正使用 gpt-6-luna，其余使用所选主模型",
   "ready": "已就绪",

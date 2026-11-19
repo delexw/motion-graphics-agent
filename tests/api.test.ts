@@ -666,7 +666,7 @@ it("exposes governance inputs, settings and complete model activity only on the 
   expect(response.json().models).toContainEqual({
     function: "Motion Graphic combination proposals",
     claude: "claude-opus-5-5",
-    codex: "gpt-6.1-sol",
+    codex: "gpt-6.2-astra",
     deepseek: "deepseek-flash",
   });
   expect(response.json().models).toContainEqual({

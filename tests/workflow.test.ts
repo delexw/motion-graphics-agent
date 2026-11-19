@@ -161,7 +161,7 @@ it.each([0, 1, 2])(
       vi.spyOn(workflow, "generate").mockResolvedValue(undefined);
       const full = await workflow.full(run, `candidate-${selectedIndex}`);
       expect(full.duration).toBe(15);
-      expect(full.model).toBe("gpt-6.1-sol");
+      expect(full.model).toBe("gpt-6.2-astra");
       expect(full.sessionId).toBe(`approved-session-${selectedIndex}`);
       expect(full.candidateId).toBe(`candidate-${selectedIndex}`);
       expect(run.winnerId).toBe(`candidate-${selectedIndex}`);
@@ -545,7 +545,7 @@ it.each(["preview", "full"] as const)(
       kind,
       phase: "generating" as const,
       workspace: "/tmp/preview-plan",
-      model: "gpt-6.1-sol",
+      model: "gpt-6.2-astra",
       duration: 3,
     };
     run.jobs.push(job);
@@ -560,13 +560,13 @@ it.each(["preview", "full"] as const)(
     receive({
       type: "invocation",
       message: "Plan",
-      data: { model: "gpt-6.1-sol", invocationId: "plan", videoBuildPlanning: true },
+      data: { model: "gpt-6.2-astra", invocationId: "plan", videoBuildPlanning: true },
     });
     receive({
       type: "usage",
       message: "Plan complete",
       data: {
-        model: "gpt-6.1-sol",
+        model: "gpt-6.2-astra",
         invocationId: "plan",
         input_tokens: 100,
         output_tokens: 20,
@@ -576,7 +576,7 @@ it.each(["preview", "full"] as const)(
     receive({
       type: "invocation",
       message: "Build",
-      data: { model: "gpt-6.1-sol", invocationId: "build" },
+      data: { model: "gpt-6.2-astra", invocationId: "build" },
     });
     const events = store.allEvents(run.id).filter((event) => event.type !== "state");
     expect(events.map((event) => (event.data as { purpose: string }).purpose)).toEqual([

@@ -146,7 +146,7 @@ it("shows customer facts instead of technical details and avoids unverified clai
 
 it.each([
   ["claude", "claude-opus-5-5"],
-  ["codex", "gpt-6.1-sol"],
+  ["codex", "gpt-6.2-astra"],
   ["codex", "gpt-6-sol"],
 ] as const)(
   "uses %s's selected job model for review and forwards concrete pacing findings to the corrector",

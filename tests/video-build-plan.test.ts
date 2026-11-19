@@ -88,7 +88,7 @@ function job(workspace = "/job"): VideoGenerationJob {
     phase: "generating",
     duration: 3,
     workspace,
-    model: "gpt-6.1-sol",
+    model: "gpt-6.2-astra",
     sessionId: "preview-session",
   };
 }
@@ -148,7 +148,7 @@ it("plans in the selected preview session, persists it and hands off in the retu
   const call = vi.mocked(agentTurn).mock.calls[0][0];
   expect(call.includeCreativeAlternatives).toBe(false);
   expect(call).toMatchObject({
-    model: "gpt-6.1-sol",
+    model: "gpt-6.2-astra",
     readOnly: true,
     sessionId: "preview-session",
   });
@@ -223,7 +223,7 @@ it.each(["claude", "codex"] as const)(
   "corrects rejected layer references and timing in the same %s session before saving",
   async (provider) => {
     const options = await input();
-    options.job.model = provider === "claude" ? "claude-opus-5-5" : "gpt-6.1-sol";
+    options.job.model = provider === "claude" ? "claude-opus-5-5" : "gpt-6.2-astra";
     options.job.sessionId = undefined;
     const invalid = validPlan();
     invalid.sceneGuidance[0].readingHolds[0].textLayerIds = ["missing-title"];
@@ -331,7 +331,7 @@ it.each([
       if (automatic) options.job.duration = 15;
       options.job.sessionId = undefined;
     }
-    options.job.model = provider === "claude" ? "claude-opus-5-5" : "gpt-6.1-sol";
+    options.job.model = provider === "claude" ? "claude-opus-5-5" : "gpt-6.2-astra";
     const width = kind === "preview" ? 1280 : 1920;
     const height = kind === "preview" ? 720 : 1080;
     const previewPlan =
@@ -562,7 +562,7 @@ it.each(["claude", "codex"] as const)(
     const options = await input();
     options.job.kind = "full";
     options.job.duration = 300;
-    options.job.model = provider === "claude" ? "claude-opus-5-5" : "gpt-6.1-sol";
+    options.job.model = provider === "claude" ? "claude-opus-5-5" : "gpt-6.2-astra";
     options.job.sessionId = undefined;
     const plan = fullPlan(300);
     vi.mocked(agentTurn).mockResolvedValueOnce({ value: plan, sessionId: "full-plan-session" });
@@ -628,7 +628,7 @@ it.each(["claude", "codex"] as const)(
     options.job.kind = "full";
     options.job.duration = 15;
     options.job.sessionId = undefined;
-    options.job.model = provider === "claude" ? "claude-opus-5-5" : "gpt-6.1-sol";
+    options.job.model = provider === "claude" ? "claude-opus-5-5" : "gpt-6.2-astra";
     vi.mocked(agentTurn).mockImplementationOnce(async (call) => {
       expect(call.schema.safeParse(fullPlan(1)).success).toBe(false);
       expect(call.schema.safeParse(fullPlan(301)).success).toBe(false);

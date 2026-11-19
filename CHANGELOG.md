@@ -10,6 +10,11 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 - Production Desk music beat ticks, estimated BPM, beat counts and previous/next beat controls, with keyboard shortcuts. Desk validates saved maps and reports missing, stale or invalid analysis without running generation.
 - A distinct English/Chinese Activity label for music analysis, with agent guidance requiring a distinct label for each new tool.
 
+### Changed
+
+- New Codex projects default to GPT-6.2 Astra across the interface, MCP and creative pipeline. Production principles and full-video repair budgets apply to Astra and remain available for historical GPT-6.1 Sol projects.
+- Governance estimates GPT-6.2 Astra usage with its published token prices and retains historical model labels and rates.
+
 ## [1.2.0] — 2026-11-16
 
 DeepSeek authoring, finished-project reuse and governed multilingual media workflows.
@@ -248,6 +253,26 @@ Kiteva uses the [MIT License](LICENSE). Third-party components retain their own 
 ## Daily update archive
 
 README recent updates show the three most recent dated entries, regardless of gaps between dates. Move entries beyond those three here when updating the READMEs. Historical English and Simplified Chinese entries are preserved below; the versioned release notes above remain unchanged.
+
+### 2026-11-15
+
+**English**
+
+- **New project from a finished version:** Choose which design, output, voice and music settings to retain while replacing the topic and script. UI and MCP share draft creation, ownership checks and retry protection; keeping the visual direction builds the full film directly without new direction previews.
+- **Independent character inheritance:** Recorded characters and mascots are preselected by default, with appearance, established personality and narrative roles shown before creation. Missing identity metadata remains unrecorded; older projects are not automatically identified.
+- **Source previews and clearer settings:** Reused projects show their source version beneath Settings. Source and MG previews use the same dotted-underlined button; source navigation stays in the app. Version settings, refinement controls and dialog scrollbars follow the shared layout and theme.
+- **Narration protection:** Replacing old content no longer writes an empty script that disables inherited narration. Enabled language narration without a usable profile fails before rendering.
+
+- **Deterministic cache checks:** Cache tests use local runtime fixtures instead of installed package trees, retaining dependency and runtime-change invalidation checks without machine-dependent hashing timeouts.
+
+**简体中文**
+
+- **从成品版本新建项目：**分别选择继承设计、输出、语音和配乐设置，同时替换主题与脚本。界面与 MCP 共用草稿创建、所有权检查和重试保护；保留视觉方向时直接制作全片，不再生成方向预览。
+- **独立角色继承：**默认预选已有身份记录的角色与吉祥物，创建前展示外观、已确立的性格及叙事职责。缺少身份元数据时如实显示未记录，不会自动识别旧项目。
+- **来源预览与设置布局：**复用项目在 Settings 下显示来源版本。来源与 MG 预览共用带虚线下划线的按钮，来源导航不刷新页面；版本设置、修改控件及弹窗滚动条遵循统一布局和主题。
+- **旁白保护：**替换旧内容不再写入会禁用继承旁白的空脚本。已开启语言旁白却没有可用配置时，在渲染前拦截。
+
+- **稳定的缓存测试：**使用本地运行库夹具替代已安装的软件包目录，保留依赖变化与运行库变化导致缓存失效的检查，消除依赖机器环境的哈希超时。
 
 ### 2026-11-13
 

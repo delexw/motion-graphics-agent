@@ -89,40 +89,43 @@ it.each(["claude", "codex"] as const)(
     await expect(coordinator.correctRound([issue("shots/01.html")])).rejects.toThrow("round limit");
   },
 );
-it("allows five GPT-6.1 full-video repair rounds, charges once per round and reuses the build session", async () => {
-  const { coordinator, job } = setup("codex", { kind: "full", model: "gpt-6.1-sol" });
-  vi.mocked(agentTurn).mockResolvedValue({
-    value: {
-      correctionOutcome: fixedCorrectionOutcome,
-      ...production,
-      storyboard: validStoryboard(),
-    },
-    sessionId: "generation-session",
-  });
-  const findings = [
-    { focus: "style" as const, cheapEligible: false, evidence: "Motion Graphic needs repair" },
-    { focus: "pacing" as const, cheapEligible: false, evidence: "Pacing needs repair" },
-  ];
-  for (let round = 0; round < videoCorrectionPolicy.gpt61Full.main; round++)
-    await coordinator.correctRound(findings);
-  expect(agentTurn).toHaveBeenCalledTimes(10);
-  for (const [call] of vi.mocked(agentTurn).mock.calls) {
-    expect(call).toMatchObject({
-      model: "gpt-6.1-sol",
+it.each(["gpt-6.2-astra", "gpt-6.1-sol"])(
+  "allows five %s full-video repair rounds, charges once per round and reuses the build session",
+  async (model) => {
+    const { coordinator, job } = setup("codex", { kind: "full", model });
+    vi.mocked(agentTurn).mockResolvedValue({
+      value: {
+        correctionOutcome: fixedCorrectionOutcome,
+        ...production,
+        storyboard: validStoryboard(),
+      },
       sessionId: "generation-session",
-      includeCreativeAlternatives: false,
     });
-    expect(call.prompt).toContain("rerun checks only after every issue in this round");
-    expect(call.prompt).toContain("GPT-6.1 VIDEO PRODUCTION PRINCIPLES");
-    expect(call.prompt).toContain("CAPTURED FOOTAGE FRAMING:");
-    expect(call.prompt).toContain("Preserve the recording's aspect ratio throughout extraction");
-  }
-  await expect(coordinator.correctRound(findings)).rejects.toThrow("round limit");
-  expect(agentTurn).toHaveBeenCalledTimes(10);
-  expect(job.sessionId).toBe("generation-session");
-});
+    const findings = [
+      { focus: "style" as const, cheapEligible: false, evidence: "Motion Graphic needs repair" },
+      { focus: "pacing" as const, cheapEligible: false, evidence: "Pacing needs repair" },
+    ];
+    for (let round = 0; round < videoCorrectionPolicy.codexMainFull.main; round++)
+      await coordinator.correctRound(findings);
+    expect(agentTurn).toHaveBeenCalledTimes(10);
+    for (const [call] of vi.mocked(agentTurn).mock.calls) {
+      expect(call).toMatchObject({
+        model,
+        sessionId: "generation-session",
+        includeCreativeAlternatives: false,
+      });
+      expect(call.prompt).toContain("rerun checks only after every issue in this round");
+      expect(call.prompt).toContain("CODEX VIDEO PRODUCTION PRINCIPLES");
+      expect(call.prompt).toContain("CAPTURED FOOTAGE FRAMING:");
+      expect(call.prompt).toContain("Preserve the recording's aspect ratio throughout extraction");
+    }
+    await expect(coordinator.correctRound(findings)).rejects.toThrow("round limit");
+    expect(agentTurn).toHaveBeenCalledTimes(10);
+    expect(job.sessionId).toBe("generation-session");
+  },
+);
 it.each([
-  ["codex", "preview", "gpt-6.1-sol"],
+  ["codex", "preview", "gpt-6.2-astra"],
   ["codex", "full", "gpt-6-astra"],
 ] as const)("preserves the two main-round limit for %s %s %s", async (provider, kind, model) => {
   const { coordinator } = setup(provider, { kind, model });

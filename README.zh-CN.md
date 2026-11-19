@@ -16,7 +16,7 @@
 
 <p align="center">
   <b>一个私人的创作小房间，把一个想法变成一段动态图形短片。</b><br>
-  使用 <a href="https://platform.claude.com/docs/en/about-claude/models/overview">Claude Opus 5.5</a>、<a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol">GPT-6.1 Sol</a> 或 <a href="https://api-docs.deepseek.com/">DeepSeek Flash</a>。
+  使用 <a href="https://platform.claude.com/docs/en/about-claude/models/overview">Claude Opus 5.5</a>、<a href="https://developers.openai.com/api/docs/models/gpt-6.2-astra">GPT-6.2 Astra</a> 或 <a href="https://api-docs.deepseek.com/">DeepSeek Flash</a>。
 </p>
 
 <p align="center">
@@ -66,6 +66,14 @@
 这里只保留最近三条按日期归档的更新记录，不按连续自然日计算。更早的记录见[变更日志](CHANGELOG.md#daily-update-archive)，版本发布记录见[完整 changelog](CHANGELOG.md)。
 
 <details>
+<summary>2026-11-19</summary>
+
+- **GPT-6.2 Astra：**新的 GPT 项目默认使用 GPT-6.2 Astra 进行创意提案、规划、生成和主模型修复。本地模型覆盖设置仍然有效；历史 GPT-6.1 Sol 选择和费用记录保持可读。
+- **Astra 费用估算：**Governance 使用已公布的 GPT-6.2 Astra token 价格估算新用量，并保留历史 Sol 价格。
+
+</details>
+
+<details>
 <summary>2026-11-17</summary>
 
 - **音乐节拍分析：**智能体可通过已安装的 HyperFrames CLI 在本地分析准备好的配乐，保存检测到的节拍时间、估算速度和音源指纹。详见[实现记录](https://github.com/delexw/motion-graphics-agent/commit/af9e4d7)。
@@ -85,18 +93,6 @@
 
 </details>
 
-<details>
-<summary>2026-11-15</summary>
-
-- **从成品版本新建项目：**分别选择继承设计、输出、语音和配乐设置，同时替换主题与脚本。界面与 MCP 共用草稿创建、所有权检查和重试保护；保留视觉方向时直接制作全片，不再生成方向预览。
-- **独立角色继承：**默认预选已有身份记录的角色与吉祥物，创建前展示外观、已确立的性格及叙事职责。缺少身份元数据时如实显示未记录，不会自动识别旧项目。
-- **来源预览与设置布局：**复用项目在 Settings 下显示来源版本。来源与 MG 预览共用带虚线下划线的按钮，来源导航不刷新页面；版本设置、修改控件及弹窗滚动条遵循统一布局和主题。
-- **旁白保护：**替换旧内容不再写入会禁用继承旁白的空脚本。已开启语言旁白却没有可用配置时，在渲染前拦截。
-
-- **稳定的缓存测试：**使用本地运行库夹具替代已安装的软件包目录，保留依赖变化与运行库变化导致缓存失效的检查，消除依赖机器环境的哈希超时。
-
-</details>
-
 ## 下载可编辑项目
 
 只要完整版本已产生源文件或媒体文件，即可下载可编辑项目，包括失败、取消及未完成的构建。流式 ZIP 包包含渲染器源文件、素材、依赖清单、OpenTimelineIO 时间线、从分镜提取的 SRT 歌词及可用的渲染媒体。渲染场景保留为视频片段，并提供可用的音乐和旁白轨道；最终混音作为参考或后备音轨。已烧录的图形和字幕不会自动变成独立图层，需要修改随包提供的原生渲染源文件。不同编辑器的导入支持可能不同。缺失输出记录在 `export.json` 中；仅有源文件的导出不代表构建成功。 ZIP 目录结构、时间线构建方式和编辑限制见[可编辑项目导出指南](docs/editable-projects.md)（英文）。
@@ -110,7 +106,7 @@
 
 搜集了这么多，有非常炫的材料，也有可能有不对的，反正先都收集了 😄
 
-创意部分我最喜欢用 Opus 5.5。[Codex](https://developers.openai.com/codex) 那边的 [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol) 也接好了，我在玩着试试。每个项目可以单独选择用哪一家。
+创意部分我最喜欢用 Opus 5.5。[Codex](https://developers.openai.com/codex) 那边的 [GPT-6.2 Astra](https://developers.openai.com/api/docs/models/gpt-6.2-astra) 也接好了，我在玩着试试。每个项目可以单独选择用哪一家。
 
 ## 它能做什么
 
@@ -177,13 +173,13 @@ Storyboard 页面把它回放成一段小小的“幕后排练”：一位火柴
 
 ## 分工
 
-| 工作                                                | Claude 项目                                                                             | Codex 项目                                                               | DeepSeek 项目                          |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------- |
-| 简报、参考核对、Motion Graphic 摘要、歌词、简单修复 | [Claude Haiku 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)    | [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna)   | DeepSeek Flash                         |
-| 组合提案、预览、完整成片、节奏/风格修复             | **[Claude Opus 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)** | [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol) | DeepSeek Flash                         |
-| 成片结果审阅                                        | 与构建该结果的主模型相同                                                                | 与构建该结果的主模型相同                                                 | 与构建成品相同的模型                   |
-| 给方向打分并挑选                                    | [JEV](https://docs.typesafe.ai/models)（[Typesafe](https://docs.typesafe.ai)）          | [JEV](https://docs.typesafe.ai/models)                                   | [JEV](https://docs.typesafe.ai/models) |
-| 记录每次调用、token 数和费用估算                    | 治理报告（Governance）                                                                  | 治理报告                                                                 | 治理报告（Governance）                 |
+| 工作                                                | Claude 项目                                                                             | Codex 项目                                                                   | DeepSeek 项目                          |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------- |
+| 简报、参考核对、Motion Graphic 摘要、歌词、简单修复 | [Claude Haiku 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)    | [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna)       | DeepSeek Flash                         |
+| 组合提案、预览、完整成片、节奏/风格修复             | **[Claude Opus 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)** | [GPT-6.2 Astra](https://developers.openai.com/api/docs/models/gpt-6.2-astra) | DeepSeek Flash                         |
+| 成片结果审阅                                        | 与构建该结果的主模型相同                                                                | 与构建该结果的主模型相同                                                     | 与构建成品相同的模型                   |
+| 给方向打分并挑选                                    | [JEV](https://docs.typesafe.ai/models)（[Typesafe](https://docs.typesafe.ai)）          | [JEV](https://docs.typesafe.ai/models)                                       | [JEV](https://docs.typesafe.ai/models) |
+| 记录每次调用、token 数和费用估算                    | 治理报告（Governance）                                                                  | 治理报告                                                                     | 治理报告（Governance）                 |
 
 更多细节和流程图见 [docs/architecture.md](docs/architecture.md)（英文）。
 
@@ -255,7 +251,7 @@ Anatomy 在服务启动时自动安装或更新。首次启动需要网络，通
 **$16.46、$18.73 和 $37.42**。超过 90% 的输入 token 是缓存读取。几乎所有费用都花在 Opus 写预览和成片上；
 Haiku 的准备和审阅只花了几美分，JEV 排序不到一美分。最贵的那个重新生成过一次方向，还用了九次修复调用。
 
-这只是三个项目，不是基准，也不是按分钟的价格。本地算力（渲染时间、电费）没有计价，也还没有 GPT-6.1 Sol 的例子。
+这只是三个项目，不是基准，也不是按分钟的价格。本地算力（渲染时间、电费）没有计价，也还没有 GPT-6.2 Astra 的例子。
 这些数字是按 API 价格折算的 token 用量。如果你用订阅账号登录而不是 API key，它们**不是**你的账单，也不能当作套餐额度的计量表；
 订阅用量和剩余百分比的显示我还没有测试过。
 计算方法和注意事项见 [docs/costs.md](docs/costs.md)（英文）。

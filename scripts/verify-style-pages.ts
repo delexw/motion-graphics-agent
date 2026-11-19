@@ -16,7 +16,7 @@ try {
   await page.getByRole("textbox", { name: "Search styles" }).fill("International Typographic");
   await page.locator(".style-card").click();
   await page.getByRole("link", { name: "Open full page" }).waitFor();
-  assert.match(await page.getByRole("dialog").innerText(), /claude-opus-5-5|gpt-6.1-sol/);
+  assert.match(await page.getByRole("dialog").innerText(), /claude-opus-5-5|gpt-6.2-astra/);
   const popup = page.waitForEvent("popup");
   await page.getByRole("link", { name: "Open full page" }).click();
   const study = await popup;

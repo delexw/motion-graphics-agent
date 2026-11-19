@@ -54,7 +54,7 @@ function project(workspace: string): Run {
         phase: "ready",
         workspace,
         sessionId: "full-session",
-        model: "gpt-6.1-sol",
+        model: "gpt-6.2-astra",
         duration: 30,
         video: "renders/full.mp4",
       },

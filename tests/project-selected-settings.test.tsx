@@ -138,3 +138,15 @@ it("shows selected Motion Graphics instead of an inactive creative preference", 
   expect(automatic).toContain("Explore creative ideas");
   expect(automatic).toContain("Automatic styles with previews");
 });
+
+it("uses GPT-6.2 Astra for new Codex settings while preserving a recorded Sol selection", () => {
+  const request = RequestSchema.parse({ instructions: "Tell a visual story", provider: "codex" });
+  const render = (mainModel?: string) =>
+    renderToStaticMarkup(
+      <ProjectSettings
+        run={{ ...run, request: { ...request, ...(mainModel ? { mainModel } : {}) } }}
+      />,
+    );
+  expect(render()).toContain("GPT-6.2 Astra");
+  expect(render("gpt-6.1-sol")).toContain("GPT-6.1 Sol");
+});

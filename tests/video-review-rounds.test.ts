@@ -19,7 +19,7 @@ import { agentTurn } from "../src/server/agents/providers";
 import { renderJob } from "../src/server/rendering/render";
 import { reviewFinishedResult } from "../src/server/jobs/subworkflows/result-review";
 
-it("rechecks after all issues, reaches a fifth review, and stops immediately when GPT-6.1's result passes", async () => {
+it("rechecks after all issues, reaches a fifth review, and stops immediately when GPT-6.2 Astra's result passes", async () => {
   const workspace = await mkdtemp(path.join(os.tmpdir(), "video-review-rounds-"));
   const order: string[] = [];
   const production = {
@@ -40,7 +40,7 @@ it("rechecks after all issues, reaches a fifth review, and stops immediately whe
     runId: "project",
     candidateId: "direction",
     kind: "full",
-    model: "gpt-6.1-sol",
+    model: "gpt-6.2-astra",
     sessionId: "build-session",
     duration: 3,
     phase: "validating",
@@ -64,7 +64,7 @@ it("rechecks after all issues, reaches a fifth review, and stops immediately whe
     };
   });
   vi.mocked(agentTurn).mockImplementation(async (call) => {
-    expect(call.model).toBe("gpt-6.1-sol");
+    expect(call.model).toBe("gpt-6.2-astra");
     expect(call.sessionId).toBe("build-session");
     order.push(call.prompt.includes("pacing corrector") ? "pacing" : "style");
     return {

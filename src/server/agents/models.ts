@@ -8,6 +8,6 @@ export const textModels = {
 export const claudeMainModel = "claude-opus-5-5";
 export const combinationModels = {
   claude: claudeMainModel,
-  codex: "gpt-6.1-sol",
+  codex: agentProviderDefinitions.codex.model,
   deepseek: agentProviderDefinitions.deepseek.model,
 } as const;

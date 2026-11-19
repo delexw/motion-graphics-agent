@@ -1,10 +1,11 @@
+import { agentProviderDefinitions } from "../../../shared/agent-providers";
 import type { Provider } from "../../../shared/contracts";
 
 // Production lessons belong to the video domain, independent of any particular visual style.
 export const videoModelGuidancePolicy = {
-  gpt61: {
+  codexMain: {
     provider: "codex",
-    model: "gpt-6.1-sol",
+    models: [agentProviderDefinitions.codex.model, "gpt-6.1-sol"],
     principles: [
       "Translate intent into an explicit visual contract: identify what stays fixed, what moves, the coordinate space and direction, which elements travel together, and what persists across scene changes. Do not confuse moving content inside a frame with moving the camera through a world. Follow the selected Motion Graphic and brief; no particular character, manga layout or camera move is mandatory.",
       "Specify each motion concretely: target layer, property, from/to values with units, transform origin, start/end times, easing, entrance, development, settle and exit. Replace vague requests such as dynamic or cinematic with observable behaviour using available local tools. Distinguish visual renderer, motion engine and composition/export framework.",
@@ -19,7 +20,8 @@ export const videoModelGuidancePolicy = {
 } as const;
 
 export function videoModelGuidance(provider: Provider, model: string): string {
-  const policy = videoModelGuidancePolicy.gpt61;
-  if (provider !== policy.provider || model !== policy.model) return "";
-  return `GPT-6.1 VIDEO PRODUCTION PRINCIPLES\n${policy.principles.map((principle, index) => `${index + 1}. ${principle}`).join("\n")}`;
+  const policy = videoModelGuidancePolicy.codexMain;
+  if (provider !== policy.provider || !policy.models.some((supported) => supported === model))
+    return "";
+  return `CODEX VIDEO PRODUCTION PRINCIPLES\n${policy.principles.map((principle, index) => `${index + 1}. ${principle}`).join("\n")}`;
 }

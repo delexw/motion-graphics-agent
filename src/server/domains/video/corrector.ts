@@ -29,7 +29,7 @@ import {
 import { claudeMainModel, textModels } from "../../agents/models";
 import { type Provider } from "../../../shared/contracts";
 import type { VideoGenerationJob } from "../../../shared/domains/video";
-import { videoModelGuidance } from "./model-guidance";
+import { videoModelGuidance, videoModelGuidancePolicy } from "./model-guidance";
 import { fullVideoQualityRules } from "./full-video-quality";
 import { videoPacingRules } from "./pacing";
 import type { CorrectionFinding, CorrectionFocus } from "./qa";
@@ -126,7 +126,7 @@ export const videoCorrectionPolicy = {
     "xhigh",
   ],
   claudeMainRounds: 2,
-  gpt61Full: { ...correctionRoundBudget, main: 5 },
+  codexMainFull: { ...correctionRoundBudget, main: 5 },
 } as const;
 
 /** A declared non-repair is terminal for this version, not a retryable provider failure. */
@@ -177,8 +177,10 @@ export class VideoCorrectionCoordinator {
             let rounds = this.rounds.get(key);
             if (!rounds) {
               rounds = new CorrectionRounds(
-                this.input.job.model === "gpt-6.1-sol" && this.input.job.kind === "full"
-                  ? videoCorrectionPolicy.gpt61Full
+                videoModelGuidancePolicy.codexMain.models.some(
+                  (model) => model === this.input.job.model,
+                ) && this.input.job.kind === "full"
+                  ? videoCorrectionPolicy.codexMainFull
                   : correctionRoundBudget,
               );
               this.rounds.set(key, rounds);

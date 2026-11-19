@@ -25,7 +25,7 @@ describe("published preview readiness", () => {
       { styleId: "style-002" },
       { reviewed: false },
       { motionRevision: 0 },
-      { model: "gpt-6.1-sol" },
+      { model: "gpt-6.2-astra" },
       { generatedAt: "2025-01-01T00:00:00.000Z" },
     ])
       expect(isCurrentStylePreview({ ...clip, ...changed }, art)).toBe(false);

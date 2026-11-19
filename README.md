@@ -16,7 +16,7 @@ and Motion Graphics, save an Assistant draft, and explicitly start a build.
 
 <p align="center">
   <b>A personal creative room where an idea turns into a short motion-graphics film.</b><br>
-  Create with <a href="https://platform.claude.com/docs/en/about-claude/models/overview">Claude Opus 5.5</a>, <a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol">GPT-6.1 Sol</a> or <a href="https://api-docs.deepseek.com/">DeepSeek Flash</a>.
+  Create with <a href="https://platform.claude.com/docs/en/about-claude/models/overview">Claude Opus 5.5</a>, <a href="https://developers.openai.com/api/docs/models/gpt-6.2-astra">GPT-6.2 Astra</a> or <a href="https://api-docs.deepseek.com/">DeepSeek Flash</a>.
 </p>
 
 <p align="center">
@@ -76,6 +76,14 @@ links and [local gallery](docs/showcase.html) remain available for local viewing
 The three most recent dated entries are listed here, regardless of gaps between dates. See the [changelog](CHANGELOG.md#daily-update-archive) for older entries and [release history](CHANGELOG.md).
 
 <details>
+<summary>2026-11-19</summary>
+
+- **GPT-6.2 Astra:** New GPT projects use GPT-6.2 Astra for creative proposals, planning, generation and main-model repairs. Local model overrides still apply. Historical GPT-6.1 Sol selections and cost estimates remain readable.
+- **Astra cost estimates:** Governance uses the published GPT-6.2 Astra token rates for new usage while retaining historical Sol rates.
+
+</details>
+
+<details>
 <summary>2026-11-17</summary>
 
 - **Music beat analysis:** The agent can analyze prepared music locally with the installed HyperFrames CLI and save measured beat timestamps, estimated tempo and a source fingerprint. [Implementation](https://github.com/delexw/motion-graphics-agent/commit/af9e4d7).
@@ -95,18 +103,6 @@ The three most recent dated entries are listed here, regardless of gaps between 
 
 </details>
 
-<details>
-<summary>2026-11-15</summary>
-
-- **New project from a finished version:** Choose which design, output, voice and music settings to retain while replacing the topic and script. UI and MCP share draft creation, ownership checks and retry protection; keeping the visual direction builds the full film directly without new direction previews.
-- **Independent character inheritance:** Recorded characters and mascots are preselected by default, with appearance, established personality and narrative roles shown before creation. Missing identity metadata remains unrecorded; older projects are not automatically identified.
-- **Source previews and clearer settings:** Reused projects show their source version beneath Settings. Source and MG previews use the same dotted-underlined button; source navigation stays in the app. Version settings, refinement controls and dialog scrollbars follow the shared layout and theme.
-- **Narration protection:** Replacing old content no longer writes an empty script that disables inherited narration. Enabled language narration without a usable profile fails before rendering.
-
-- **Deterministic cache checks:** Cache tests use local runtime fixtures instead of installed package trees, retaining dependency and runtime-change invalidation checks without machine-dependent hashing timeouts.
-
-</details>
-
 ## Editable project downloads
 
 Full versions offer **Download editable project** whenever source or media files exist, including failed, cancelled and incomplete builds. The streamed ZIP contains renderer sources and assets, dependency manifests, an OpenTimelineIO timeline, SRT subtitles from the storyboard, and usable rendered media. Rendered scenes remain clips, with available music/narration tracks; the rendered audio mix is preserved as a reference or fallback. Burned-in graphics/captions stay flattened in clips; edit the included native renderer sources to change them. Editor import support varies. Missing renders are reported in `export.json`; a source-only export does not imply a successful build. See [editable project exports](docs/editable-projects.md) for the ZIP layout, timeline construction and editing limitations.
@@ -123,7 +119,7 @@ source here, under the MIT license.
 
 I collected a lot. Some of it is dazzling, and some of it is probably wrong. I kept it all anyway 😄
 
-Opus 5.5 is my favourite for the creative part. The [Codex](https://developers.openai.com/codex) provider with [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol) is wired up too,
+Opus 5.5 is my favourite for the creative part. The [Codex](https://developers.openai.com/codex) provider with [GPT-6.2 Astra](https://developers.openai.com/api/docs/models/gpt-6.2-astra) is wired up too,
 and I'm trying it out for fun. You choose the provider per project.
 
 ## What it does
@@ -198,13 +194,13 @@ an evaluator and repairs.
 
 ## Who does what
 
-| Job                                                                          | Claude projects                                                                         | Codex projects                                                           | DeepSeek projects                      |
-| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------- |
-| Brief, reference checks, Motion Graphic summaries, subtitles, simple repairs | [Claude Haiku 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)    | [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna)   | DeepSeek Flash                         |
-| Combination proposals, previews, the full film, pacing/style repairs         | **[Claude Opus 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)** | [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol) | DeepSeek Flash                         |
-| Finished-result review                                                       | Same model that built the result                                                        | Same model that built the result                                         | Same model that built the result       |
-| Scoring and choosing directions                                              | [JEV](https://docs.typesafe.ai/models) via [Typesafe](https://docs.typesafe.ai)         | [JEV](https://docs.typesafe.ai/models)                                   | [JEV](https://docs.typesafe.ai/models) |
-| Recording every call, token count and cost estimate                          | Governance report                                                                       | Governance report                                                        | Governance report                      |
+| Job                                                                          | Claude projects                                                                         | Codex projects                                                               | DeepSeek projects                      |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------- |
+| Brief, reference checks, Motion Graphic summaries, subtitles, simple repairs | [Claude Haiku 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)    | [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna)       | DeepSeek Flash                         |
+| Combination proposals, previews, the full film, pacing/style repairs         | **[Claude Opus 5.5](https://platform.claude.com/docs/en/about-claude/models/overview)** | [GPT-6.2 Astra](https://developers.openai.com/api/docs/models/gpt-6.2-astra) | DeepSeek Flash                         |
+| Finished-result review                                                       | Same model that built the result                                                        | Same model that built the result                                             | Same model that built the result       |
+| Scoring and choosing directions                                              | [JEV](https://docs.typesafe.ai/models) via [Typesafe](https://docs.typesafe.ai)         | [JEV](https://docs.typesafe.ai/models)                                       | [JEV](https://docs.typesafe.ai/models) |
+| Recording every call, token count and cost estimate                          | Governance report                                                                       | Governance report                                                            | Governance report                      |
 
 More detail, including the workflow diagrams, is in [docs/architecture.md](docs/architecture.md).
 
@@ -286,7 +282,7 @@ preparation and review work cost cents, and JEV ranking under a cent. The expens
 its directions and needed nine repair calls.
 
 That's three projects, not a benchmark or a per-minute price. Local compute (render time, electricity)
-isn't priced, and there's no GPT-6.1 Sol example yet. These are token counts priced at API rates. If
+isn't priced, and there's no GPT-6.2 Astra example yet. These are token counts priced at API rates. If
 you're signed in with a subscription instead of an API key, they are **not** your bill and not a meter of
 your plan's allowance. I haven't tested subscription usage or remaining-percentage reporting. Method and caveats:
 [docs/costs.md](docs/costs.md).

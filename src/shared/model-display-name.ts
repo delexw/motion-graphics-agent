@@ -5,6 +5,7 @@ const modelNames: Record<string, string> = {
   "deepseek-v4-pro": "DeepSeek V4 Pro",
   "deepseek-flash": "DeepSeek Flash",
   "gpt-6.1-sol": "GPT-6.1 Sol",
+  "gpt-6.2-astra": "GPT-6.2 Astra",
 };
 export function modelDisplayName(model: string, fallback = model || "Not recorded") {
   return modelNames[model] || fallback;

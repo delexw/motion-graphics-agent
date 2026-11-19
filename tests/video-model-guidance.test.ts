@@ -118,9 +118,9 @@ it.each(["hyperframes", "multiplane"] as const)(
   },
 );
 
-it("keeps reusable production principles specific to GPT-6.1 video calls", () => {
-  const guidance = videoModelGuidance("codex", "gpt-6.1-sol");
-  expect(videoModelGuidancePolicy.gpt61.principles).toHaveLength(8);
+it("keeps reusable production principles specific to GPT-6.2 Astra video calls", () => {
+  const guidance = videoModelGuidance("codex", "gpt-6.2-astra");
+  expect(videoModelGuidancePolicy.codexMain.principles).toHaveLength(8);
   for (const lesson of [
     "coordinate space",
     "from/to values with units",
@@ -133,7 +133,7 @@ it("keeps reusable production principles specific to GPT-6.1 video calls", () =>
     "plans its complete story before implementation in the same session",
   ])
     expect(guidance).toContain(lesson);
-  expect(videoModelGuidance("claude", "gpt-6.1-sol")).toBe("");
+  expect(videoModelGuidance("claude", "gpt-6.2-astra")).toBe("");
   expect(videoModelGuidance("codex", "gpt-6-luna")).toBe("");
   expect(videoModelGuidance("codex", "gpt-6-astra")).toBe("");
 });
@@ -147,7 +147,7 @@ it.each(["preview", "full", "refinement"] as const)(
       runId: "project",
       candidateId: "candidate",
       kind: kind === "preview" ? "preview" : "full",
-      model: "gpt-6.1-sol",
+      model: "gpt-6.2-astra",
       duration: kind === "preview" ? 3 : 30,
       phase: "queued",
       workspace: "/tmp/example",
@@ -303,7 +303,7 @@ it.each(["preview", "full", "refinement"] as const)(
         expect(selectedPrompt).not.toContain("search_pool and read_pool_entry");
       }
     }
-    expect(prompt).toContain(videoModelGuidance("codex", "gpt-6.1-sol"));
+    expect(prompt).toContain(videoModelGuidance("codex", "gpt-6.2-astra"));
     expect(prompt).toContain("STORYBOARD.json");
     if (kind === "preview") expect(prompt).toContain("PREVIEW SCOPE:");
     if (kind === "refinement") expect(prompt).toContain("REVISION SCOPE:");
@@ -487,3 +487,9 @@ it.each(["hyperframes", "multiplane"] as const)(
     expect(prompt.split(/\s+/).length).toBeLessThan(1800);
   },
 );
+
+it("retains the same video principles when refining a historical GPT-6.1 Sol project", () => {
+  expect(videoModelGuidance("codex", "gpt-6.1-sol")).toBe(
+    videoModelGuidance("codex", "gpt-6.2-astra"),
+  );
+});
