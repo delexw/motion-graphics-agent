@@ -342,7 +342,9 @@ export function RoomProject({
                 value0: full.length ? ` · ${full.length}` : "",
               }),
               children: (
-                <div className="room-preview-grid">
+                <div
+                  className={`room-preview-grid${run.request.outputType === "page" ? "" : " room-full-video-results"}`}
+                >
                   {!full.length &&
                     (directBuild ? (
                       <ProjectResultPending project={run} />

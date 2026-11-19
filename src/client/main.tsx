@@ -1,3 +1,4 @@
+import { SelectedDirection } from "./components/selected-direction";
 import { ProjectReuseButton } from "./components/project-reuse/button";
 import { OpenPageButton } from "./domains/page/open-button";
 import { focusSettingControl } from "./lib/settings-conflict-navigation";
@@ -877,6 +878,7 @@ function App() {
           <div className="candidate-heading">
             <div className="candidate-heading-label">
               <h3>{title}</h3>
+              <SelectedDirection winnerId={run.winnerId} job={job} />
               {job.phase === "ready" && job.finishedAt && (
                 <span className="candidate-generated-at">
                   {translateUi("Generated")}{" "}

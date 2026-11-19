@@ -1321,6 +1321,125 @@
 .room-project .full-delivery {
   min-width: 0;
 }
+/* Full-version results: size the preview from the project scroll viewport. */
+.room-project-scroll:has(.room-full-video-results) {
+  container: room-project-scroll / size;
+  padding-bottom: 8px;
+}
+.room-project-tabs:has(.room-full-video-results) > .ant-tabs-nav {
+  margin-bottom: 8px;
+}
+.room-full-video-results {
+  /* Smallest useful preview height; below this the project scroll area scrolls. */
+  --room-full-min-preview: 160px;
+  /* Vertical space reserved for tab nav + controls row + borders/padding. */
+  --room-full-chrome: 176px;
+  --room-full-strip: 0px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+.room-full-video-results > section {
+  align-items: stretch;
+}
+.room-full-video-results .full-delivery {
+  margin-bottom: 0;
+}
+.room-full-video-results .full-delivery + .full-delivery {
+  margin-top: 16px;
+}
+.room-full-video-results .studio-result-card:has(.revision-strip) {
+  --room-full-strip: 64px;
+}
+.room-full-video-results .candidate-media .kiteva-video-player {
+  --room-full-preview-h: max(
+    var(--room-full-min-preview),
+    calc(100cqh - var(--room-full-chrome) - var(--room-full-strip))
+  );
+  width: min(100%, calc(var(--room-full-preview-h) * 16 / 9));
+  margin-inline: auto;
+}
+.room-full-video-results .candidate-media .kiteva-video-player > video {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: var(--room-full-preview-h);
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+}
+.room-full-video-results .studio-result-card .candidate-body {
+  flex: none;
+  gap: 8px;
+  padding: 12px 16px;
+}
+.room-full-video-results .studio-result-card .candidate-heading {
+  align-items: center;
+}
+.room-full-video-results .studio-result-card .candidate-heading-label {
+  padding-block: 4px;
+}
+.room-full-video-results .studio-result-card .candidate-actions {
+  margin-top: 0;
+}
+.room-full-video-results .studio-result-card .candidate-actions:empty {
+  display: none;
+}
+@container revision-stack (max-width: 600px) {
+  .room-full-video-results .full-delivery {
+    --room-full-chrome: 128px;
+  }
+  .room-full-video-results .studio-result-card .candidate-body {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 8px;
+    padding: 8px 10px;
+  }
+  .room-full-video-results .studio-result-card .candidate-heading {
+    flex: none;
+    min-width: 0;
+  }
+  /* Visually hidden, still announced: generic title + generated timestamp. */
+  .room-full-video-results .studio-result-card .candidate-heading-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .room-full-video-results .studio-result-card .revision-switcher {
+    flex: 0 1 auto;
+    min-width: 0;
+    margin: 0;
+  }
+  .room-full-video-results .candidate-heading > .delivery-links {
+    gap: 4px;
+  }
+  .room-full-video-results .delivery-links > .delivery-icon-button {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    padding: 0;
+  }
+}
+@container revision-stack (max-width: 360px) {
+  .room-full-video-results .full-delivery {
+    /* Controls may wrap to two rows. */
+    --room-full-chrome: 160px;
+  }
+  .room-full-video-results .studio-result-card .candidate-body {
+    justify-content: flex-start;
+  }
+  .room-full-video-results .delivery-links > .delivery-icon-button {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+  }
+}
+
 .room-project .ant-tabs-tabpane > .project-result-pending {
   min-height: 260px;
 }
