@@ -11,6 +11,7 @@ const step = z.object({
   name: z.string().optional(),
   run: z.string().optional(),
   if: z.string().optional(),
+  env: z.record(z.string(), z.string()).optional(),
 });
 const workflow = z.object({
   on: z.record(z.string(), z.unknown()),
@@ -39,7 +40,14 @@ it("checks every PR without path filters and runs the entire suite alongside nat
     expect(commands).toContain(command);
   expect(commands).not.toContain("npm test -- tests/");
   expect(commands).toContain("npm run multiplane:setup");
-  expect(ci.jobs["native-windows"].steps.some((s) => s.run === "npm run windows:check")).toBe(true);
+  const windowsSmokeTest = ci.jobs["native-windows"].steps.find(
+    (step) => step.run === "npm run windows:check",
+  );
+  expect(windowsSmokeTest?.env).toEqual({
+    PRODUCER_DISABLE_GPU: "true",
+    PRODUCER_BROWSER_GPU_MODE: "software",
+    PRODUCER_FORCE_SCREENSHOT: "true",
+  });
 });
 
 it("checks every speech requirements file against the adapters without downloading models", () => {

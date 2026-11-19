@@ -10,6 +10,7 @@ import {
 } from "../../runtime/project-files";
 import { browserExecutablePath } from "../../runtime/browser";
 import { assertWindowsRenderReady } from "./readiness";
+import { windowsCaptureEnvironment } from "./windows-capture-environment";
 import { renderPrivatePaths } from "./private-paths";
 import type { RenderCommand } from "./contracts";
 
@@ -85,6 +86,7 @@ export async function windowsRenderCommand(
       ...projectRuntimeEnvironment(workspace, "render"),
       CODEX_HOME: sandboxHome,
       HYPERFRAMES_BROWSER_PATH: browserExecutablePath(),
+      ...windowsCaptureEnvironment(),
     },
   };
 }

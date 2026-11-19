@@ -6,7 +6,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { parse } from "@iarna/toml";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
+import { windowsCaptureEnvironment } from "../src/server/rendering/sandbox/windows-capture-environment";
 import {
   renderPermissionProfile,
   windowsRenderCommand,
@@ -99,6 +100,29 @@ it("loads the sandbox preload through Node's real ESM loader", async () => {
     );
     expect(output.trim()).toBe("loader-ready");
   } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+it("forwards opt-in software capture settings without forwarding unrelated variables", async () => {
+  const softwareCapture = {
+    PRODUCER_DISABLE_GPU: "true",
+    PRODUCER_BROWSER_GPU_MODE: "software",
+    PRODUCER_FORCE_SCREENSHOT: "true",
+  };
+  expect(windowsCaptureEnvironment({})).toEqual({});
+  expect(
+    windowsCaptureEnvironment({ PRODUCER_BROWSER_GPU_MODE: "hardware", UNRELATED: "true" }),
+  ).toEqual({});
+  const workspace = await mkdtemp(path.join(tmpdir(), "native-software-capture-"));
+  try {
+    for (const [key, value] of Object.entries(softwareCapture)) vi.stubEnv(key, value);
+    vi.stubEnv("UNRELATED", "fixture");
+    const result = await diagnosticCommand(process.execPath, ["-e", "0"], workspace);
+    expect(result.env).toMatchObject(softwareCapture);
+    expect(result.env.UNRELATED).toBeUndefined();
+  } finally {
+    vi.unstubAllEnvs();
     await rm(workspace, { recursive: true, force: true });
   }
 });

@@ -4,6 +4,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { systemEnvironment } from "../../runtime/platform";
+import { windowsCaptureEnvironment } from "./windows-capture-environment";
 import { watchCommandOutput } from "../../runtime/file-output";
 import { z } from "zod";
 
@@ -104,6 +105,7 @@ export async function runCodexSandboxCommand(
                 disableTimeout: true,
                 env: {
                   ...systemEnvironment(),
+                  ...windowsCaptureEnvironment(),
                   HYPERFRAMES_BROWSER_PATH: process.env.HYPERFRAMES_BROWSER_PATH || null,
                   DO_NOT_TRACK: "1",
                 },
