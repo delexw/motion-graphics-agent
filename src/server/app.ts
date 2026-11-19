@@ -1,3 +1,4 @@
+import { registerCompactDownloadRoutes } from "./rendering/compact-download-routes";
 import { registerProjectReuseRoutes } from "./project-reuse/routes";
 import { projectName } from "../shared/project-name";
 import {
@@ -816,6 +817,7 @@ export async function createApp(options: { store?: Store } = {}) {
       throw Error("Invalid artifact path");
     return target;
   }
+  registerCompactDownloadRoutes(app, getRun, artifact, workflow);
   app.get<{ Params: { runId: string; jobId: string; "*": string } }>(
     "/api/artifacts/:runId/:jobId/*",
     async (req, reply) => {

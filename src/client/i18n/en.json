@@ -1451,5 +1451,18 @@
   "No source files attached.": "No source files attached.",
   "Create a new draft": "Create a new draft",
   "Your source project stays unchanged. Review the new draft in the existing creation flow; generation starts only after you confirm.": "Your source project stays unchanged. Review the new draft in the existing creation flow; generation starts only after you confirm.",
-  "This detail has no independent saved snapshot. Exact inheritance is not available.": "This detail has no independent saved snapshot. Exact inheritance is not available."
+  "This detail has no independent saved snapshot. Exact inheritance is not available.": "This detail has no independent saved snapshot. Exact inheritance is not available.",
+  "Downloads": "Downloads",
+  "Download original MP4": "Download original MP4",
+  "Download compact MP4": "Download compact MP4",
+  "Make a smaller MP4 at the original resolution.": "Make a smaller MP4 at the original resolution.",
+  "smaller than the original": "smaller than the original",
+  "Use the original MP4. A smaller copy did not pass the size and quality checks.": "Use the original MP4. A smaller copy did not pass the size and quality checks.",
+  "Retry compression": "Retry compression",
+  "Checking the compact video…": "Checking the compact video…",
+  "Compressing video…": "Compressing video…",
+  "Waiting to compress…": "Waiting to compress…",
+  "Compression failed. Try again or download the original MP4.": "Compression failed. Try again or download the original MP4.",
+  "Editable project files are currently unavailable.": "Editable project files are currently unavailable.",
+  "Checking editable project files…": "Checking editable project files…"
 }

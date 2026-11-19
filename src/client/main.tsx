@@ -10,7 +10,6 @@ import { LoadingStatus } from "./components/loading-status";
 import { LanguageTrackSettings } from "./components/language-track-settings";
 import type { LanguageTracks } from "../shared/language-tracks";
 import { languageMediaUrls } from "./lib/language-media";
-import { LanguageMediaDownloads } from "./components/language-media-downloads";
 import { PromptText } from "./components/style-mention";
 import { ScriptItems } from "./components/script-items";
 import { legacyScriptItems, type ScriptItem } from "../shared/script-items";
@@ -26,7 +25,7 @@ import {
   roomUtilities,
   type RoomUtilityPage,
 } from "./room/utility-windows";
-import { ProjectDownload } from "./components/project-download";
+import { ResultDownloads } from "./components/result-downloads";
 import { ProjectResultPending } from "./components/project-result-pending";
 import { JobActivityProgress } from "./components/activity-progress";
 import { RoomProject } from "./room/room-project";
@@ -39,7 +38,7 @@ import { validateAssetLimits } from "../shared/asset-limits";
 import { PageTemplate } from "./components/page-template";
 import { technologyPoolSize } from "../shared/technology-pool";
 import { ProjectList } from "./components/project-list";
-import { Button, Input, Alert, Card, Collapse, Tooltip, Popover } from "antd";
+import { Button, Input, Alert, Card, Collapse, Tooltip } from "antd";
 import { CodedError, errorCode } from "../shared/errors";
 import { ProjectConversation } from "./components/project-conversation";
 import type { RevisionSlots } from "./components/revision-stack";
@@ -95,7 +94,6 @@ import {
   Search,
   Play,
   LoaderCircle,
-  FileVideo,
   PanelsTopLeft,
   RotateCcw,
   Square,
@@ -892,7 +890,20 @@ function App() {
                 role="group"
                 aria-label={translateUi("Result actions")}
               >
-                {job.kind === "full" && <ProjectDownload run={run} job={job} />}
+                {job.kind === "full" && (
+                  <ResultDownloads
+                    key={job.id}
+                    run={run}
+                    job={job}
+                    originalUrl={
+                      job.phase === "ready" && job.video
+                        ? artifactUrl(run, job, job.video)
+                        : undefined
+                    }
+                    media={media}
+                    downloadName={downloadName}
+                  />
+                )}
                 <OpenPageButton job={job} />
                 <ProjectReuseButton
                   run={run}
@@ -903,43 +914,6 @@ function App() {
                 />
                 {job.phase === "ready" && (
                   <>
-                    <Popover
-                      trigger={["hover", "focus", "click"]}
-                      placement="bottomRight"
-                      content={
-                        media ? (
-                          <LanguageMediaDownloads media={media} downloadName={downloadName} />
-                        ) : undefined
-                      }
-                    >
-                      <Tooltip
-                        trigger={["hover", "focus"]}
-                        title={
-                          media
-                            ? null
-                            : translateUi(
-                                job.outputType === "page"
-                                  ? "Download the complete HTML page bundle."
-                                  : "Download the finished video as an MP4.",
-                              )
-                        }
-                      >
-                        <a
-                          className="secondary delivery-icon-button"
-                          href={
-                            job.outputType === "page"
-                              ? `/api/projects/${run.id}/${job.id}`
-                              : artifactUrl(run, job, job.video!)
-                          }
-                          download={`${downloadName}.${job.outputType === "page" ? "zip" : "mp4"}`}
-                          aria-label={translateUi(
-                            job.outputType === "page" ? "Download HTML bundle" : "Download MP4",
-                          )}
-                        >
-                          <FileVideo size={18} aria-hidden="true" />
-                        </a>
-                      </Tooltip>
-                    </Popover>
                     <Tooltip
                       trigger={["hover", "focus"]}
                       title={translateUi(

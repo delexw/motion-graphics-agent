@@ -1,6 +1,7 @@
-import { FileVideo, AudioLines, FileText } from "lucide-react";
+import { FileVideo, AudioLines, FileText, Captions } from "lucide-react";
 import { useState } from "react";
-import { Button, ConfigProvider, Flex, Select } from "antd";
+import { ConfigProvider, Flex, Select } from "antd";
+import { DownloadIconButton } from "./download-icon-button";
 import type { LanguageMedia } from "../../shared/language-tracks";
 import { videoLanguageLabel } from "../../shared/video-language";
 import { translateUi, useUiLanguage } from "../i18n";
@@ -23,7 +24,7 @@ export function LanguageMediaDownloads({
     <ConfigProvider getPopupContainer={(trigger) => trigger?.parentElement ?? document.body}>
       <section
         className="language-media-downloads"
-        style={{ width: "max-content", maxWidth: "calc(100vw - 48px)" }}
+        style={{ maxWidth: "100%" }}
         aria-label={translateUi("Language downloads")}
       >
         <h4>{translateUi("Language downloads")}</h4>
@@ -40,13 +41,12 @@ export function LanguageMediaDownloads({
                   }))}
                   onChange={setLanguage}
                 />
-                <Button
-                  aria-label={translateUi("Download MP4")}
-                  title={translateUi("Download MP4")}
-                  icon={<FileVideo size={18} />}
+                <DownloadIconButton
+                  label={translateUi("Download MP4")}
+                  icon={<FileVideo size={18} aria-hidden="true" />}
                   href={selected.video}
                   download={`${downloadName}-${selected.language}.mp4`}
-                ></Button>
+                />
               </Flex>
               <Flex gap="small" wrap align="center">
                 <Select
@@ -58,19 +58,21 @@ export function LanguageMediaDownloads({
                   ]}
                   onChange={setAudio}
                 />
-                <Button
-                  aria-label={translateUi("Download audio")}
-                  title={translateUi("Download audio")}
-                  icon={<AudioLines size={18} />}
+                <DownloadIconButton
+                  label={translateUi("Download audio")}
+                  icon={<AudioLines size={18} aria-hidden="true" />}
                   href={audio === "mix" ? selected.mix : selected.audio}
                   download={`${downloadName}-${selected.language}-${audio}.${audio === "mix" ? "m4a" : "wav"}`}
-                ></Button>
+                />
               </Flex>
             </Flex>
           ) : (
-            <Button href={media.musicVideo} download={`${downloadName}.mp4`}>
-              {translateUi("Download MP4")}
-            </Button>
+            <DownloadIconButton
+              href={media.musicVideo}
+              download={`${downloadName}.mp4`}
+              label={translateUi("Download MP4")}
+              icon={<FileVideo size={18} aria-hidden="true" />}
+            />
           )}
           {captions && (
             <Flex gap="small" wrap align="center">
@@ -83,24 +85,18 @@ export function LanguageMediaDownloads({
                 }))}
                 onChange={setSubtitle}
               />
-              <Button
-                aria-label="SRT"
-                title="SRT"
-                icon={<FileText size={18} />}
+              <DownloadIconButton
+                label="SRT"
+                icon={<FileText size={18} aria-hidden="true" />}
                 href={captions.srt}
                 download={`${downloadName}-${captions.language}.srt`}
-              >
-                SRT
-              </Button>
-              <Button
-                aria-label="VTT"
-                title="VTT"
-                icon={<FileText size={18} />}
+              />
+              <DownloadIconButton
+                label="VTT"
+                icon={<Captions size={18} aria-hidden="true" />}
                 href={captions.vtt}
                 download={`${downloadName}-${captions.language}.vtt`}
-              >
-                VTT
-              </Button>
+              />
             </Flex>
           )}
         </Flex>

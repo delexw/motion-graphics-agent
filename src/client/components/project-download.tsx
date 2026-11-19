@@ -1,25 +1,25 @@
 import { jobDownloadBasename } from "../../shared/job-download-name";
 import { useEffect, useState } from "react";
 import { FolderArchive } from "lucide-react";
-import { Tooltip } from "antd";
+import { Typography } from "antd";
+import { DownloadIconButton } from "./download-icon-button";
 import { translateUi, useUiLanguage } from "../i18n";
 import { terminalPhases, type GenerationJob, type Run } from "../../shared/contracts";
 
 export function ProjectDownload({ run, job }: { run: Run; job: GenerationJob }) {
   useUiLanguage();
-  const [available, setAvailable] = useState(false);
+  const [available, setAvailable] = useState<boolean>();
   const url = `/api/projects/${run.id}/${job.id}`;
   useEffect(() => {
     const controller = new AbortController();
-    setAvailable(false);
+    setAvailable(undefined);
     const check = async () => {
       try {
         const response = await fetch(`${url}/availability`, { signal: controller.signal });
-        if (!response.ok) return;
-        const body = await response.json();
+        const body = response.ok ? await response.json() : { available: false };
         if (!controller.signal.aborted) setAvailable(body.available === true);
       } catch {
-        /* A later poll or phase update retries transient failures. */
+        if (!controller.signal.aborted) setAvailable(false);
       }
     };
     void check();
@@ -35,18 +35,19 @@ export function ProjectDownload({ run, job }: { run: Run; job: GenerationJob }) 
     };
   }, [url, job.phase]);
   return available ? (
-    <Tooltip
-      trigger={["hover", "focus"]}
-      title={translateUi("Download editable source files and assets as a ZIP.")}
-    >
-      <a
-        className="secondary delivery-icon-button"
-        href={url}
-        download={`${jobDownloadBasename(run, job)}.zip`}
-        aria-label={translateUi("Download editable project")}
-      >
-        <FolderArchive size={18} aria-hidden="true" />
-      </a>
-    </Tooltip>
-  ) : null;
+    <DownloadIconButton
+      href={url}
+      download={`${jobDownloadBasename(run, job)}.zip`}
+      icon={<FolderArchive size={18} aria-hidden="true" />}
+      label={translateUi("Download editable project")}
+    />
+  ) : (
+    <Typography.Text type="secondary">
+      {translateUi(
+        available === undefined
+          ? "Checking editable project files…"
+          : "Editable project files are currently unavailable.",
+      )}
+    </Typography.Text>
+  );
 }

@@ -6,11 +6,15 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Added
 
+- The Downloads pop-up collects the original MP4, editable project ZIP and language files. It can prepare a compact MP4 in the background and show progress when reopened. Repeated clicks share one job. Kiteva only offers the compact file when it saves at least 10% and passes picture and playback checks.
+
 - Local music beat analysis through the build-only `music_analysis.analyze_music` tool, using the installed HyperFrames CLI. Saved beat maps include estimated tempo, measured timestamps and a source fingerprint.
 - Production Desk music beat ticks, estimated BPM, beat counts and previous/next beat controls, with keyboard shortcuts. Desk validates saved maps and reports missing, stale or invalid analysis without running generation.
 - A distinct English/Chinese Activity label for music analysis, with agent guidance requiring a distinct label for each new tool.
 
 ### Changed
+
+- Full-video previews and controls resize together. A check icon and border show which direction was selected.
 
 - New Codex projects default to GPT-6.2 Astra across the interface, MCP and creative pipeline. Production principles and full-video repair budgets apply to Astra and remain available for historical GPT-6.1 Sol projects.
 - Governance estimates GPT-6.2 Astra usage with its published token prices and retains historical model labels and rates.

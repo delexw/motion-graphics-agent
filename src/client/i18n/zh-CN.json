@@ -1451,5 +1451,18 @@
   "No source files attached.": "未附加来源素材。",
   "Create a new draft": "创建新草稿",
   "Your source project stays unchanged. Review the new draft in the existing creation flow; generation starts only after you confirm.": "原项目保持不变。继续后进入现有创建流程审阅新草稿，确认后才开始生成。",
-  "This detail has no independent saved snapshot. Exact inheritance is not available.": "此项没有独立保存的设计快照，会沿用目录设计方向，不承诺精确复刻。"
+  "This detail has no independent saved snapshot. Exact inheritance is not available.": "此项没有独立保存的设计快照，会沿用目录设计方向，不承诺精确复刻。",
+  "Downloads": "下载",
+  "Download original MP4": "下载原始 MP4",
+  "Download compact MP4": "下载压缩版 MP4",
+  "Make a smaller MP4 at the original resolution.": "保留原始分辨率并生成较小的 MP4。",
+  "smaller than the original": "小于原始文件",
+  "Use the original MP4. A smaller copy did not pass the size and quality checks.": "请使用原始 MP4。压缩版未通过大小和质量检查。",
+  "Retry compression": "重试压缩",
+  "Checking the compact video…": "正在检查压缩视频…",
+  "Compressing video…": "正在压缩视频…",
+  "Waiting to compress…": "正在等待压缩…",
+  "Compression failed. Try again or download the original MP4.": "压缩失败。请重试或下载原始 MP4。",
+  "Editable project files are currently unavailable.": "可编辑项目文件暂时不可用。",
+  "Checking editable project files…": "正在检查可编辑项目文件…"
 }

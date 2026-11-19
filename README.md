@@ -80,6 +80,8 @@ The three most recent dated entries are listed here, regardless of gaps between 
 
 - **GPT-6.2 Astra:** New GPT projects use GPT-6.2 Astra for creative proposals, planning, generation and main-model repairs. Local model overrides still apply. Historical GPT-6.1 Sol selections and cost estimates remain readable.
 - **Astra cost estimates:** Governance uses the published GPT-6.2 Astra token rates for new usage while retaining historical Sol rates.
+- **Downloads:** Open the download icon for the original MP4, compact MP4, editable project ZIP and language files. Compression runs in the background. Reopen the pop-up to see progress. Repeated clicks share one job, and Kiteva keeps the original available if the compact copy fails its checks.
+- **Project results:** Video and controls resize together in smaller project windows. A check icon and border mark the selected preview.
 
 </details>
 

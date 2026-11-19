@@ -10,10 +10,17 @@ import { appRoot } from "../src/server/runtime/config";
 import { browserAliases, browserDependencyScan } from "../vite.resolve";
 
 it.skipIf(!browserExecutablePath())(
-  "shows an editable download for failed jobs only when files exist",
+  "opens a centred Downloads pop-up and keeps one compact job across visits",
   async () => {
     const cacheDir = await mkdtemp(path.join(os.tmpdir(), "project-download-"));
     let available = true;
+    let compactStatus = { status: "idle" } as {
+      status: string;
+      percent?: number;
+      bytes?: number;
+      originalBytes?: number;
+    };
+    let starts = 0;
     const server = await createServer({
       configFile: false,
       cacheDir,
@@ -26,6 +33,21 @@ it.skipIf(!browserExecutablePath())(
           name: "download-fixture",
           configureServer(server) {
             server.middlewares.use(async (req, res, next) => {
+              if (req.url === "/api/projects/run/job/compact-video") {
+                if (req.method === "POST") {
+                  starts += 1;
+                  compactStatus = { status: "compressing", percent: 37 };
+                }
+                res.setHeader("content-type", "application/json");
+                res.end(JSON.stringify(compactStatus));
+                return;
+              }
+              if (req.url === "/api/projects/run/job/compact-video/file") {
+                res.setHeader("Content-Type", "video/mp4");
+                res.setHeader("Content-Disposition", 'attachment; filename="compact.mp4"');
+                res.end("local compact video fixture");
+                return;
+              }
               if (req.url === "/api/projects/run/job/availability") {
                 res.setHeader("content-type", "application/json");
                 res.end(JSON.stringify({ available }));
@@ -41,7 +63,15 @@ it.skipIf(!browserExecutablePath())(
               res.end(
                 await server.transformIndexHtml(
                   req.url,
-                  `<div id="root"></div><script type="module">import React from 'react';import{createRoot}from'react-dom/client';import{ProjectDownload}from'/src/client/components/project-download.tsx';createRoot(document.getElementById('root')).render(React.createElement(ProjectDownload,{run:{id:'run',candidates:[{id:'direction',displayTitle:'Channel Surf'}],jobs:[{id:'job',candidateId:'direction',kind:'full',version:7}]},job:{id:'job',candidateId:'direction',kind:'full',phase:'failed',version:7}}));</script>`,
+                  `<div id="root"></div><script type="module">
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import {ResultDownloads} from '/src/client/components/result-downloads.tsx';
+const job = {id:'job', candidateId:'direction', kind:'full', phase:'ready', outputType:'video', version:7};
+const run = {id:'run', candidates:[{id:'direction',displayTitle:'Example film'}], jobs:[job]};
+const media = {narration:[],subtitles:[{language:'en',srt:'/en.srt',vtt:'/en.vtt'}],musicVideo:'/original.mp4'};
+createRoot(document.getElementById('root')).render(React.createElement(ResultDownloads,{run,job,media,originalUrl:'/original.mp4',downloadName:'example-film-v7'}));
+</script>`,
                 ),
               );
             });
@@ -58,49 +88,92 @@ it.skipIf(!browserExecutablePath())(
     try {
       await server.listen();
       const page = await browser.newPage();
+      await page.setViewport({ width: 900, height: 740 });
       const address = server.httpServer!.address();
       if (!address || typeof address === "string") throw Error("No fixture port");
       await page.goto(`http://127.0.0.1:${address.port}/download-test`);
-      await page.waitForSelector("a[download]");
-      expect(
-        await page.$eval("a", (a) => ({
-          label: a.getAttribute("aria-label"),
-          text: a.textContent,
-          href: a.getAttribute("href"),
-          download: a.getAttribute("download"),
-          icons: a.querySelectorAll("svg").length,
-        })),
-      ).toEqual({
-        label: "Download editable project",
-        text: "",
-        href: "/api/projects/run/job",
-        download: "channel-surf-v7.zip",
-        icons: 1,
+      const open = () => page.click('button[aria-label="Downloads"]');
+      await open();
+      await page.waitForSelector('a[download="example-film-v7.zip"]');
+      await page.waitForFunction(() => {
+        const dialog = document.querySelector('[role="dialog"]');
+        if (!dialog) return false;
+        const { x, y, width, height } = dialog.getBoundingClientRect();
+        return (
+          width > 0 &&
+          width < innerWidth * 0.75 &&
+          Math.abs(x + width / 2 - innerWidth / 2) < 16 &&
+          Math.abs(y + height / 2 - innerHeight / 2) < 24
+        );
       });
+      expect(await page.$('a[href="/original.mp4"]')).not.toBeNull();
+      expect(await page.$('a[href="/en.srt"]')).not.toBeNull();
+      const actions = await page.$$eval(
+        '[role="dialog"] a[download]:not([hidden]), button[aria-label="Download compact MP4"]',
+        (elements) =>
+          elements.map((element) => ({
+            label: element.getAttribute("aria-label"),
+            text: element.textContent?.trim(),
+            icon: Boolean(element.querySelector("svg")),
+          })),
+      );
+      expect(actions.length).toBeGreaterThanOrEqual(5);
+      for (const action of actions) {
+        expect(action.label).toBeTruthy();
+        expect(action.text).toBe("");
+        expect(action.icon).toBe(true);
+      }
+      await page.$$eval("button", (buttons) => {
+        const button = buttons.find(
+          (item) => item.getAttribute("aria-label") === "Download compact MP4",
+        );
+        button?.click();
+        button?.click();
+      });
+      await page.waitForSelector('[role="progressbar"][aria-valuenow="37"]');
+      expect(starts).toBe(1);
+      await page.keyboard.press("Escape");
+      await page.waitForSelector('[role="dialog"]', { hidden: true });
+      await page.waitForFunction(
+        () => document.activeElement?.getAttribute("aria-label") === "Downloads",
+      );
+      await page.setViewport({ width: 360, height: 640 });
+      await open();
+      await page.waitForSelector('[role="progressbar"][aria-valuenow="37"]');
+      expect(starts).toBe(1);
+      expect(
+        await page.$eval('[role="dialog"]', (dialog) => {
+          const { left, right } = dialog.getBoundingClientRect();
+          return left >= 0 && right <= innerWidth;
+        }),
+      ).toBe(true);
+      compactStatus = { status: "ready", bytes: 10, originalBytes: 100 };
+      await page.waitForSelector('a[href$="/compact-video/file"]:not([hidden])');
+      expect(starts).toBe(1);
       const session = await page.createCDPSession();
       await session.send("Browser.setDownloadBehavior", {
         behavior: "allow",
         downloadPath: cacheDir,
       });
-      await page.click("a[download]");
+      await page.click('a[download="example-film-v7.zip"]');
       await expect
         .poll(async () => {
           try {
-            return await readFile(path.join(cacheDir, "channel-surf-v7.zip"), "utf8");
+            return await readFile(path.join(cacheDir, "example-film-v7.zip"), "utf8");
           } catch {
             return "";
           }
         })
         .toBe("local archive fixture");
-      await page.hover("a[download]");
-      await page.waitForSelector('[role="tooltip"]', { visible: true });
-      expect(await page.$eval('[role="tooltip"]', (element) => element.textContent)).toBe(
-        "Download editable source files and assets as a ZIP.",
-      );
+      await page.click('a[href$="/compact-video/file"]:not([hidden])');
+      await expect
+        .poll(async () => readFile(path.join(cacheDir, "compact.mp4"), "utf8").catch(() => ""))
+        .toBe("local compact video fixture");
       available = false;
       await page.reload();
-      await page.waitForNetworkIdle();
-      expect(await page.$("a[download]")).toBeNull();
+      await open();
+      await page.waitForSelector('a[href="/original.mp4"]');
+      expect(await page.$('a[download="example-film-v7.zip"]')).toBeNull();
     } finally {
       await browser.close();
       await server.close();

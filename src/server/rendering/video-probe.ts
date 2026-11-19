@@ -8,6 +8,8 @@ export type VideoProbe = {
     height: number;
     avg_frame_rate: string;
     codec_name: string;
+    pix_fmt?: string;
+    color_transfer?: string;
     nb_read_frames?: string;
     channels?: number;
   }>;
