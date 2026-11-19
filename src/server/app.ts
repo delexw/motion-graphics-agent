@@ -74,7 +74,7 @@ import { Workflow } from "./jobs/workflow.js";
 import { videoMimeType } from "./rendering/webm-video";
 import { multiplaneStatus } from "./rendering/multiplane";
 import { multiplaneSettingCoverage, videoRenderers } from "../shared/video-renderers";
-import { combinationModels, textModels } from "./agents/models";
+import { textModels } from "./agents/models";
 import type { GovernanceReport } from "../shared/governance";
 import {
   readExampleRecords,
@@ -282,6 +282,10 @@ export async function createApp(options: { store?: Store } = {}) {
           url: "https://developers.openai.com/api/docs/models/gpt-6.2-astra",
         },
         {
+          label: "GPT-6.2 Sol pricing",
+          url: "https://developers.openai.com/api/docs/models/gpt-6.2-sol",
+        },
+        {
           label: "Claude pricing",
           url: "https://platform.claude.com/docs/en/about-claude/pricing",
         },
@@ -315,7 +319,7 @@ export async function createApp(options: { store?: Store } = {}) {
         {
           function: "Preview video planning",
           claude: "Not used",
-          codex: "gpt-6.2-astra before each preview",
+          codex: "Selected main model before each preview",
           deepseek: "Selected main model before each preview",
         },
         {
@@ -327,7 +331,7 @@ export async function createApp(options: { store?: Store } = {}) {
         {
           function: "Previews and full generation",
           claude: models.claude,
-          codex: models.codex,
+          codex: "Selected main model",
           deepseek: models.deepseek,
         },
         {
@@ -339,9 +343,9 @@ export async function createApp(options: { store?: Store } = {}) {
         },
         {
           function: "Motion Graphic combination proposals",
-          claude: combinationModels.claude,
-          codex: combinationModels.codex,
-          deepseek: combinationModels.deepseek,
+          claude: "Selected main model",
+          codex: "Selected main model",
+          deepseek: "Selected main model",
         },
         {
           function: "Combination evaluation and direction selection",

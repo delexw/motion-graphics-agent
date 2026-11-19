@@ -489,6 +489,9 @@ it.each(["hyperframes", "multiplane"] as const)(
 );
 
 it("retains the same video principles when refining a historical GPT-6.1 Sol project", () => {
+  expect(videoModelGuidance("codex", "gpt-6.2-sol")).toBe(
+    videoModelGuidance("codex", "gpt-6.2-astra"),
+  );
   expect(videoModelGuidance("codex", "gpt-6.1-sol")).toBe(
     videoModelGuidance("codex", "gpt-6.2-astra"),
   );

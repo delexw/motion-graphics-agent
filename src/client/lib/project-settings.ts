@@ -13,6 +13,7 @@ export function projectSettingsDraft(request: CreativeRequest) {
     },
     preference: request.preference,
     provider: request.provider,
+    mainModel: request.mainModel,
     count: request.candidateCount,
     outputType: request.outputType,
     viewport: request.outputType === "page" ? request.viewport : ("desktop" as const),

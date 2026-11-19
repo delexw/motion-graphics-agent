@@ -6,6 +6,8 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Added
 
+- GPT-6.2 Sol is available in Generation settings. Governance estimates its cost at the published Standard rates.
+
 - The Downloads pop-up collects the original MP4, editable project ZIP and language files. It can prepare a compact MP4 in the background and show progress when reopened. Repeated clicks share one job. Kiteva only offers the compact file when it saves at least 10% and passes picture and playback checks.
 
 - Local music beat analysis through the build-only `music_analysis.analyze_music` tool, using the installed HyperFrames CLI. Saved beat maps include estimated tempo, measured timestamps and a source fingerprint.

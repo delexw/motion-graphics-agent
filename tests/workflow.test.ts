@@ -81,10 +81,10 @@ it.each(["claude", "codex"] as const)(
     run.request = RequestSchema.parse({
       instructions: "A shape unfolds into a kite",
       provider,
-      mainModel: "gpt-6-astra",
+      mainModel: provider === "codex" ? "gpt-6.2-sol" : "claude-opus-5-5",
     });
     for (const kind of ["preview", "full"] as const) {
-      expect(workflow["newJob"](run, candidate, kind, 3).model).toBe("gpt-6-astra");
+      expect(workflow["newJob"](run, candidate, kind, 3).model).toBe(run.request.mainModel);
     }
   },
 );

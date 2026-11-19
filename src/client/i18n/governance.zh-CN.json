@@ -80,5 +80,7 @@
   "Pacing correction · initial lower-cost repair": "节奏修正 · 首次低成本修复",
   "Pacing correction · main-model repair": "节奏修正 · 主模型修复",
   "Motion Graphic correction · initial lower-cost repair": "动态图形修正 · 首次低成本修复",
-  "Motion Graphic correction · main-model repair": "动态图形修正 · 主模型修复"
+  "Motion Graphic correction · main-model repair": "动态图形修正 · 主模型修复",
+  "Selected main model before each preview": "每次预览前使用所选主模型",
+  "GPT-6.2 Sol pricing": "GPT-6.2 Sol 费率"
 }

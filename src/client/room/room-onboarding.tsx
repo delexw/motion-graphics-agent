@@ -1,4 +1,4 @@
-import { agentProviderIds } from "../../shared/agent-providers";
+import { agentModelChoices, agentModelChoiceValue } from "../../shared/agent-providers";
 import { SettingsConflictNotice } from "../components/settings-conflict-notice";
 import { SettingsConflictError, type SettingsConflict } from "../../shared/request-settings-review";
 import { errorCode } from "../../shared/errors";
@@ -55,7 +55,7 @@ import {
 } from "./onboarding";
 import { StylePicker } from "../components/style-picker";
 import { manualStyleLimit, trimStylesForDuration } from "../../shared/style-selection";
-import { providerDisplayName } from "../../shared/model-display-name";
+import { defaultProviderModels, modelDisplayName } from "../../shared/model-display-name";
 import { api } from "../lib/api";
 import { RendererChoice } from "./renderer-choice";
 import { SettingsSectionHeading } from "../components/settings-section-heading";
@@ -585,12 +585,15 @@ export function RoomOnboarding({
               {translateUi("Model")}
               <Select
                 aria-label={translateUi("Model")}
-                value={request.provider}
-                options={agentProviderIds.map((value) => ({
+                value={agentModelChoiceValue(request)}
+                options={agentModelChoices.map(({ value, provider, mainModel }) => ({
                   value,
-                  label: providerDisplayName(value),
+                  label: modelDisplayName(mainModel ?? defaultProviderModels[provider]),
                 }))}
-                onChange={(provider) => patch({ provider, mainModel: undefined })}
+                onChange={(value) => {
+                  const choice = agentModelChoices.find((entry) => entry.value === value);
+                  if (choice) patch({ provider: choice.provider, mainModel: choice.mainModel });
+                }}
               />
             </label>
             <label>

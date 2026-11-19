@@ -6,6 +6,34 @@ export const agentProviderDefinitions = {
   deepseek: { name: "DeepSeek", model: "deepseek-flash", textModel: "deepseek-flash" },
 } as const;
 
+export const codexSolModel = "gpt-6.2-sol";
+type AgentProviderId = (typeof agentProviderIds)[number];
+
+export const agentModelChoices: readonly {
+  value: string;
+  provider: AgentProviderId;
+  mainModel?: string;
+}[] = [
+  { value: "codex", provider: "codex" },
+  { value: codexSolModel, provider: "codex", mainModel: codexSolModel },
+  { value: "claude", provider: "claude" },
+  { value: "deepseek", provider: "deepseek" },
+];
+
+export function agentModelChoiceValue({
+  provider,
+  mainModel,
+}: {
+  provider: AgentProviderId;
+  mainModel?: string;
+}) {
+  return (
+    agentModelChoices.find(
+      (choice) => choice.provider === provider && choice.mainModel === mainModel,
+    )?.value ?? provider
+  );
+}
+
 export function agentProviderName(provider: string) {
   const id = agentProviderIds.find((id) => id === provider);
   return id ? agentProviderDefinitions[id].name : provider;

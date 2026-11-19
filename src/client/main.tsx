@@ -1,3 +1,5 @@
+import { agentModelChoices, agentModelChoiceValue } from "../shared/agent-providers";
+import { defaultProviderModels, modelDisplayName } from "../shared/model-display-name";
 import { SelectedDirection } from "./components/selected-direction";
 import { ProjectReuseButton } from "./components/project-reuse/button";
 import { OpenPageButton } from "./domains/page/open-button";
@@ -206,6 +208,7 @@ function App() {
   const [instructions, setInstructions] = useState("");
   const [preference, setPreference] = useState<CreativeApproach>("context");
   const [provider, setProvider] = useState<Provider>("codex");
+  const [mainModel, setMainModel] = useState<string>();
   const [count, setCount] = useState(5);
   const [outputType, setOutputType] = useState<"video" | "page">("video");
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
@@ -351,6 +354,7 @@ function App() {
               setInstructions(draft.instructions);
               setPreference(draft.preference);
               setProvider(draft.provider);
+              setMainModel(draft.mainModel);
               setCount(draft.count);
               setOutputType(draft.outputType);
               setViewport(draft.viewport);
@@ -507,6 +511,7 @@ function App() {
     urls,
     outputType,
     provider,
+    mainModel,
     count,
     selectedStyleIds,
     duration,
@@ -646,6 +651,7 @@ function App() {
           .filter(Boolean),
         preference,
         provider,
+        mainModel,
         candidateCount: manual ? count : count || 5,
         selectedStyleIds,
         ...(outputType === "page"
@@ -720,6 +726,7 @@ function App() {
       setSectionInstructions({ music: "", images: "", videos: "", urls: "" });
       setPreference("context");
       setProvider("codex");
+      setMainModel(undefined);
       setCount(5);
       setOutputType("video");
       setViewport("desktop");
@@ -1839,15 +1846,26 @@ function App() {
                         <div className="composer-control">
                           <StudioSelect
                             aria-label={translateUi("Model")}
-                            value={provider}
-                            onValueChange={(value) => setProvider(value as Provider)}
+                            value={agentModelChoiceValue({ provider, mainModel })}
+                            onValueChange={(value) => {
+                              const choice = agentModelChoices.find(
+                                (entry) => entry.value === value,
+                              );
+                              if (choice) {
+                                setProvider(choice.provider);
+                                setMainModel(choice.mainModel);
+                              }
+                            }}
                           >
-                            <StudioSelectOption value="codex">
-                              {translateUi("GPT-6.2 Astra")}
-                            </StudioSelectOption>
-                            <StudioSelectOption value="claude">
-                              {translateUi("Opus 5.5")}
-                            </StudioSelectOption>
+                            {agentModelChoices
+                              .filter((choice) => choice.provider !== "deepseek")
+                              .map((choice) => (
+                                <StudioSelectOption key={choice.value} value={choice.value}>
+                                  {modelDisplayName(
+                                    choice.mainModel ?? defaultProviderModels[choice.provider],
+                                  )}
+                                </StudioSelectOption>
+                              ))}
                           </StudioSelect>
                         </div>
                         <div className="composer-control">

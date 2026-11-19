@@ -666,7 +666,7 @@ export class Workflow {
               async () =>
                 agentTurn({
                   provider: run.request.provider,
-                  model: combinationModels[run.request.provider],
+                  model: run.request.mainModel || combinationModels[run.request.provider],
                   workspace,
                   signal: controller.signal,
                   readOnly: true,

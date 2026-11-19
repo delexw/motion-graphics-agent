@@ -93,6 +93,14 @@ function App(){const[draft,setDraft]=useState({...emptyRoomDraft(),step:7,stepLa
     await page.goto(`${server.resolvedUrls!.local[0]}deepseek-fixture`);
     await page.waitForSelector('[aria-label="Model"]');
     await page.click('[aria-label="Model"]');
+    await chooseRenderedSelectOption(page, '.ant-select-item-option[title="GPT-6.2 Sol"]');
+    await page.waitForFunction(() => {
+      const { provider, mainModel } = JSON.parse(
+        document.querySelector("#state")!.textContent!,
+      ).request;
+      return provider === "codex" && mainModel === "gpt-6.2-sol";
+    });
+    await page.click('[aria-label="Model"]');
     await chooseRenderedSelectOption(page, '.ant-select-item-option[title="DeepSeek Flash"]');
     await page.waitForFunction(
       () =>

@@ -113,3 +113,15 @@ it("restores timed-item subtitles independently of the old global setting", () =
       .subtitlesEnabled,
   ).toBe(false);
 });
+
+it("keeps the selected Sol model when reusing a project's settings", () => {
+  const request = RequestSchema.parse({
+    instructions: "Explain an idea",
+    provider: "codex",
+    mainModel: "gpt-6.2-sol",
+  });
+  expect(projectSettingsDraft(request)).toMatchObject({
+    provider: "codex",
+    mainModel: "gpt-6.2-sol",
+  });
+});

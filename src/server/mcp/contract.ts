@@ -1,3 +1,4 @@
+import { codexSolModel } from "../../shared/agent-providers";
 import { languageTrackRows, LanguageTracksSchema } from "../../shared/language-tracks";
 import { z } from "zod";
 import { VideoRequestSchema } from "../../shared/domains/video";
@@ -38,7 +39,7 @@ const fieldGuidance: Record<string, string> = {
     .join(" ")} Default: creative (Explore creative ideas).`,
   provider:
     "Main agent provider: claude, codex or deepseek. Default: claude. The selected provider uses its own default main model unless overridden.",
-  mainModel: `Main model identifier. Default for Claude: ${defaultProviderModels.claude} (Opus 5.5). Must belong to the chosen provider; no silent substitution.`,
+  mainModel: `Main model identifier. Default for Claude: ${defaultProviderModels.claude} (Opus 5.5). For Codex, use ${defaultProviderModels.codex} or ${codexSolModel}. Must belong to the chosen provider; no silent substitution.`,
   candidateCount:
     "Number of preview directions, default 3. Zero means direct build and requires selectedStyleIds, according to Kiteva's standard request validation.",
   selectedStyleIds:

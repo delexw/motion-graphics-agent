@@ -57,7 +57,7 @@ it("prices the real SDK resume snapshots once instead of summing cumulative usag
   for (const row of rows) expect(row.costHigh).toBe(row.costLow);
 });
 
-it("prices writes and reads as input subsets and does not add reasoning twice", () => {
+it.each(["gpt-6.1-sol", "gpt-6.2-sol"])("prices cache usage and reasoning for %s", (model) => {
   const usage: Usage = {
     input_tokens: 1000,
     cached_input_tokens: 600,
@@ -65,10 +65,11 @@ it("prices writes and reads as input subsets and does not add reasoning twice", 
     output_tokens: 100,
     reasoning_output_tokens: 80,
   };
-  expect(codexApiCost("gpt-6.1-sol", usage)).toBeCloseTo(0.00191, 10);
-  expect(
-    projectGovernance(run, [event(1, usage, { model: "gpt-6.1-sol" })]).activity[0].costLow,
-  ).toBeCloseTo(0.00191, 10);
+  expect(codexApiCost(model, usage)).toBeCloseTo(0.00191, 10);
+  expect(projectGovernance(run, [event(1, usage, { model })]).activity[0].costLow).toBeCloseTo(
+    0.00191,
+    10,
+  );
 });
 
 it("keeps reported SDK costs ahead of calculated Codex estimates", () => {
