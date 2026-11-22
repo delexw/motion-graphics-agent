@@ -2348,6 +2348,20 @@ html,
   gap: 14px;
   margin: 0 0 20px;
 }
+.governance-timing-card .governance-timing {
+  margin-bottom: 0;
+}
+.governance-timing-card .governance-timing dd {
+  font-size: 18px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.governance-project-pagination {
+  min-width: 0;
+}
+.governance-project-pagination .ant-pagination {
+  row-gap: 8px;
+}
 .governance-timing dt,
 .governance-settings dt {
   font-size: 11px;
@@ -3127,6 +3141,65 @@ html,
 }
 .governance-ant-table {
   min-width: 0;
+  isolation: isolate;
+}
+.governance-row-details,
+.governance-jev-calls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  overflow-wrap: anywhere;
+}
+.governance-jev-dashboard-card .ant-card-head-title {
+  white-space: normal;
+}
+.governance-jev-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: 8px 16px;
+}
+.governance-jev-reading-text {
+  max-inline-size: 72ch;
+  margin-bottom: 0;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+.governance-comparison-options {
+  display: grid;
+  gap: 8px;
+  padding-inline-start: 20px;
+}
+.governance-comparison-option-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+}
+.governance-comparison-preference {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+.governance-jev-dashboard-card .ant-tag {
+  margin-inline-end: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.governance-jev-call-metrics {
+  margin: 0;
+}
+.governance-jev-raw-events {
+  max-block-size: 30rem;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.governance-jev-call-metrics dt {
+  margin-bottom: 4px;
+  color: var(--muted);
+}
+.governance-jev-call-metrics dd {
+  margin: 0;
 }
 .governance-table-detail {
   color: var(--muted);

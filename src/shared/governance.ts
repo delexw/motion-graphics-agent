@@ -1,3 +1,4 @@
+import type { JevCallDetail } from "./jev-call-accounting";
 import type { ModelPromptSummary } from "./model-prompts";
 import type { CreativeRequest } from "./contracts";
 export interface ModelActivity {
@@ -16,6 +17,8 @@ export interface ModelActivity {
   costLow: number | null;
   costHigh: number | null;
   costBasis: string;
+  jevCalls?: JevCallDetail[];
+  effortCounts?: ModelEffortCount[];
   renderCacheReviews?: {
     id: string;
     time: string;
@@ -52,6 +55,18 @@ export interface ModelActivity {
     resources: { id: string; name: string; selected: boolean; probability: number | null }[];
   }[];
 }
+export interface ModelEffortCount {
+  effort: string;
+  count: number;
+}
+
+export function addModelEffortCount(row: ModelActivity, effort: string, count = 1) {
+  const counts = (row.effortCounts ??= []);
+  const previous = counts.find((entry) => entry.effort === effort);
+  if (previous) previous.count += count;
+  else counts.push({ effort, count });
+}
+
 export interface GovernancePagination {
   page: number;
   pageSize: number;
@@ -117,9 +132,14 @@ export function aggregateModels(activity: ModelActivity[]): ModelActivity[] {
         costLow: null,
         costHigh: null,
         costBasis: "Known usage subtotal",
+        jevCalls: undefined,
+        effortCounts: undefined,
       };
       rows.set(source.model, row);
     }
+    if (source.jevCalls?.length) (row.jevCalls ??= []).push(...source.jevCalls);
+    for (const { effort, count } of source.effortCounts ?? [])
+      addModelEffortCount(row, effort, count);
     row.calls += source.calls;
     row.tools += source.tools;
     row.cacheHits += source.cacheHits;

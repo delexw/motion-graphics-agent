@@ -1,7 +1,9 @@
+import { ReasoningEffortId } from "@deepseek-ai/dsh-llm";
+import type { ModelEffort } from "../../shared/model-effort";
+import type { DeepSeekEffort } from "./model-effort-levels";
 import { attachDeepSeekCost, readDeepSeekCosts } from "./deepseek/cost-meter";
 import {
   DeepSeekHarness,
-  type DeepSeekHarnessOptions,
   type SdkPromptContentBlock,
   type SdkEncodedImageBlock,
 } from "@deepseek-ai/dsh-sdk-client";
@@ -15,6 +17,19 @@ import { prepareDeepSeekConfiguration } from "./deepseek/configuration";
 import { deepseekEvents } from "./deepseek/events";
 import type { Agent, ProviderEvent } from "./agent";
 
+const deepSeekEffortAliases = {
+  low: "low",
+  medium: "high",
+  high: "high",
+  xhigh: "max",
+  max: "max",
+  ultra: "max",
+} as const satisfies Record<ModelEffort, DeepSeekEffort>;
+
+export function deepSeekNativeEffort(effort?: ModelEffort): DeepSeekEffort | undefined {
+  return effort ? deepSeekEffortAliases[effort] : undefined;
+}
+
 export const deepseekAgent: Agent = {
   provider: "deepseek",
   async run(options) {
@@ -25,6 +40,7 @@ export const deepseekAgent: Agent = {
       );
     const { home, patchFile, costFile } = await prepareDeepSeekConfiguration(options);
     options.signal.throwIfAborted();
+    const effort = deepSeekNativeEffort(options.reasoningEffort);
     const harness = new DeepSeekHarness({
       cwd: options.workspace,
       processCwd: options.workspace,
@@ -33,13 +49,7 @@ export const deepseekAgent: Agent = {
       patches: [patchFile],
       provider: "deepseek-official",
       model: options.model,
-      ...(options.reasoningEffort
-        ? {
-            reasoningEffort: { low: "low", medium: "high", high: "high", xhigh: "max" }[
-              options.reasoningEffort
-            ] as DeepSeekHarnessOptions["reasoningEffort"],
-          }
-        : {}),
+      ...(effort ? { reasoningEffort: ReasoningEffortId(effort) } : {}),
       env: {
         ...systemEnvironment(),
         ...projectRuntimeEnvironment(options.workspace, "agent"),

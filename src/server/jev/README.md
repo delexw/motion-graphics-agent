@@ -27,11 +27,14 @@ actual capabilities rather than infer functionality from names or equate audio m
 
 ## Visual Choice guidance
 
+JEV can choose [Bevy](../agents/capabilities/README.md#bevy) for shots that benefit from native
+rendering or simulation. The build agent checks the local toolchain and GPU before use.
+
 Each visual option owns its source-grounded distinctions: Animate UI and React Bits in their
 capability folders, Anatomy beside its bundled skill, and local authoring in
-`agents/local-authoring.ts`. Each option stores its Choice description directly as readable text: what it provides, advantages, disadvantages, implementation costs,
-video adaptation, missing capabilities and when to choose it. The comparison text is supplied once,
-not duplicated in state. Source references stay in comments beside the option metadata for maintenance.
+`agents/local-authoring.ts`. Each option supplies three short lines covering best fit, strength and trade-off. The same format
+lets JEV compare use cases, visual benefits and setup costs across tools. Choice compares the current
+brief and renderer without using option order, popularity or past selections. Source references stay in comments beside the option metadata for maintenance.
 
 Visual Choice performs no catalog search or package/skill inventory collection. JEV compares the
 written tradeoffs with the complete original idea, image instructions, selected Motion Graphics and
@@ -91,3 +94,20 @@ pre-start checks separately from project activity, including rejected requests w
 Records include the request hash, draft/project link, timestamps, outcome, conflicts,
 redacted native request payload, response and provider-reported usage. The provider's internal
 prompt is not available. No live provider calls are used by verification tests.
+
+## Model call effort
+
+Projects opt in with the JEV dynamic effort switch or the MCP idea setting
+`dynamicModelEffort`. It defaults to off, including for older projects without a
+saved choice. The [project effort router](../agents/project-model-effort.ts)
+selects the strategy for each call.
+
+- The [default effort strategy](../agents/default-model-effort.ts) uses explicit
+  task effort when set, then the provider default.
+- The [dynamic effort strategy](strategies/model-effort.ts) asks JEV to compare
+  every supported level against the evidence for the individual call. The JEV
+  request supplies no default, minimum or preferred level. When JEV cannot
+  choose or the model has no known levels, the call uses the default strategy.
+
+Governance links the JEV decision to the invocation and records the effort sent
+to the provider.

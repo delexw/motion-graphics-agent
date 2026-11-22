@@ -1,3 +1,4 @@
+import { combinationCandidateId } from "../../../shared/style-combinations";
 import { styleCombinationRankingBrief } from "./style-combination-context";
 import { videoRendererOf } from "../../../shared/video-renderers";
 import { rendererDecisionMetadataFor } from "../../rendering/renderer-metadata";
@@ -205,7 +206,7 @@ export async function rankOptions(
         dimensions[dim] = a.score / 3;
         if (dim !== "preferenceFit") confidences.push(a.confidence);
       }
-      const id = `candidate-${offset + i + 1}`;
+      const id = combinationCandidateId(offset + i);
       const comparison = state.options[i];
       descriptions.set(
         id,
@@ -274,6 +275,12 @@ export async function rankOptions(
       selectionDecision: {
         round: selected.length + 1,
         comparedIds: result.comparedIds,
+        comparedStyles: Object.fromEntries(
+          result.comparedIds.map((id) => {
+            const candidate = remaining.get(id)!;
+            return [id, [candidate.primaryStyleId, ...candidate.supportingStyleIds]];
+          }),
+        ),
         probabilities: result.answer.probabilities,
       },
     });

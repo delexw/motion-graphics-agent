@@ -68,6 +68,7 @@ export async function prepareScriptItems(
         readOnly: true,
         provider: input.request.provider,
         model,
+        effortTask: "script",
         sessionId: input.sessionId,
         workspace: input.workspace,
         signal: input.signal,

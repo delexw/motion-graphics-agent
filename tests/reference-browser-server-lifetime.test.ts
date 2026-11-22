@@ -1,12 +1,8 @@
 import { expect, it, vi } from "vitest";
 
-const tools = vi.hoisted(() => ({
-  create: vi.fn(),
-  connect: vi.fn(),
-  close: vi.fn().mockResolvedValue(undefined),
-}));
+const createTools = vi.hoisted(() => vi.fn());
 vi.mock("../src/server/agents/capabilities/reference-browser/tools", () => ({
-  createReferenceTools: tools.create,
+  createReferenceTools: createTools,
 }));
 vi.mock("@modelcontextprotocol/sdk/server/stdio.js", () => ({
   StdioServerTransport: class {},
@@ -26,7 +22,9 @@ it("keeps the browser MCP alive beyond ten minutes and closes on run shutdown", 
     return process.stdin;
   });
   const exit = vi.spyOn(process, "exit").mockImplementation(() => undefined as never);
-  tools.create.mockReturnValue({ server: { connect: tools.connect }, close: tools.close });
+  const connect = vi.fn(async () => {});
+  const close = vi.fn(async () => {});
+  createTools.mockReturnValue({ server: { connect }, close });
   process.argv = [
     "node",
     "server",
@@ -38,17 +36,17 @@ it("keeps the browser MCP alive beyond ten minutes and closes on run shutdown", 
   ];
   try {
     await import("../src/server/agents/capabilities/reference-browser/server");
-    const signal: AbortSignal = tools.create.mock.calls[0][0].signal;
-    expect(tools.connect).toHaveBeenCalledOnce();
+    const signal: AbortSignal = createTools.mock.calls[0][0].signal;
+    expect(connect).toHaveBeenCalledOnce();
     expect(timeout).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(61 * 60 * 1000);
     expect(signal.aborted).toBe(false);
-    expect(tools.close).not.toHaveBeenCalled();
+    expect(close).not.toHaveBeenCalled();
     expect([...shutdownHandlers.keys()]).toEqual(["SIGTERM", "SIGINT", "stdin:end"]);
     shutdownHandlers.get("SIGTERM")!();
     await Promise.resolve();
     expect(signal.aborted).toBe(true);
-    expect(tools.close).toHaveBeenCalledOnce();
+    expect(close).toHaveBeenCalledOnce();
     expect(exit).toHaveBeenCalledWith(0);
   } finally {
     process.argv = originalArguments;

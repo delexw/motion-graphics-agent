@@ -10,7 +10,7 @@ import { appRoot } from "../src/server/runtime/config";
 import { browserAliases, browserDependencyScan } from "../vite.resolve";
 
 it.skipIf(!browserExecutablePath())(
-  "opens a centred Downloads pop-up and keeps one compact job across visits",
+  "opens Downloads with one preset menu and keeps one job per preset",
   async () => {
     const cacheDir = await mkdtemp(path.join(os.tmpdir(), "project-download-"));
     let available = true;
@@ -21,6 +21,7 @@ it.skipIf(!browserExecutablePath())(
       originalBytes?: number;
     };
     let starts = 0;
+    let limitedStarts = 0;
     const server = await createServer({
       configFile: false,
       cacheDir,
@@ -33,6 +34,24 @@ it.skipIf(!browserExecutablePath())(
           name: "download-fixture",
           configureServer(server) {
             server.middlewares.use(async (req, res, next) => {
+              if (req.url === "/api/projects/run/job/compact-video?preset=10mb") {
+                if (req.method === "POST") limitedStarts += 1;
+                res.setHeader("content-type", "application/json");
+                res.end(
+                  JSON.stringify(
+                    limitedStarts
+                      ? { status: "ready", bytes: 10, originalBytes: 100 }
+                      : { status: "idle" },
+                  ),
+                );
+                return;
+              }
+              if (req.url === "/api/projects/run/job/compact-video/file?preset=10mb") {
+                res.setHeader("Content-Type", "video/mp4");
+                res.setHeader("Content-Disposition", 'attachment; filename="compact-10mb.mp4"');
+                res.end("local size-limited fixture");
+                return;
+              }
               if (req.url === "/api/projects/run/job/compact-video") {
                 if (req.method === "POST") {
                   starts += 1;
@@ -93,8 +112,20 @@ createRoot(document.getElementById('root')).render(React.createElement(ResultDow
       if (!address || typeof address === "string") throw Error("No fixture port");
       await page.goto(`http://127.0.0.1:${address.port}/download-test`);
       const open = () => page.click('button[aria-label="Downloads"]');
+      const presetButton = 'button[aria-label="Compression presets"]';
+      const openPresets = () => page.click(presetButton);
+      async function presetItem(name: string) {
+        const item = await page.waitForSelector(`::-p-aria([name="${name}"][role="menuitem"])`, {
+          visible: true,
+        });
+        if (!item) throw Error(`Missing preset ${name}`);
+        return item;
+      }
       await open();
       await page.waitForSelector('a[download="example-film-v7.zip"]');
+      expect(await page.$eval('[role="dialog"]', (dialog) => dialog.textContent)).not.toContain(
+        "Make a smaller MP4 at the original resolution.",
+      );
       await page.waitForFunction(() => {
         const dialog = document.querySelector('[role="dialog"]');
         if (!dialog) return false;
@@ -109,7 +140,7 @@ createRoot(document.getElementById('root')).render(React.createElement(ResultDow
       expect(await page.$('a[href="/original.mp4"]')).not.toBeNull();
       expect(await page.$('a[href="/en.srt"]')).not.toBeNull();
       const actions = await page.$$eval(
-        '[role="dialog"] a[download]:not([hidden]), button[aria-label="Download compact MP4"]',
+        '[role="dialog"] a[download]:not([hidden]), button[aria-label="Compression presets"]',
         (elements) =>
           elements.map((element) => ({
             label: element.getAttribute("aria-label"),
@@ -118,18 +149,42 @@ createRoot(document.getElementById('root')).render(React.createElement(ResultDow
           })),
       );
       expect(actions.length).toBeGreaterThanOrEqual(5);
+      expect(actions.filter(({ label }) => label === "Compression presets")).toHaveLength(1);
+      expect(await page.$('[role="menu"]')).toBeNull();
       for (const action of actions) {
         expect(action.label).toBeTruthy();
         expect(action.text).toBe("");
         expect(action.icon).toBe(true);
       }
-      await page.$$eval("button", (buttons) => {
-        const button = buttons.find(
-          (item) => item.getAttribute("aria-label") === "Download compact MP4",
-        );
-        button?.click();
-        button?.click();
+      const geometry = () =>
+        page.$eval(presetButton, (button) => {
+          const trigger = button.getBoundingClientRect();
+          const original = document
+            .querySelector('a[href="/original.mp4"]')!
+            .getBoundingClientRect();
+          const icons = [...button.querySelectorAll("svg")].map((icon) =>
+            icon.getBoundingClientRect(),
+          );
+          return {
+            aligned: Math.abs(trigger.top - original.top) < 2,
+            padded:
+              icons.length === 2 &&
+              icons.every(
+                (icon) => icon.left >= trigger.left + 4 && icon.right <= trigger.right - 4,
+              ),
+          };
+        });
+      await expect.poll(geometry).toEqual({ aligned: true, padded: true });
+      await page.focus(presetButton);
+      await page.keyboard.press("Enter");
+      const higherQuality = await presetItem("50% rate");
+      await presetItem("90% rate");
+      expect(starts + limitedStarts).toBe(0);
+      await higherQuality.evaluate((item) => {
+        (item as HTMLElement).click();
+        (item as HTMLElement).click();
       });
+      await page.waitForSelector(presetButton + '[aria-expanded="false"]');
       await page.waitForSelector('[role="progressbar"][aria-valuenow="37"]');
       expect(starts).toBe(1);
       await page.keyboard.press("Escape");
@@ -148,7 +203,9 @@ createRoot(document.getElementById('root')).render(React.createElement(ResultDow
         }),
       ).toBe(true);
       compactStatus = { status: "ready", bytes: 10, originalBytes: 100 };
-      await page.waitForSelector('a[href$="/compact-video/file"]:not([hidden])');
+      await page.waitForFunction(() =>
+        document.querySelector('[role="dialog"]')?.textContent?.includes("50% rate · 90%"),
+      );
       expect(starts).toBe(1);
       const session = await page.createCDPSession();
       await session.send("Browser.setDownloadBehavior", {
@@ -165,10 +222,18 @@ createRoot(document.getElementById('root')).render(React.createElement(ResultDow
           }
         })
         .toBe("local archive fixture");
-      await page.click('a[href$="/compact-video/file"]:not([hidden])');
+      await openPresets();
+      await (await presetItem("50% rate")).click();
       await expect
         .poll(async () => readFile(path.join(cacheDir, "compact.mp4"), "utf8").catch(() => ""))
         .toBe("local compact video fixture");
+      await openPresets();
+      await (await presetItem("90% rate")).click();
+      await expect
+        .poll(async () => readFile(path.join(cacheDir, "compact-10mb.mp4"), "utf8").catch(() => ""))
+        .toBe("local size-limited fixture");
+      expect(starts).toBe(1);
+      expect(limitedStarts).toBe(1);
       available = false;
       await page.reload();
       await open();

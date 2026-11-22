@@ -40,6 +40,7 @@ export function createVideoBuildTurn(input: {
       includeCreativeAlternatives: false,
       provider: request.provider,
       model: job.model,
+      effortTask: "build",
       workspace: job.workspace,
       referenceUrls: request.urls,
       enableVideoCapture:

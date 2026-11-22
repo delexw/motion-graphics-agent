@@ -52,6 +52,8 @@ export async function generatePage(input: {
           : await agentTurn({
               includeCreativeAlternatives: false,
               provider: input.request.provider,
+              model: job.model,
+              effortTask: "build",
               workspace: job.workspace,
               signal,
               sessionId: job.sessionId,

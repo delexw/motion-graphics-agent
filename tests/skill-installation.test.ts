@@ -268,3 +268,32 @@ it("updates img2threejs from upstream HEAD on successive startup refreshes and r
   await refreshSkills([img2threejsSkill], fixture.root, report);
   expect((await installedSkill(img2threejsSkill, fixture.root)).manifest).toEqual(latest.manifest);
 });
+
+it("installs only Markdown and the licence from a pinned skill collection", async () => {
+  const fixture = await repository();
+  const revision = "b".repeat(40);
+  const entrypoint = "skills/example/SKILL.md";
+  const sibling = "skills/example-rendering/SKILL.md";
+  const skill = { ...fixture.skill, collection: { revision, entrypoint } };
+  fixture.update({
+    [entrypoint]: "---\nname: example\n---\nSee the rendering skill.\n",
+    [sibling]: "Rendering guide",
+    "skills/example/scripts/unwanted.py": "ignored",
+    "README.md": "ignored",
+    LICENSE: "MIT License",
+  });
+  const installation = await updateSkill(skill, fixture.root);
+  expect(fixture.download).toHaveBeenCalledWith(
+    `https://codeload.github.com/example/illustration-skill/zip/${revision}`,
+    expect.objectContaining({ redirect: "error" }),
+  );
+  expect(Object.keys(installation.manifest.files).sort()).toEqual(
+    ["LICENSE", entrypoint, sibling].sort(),
+  );
+  await expect(updateSkill(skill, fixture.root)).resolves.toEqual(installation);
+  expect(fixture.download).toHaveBeenCalledOnce();
+
+  const incompatible = { ...skill, collection: { ...skill.collection, revision: "c".repeat(40) } };
+  await expect(updateSkill(incompatible, fixture.root)).rejects.toThrow("archive revision");
+  await expect(installedSkill(skill, fixture.root)).resolves.toEqual(installation);
+});

@@ -214,7 +214,14 @@ export function RoomProject({
                     placement="end"
                     className="room-bubble-user"
                     header={translateUi("Settings")}
-                    content={<ProjectSettings run={run} styles={styles} examples={examples} />}
+                    content={
+                      <ProjectSettings
+                        run={run}
+                        styles={styles}
+                        examples={examples}
+                        onUpdated={onUpdated}
+                      />
+                    }
                   />
                   <Bubble
                     placement="end"

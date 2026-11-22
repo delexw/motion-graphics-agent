@@ -7,6 +7,9 @@ import { narrationCapability } from "./narration/capability";
 import { narrationGuidance } from "./narration/prompt";
 import { audioStudioCapability } from "./audio-studio/capability";
 import { audioStudioGuidance } from "./audio-studio/prompt";
+import { bevyCapability } from "./bevy/capability";
+import { bevyBuildGuidance, bevyGuidance } from "./bevy/prompt";
+import type { managedBevyRuntime } from "./bevy/installation";
 import { musicAnalysisCapability } from "./music-analysis/capability";
 import { musicAnalysisGuidance } from "./music-analysis/prompt";
 import { animateUiCapability } from "./animate-ui/capability";
@@ -24,6 +27,8 @@ export function agentCapabilities(
   textOnly = false,
   includeCreativeAlternatives = true,
   referenceOptions: ReferenceBrowserOptions = {},
+  bevyRuntime?: ReturnType<typeof managedBevyRuntime>,
+  bevyRouterPath?: string,
 ) {
   const reference = referenceBrowserCapability(workspace, {
     ...referenceOptions,
@@ -41,6 +46,7 @@ export function agentCapabilities(
         creative_pool: creativePoolCapability(includeCreativeAlternatives, workspace, readOnly),
         ...(audioStudio ? { audio_studio: audioStudio } : {}),
         ...(!readOnly ? { music_analysis: musicAnalysisCapability(workspace) } : {}),
+        ...(!readOnly ? { bevy: bevyCapability(workspace) } : {}),
         ...(narration ? { narration } : {}),
       };
   return {
@@ -53,6 +59,7 @@ export function agentCapabilities(
           `### Music analysis\n\n${musicAnalysisGuidance}`,
           `### React Bits\n\n${reactBitsGuidance}`,
           `### Animate UI\n\n${animateUiGuidance}`,
+          `### Bevy\n\n${readOnly ? bevyGuidance : bevyBuildGuidance(bevyRuntime, bevyRouterPath)}`,
           `### Creative Pool\n\n${creativePoolGuidance}`,
           reference
             ? `### Website references\n\n${referenceBrowserGuidance({ ...referenceOptions, readOnly, textOnly })}`

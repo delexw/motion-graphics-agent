@@ -2,11 +2,15 @@ import { createHash } from "node:crypto";
 import { lstatSync } from "node:fs";
 import { mkdtemp, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { CompactVideoDownload } from "../../shared/compact-video-download";
+import {
+  compactVideoLimitBytes,
+  type CompactVideoDownload,
+  type CompactVideoPreset,
+} from "../../shared/compact-video-download";
 import { WorkQueue } from "../jobs/queue";
 import { compressVideo } from "./compact-video";
 
-type Source = { source: string; cache: string; originalBytes: number };
+type Source = { source: string; cache: string; originalBytes: number; preset: CompactVideoPreset };
 type RunWork = (work: (signal: AbortSignal) => Promise<void>) => Promise<void>;
 
 export class CompactDownloads {
@@ -16,11 +20,20 @@ export class CompactDownloads {
 
   constructor(private readonly compress = compressVideo) {}
 
-  private async sourceInfo(source: string): Promise<Source> {
+  private async sourceInfo(source: string, preset: CompactVideoPreset): Promise<Source> {
     const file = await stat(source);
+    const version = preset === "10mb" ? "10mb-v1" : "v1";
     const key = createHash("sha256")
       .update(
-        JSON.stringify(["v1", source, file.dev, file.ino, file.size, file.mtimeMs, file.ctimeMs]),
+        JSON.stringify([
+          version,
+          source,
+          file.dev,
+          file.ino,
+          file.size,
+          file.mtimeMs,
+          file.ctimeMs,
+        ]),
       )
       .digest("hex")
       .slice(0, 24);
@@ -28,19 +41,28 @@ export class CompactDownloads {
       source,
       cache: path.join(path.dirname(source), `compact-${key}.mp4`),
       originalBytes: file.size,
+      preset,
     };
   }
 
   private saved(info: Source): CompactVideoDownload | undefined {
     const output = lstatSync(info.cache, { throwIfNoEntry: false });
-    if (output?.isFile() && output.size > 0 && output.size < info.originalBytes)
+    if (
+      output?.isFile() &&
+      output.size > 0 &&
+      output.size < info.originalBytes &&
+      (info.preset === "quality" || output.size <= compactVideoLimitBytes)
+    )
       return { status: "ready", bytes: output.size, originalBytes: info.originalBytes };
     const unchanged = lstatSync(`${info.cache}.original`, { throwIfNoEntry: false });
     if (unchanged?.isFile()) return { status: "original" };
   }
 
-  async status(source: string): Promise<CompactVideoDownload> {
-    const info = await this.sourceInfo(source);
+  async status(
+    source: string,
+    preset: CompactVideoPreset = "quality",
+  ): Promise<CompactVideoDownload> {
+    const info = await this.sourceInfo(source, preset);
     const saved = this.saved(info);
     return (
       this.running.get(info.cache) ??
@@ -49,8 +71,12 @@ export class CompactDownloads {
     );
   }
 
-  async start(source: string, runWork: RunWork): Promise<CompactVideoDownload> {
-    const info = await this.sourceInfo(source);
+  async start(
+    source: string,
+    runWork: RunWork,
+    preset: CompactVideoPreset = "quality",
+  ): Promise<CompactVideoDownload> {
+    const info = await this.sourceInfo(source, preset);
     const saved = this.saved(info);
     const existing = this.running.get(info.cache) ?? saved;
     if (existing) return existing;
@@ -81,9 +107,10 @@ export class CompactDownloads {
         signal,
         (percent) => update({ status: "compressing", percent }),
         () => update({ status: "checking" }),
+        info.preset,
       );
       signal.throwIfAborted();
-      if ((await this.sourceInfo(info.source)).cache !== info.cache)
+      if ((await this.sourceInfo(info.source, info.preset)).cache !== info.cache)
         throw Error("The source video changed during compression");
       if (accepted) await rename(target, info.cache);
       else await writeFile(`${info.cache}.original`, "", { flag: "wx" });
@@ -92,8 +119,8 @@ export class CompactDownloads {
     }
   }
 
-  async file(source: string) {
-    const info = await this.sourceInfo(source);
+  async file(source: string, preset: CompactVideoPreset = "quality") {
+    const info = await this.sourceInfo(source, preset);
     return this.saved(info)?.status === "ready" ? info.cache : undefined;
   }
 }

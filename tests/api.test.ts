@@ -11,17 +11,17 @@ import type { Run } from "../src/shared/contracts";
 import path from "node:path";
 import { appRoot, dataRoot, webPort } from "../src/server/runtime/config";
 import { RequestSchema } from "../src/shared/contracts";
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createApp } from "../src/server/app";
 import { Store } from "../src/server/jobs/store";
 import { api } from "../src/client/lib/api";
 import sharp from "sharp";
 import { unzipSync } from "fflate";
 let server: Awaited<ReturnType<typeof createApp>>;
-beforeAll(async () => {
+beforeEach(async () => {
   server = await createApp({ store: new Store(":memory:") });
 });
-afterAll(async () => {
+afterEach(async () => {
   await server.app.close();
 });
 const headers = { host: "127.0.0.1:4317" };
@@ -49,6 +49,52 @@ describe("local application API", () => {
     const page = await server.app.inject({ url: "/projects", headers });
     expect(page.statusCode).toBe(200);
     expect(page.headers["content-type"]).toContain("text/html");
+  });
+  it("updates effort for one saved project without changing workflow history", async () => {
+    const run: Run = {
+      id: randomUUID(),
+      request: RequestSchema.parse({ instructions: "Explain a simple story" }),
+      phase: "ready",
+      createdAt: "2026-01-01T00:00:00Z",
+      candidates: [],
+      jobs: [],
+    };
+    const other = { ...run, id: randomUUID() };
+    server.store.save(run);
+    server.store.save(other);
+    const route = `/api/runs/${run.id}/model-effort`;
+    try {
+      const disabled = await server.app.inject({
+        method: "PATCH",
+        url: route,
+        headers,
+        payload: { dynamicModelEffort: false },
+      });
+      expect(disabled.statusCode).toBe(200);
+      expect(disabled.json().request.dynamicModelEffort).toBe(false);
+      expect(server.store.get(run.id)?.request.dynamicModelEffort).toBe(false);
+      expect(server.store.get(other.id)?.request.dynamicModelEffort).toBeUndefined();
+      const invalid = await server.app.inject({
+        method: "PATCH",
+        url: route,
+        headers,
+        payload: { dynamicModelEffort: "false" },
+      });
+      expect(invalid.statusCode).toBe(400);
+      expect(server.store.get(run.id)?.request.dynamicModelEffort).toBe(false);
+      const enabled = await server.app.inject({
+        method: "PATCH",
+        url: route,
+        headers,
+        payload: { dynamicModelEffort: true },
+      });
+      expect(enabled.statusCode).toBe(200);
+      expect(server.store.get(run.id)?.request.dynamicModelEffort).toBe(true);
+      expect(server.store.events(run.id)).toEqual([]);
+    } finally {
+      server.store.delete(run.id);
+      server.store.delete(other.id);
+    }
   });
   it("rejects project attachment limits even when the frontend is bypassed", async () => {
     const assetIds = Array.from({ length: 9 }, () => randomUUID());

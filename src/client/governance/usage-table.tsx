@@ -1,4 +1,6 @@
-import { candidateStyleName } from "../lib/candidate-style-name";
+import { GovernanceJevDetails, jevUsageVariants } from "./jev-details";
+import { GovernanceRowDetails } from "./row-details";
+import { GovernanceEffortCounts } from "./model-effort";
 import type { Style } from "../../shared/contracts";
 import { formatGovernanceCost } from "./format-cost";
 import { translateUi, useUiLanguage } from "../i18n";
@@ -24,7 +26,6 @@ export function GovernanceUsageTable({
   byFunction?: boolean;
 }) {
   useUiLanguage();
-  const displayStyles = styles.map(({ id, name_en }) => ({ id, name_en: translateUi(name_en) }));
   const columns: TableColumnsType<ModelActivity> = [
     {
       title: byFunction ? translateUi("Model / function") : translateUi("Model"),
@@ -139,153 +140,26 @@ export function GovernanceUsageTable({
   return (
     <Table<ModelActivity>
       expandable={
-        byFunction
+        byFunction || rows.some((row) => row.jevCalls?.length || row.effortCounts?.length)
           ? {
+              fixed: true,
               rowExpandable: (row) =>
                 Boolean(
-                  row.authoringSelections?.length ||
-                  row.combinationEvaluation ||
-                  row.renderCacheReviews?.length,
+                  row.jevCalls?.length ||
+                  row.effortCounts?.length ||
+                  (byFunction && jevUsageVariants(row).length),
                 ),
               expandedRowRender: (row) => (
-                <div>
-                  {row.renderCacheReviews?.map((review) => (
-                    <section key={review.id} aria-label={translateUi("Render cache review")}>
-                      <strong>{review.shot || translateUi("Not recorded")}</strong>
-                      {review.direction && (
-                        <div>
-                          {review.direction} ·{" "}
-                          {translateUi("Version {{value0}}", { value0: review.version })}
-                        </div>
-                      )}
-                      <div>
-                        {translateUi("JEV decision")}:{" "}
-                        {review.choice === null
-                          ? translateUi("Not recorded")
-                          : translateUi(
-                              review.choice === "reuse" ? "Reuse cached shot" : "Rebuild shot",
-                            )}
-                      </div>
-                      <div>
-                        {translateUi("Choice certainty")}: {probability(review.confidence)}
-                      </div>
-                      <ul>
-                        <li>
-                          {translateUi("Reuse cached shot")}:{" "}
-                          {probability(review.probabilities.reuse)}
-                        </li>
-                        <li>
-                          {translateUi("Rebuild shot")}: {probability(review.probabilities.refresh)}
-                        </li>
-                      </ul>
-                      {review.summary && <p>{review.summary}</p>}
-                      {review.renderImpact && <p>{review.renderImpact}</p>}
-                      {review.uncertain && (
-                        <p>
-                          {translateUi(
-                            "The change brief is uncertain; cached footage cannot be reused.",
-                          )}
-                        </p>
-                      )}
-                      <a href={review.promptUrl} target="_blank" rel="noreferrer">
-                        {translateUi("Recorded review input")} · {review.time}
-                      </a>
-                    </section>
-                  ))}
-                  {row.combinationEvaluation && (
-                    <section aria-label={translateUi("Combination evaluation")}>
-                      {row.combinationEvaluation.selected.map((candidate) => (
-                        <section key={candidate.id}>
-                          <strong>{candidate.title || candidate.id}</strong>
-                          <div>
-                            {candidate.styles.length > 0 &&
-                              candidateStyleName(
-                                {
-                                  primaryStyleId: candidate.styles[0],
-                                  supportingStyleIds: candidate.styles.slice(1),
-                                },
-                                displayStyles,
-                              )}
-                          </div>
-                          <p>{candidate.rationale}</p>
-                          <div>
-                            {translateUi("Evaluation score")}: {candidate.score.toFixed(1)} / 100
-                          </div>
-                          {candidate.evaluationConfidence != null && (
-                            <div>
-                              {translateUi("Evaluation certainty")}:{" "}
-                              {probability(candidate.evaluationConfidence)}
-                            </div>
-                          )}
-                          <div>
-                            {translateUi("Choice certainty in final comparison")}:{" "}
-                            {probability(candidate.confidence)}
-                          </div>
-                          <p>
-                            {translateUi(
-                              "Choice certainty measures how strongly JEV preferred one option over the others. Near zero means a near tie; it is not the quality score or a success probability.",
-                            )}
-                          </p>
-                          <div>
-                            {candidate.selectionDecision ? (
-                              <>
-                                {translateUi("Selection round")}:{" "}
-                                {candidate.selectionDecision.round}
-                                <ul>
-                                  {candidate.selectionDecision.comparedIds.map((id) => (
-                                    <li key={id}>
-                                      {id}:{" "}
-                                      {probability(
-                                        candidate.selectionDecision!.probabilities[id] ?? null,
-                                      )}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </>
-                            ) : (
-                              translateUi(
-                                "Original choice probabilities were not recorded for this run.",
-                              )
-                            )}
-                          </div>
-                          <ul>
-                            {Object.entries(candidate.dimensions).map(([name, value]) => (
-                              <li key={name}>
-                                {translateUi(name)}: {probability(value)}
-                              </li>
-                            ))}
-                          </ul>
-                        </section>
-                      ))}
-                      <strong>{translateUi("Recorded evaluation calls")}</strong>
-                      <ol>
-                        {row.combinationEvaluation.calls.map((call) => (
-                          <li key={call.id}>
-                            <a href={call.promptUrl} target="_blank" rel="noreferrer">
-                              {call.time}
-                            </a>
-                          </li>
-                        ))}
-                      </ol>
-                    </section>
-                  )}
-                  {row.authoringSelections?.map((selection) => (
-                    <section key={selection.jobId} aria-label={translateUi("Authoring comparison")}>
-                      <strong>
-                        {translateUi(selection.kind === "preview" ? "Preview" : "Full film")}
-                        {selection.direction && ` · ${selection.direction}`}
-                      </strong>
-                      <ul>
-                        {selection.resources.map((resource) => (
-                          <li key={resource.id}>
-                            {translateUi(resource.name)} · {probability(resource.probability)}
-                            {resource.selected && ` · ${translateUi("Selected")}`}
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
-                  ))}
-                </div>
+                <GovernanceRowDetails>
+                  {row.effortCounts?.length ? (
+                    <GovernanceEffortCounts counts={row.effortCounts} />
+                  ) : null}
+                  <GovernanceJevDetails
+                    calls={row.jevCalls}
+                    variants={byFunction ? jevUsageVariants(row) : undefined}
+                    styles={styles}
+                  />
+                </GovernanceRowDetails>
               ),
             }
           : undefined

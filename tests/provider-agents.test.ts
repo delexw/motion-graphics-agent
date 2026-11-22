@@ -1,3 +1,6 @@
+import { parseJevRequest } from "./jev-request";
+import { RequestSchema } from "../src/shared/contracts";
+import { withProjectModelEffort } from "../src/server/agents/project-model-effort";
 import { bundledSkills } from "../src/server/agents/bundled-skills/registry";
 import { credentialEnvironmentVariables } from "../src/server/runtime/credential-environment";
 import { projectRuntimeEnvironment } from "../src/server/runtime/project-files";
@@ -1685,3 +1688,151 @@ it.each([{ textOnly: true }, { readOnly: true }, { planMode: true, readOnly: tru
     expect(options.env[credentialEnvironmentVariables.claudeOauthToken]).toBe("fixture-sdk-token");
   },
 );
+
+it("asks JEV separately for each supported project invocation and records the effort sent", async () => {
+  sdk.codexEvents.mockImplementation(async function* () {
+    yield {
+      type: "item.completed",
+      item: { id: "answer", type: "agent_message", text: '{"message":"done"}' },
+    };
+    yield { type: "turn.completed", usage: {} };
+  });
+  const decisions = vi.fn();
+  const events = vi.fn();
+  let dispatched = 0;
+  const fetch = vi.fn(async (_url, init) => {
+    const body = await parseJevRequest(init);
+    expect(Object.keys(body.questions)).toEqual(["effort"]);
+    const levels = Object.keys(body.questions.effort.criteria);
+    expect(levels).toEqual(["low", "medium", "high", "xhigh", "max", "ultra"]);
+    expect(body.state.policy).toContain("this individual call against every supported level");
+    expect(JSON.stringify(body)).not.toMatch(
+      /start the comparison|choose low only|minimum|preferred level/i,
+    );
+    const level = ["low", "high", "unsupported"][dispatched++];
+    return Response.json({
+      model: "jev-1.14.0",
+      answers: {
+        effort: {
+          type: "choice",
+          choice: level,
+          confidence: 1,
+          probabilities: Object.fromEntries(
+            levels.map((candidate) => [candidate, candidate === level ? 1 : 0]),
+          ),
+        },
+      },
+      usage: { input_tokens: 10, output_tokens: 2 },
+    });
+  });
+  vi.stubEnv(credentialEnvironmentVariables.typesafeApiKey, "test-placeholder");
+  vi.stubGlobal("fetch", fetch);
+  try {
+    const request = RequestSchema.parse({
+      instructions: "Show a miniature town reacting to a storm",
+      duration: 120,
+      dynamicModelEffort: true,
+    });
+    await withProjectModelEffort({ request, onEffortEvent: decisions }, async () => {
+      for (const [task, expected] of [
+        ["planning", "low"],
+        ["build", "high"],
+        ["review", "medium"],
+      ] as const) {
+        await agentTurn({
+          provider: "codex",
+          model: "gpt-6.2-astra",
+          workspace: "/job",
+          prompt: "Work on the " + task + " task",
+          effortTask: task,
+          ...(task === "planning" ? { reasoningEffort: "xhigh" as const } : {}),
+          readOnly: task !== "build",
+          schema: z.object({ message: z.string() }),
+          signal: new AbortController().signal,
+          onEvent: events,
+        });
+        expect(sdk.threadOptions.mock.calls.at(-1)![0].modelReasoningEffort).toBe(expected);
+        const invocation = events.mock.calls
+          .map(([event]) => event)
+          .filter((event) => event.type === "invocation")
+          .at(-1)!;
+        const decision = decisions.mock.calls
+          .map(([event]) => event)
+          .filter((event) => event.type === "invocation")
+          .at(-1)!;
+        expect(invocation.data.prompt.reasoningEffort).toBe(expected);
+        expect(invocation.data.effortDecisionId).toBe(decision.data.invocationId);
+        expect(decision.data).toMatchObject({
+          provider: "jev",
+          targetInvocationId: invocation.data.invocationId,
+          effortTask: task,
+        });
+      }
+    });
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(decisions.mock.calls.filter(([event]) => event.type === "usage")).toHaveLength(3);
+    expect(decisions.mock.calls.filter(([event]) => event.type === "warning")).toHaveLength(1);
+  } finally {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  }
+});
+
+it("skips the JEV effort call by default or when disabled and retains existing effort", async () => {
+  sdk.codexEvents.mockImplementation(async function* () {
+    yield {
+      type: "item.completed",
+      item: { id: "answer", type: "agent_message", text: '{"message":"done"}' },
+    };
+    yield { type: "turn.completed", usage: {} };
+  });
+  const decisions = vi.fn();
+  const events = vi.fn();
+  const fetch = vi.fn(async () => {
+    throw Error("No JEV call expected");
+  });
+  vi.stubEnv(credentialEnvironmentVariables.typesafeApiKey, "test-placeholder");
+  vi.stubGlobal("fetch", fetch);
+  try {
+    let request = RequestSchema.parse({
+      instructions: "Show a miniature town reacting to a storm",
+    });
+    const context = {
+      get request() {
+        return request;
+      },
+      onEffortEvent: decisions,
+    };
+    await withProjectModelEffort(context, async () => {
+      for (const [dynamicModelEffort, reasoningEffort] of [
+        [undefined, undefined],
+        [false, "high"],
+      ] as const) {
+        request = { ...request, dynamicModelEffort };
+        await agentTurn({
+          provider: "codex",
+          model: "gpt-6.2-astra",
+          workspace: "/job",
+          prompt: "Work on the task",
+          reasoningEffort,
+          schema: z.object({ message: z.string() }),
+          signal: new AbortController().signal,
+          onEvent: events,
+        });
+        expect(sdk.threadOptions.mock.calls.at(-1)![0].modelReasoningEffort).toBe(
+          reasoningEffort ?? "medium",
+        );
+      }
+    });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(decisions).not.toHaveBeenCalled();
+    const invocations = events.mock.calls
+      .map(([event]) => event)
+      .filter((event) => event.type === "invocation");
+    expect(invocations.map(({ data }) => data.prompt.reasoningEffort)).toEqual(["medium", "high"]);
+    expect(invocations.every(({ data }) => !data.effortDecisionId)).toBe(true);
+  } finally {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  }
+});

@@ -1,0 +1,14 @@
+.settings-field-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.settings-help-tip {
+  display: inline-flex;
+  flex: none;
+  padding: 2px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: help;
+}

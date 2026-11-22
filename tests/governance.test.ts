@@ -1,3 +1,5 @@
+import { aggregateModels } from "../src/shared/governance";
+import { recordedModelPrompt } from "../src/server/governance/prompts";
 import { expect, it } from "vitest";
 import { projectGovernance } from "../src/server/governance/report";
 import { RequestSchema, type Run, type AgentProgressEvent } from "../src/shared/contracts";
@@ -789,4 +791,153 @@ it("exposes saved combination decisions and unique recorded calls without repeat
   expect(detail.calls).toHaveLength(1);
   expect(detail.calls[0].promptUrl).toBe("/api/admin/governance/project/prompts/evaluation-1");
   expect(JSON.stringify(detail)).not.toContain("Private large prompt");
+});
+
+it("records per-call effort and links the provider call to its metered JEV decision", async () => {
+  const prompt = {
+    system: null,
+    user: "Fixture prompt",
+    outputSchema: null,
+    reasoningEffort: null,
+  };
+  const decision = {
+    provider: "jev",
+    model: "jev-1.14.0",
+    invocationId: "decision",
+    purpose: "Model call effort selection",
+  };
+  const events = [
+    event(1, "invocation", {
+      ...decision,
+      targetModel: "gpt-6.2-astra",
+      targetInvocationId: "build",
+      prompt,
+    }),
+    event(2, "usage", {
+      ...decision,
+      usage: { input_tokens: 100, output_tokens: 10 },
+      decision: { questionKey: "effort", answer: { choice: "xhigh" } },
+    }),
+    event(3, "invocation", {
+      provider: "codex",
+      model: "gpt-6.2-astra",
+      invocationId: "build",
+      purpose: "Full video generation",
+      effortDecisionId: "decision",
+      prompt: { ...prompt, reasoningEffort: "xhigh" },
+    }),
+  ];
+  events.push(
+    { ...events[2], id: 4 }, // A repeated invocation event must not increase the effort count.
+    event(5, "invocation", {
+      provider: "codex",
+      model: "gpt-6.2-astra",
+      invocationId: "review",
+      purpose: "Full video review",
+      prompt: { ...prompt, reasoningEffort: "medium" },
+    }),
+  );
+  const project = projectGovernance(run, events);
+  expect(project.prompts).toContainEqual(
+    expect.objectContaining({
+      id: "build",
+      reasoningEffort: "xhigh",
+      effortDecisionId: "decision",
+    }),
+  );
+  expect(project.activity).toContainEqual(
+    expect.objectContaining({
+      purpose: "Model call effort selection",
+      model: "jev-1.14.0",
+      calls: 1,
+      inputTokens: 100,
+    }),
+  );
+  expect(
+    project.activity.find((row) => row.purpose === "Full video generation")?.effortCounts,
+  ).toEqual([{ effort: "xhigh", count: 1 }]);
+  expect(project.activity.find((row) => row.purpose === "Full video review")?.effortCounts).toEqual(
+    [{ effort: "medium", count: 1 }],
+  );
+  const rows = aggregateModels(project.activity);
+  expect(rows.find((row) => row.model === "gpt-6.2-astra")?.effortCounts).toEqual([
+    { effort: "xhigh", count: 1 },
+    { effort: "medium", count: 1 },
+  ]);
+  expect(rows.find((row) => row.model === "jev-1.14.0")?.jevCalls).toEqual([
+    expect.objectContaining({
+      id: "decision",
+      purpose: "Model call effort selection",
+      targetModel: "gpt-6.2-astra",
+      selectedEffort: "xhigh",
+      inputTokens: 100,
+      outputTokens: 10,
+      cost: expect.any(Number),
+      promptUrl: "/api/admin/governance/project/prompts/decision",
+    }),
+  ]);
+  await expect(recordedModelPrompt(run, events, "decision")).resolves.toMatchObject({
+    effortSelection: { model: "gpt-6.2-astra", level: "xhigh" },
+  });
+});
+
+it("recovers the names of historical comparison options from the saved proposals", () => {
+  const candidate = {
+    id: "round-2-candidate-2",
+    displayTitle: "A clear idea",
+    primaryStyleId: "style-002",
+    supportingStyleIds: ["style-003"],
+    sceneRoles: [],
+    rationale: "Clarity",
+    feasible: true,
+    missingAssets: [],
+    score: 85,
+    confidence: 0.8,
+    dimensions: {},
+    selectionDecision: {
+      round: 1,
+      comparedIds: ["candidate-1", "candidate-2"],
+      probabilities: { "candidate-1": 0.12, "candidate-2": 0.88 },
+    },
+  };
+  const project: Run = {
+    ...run,
+    rankingModel: "jev-1.14.0",
+    directionRound: 2,
+    candidates: [candidate],
+    preparation: {
+      fingerprint: "fixture",
+      checkpoints: {
+        proposals: {
+          state: "completed",
+          completedAt: run.createdAt,
+          output: {
+            value: {
+              options: [{ primaryStyleId: "style-001", supportingStyleIds: [] }, candidate],
+            },
+          },
+        },
+      },
+    },
+  };
+  const events = [
+    event(1, "usage", {
+      model: "jev-1.14.0",
+      purpose: "Combination evaluation",
+      invocationId: "comparison",
+    }),
+  ];
+  expect(
+    projectGovernance(project, events).activity[0].combinationEvaluation?.selected[0]
+      .selectionDecision,
+  ).toMatchObject({
+    comparedStyles: {
+      "candidate-1": ["style-001"],
+      "candidate-2": ["style-002", "style-003"],
+    },
+  });
+  expect(
+    projectGovernance({ ...project, preparation: undefined }, events).activity[0]
+      .combinationEvaluation?.selected[0].selectionDecision?.comparedStyles,
+  ).toEqual({ "candidate-2": ["style-002", "style-003"] });
 });

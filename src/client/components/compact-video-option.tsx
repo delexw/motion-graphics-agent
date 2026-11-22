@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { FileDown, RotateCw } from "lucide-react";
-import { DownloadIconButton } from "./download-icon-button";
-import { Alert, Flex, Progress, Typography } from "antd";
-import type { CompactVideoDownload } from "../../shared/compact-video-download";
+import { FileDown, FileArchive, RotateCw, ChevronDown } from "lucide-react";
+import { Alert, Button, Dropdown, Progress, Tooltip, Typography } from "antd";
+import type { CompactVideoDownload, CompactVideoPreset } from "../../shared/compact-video-download";
 import { translateUi } from "../i18n";
 
-export function CompactVideoOption({ url }: { url: string }) {
+function useCompactVideoPreset(baseUrl: string, preset: CompactVideoPreset) {
+  const query = preset === "10mb" ? "?preset=10mb" : "";
+  const url = baseUrl + query;
+  const downloadUrl = baseUrl + "/file" + query;
   const [state, setState] = useState<CompactVideoDownload>({ status: "idle" });
   const [starting, setStarting] = useState(false);
   const pendingStart = useRef(false);
@@ -48,7 +50,11 @@ export function CompactVideoOption({ url }: { url: string }) {
   }, [state.status]);
 
   async function start() {
-    if (pendingStart.current || active) return;
+    if (pendingStart.current || active || state.status === "original") return;
+    if (state.status === "ready") {
+      readyLink.current?.click();
+      return;
+    }
     pendingStart.current = true;
     requested.current = true;
     setStarting(true);
@@ -64,58 +70,72 @@ export function CompactVideoOption({ url }: { url: string }) {
     }
   }
 
+  return { state, busy: starting || active, start, readyLink, downloadUrl };
+}
+
+export function CompactVideoPresets({ baseUrl }: { baseUrl: string }) {
+  const [open, setOpen] = useState(false);
+  const quality = useCompactVideoPreset(baseUrl, "quality");
+  const limited = useCompactVideoPreset(baseUrl, "10mb");
+  const options = [
+    { preset: "quality", name: translateUi("50% rate"), icon: FileDown, ...quality },
+    { preset: "10mb", name: translateUi("90% rate"), icon: FileArchive, ...limited },
+  ];
+  const label = translateUi("Compression presets");
+
   return (
-    <Flex vertical gap="small" align="start">
-      <Typography.Text>
-        {translateUi("Make a smaller MP4 at the original resolution.")}
-      </Typography.Text>
-      {state.status === "ready" ? (
-        <>
-          <a ref={readyLink} href={`${url}/file`} download hidden aria-hidden="true" />
-          <DownloadIconButton
-            href={`${url}/file`}
-            download
+    <>
+      <Tooltip title={label} trigger={["hover", "focus"]}>
+        <Dropdown
+          trigger={["click"]}
+          open={open}
+          onOpenChange={setOpen}
+          autoFocus
+          menu={{
+            items: options.map(({ preset, name, icon: Icon, state, busy, start }) => ({
+              key: preset,
+              label: name,
+              icon: state.status === "failed" ? <RotateCw size={16} /> : <Icon size={16} />,
+              disabled: busy || state.status === "original",
+              onClick: () => {
+                setOpen(false);
+                void start();
+              },
+            })),
+          }}
+        >
+          <Button
+            aria-label={label}
+            aria-haspopup="menu"
+            aria-expanded={open}
+            style={{ minWidth: 54, width: "auto", paddingInline: 8, gap: 4 }}
             icon={<FileDown size={18} aria-hidden="true" />}
-            label={translateUi("Download compact MP4")}
-          />
-          <Typography.Text type="secondary">
-            {Math.round(100 * (1 - state.bytes / state.originalBytes))}%{" "}
-            {translateUi("smaller than the original")}
-          </Typography.Text>
-        </>
-      ) : state.status === "original" ? (
-        <Alert
-          type="info"
-          title={translateUi(
-            "Use the original MP4. A smaller copy did not pass the size and quality checks.",
+          >
+            <ChevronDown size={12} aria-hidden="true" />
+          </Button>
+        </Dropdown>
+      </Tooltip>
+      {options.map(({ preset, name, state, busy, readyLink, downloadUrl }) => (
+        <div key={preset} style={{ width: "100%" }} hidden={!busy && state.status === "idle"}>
+          <a ref={readyLink} href={downloadUrl} download hidden aria-hidden="true" />
+          {state.status === "ready" && (
+            <Typography.Text type="secondary">
+              {name} · {Math.round(100 * (1 - state.bytes / state.originalBytes))}%{" "}
+              {translateUi("smaller than the original")}
+            </Typography.Text>
           )}
-        />
-      ) : (
-        <>
-          <DownloadIconButton
-            type="primary"
-            onClick={() => void start()}
-            disabled={active || starting}
-            label={translateUi(
-              state.status === "failed" ? "Retry compression" : "Download compact MP4",
-            )}
-            icon={
-              state.status === "failed" ? (
-                <RotateCw size={18} aria-hidden="true" />
-              ) : (
-                <FileDown size={18} aria-hidden="true" />
-              )
-            }
-          />
-          {(active || starting) && (
-            <div style={{ width: "100%" }} role="status">
-              {translateUi(
-                state.status === "checking"
-                  ? "Checking the compact video…"
-                  : state.status === "compressing"
-                    ? "Compressing video…"
-                    : "Waiting to compress…",
-              )}
+          {busy && (
+            <div role="status">
+              <Typography.Text strong>{name}</Typography.Text>
+              <div>
+                {translateUi(
+                  state.status === "checking"
+                    ? "Checking the compact video…"
+                    : state.status === "compressing"
+                      ? "Compressing video…"
+                      : "Waiting to compress…",
+                )}
+              </div>
               <Progress
                 percent={
                   state.status === "compressing"
@@ -129,14 +149,27 @@ export function CompactVideoOption({ url }: { url: string }) {
               />
             </div>
           )}
+          {state.status === "original" && (
+            <Alert
+              type="info"
+              title={translateUi(
+                preset === "10mb"
+                  ? "Kiteva could not make a copy within the 10 MB limit."
+                  : "Use the original MP4. A smaller copy did not pass the size and quality checks.",
+              )}
+            />
+          )}
           {state.status === "failed" && (
             <Alert
               type="error"
-              title={translateUi("Compression failed. Try again or download the original MP4.")}
+              title={name}
+              description={translateUi(
+                "Compression failed. Try again or download the original MP4.",
+              )}
             />
           )}
-        </>
-      )}
-    </Flex>
+        </div>
+      ))}
+    </>
   );
 }

@@ -1,3 +1,4 @@
+import { governanceEffortLabel } from "./model-effort";
 import { LoadingStatus } from "../components/loading-status";
 import { uiLanguage, translateUi, useUiLanguage } from "../i18n";
 import { PromptText } from "../components/style-mention";
@@ -37,6 +38,8 @@ export function modelPromptTreeData(prompts: ModelPromptSummary[]): TreeDataNode
                     ? translateUi("Historical")
                     : translateUi("Recorded")}
                 </span>
+                {" · "}
+                {governanceEffortLabel(call.reasoningEffort)}
               </span>
             ),
           })),
@@ -139,11 +142,38 @@ export function ModelPromptBrowser({
           {record && (
             <>
               {record.note && <Alert title={translateUi(record.note)} type="info" />}
-              {record.reasoningEffort && (
+              <p>
+                {translateUi("Reasoning effort:") + " "}
+                {governanceEffortLabel(
+                  record.source === "historical" ? undefined : record.reasoningEffort,
+                )}
+              </p>
+              {record.effortSelection && (
                 <p>
-                  {translateUi("Reasoning effort:") + " "}
-                  {translateUi(record.reasoningEffort)}
+                  {translateUi("Selected effort:")}{" "}
+                  {record.effortSelection.level
+                    ? governanceEffortLabel(record.effortSelection.level)
+                    : translateUi("Unavailable")}{" "}
+                  · {record.effortSelection.model}
                 </p>
+              )}
+              {selected?.effortDecisionId && (
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={() => {
+                    const decision = prompts.find(
+                      (prompt) => prompt.id === selected.effortDecisionId,
+                    );
+                    if (decision) {
+                      setRecord(undefined);
+                      setError("");
+                      setSelected(decision);
+                    }
+                  }}
+                >
+                  {translateUi("View JEV effort decision")}
+                </button>
               )}
               <h3>{translateUi("System instructions")}</h3>
               <pre>

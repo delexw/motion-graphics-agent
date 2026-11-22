@@ -49,6 +49,7 @@ export async function prepareSubtitles(
     textOnly: true,
     provider: request.provider,
     model,
+    effortTask: "script",
     readOnly: true,
     workspace,
     signal: AbortSignal.any([signal, AbortSignal.timeout(180000)]),

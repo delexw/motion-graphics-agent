@@ -1,3 +1,4 @@
+import { SavedProjectEffortSelect } from "./project-effort-select";
 import { defaultProviderModels } from "../../shared/model-display-name";
 import { hasOnScreenSubtitles } from "../../shared/script-items";
 import { creativeApproachLabel } from "../../shared/creative-approach";
@@ -47,10 +48,12 @@ export function ProjectSettings({
   run,
   styles = [],
   examples = [],
+  onUpdated,
 }: {
   run: Run;
   styles?: Pick<Style, "id" | "name_en">[];
   examples?: StyleExample[];
+  onUpdated?: (run: Run) => void;
 }) {
   useUiLanguage();
   const request = run.request;
@@ -106,6 +109,7 @@ export function ProjectSettings({
           <span key={setting}>{translateUi(setting)}</span>
         ))}
       </div>
+      {onUpdated && <SavedProjectEffortSelect key={run.id} run={run} onUpdated={onUpdated} />}
       {request.projectReuse && (
         <p>
           {translateUi("Created from:")} <ProjectSourceLink source={request.projectReuse} />

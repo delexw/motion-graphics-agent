@@ -354,3 +354,28 @@ through `Workflow.projectDependency` rather than launching unowned background ta
 App-shared services retain app ownership. See
 [project work and cancellation](../../../../docs/process-lifecycle.md) for the lifecycle,
 cleanup failure contract and tests.
+
+## Bevy
+
+JEV can choose [Bevy](https://bevy.org/) in the existing visual authoring decision.
+The build agent pins a version in a project-local Cargo crate, checks the GPU and
+compiles a native headless scene. See the Bevy repository's
+[headless renderer example](https://github.com/bevyengine/bevy/blob/main/examples/app/headless_renderer.rs)
+at the pinned version.
+
+Builds using Bevy 0.20 can read the
+[community Bevy skills](https://github.com/chrisgliddon/bevy-skills) from their
+local task inputs. Both providers start with the router and read the guides it
+points to. If the installed Bevy version differs or the local guides are
+unavailable, the build uses the official example for its Bevy version.
+See [dependency upgrades](../../../../docs/dependency-upgrades.md#bevy-managed-updates)
+for installation and version checks.
+
+The build-only `bevy.render_frames` tool runs the compiled scene through Kiteva's
+render sandbox. The executable takes `--output-dir`, `--width`, `--height`,
+`--fps` and `--frames` and writes numbered PNGs from `frame-000000.png`.
+The tool checks the count, names, format and dimensions before publishing the
+sequence under the project's media assets. A repeated shot name cannot overwrite a
+saved sequence. A failed or cancelled run discards its staged frames. The tool
+has a three-minute timeout and requires a prepared executable. The project
+renderer uses the resulting assets and performs final export.

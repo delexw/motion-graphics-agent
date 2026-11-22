@@ -2,7 +2,7 @@ import { newBrowserPage } from "./fixtures/browser-page";
 import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import puppeteer from "puppeteer-core";
+import puppeteer, { type Page } from "puppeteer-core";
 import react from "@vitejs/plugin-react";
 import { createServer } from "vite";
 import { expect, it, vi } from "vitest";
@@ -10,7 +10,9 @@ import { browserExecutablePath } from "../src/server/runtime/browser";
 import { appRoot } from "../src/server/runtime/config";
 import { browserAliases, browserDependencyScan } from "../vite.resolve";
 
-it("shows grounded conflict rows, routes editing actions, clears stale evidence and reports unchecked failures in both languages", async () => {
+async function withSettingsBrowser(
+  scenario: (page: Page, baseUrl: string, output: string) => Promise<void>,
+) {
   const executablePath = browserExecutablePath();
   expect(executablePath).toBeTruthy();
   const cacheDir = await mkdtemp(path.join(os.tmpdir(), "settings-notice-"));
@@ -73,7 +75,20 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
     await page.setViewport({ width: 1000, height: 700 });
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(String(error)));
-    await page.goto(`${server.resolvedUrls!.local[0]}settings-notice`);
+    const output = path.join(appRoot, "work/settings-conflict-preview");
+    await mkdir(output, { recursive: true });
+    await scenario(page, server.resolvedUrls!.local[0], output);
+    expect(errors).toEqual([]);
+  } finally {
+    await browser.close();
+    await server.close();
+    await rm(cacheDir, { recursive: true, force: true });
+  }
+}
+
+it("shows grounded conflicts, clears stale evidence and reports unavailable checks in both languages", async () => {
+  await withSettingsBrowser(async (page, baseUrl, output) => {
+    await page.goto(`${baseUrl}settings-notice`);
     await page.waitForSelector('[role="alert"] li');
     expect(await page.$$eval('[role="alert"] li', (nodes) => nodes.length)).toBe(2);
     expect(await page.$eval('[role="alert"]', (node) => node.textContent)).toContain("60 fps");
@@ -88,8 +103,6 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
     expect(await page.$eval("#fixture-controls", (node) => (node as HTMLDetailsElement).open)).toBe(
       true,
     );
-    const output = path.join(appRoot, "work/settings-conflict-preview");
-    await mkdir(output, { recursive: true });
     await page.screenshot({ path: path.join(output, "notice-en.png") });
     await (await page.$('[role="alert"]'))!.screenshot({
       path: path.join(output, "notice-en-card.png"),
@@ -114,6 +127,11 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
     expect(await page.$eval('[role="alert"]', (node) => node.textContent)).toContain(
       "暂时无法核对",
     );
+  });
+}, 45000);
+
+it("blocks duplicate submissions and routes draft edits after a conflict", async () => {
+  await withSettingsBrowser(async (page, baseUrl, output) => {
     await page.setRequestInterception(true);
     let submissions = 0;
     let answer: (() => Promise<void>) | undefined;
@@ -155,7 +173,7 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
         });
       else void request.continue();
     });
-    await page.goto(`${server.resolvedUrls!.local[0]}settings-onboarding`);
+    await page.goto(`${baseUrl}settings-onboarding`);
     await page.waitForSelector(".room-onboarding-actions button.ant-btn-primary");
     await page.locator(".room-onboarding-actions button.ant-btn-primary").click();
     await vi.waitFor(() => expect(answer).toBeDefined());
@@ -178,10 +196,18 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
     expect(await page.$eval('[aria-current="step"]', (node) => node.textContent)).toBe("Settings");
     await page.locator('button[aria-label="Edit brief: Main idea"]').click();
     expect(await page.$eval('[aria-current="step"]', (node) => node.textContent)).toBe("Idea");
-    await page.goto(`${server.resolvedUrls!.local[0]}settings-governance`);
+  });
+}, 45000);
+
+it("opens the recorded settings check data in Governance", async () => {
+  await withSettingsBrowser(async (page, baseUrl, output) => {
+    await page.goto(`${baseUrl}settings-governance`);
     await page.waitForSelector(".ant-table-row");
     expect(await page.$eval("body", (node) => node.textContent)).toContain("Conflicts found");
     await page.locator(".ant-table-row-expand-icon").click();
+    await page.waitForSelector(".governance-settings-check-card");
+    expect(await page.$(".ant-table-expanded-row pre")).toBeNull();
+    await page.locator(".governance-settings-check-card .ant-collapse-header").click();
     await page.waitForSelector(".ant-table-expanded-row pre");
     expect(await page.$eval(".ant-table-expanded-row", (node) => node.textContent)).toContain(
       "60 fps",
@@ -190,10 +216,5 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
       "input_tokens",
     );
     await page.screenshot({ path: path.join(output, "governance-settings-check.png") });
-    expect(errors).toEqual([]);
-  } finally {
-    await browser.close();
-    await server.close();
-    await rm(cacheDir, { recursive: true, force: true });
-  }
+  });
 }, 45000);

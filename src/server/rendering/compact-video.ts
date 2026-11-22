@@ -1,11 +1,33 @@
 import path from "node:path";
 import { stat } from "node:fs/promises";
+import {
+  compactVideoLimitBytes,
+  type CompactVideoPreset,
+} from "../../shared/compact-video-download";
 import { command } from "../runtime/process";
-import { probeVideo } from "./video-probe";
+import { probeVideo, type VideoProbe } from "./video-probe";
 import { countedProbe, frameRateOf, similarityOf } from "./webm-video";
 
 const minimumSimilarity = 0.985;
 const minimumSaving = 0.1;
+const muxHeadroom = 0.04;
+const defaultAudioBitrate = 256_000;
+
+function targetVideoBitrate(
+  streams: VideoProbe["streams"],
+  video: VideoProbe["streams"][number],
+  maximumBytes: number,
+  seconds: number,
+) {
+  const copiedBitrate = streams
+    .filter((stream) => stream !== video)
+    .reduce((sum, stream) => {
+      const rate = Number(stream.bit_rate);
+      if (rate > 0 && Number.isFinite(rate)) return sum + rate;
+      return sum + (stream.codec_type === "audio" ? defaultAudioBitrate : 0);
+    }, 0);
+  return Math.floor((maximumBytes * (1 - muxHeadroom) * 8) / seconds - copiedBitrate);
+}
 
 export async function compressVideo(
   source: string,
@@ -13,6 +35,7 @@ export async function compressVideo(
   signal: AbortSignal,
   onProgress: (percent: number) => void,
   onChecking: () => void,
+  preset: CompactVideoPreset = "quality",
 ) {
   const input = await probeVideo(source, signal);
   const video = input.streams.find((stream) => stream.codec_type === "video");
@@ -25,58 +48,73 @@ export async function compressVideo(
   )
     return false;
 
+  const originalFile = await stat(source);
+  const savingLimit = originalFile.size * (1 - minimumSaving);
+  const sizeLimited = preset === "10mb";
+  const maximumBytes = sizeLimited ? Math.min(compactVideoLimitBytes, savingLimit) : savingLimit;
+  const videoBitrate = sizeLimited
+    ? targetVideoBitrate(input.streams, video, maximumBytes, seconds)
+    : undefined;
+  if (videoBitrate !== undefined && videoBitrate < 16_000) return false;
+
   const timeout = Math.max(600_000, Math.ceil(seconds) * 6000);
-  let pending = "";
+  const passes = sizeLimited ? [1, 2] : [undefined];
   let reported = 0;
-  await command(
-    "ffmpeg",
-    [
-      "-v",
-      "error",
-      "-nostats",
-      "-progress",
-      "pipe:1",
-      "-i",
-      source,
-      "-map",
-      "0",
-      "-c",
-      "copy",
-      "-c:v:0",
-      "libx264",
-      "-preset",
-      "slow",
-      "-crf",
-      "19",
-      "-movflags",
-      "+faststart",
-      "-f",
-      "mp4",
-      target,
-    ],
-    path.dirname(source),
-    signal,
-    () => {},
-    timeout,
-    false,
-    (chunk) => {
-      pending += chunk;
-      const lines = pending.split("\n");
-      pending = lines.pop() ?? "";
-      for (const line of lines) {
-        const match = /^out_time_us=(\d+)\s*$/.exec(line);
-        if (!match) continue;
-        const percent = Math.min(99, Math.floor((Number(match[1]) / (seconds * 1e6)) * 100));
-        if (percent <= reported) continue;
-        reported = percent;
-        onProgress(percent);
-      }
-    },
-  );
+  for (const [index, pass] of passes.entries()) {
+    let pending = "";
+    await command(
+      "ffmpeg",
+      [
+        "-v",
+        "error",
+        "-nostats",
+        "-progress",
+        "pipe:1",
+        "-i",
+        source,
+        ...(pass === 1 ? ["-map", "0:v:0", "-an"] : ["-map", "0", "-c", "copy"]),
+        "-c:v:0",
+        "libx264",
+        "-preset",
+        "slow",
+        ...(pass === undefined
+          ? ["-crf", "19"]
+          : [
+              "-b:v:0",
+              String(videoBitrate),
+              "-fps_mode:v:0",
+              "passthrough",
+              "-passlogfile",
+              `${target}.pass`,
+              "-pass:v:0",
+              String(pass),
+            ]),
+        ...(pass === 1 ? ["-f", "null", "-"] : ["-movflags", "+faststart", "-f", "mp4", target]),
+      ],
+      path.dirname(source),
+      signal,
+      () => {},
+      timeout,
+      false,
+      (chunk) => {
+        pending += chunk;
+        const lines = pending.split("\n");
+        pending = lines.pop() ?? "";
+        for (const line of lines) {
+          const match = /^out_time_us=(\d+)\s*$/.exec(line);
+          if (!match) continue;
+          const fraction = Math.min(1, Number(match[1]) / (seconds * 1e6));
+          const percent = Math.min(99, Math.floor(((index + fraction) / passes.length) * 100));
+          if (percent <= reported) continue;
+          reported = percent;
+          onProgress(percent);
+        }
+      },
+    );
+  }
 
   onChecking();
-  const [originalFile, compactFile] = await Promise.all([stat(source), stat(target)]);
-  if (compactFile.size > originalFile.size * (1 - minimumSaving)) return false;
+  if ((await stat(target)).size > maximumBytes) return false;
 
   const original = await countedProbe(source, signal, timeout);
   const compact = await countedProbe(target, signal, timeout);
@@ -98,5 +136,5 @@ export async function compressVideo(
     return false;
 
   // FFmpeg compares the entire video. Audio and other streams are copied from the original.
-  return (await similarityOf(target, source, signal, timeout)) >= minimumSimilarity;
+  return sizeLimited || (await similarityOf(target, source, signal, timeout)) >= minimumSimilarity;
 }

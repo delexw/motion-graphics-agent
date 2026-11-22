@@ -1,3 +1,6 @@
+import { SettingsHelpTip } from "../components/settings-help-tip";
+import { ProjectEffortSelect } from "../components/project-effort-select";
+import { usesDynamicModelEffort } from "../../shared/model-effort";
 import { agentModelChoices, agentModelChoiceValue } from "../../shared/agent-providers";
 import { SettingsConflictNotice } from "../components/settings-conflict-notice";
 import { SettingsConflictError, type SettingsConflict } from "../../shared/request-settings-review";
@@ -596,6 +599,10 @@ export function RoomOnboarding({
                 }}
               />
             </label>
+            <ProjectEffortSelect
+              checked={usesDynamicModelEffort(request)}
+              onChange={(dynamicModelEffort) => patch({ dynamicModelEffort })}
+            />
             <label>
               {translateUi("Preview directions")}
               <Select
@@ -608,12 +615,22 @@ export function RoomOnboarding({
                 onChange={(candidateCount) => patch({ candidateCount })}
               />
             </label>
-            <label>
-              {translateUi(
-                buildRouteOf(request) === "automatic-previews"
-                  ? "Creative approach"
-                  : "Build route",
-              )}
+            <div className="settings-field">
+              <span className="settings-field-label">
+                {translateUi(
+                  buildRouteOf(request) === "automatic-previews"
+                    ? "Creative approach"
+                    : "Build route",
+                )}
+                <SettingsHelpTip
+                  label={translateUi("About the build route")}
+                  title={translateUi(
+                    request.selectedStyleIds?.length
+                      ? "Use your chosen Motion Graphics for previews or a direct build. No style proposals or ranking calls."
+                      : creativeApproaches[request.preference].description,
+                  )}
+                />
+              </span>
               <Select
                 aria-label={translateUi(
                   buildRouteOf(request) === "automatic-previews"
@@ -641,14 +658,7 @@ export function RoomOnboarding({
                   })
                 }
               />
-              <small>
-                {translateUi(
-                  request.selectedStyleIds?.length
-                    ? "Use your chosen Motion Graphics for previews or a direct build. No style proposals or ranking calls."
-                    : creativeApproaches[request.preference].description,
-                )}
-              </small>
-            </label>
+            </div>
             {request.outputType === "video" ? (
               <>
                 <label>

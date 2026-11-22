@@ -175,12 +175,14 @@ export const claudeAgent: Agent = {
           };
         };
         signal.throwIfAborted();
+        const effort = options.reasoningEffort;
+        if (effort === "ultra") throw Error("Claude does not support Ultra effort.");
         stream = query({
           prompt: images.length ? imagePrompt() : prompt,
           options: {
             cwd: workspace,
             model: model,
-            ...(options.reasoningEffort ? { effort: options.reasoningEffort } : {}),
+            ...(effort ? { effort } : {}),
             systemPrompt,
             settings: { promptCacheTtl: "5m", subagentPromptCacheTtl: "5m" },
             env: {

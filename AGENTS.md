@@ -61,6 +61,7 @@ All codebase tests must mock third-party boundaries: HTTP requests, SDK calls,
 package/model downloads and account/service access. Never contact a real external
 service or download models during a test, including inference and JEV. Use injected
 responses, sanitized recordings, local fixtures and preinstalled dependencies.
+Follow [test isolation guidance](.agents/testing.md) for every test.
 Recordings must exclude credentials, authorization headers, cookies, login state
 and personal/private data; use synthetic placeholders and review them before commit. Local application/browser
 E2E may run against loopback fixture services, with every third-party request blocked

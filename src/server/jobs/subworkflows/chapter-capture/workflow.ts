@@ -161,6 +161,7 @@ export async function prepareChapterCaptures(
               } = await generate({
                 provider: request.provider,
                 model: captureModel,
+                effortTask: "capture",
                 workspace: job.workspace,
                 referenceUrls: request.urls,
                 enableVideoCapture: true,

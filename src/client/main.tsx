@@ -1,3 +1,5 @@
+import { ProjectEffortSelect } from "./components/project-effort-select";
+import { usesDynamicModelEffort } from "../shared/model-effort";
 import { agentModelChoices, agentModelChoiceValue } from "../shared/agent-providers";
 import { defaultProviderModels, modelDisplayName } from "../shared/model-display-name";
 import { SelectedDirection } from "./components/selected-direction";
@@ -209,6 +211,7 @@ function App() {
   const [preference, setPreference] = useState<CreativeApproach>("context");
   const [provider, setProvider] = useState<Provider>("codex");
   const [mainModel, setMainModel] = useState<string>();
+  const [dynamicModelEffort, setDynamicModelEffort] = useState<boolean>();
   const [count, setCount] = useState(5);
   const [outputType, setOutputType] = useState<"video" | "page">("video");
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
@@ -355,6 +358,7 @@ function App() {
               setPreference(draft.preference);
               setProvider(draft.provider);
               setMainModel(draft.mainModel);
+              setDynamicModelEffort(draft.dynamicModelEffort);
               setCount(draft.count);
               setOutputType(draft.outputType);
               setViewport(draft.viewport);
@@ -512,6 +516,7 @@ function App() {
     outputType,
     provider,
     mainModel,
+    dynamicModelEffort,
     count,
     selectedStyleIds,
     duration,
@@ -652,6 +657,7 @@ function App() {
         preference,
         provider,
         mainModel,
+        dynamicModelEffort,
         candidateCount: manual ? count : count || 5,
         selectedStyleIds,
         ...(outputType === "page"
@@ -727,6 +733,7 @@ function App() {
       setPreference("context");
       setProvider("codex");
       setMainModel(undefined);
+      setDynamicModelEffort(undefined);
       setCount(5);
       setOutputType("video");
       setViewport("desktop");
@@ -1867,6 +1874,12 @@ function App() {
                                 </StudioSelectOption>
                               ))}
                           </StudioSelect>
+                        </div>
+                        <div className="composer-control">
+                          <ProjectEffortSelect
+                            checked={usesDynamicModelEffort({ dynamicModelEffort })}
+                            onChange={setDynamicModelEffort}
+                          />
                         </div>
                         <div className="composer-control">
                           <StudioSelect

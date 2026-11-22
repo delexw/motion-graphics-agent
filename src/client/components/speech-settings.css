@@ -34,14 +34,6 @@
   margin-left: auto;
   font-variant-numeric: tabular-nums;
 }
-.speech-help {
-  display: inline-flex;
-  padding: 2px;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: help;
-}
 .speech-adjustment .ant-slider {
   margin: 10px 5px 4px;
 }

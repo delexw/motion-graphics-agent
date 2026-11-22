@@ -1,11 +1,11 @@
 import { useEffect, useId, useState } from "react";
-import { Alert, Collapse, Empty, Input, Select, Spin, Typography } from "antd";
+import { Alert, Empty, Input, Select, Spin, Typography } from "antd";
 import type { ProjectTechnologyMonitor } from "../../shared/project-technologies";
 import { translateUi } from "../i18n";
 import { ProjectTechnologies } from "./project-technologies";
 
 type Job = { id: string; kind: string; phase: string };
-function JobTechnologies({ projectId, jobs }: { projectId: string; jobs: Job[] }) {
+export function ProjectTechnologyExplorer({ projectId, jobs }: { projectId: string; jobs: Job[] }) {
   const [chosenJob, setChosenJob] = useState("");
   const jobId =
     chosenJob ||
@@ -146,21 +146,5 @@ function JobTechnologies({ projectId, jobs }: { projectId: string; jobs: Job[] }
         </div>
       )}
     </div>
-  );
-}
-/** Show current-page evidence by default; stop polling when the panel closes. */
-export function ProjectTechnologyExplorer(props: { projectId: string; jobs: Job[] }) {
-  return (
-    <Collapse
-      defaultActiveKey={["technologies"]}
-      destroyOnHidden
-      items={[
-        {
-          key: "technologies",
-          label: translateUi("Project technologies"),
-          children: <JobTechnologies {...props} />,
-        },
-      ]}
-    />
   );
 }

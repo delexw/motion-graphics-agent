@@ -1,6 +1,6 @@
 import Fastify from "fastify";
 import { execFileSync } from "node:child_process";
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { expect, it, vi } from "vitest";
@@ -8,9 +8,10 @@ import { RequestSchema, type Run } from "../src/shared/contracts";
 import { registerCompactDownloadRoutes } from "../src/server/rendering/compact-download-routes";
 import { CompactDownloads } from "../src/server/rendering/compact-downloads";
 import { compressVideo } from "../src/server/rendering/compact-video";
+import { compactVideoLimitBytes } from "../src/shared/compact-video-download";
 import { probeVideo } from "../src/server/rendering/video-probe";
 
-it("returns one compression job to concurrent requests and reuses the verified file", async () => {
+it("returns one compression job to concurrent requests and reuses the verified file for each preset", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "compact-download-"));
   const source = path.join(directory, "full.mp4");
   await writeFile(source, "original video fixture");
@@ -21,11 +22,11 @@ it("returns one compression job to concurrent requests and reuses the verified f
     complete = resolve;
   });
   const compress = vi.fn<typeof compressVideo>(
-    async (_source, target, _signal, progress, checking) => {
+    async (_source, target, _signal, progress, checking, preset) => {
       progress(37);
       await finish;
       checking();
-      await writeFile(target, "small video");
+      await writeFile(target, preset === "10mb" ? "10 MB video" : "small video");
       return true;
     },
   );
@@ -61,21 +62,34 @@ it("returns one compression job to concurrent requests and reuses the verified f
   );
   const url = "/api/projects/run/job/compact-video";
   const readStatus = async () => (await app.inject(url)).json();
-  const start = () => app.inject({ method: "POST", url });
+  const limitedUrl = url + "?preset=10mb";
+  const limitedFile = url + "/file?preset=10mb";
+  const start = (target = url) => app.inject({ method: "POST", url: target });
   try {
     expect(await readStatus()).toEqual({ status: "idle" });
+    expect((await app.inject(url + "?preset=unknown")).statusCode).toBe(400);
     expect((await app.inject("/api/projects/run/preview/compact-video")).statusCode).toBe(404);
-    const replies = await Promise.all([start(), start(), start()]);
+    const replies = await Promise.all([start(), start()]);
     expect(replies.every((reply) => [200, 202].includes(reply.statusCode))).toBe(true);
     await expect.poll(readStatus).toEqual({ status: "compressing", percent: 37 });
     expect(compress).toHaveBeenCalledTimes(1);
     expect((await app.inject(`${url}/file`)).statusCode).toBe(404);
+    const limitedReplies = await Promise.all([start(limitedUrl), start(limitedUrl)]);
+    expect(limitedReplies.every((reply) => reply.json().status === "queued")).toBe(true);
+    expect((await app.inject(limitedUrl)).json().status).toBe("queued");
+    expect((await app.inject(limitedFile)).statusCode).toBe(404);
     complete();
     await expect.poll(async () => (await readStatus()).status).toBe("ready");
     expect((await app.inject(`${url}/file`)).body).toBe("small video");
     expect((await start()).json().status).toBe("ready");
-    expect(compress).toHaveBeenCalledTimes(1);
+    await expect.poll(async () => (await app.inject(limitedUrl)).json().status).toBe("ready");
+    const limited = await app.inject(limitedFile);
+    expect(limited.body).toBe("10 MB video");
+    expect(limited.headers["content-disposition"]).toContain("-compact-10mb.mp4");
+    expect((await start(limitedUrl)).json().status).toBe("ready");
+    expect(compress.mock.calls.map((call) => call[5])).toEqual(["quality", "10mb"]);
     expect((await new CompactDownloads().status(source)).status).toBe("ready");
+    expect((await new CompactDownloads().status(source, "10mb")).status).toBe("ready");
     expect(await readFile(source, "utf8")).toBe("original video fixture");
     await writeFile(source, "changed original video fixture");
     expect(await readStatus()).toEqual({ status: "idle" });
@@ -121,9 +135,18 @@ const hasFfmpeg = (() => {
   }
 })();
 
-it.skipIf(!hasFfmpeg)(
-  "makes a verified MP4 with the original frame size, frame rate, and audio",
-  async () => {
+it.skipIf(!hasFfmpeg).each([
+  { preset: "quality", sourceFilter: "testsrc2=s=320x180:r=30", crf: "8", width: 320, height: 180 },
+  {
+    preset: "10mb",
+    sourceFilter: "testsrc2=s=960x540:r=30,noise=alls=100:allf=t+u",
+    crf: "0",
+    width: 960,
+    height: 540,
+  },
+] as const)(
+  "preserves frame size, frame rate and audio with the $preset preset",
+  async ({ preset, sourceFilter, crf, width, height }) => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "compact-ffmpeg-"));
     try {
       const source = path.join(directory, "original.mp4");
@@ -134,7 +157,7 @@ it.skipIf(!hasFfmpeg)(
         "-f",
         "lavfi",
         "-i",
-        "testsrc2=s=320x180:r=30",
+        sourceFilter,
         "-f",
         "lavfi",
         "-i",
@@ -144,7 +167,7 @@ it.skipIf(!hasFfmpeg)(
         "-c:v",
         "libx264",
         "-crf",
-        "8",
+        crf,
         "-c:a",
         "aac",
         source,
@@ -152,15 +175,19 @@ it.skipIf(!hasFfmpeg)(
       const signal = new AbortController().signal;
       const progress = vi.fn();
       const checking = vi.fn();
-      expect(await compressVideo(source, output, signal, progress, checking)).toBe(true);
+      if (preset === "10mb")
+        expect((await stat(source)).size).toBeGreaterThan(compactVideoLimitBytes);
+      expect(await compressVideo(source, output, signal, progress, checking, preset)).toBe(true);
+      if (preset === "10mb")
+        expect((await stat(output)).size).toBeLessThanOrEqual(compactVideoLimitBytes);
       expect(progress).toHaveBeenCalled();
       expect(checking).toHaveBeenCalledOnce();
       const probe = await probeVideo(output, signal);
       expect(probe.streams).toEqual([
         expect.objectContaining({
           codec_name: "h264",
-          width: 320,
-          height: 180,
+          width,
+          height,
           avg_frame_rate: "30/1",
         }),
         expect.objectContaining({ codec_name: "aac" }),
@@ -170,7 +197,7 @@ it.skipIf(!hasFfmpeg)(
       await rm(directory, { recursive: true, force: true });
     }
   },
-  20000,
+  40000,
 );
 
 it("cleans up a cancelled encode and lets the user try again", async () => {

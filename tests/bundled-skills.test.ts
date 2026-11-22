@@ -1,3 +1,5 @@
+import { bevyCommunitySkills } from "../src/server/agents/capabilities/bevy/community-skills";
+import { bevyBuildGuidance } from "../src/server/agents/capabilities/bevy/prompt";
 import { prepareProjectLayout, projectArtifactPath } from "../src/server/runtime/workspace";
 import { stageProceduralModelRuntime } from "../src/server/agents/bundled-skills/procedural-runtime";
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
@@ -194,4 +196,59 @@ it("rejects linked runtime files and directories and respects cancelled staging"
   const controller = new AbortController();
   controller.abort();
   await expect(stageProceduralModelRuntime(workspace, controller.signal)).rejects.toThrow();
+});
+
+it("routes a compatible Bevy build to the staged router and retains its sibling layout", async () => {
+  const workspace = await temporaryWorkspace();
+  await prepareProjectLayout(workspace);
+  const signal = new AbortController().signal;
+  const {
+    id,
+    repository,
+    collection: { revision, entrypoint },
+  } = bevyCommunitySkills;
+  const base = path.join(installation.root, id);
+  const files: Record<string, string> = {};
+  const sibling = "skills/example-rendering/SKILL.md";
+
+  await expect(
+    prepareBundledSkills(workspace, signal, installation.root, { bevy: "0.20.1" }),
+  ).resolves.toEqual(new Map());
+  for (const [file, contents] of Object.entries({
+    LICENSE: "MIT License",
+    [entrypoint]: "---\nname: bevy\n---\nRead the renderer guide.\n",
+    [sibling]: "Renderer guide fixture",
+  })) {
+    const destination = path.join(base, revision, file);
+    await mkdir(path.dirname(destination), { recursive: true });
+    await writeFile(destination, contents);
+    files[file] = createHash("sha256").update(contents).digest("hex");
+  }
+  await writeFile(path.join(base, "current.json"), JSON.stringify({ repository, revision, files }));
+
+  await expect(
+    prepareBundledSkills(workspace, signal, installation.root, { bevy: "0.21.0" }),
+  ).resolves.toEqual(new Map());
+  const references = await prepareBundledSkills(workspace, signal, installation.root, {
+    bevy: "0.20.1",
+  });
+  const router = references.get(id);
+  const staged = `task-context/inputs/bevy-skills/${revision}`;
+  expect(router).toBe(`${staged}/${entrypoint}`);
+  expect(await readFile(path.join(workspace, staged, sibling), "utf8")).toBe(
+    "Renderer guide fixture",
+  );
+  const runtime = {
+    version: "0.20.1",
+    release: "release-fixture",
+    directory: "/fixture",
+    config: "/fixture/vendor.toml",
+  };
+  expect(bevyBuildGuidance(runtime, router)).toContain(JSON.stringify(router));
+  expect(bevyBuildGuidance(runtime)).toContain("community Bevy skill is unavailable");
+  expect(claudeBundledSkills(workspace, true).skills).not.toContain("bundled-authoring:bevy");
+  await writeFile(path.join(base, revision, sibling), "tampered");
+  await expect(
+    prepareBundledSkills(workspace, signal, installation.root, { bevy: "0.20.1" }),
+  ).resolves.toEqual(new Map());
 });

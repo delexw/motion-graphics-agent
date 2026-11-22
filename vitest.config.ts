@@ -13,7 +13,11 @@ export default defineConfig({
       Object.values(credentialEnvironmentVariables).map((name) => [name, ""]),
     ),
     pool: "threads",
-    // Workflow mocks and environment changes must stay scoped to each test file.
+    // Isolate modules by file and reset mock and environment state before every case.
     isolate: true,
+    mockReset: true,
+    restoreMocks: true,
+    unstubEnvs: true,
+    unstubGlobals: true,
   },
 });

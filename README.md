@@ -76,12 +76,22 @@ links and [local gallery](docs/showcase.html) remain available for local viewing
 The three most recent dated entries are listed here, regardless of gaps between dates. See the [changelog](CHANGELOG.md#daily-update-archive) for older entries and [release history](CHANGELOG.md).
 
 <details>
+<summary>2026-11-22</summary>
+
+- **Adjustive effort:** This per-project Yes/No setting defaults to No. Yes lets JEV choose effort for each supported model call. No uses the configured task or model default. MCP can set it when creating a draft.
+- **Governance:** Project timing appears at the top, and usage rows show reasoning effort. JEV dashboards show decisions and scores first, with expandable rationale, inputs and comparisons. Saved combination comparisons show primary and supporting style names where available.
+- **Generation settings:** Video language, build route and adjustive effort have info tips beside their labels.
+- **Bevy authoring:** Kiteva can select Bevy for shots. Setup and startup prepare the managed runtime and refresh compatible community guides through the bundled-skill registry.
+
+</details>
+
+<details>
 <summary>2026-11-19</summary>
 
 - **GPT-6.2 Astra:** New GPT projects use GPT-6.2 Astra for creative proposals, planning, generation and main-model repairs. Local model overrides still apply. Historical GPT-6.1 Sol selections and cost estimates remain readable.
 - **Astra cost estimates:** Governance uses the published GPT-6.2 Astra token rates for new usage while retaining historical Sol rates.
 - **GPT-6.2 Sol:** Choose Sol in Generation settings. Governance estimates its cost from OpenAI's published Standard rates.
-- **Downloads:** Open the download icon for the original MP4, compact MP4, editable project ZIP and language files. Compression runs in the background. Reopen the pop-up to see progress. Repeated clicks share one job, and Kiteva keeps the original available if the compact copy fails its checks.
+- **Downloads:** Open the download icon for the original MP4, compact MP4, editable project ZIP and language files. The 50% rate preset checks picture quality. The 90% rate preset targets a copy of up to 10 MB. Actual savings vary by video. Compression runs in the background. Reopen the pop-up to see progress. Repeated clicks share one job, and Kiteva keeps the original available if the compact copy fails its checks.
 - **Project results:** Video and controls resize together in smaller project windows. A check icon and border mark the selected preview.
 
 </details>
@@ -92,17 +102,6 @@ The three most recent dated entries are listed here, regardless of gaps between 
 - **Music beat analysis:** The agent can analyze prepared music locally with the installed HyperFrames CLI and save measured beat timestamps, estimated tempo and a source fingerprint. [Implementation](https://github.com/delexw/motion-graphics-agent/commit/af9e4d7).
 - **Beats in Production Desk:** Music clips show beat ticks, estimated BPM and beat counts. Select a clip to jump to the previous or next beat with buttons or `[` / `]`. Missing or stale analysis is labeled; opening Desk does not run generation. See [Desk controls and limits](docs/production-desk.md#measured-music-beats).
 - **Tool activity labels:** Music analysis has its own English/Chinese Activity label. Agent guidance requires a distinct customer-facing label for each new tool.
-
-</details>
-
-<details>
-<summary>2026-11-16</summary>
-
-- **v1.2.0 released:** DeepSeek authoring, finished-project reuse and governed media workflows. See the [release notes](https://github.com/delexw/motion-graphics-agent/releases/tag/v1.2.0).
-- **DeepSeek provider:** Select DeepSeek Flash for text and image-based authoring through the official Harness SDK. Configure `DEEPSEEK_API_KEY`; UI, MCP and Governance share provider routing. OAuth is not integrated.
-- **Cost accounting:** The isolated SDK runtime loads the community `dsh-cost-meter` plugin. Governance labels per-call USD estimates, counts stable session/sequence records once, and preserves unknown usage and prices. See [setup, security and limits](src/server/agents/deepseek/README.md).
-- **SDK execution fixes:** Resumed DeepSeek refinements explicitly switch working directory and grant the current authoring workspace. Tool completion/error events retain their call IDs. Codex defaults to medium reasoning while preserving explicit effort overrides.
-- **Preparation activity:** Completed preparation displays the existing saved checkpoints instead of an empty generic event list.
 
 </details>
 

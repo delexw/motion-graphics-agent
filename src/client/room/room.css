@@ -989,12 +989,16 @@
   gap: 12px;
 }
 .room-settings label,
+.room-settings .settings-field,
 .room-settings-styles > span {
   display: flex;
   flex-direction: column;
   gap: 5px;
   color: var(--room-muted);
   font-size: 12px;
+}
+.room-settings .settings-field-label .settings-help-tip {
+  margin-block: -2px;
 }
 .room-settings .ant-select,
 .room-duration .ant-input-number {
@@ -2117,6 +2121,7 @@
   gap: 16px 12px;
 }
 .room-onboarding .room-settings label,
+.room-onboarding .room-settings .settings-field,
 .room-onboarding .room-settings-styles > span {
   font-size: 12px;
   font-weight: 650;

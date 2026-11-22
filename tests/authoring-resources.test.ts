@@ -18,6 +18,7 @@ it("keeps research skills available independently of visual authoring selection"
   expect(authoringResources.map((resource) => resource.id)).toEqual([
     "animate_ui",
     "react_bits",
+    "bevy",
     "anatomy",
     "img2threejs",
     "stageshow",
@@ -65,7 +66,7 @@ async function input() {
     onEvent: vi.fn(),
   };
 }
-it.each(["animate_ui", "react_bits", "anatomy", "img2threejs", "stageshow", "local_code"])(
+it.each(["animate_ui", "react_bits", "bevy", "anatomy", "img2threejs", "stageshow", "local_code"])(
   "uses the native Choice API winner %s, preserving renderer, MGs and usage attribution",
   async (winner) => {
     vi.stubEnv(credentialEnvironmentVariables.typesafeApiKey, "test-placeholder");
@@ -84,20 +85,26 @@ it.each(["animate_ui", "react_bits", "anatomy", "img2threejs", "stageshow", "loc
         for (const resource of authoringResources) {
           const description = body.questions.resource.criteria[resource.id];
           expect(description).toBe(resource.guidance);
-          expect(description).toContain("Advantages / best fit:");
-          expect(description).toContain("Disadvantages / poor fit:");
-          expect(description).toContain("Video adaptation:");
+          expect(description.split("\n").map((line: string) => line.split(":")[0])).toEqual([
+            "Best fit",
+            "Strength",
+            "Trade-off",
+          ]);
+          expect(description.split(/\s+/).length).toBeLessThanOrEqual(65);
         }
         expect(body.questions.resource.criteria.anatomy).toContain("SVG/HTML");
         expect(body.questions.resource.criteria.local_code).toContain(
-          "Pre-authored component effects",
+          "existing renderer-compatible code",
         );
         expect(body.state.renderer.id).toBe("hyperframes");
         expect(body.state.renderer.visuals.frameContract).toContain("GSAP");
         expect(body.state.renderer.audio.generatesMusic).toBe(false);
         expect(body.state.policy).toContain("Do not change selected styles");
         expect(body.state.policy).toContain("selected MG contributes motion only within that demo");
-        expect(body.questions.resource.criteria.stageshow).toContain("STAGESHOW SCENE OWNERSHIP");
+        expect(body.questions.resource.criteria.stageshow).toContain("Keep the demo appearance");
+        expect(body.state.policy).toContain(
+          "Option order, popularity and previous selections carry no weight",
+        );
         expect(body.state.resources.map((r: { id: string }) => r.id)).toEqual(
           authoringResources.map((r) => r.id),
         );

@@ -35,6 +35,7 @@ export async function runAutomaticPreviewWorkflow(input: {
   const result = await agentTurn({
     provider: input.request.provider,
     model: input.request.mainModel || models[input.request.provider],
+    effortTask: "planning",
     workspace: input.workspace,
     signal: input.signal,
     readOnly: true,

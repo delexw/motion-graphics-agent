@@ -1,12 +1,14 @@
 import { settingsCheckActivity } from "../../shared/settings-check-accounting";
 import { formatGovernanceCost } from "./format-cost";
-import { Card, Table, Tag, Typography, Input } from "antd";
+import { Card, Table, Typography, Input } from "antd";
 import { translateUi, uiLanguage } from "../i18n";
 import {
   requestSettingLabels,
   type SettingsCheckRecord,
 } from "../../shared/request-settings-review";
-import { settingValueText } from "../components/settings-conflict-notice";
+import { GovernanceJevDetails } from "./jev-details";
+import { GovernanceRowDetails } from "./row-details";
+import { SettingsCheckStatus } from "./settings-check-status";
 
 /** Includes blocked starts, which have no project activity timeline. */
 export function SettingsChecks({
@@ -36,6 +38,7 @@ export function SettingsChecks({
         />
       )}
       <Table
+        className="governance-ant-table"
         dataSource={records.map((row) => ({ ...row, accounting: settingsCheckActivity(row) }))}
         rowKey="id"
         size="small"
@@ -61,26 +64,7 @@ export function SettingsChecks({
           { title: translateUi("Model"), dataIndex: "model" },
           {
             title: translateUi("Status"),
-            render: (_, row) => (
-              <Tag
-                color={
-                  row.status === "compatible"
-                    ? "green"
-                    : row.status === "conflict"
-                      ? "orange"
-                      : undefined
-                }
-              >
-                {translateUi(
-                  {
-                    checking: "No final result recorded",
-                    compatible: "Compatible",
-                    conflict: "Conflicts found",
-                    failed: "Check failed / start blocked",
-                  }[row.status],
-                )}
-              </Tag>
-            ),
+            render: (_, row) => <SettingsCheckStatus status={row.status} />,
           },
           {
             title: translateUi("Duration"),
@@ -120,38 +104,14 @@ export function SettingsChecks({
           },
         ]}
         expandable={{
+          fixed: true,
           expandedRowRender: (row) => (
-            <div>
-              <p>
-                {translateUi("Draft / project")}: {row.draftId ?? "—"} / {row.runId ?? "—"}
-              </p>
-              {row.review && row.review.conflicts.length > 0 && (
-                <ul>
-                  {row.review.conflicts.map((conflict) => (
-                    <li key={conflict.setting}>
-                      {translateUi(requestSettingLabels[conflict.setting])}:{" "}
-                      {settingValueText(conflict)} · {translateUi("Conflicting input")}:{" "}
-                      {translateUi(conflict.source.label)}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <Typography.Paragraph>
-                {translateUi(
-                  "Recorded JEV input, response and usage. Internal provider prompts are not exposed; absent usage is not zero usage.",
-                )}
-              </Typography.Paragraph>
-              <pre
-                style={{
-                  whiteSpace: "pre-wrap",
-                  overflowWrap: "anywhere",
-                  maxHeight: 480,
-                  overflow: "auto",
-                }}
-              >
-                {JSON.stringify(row.events, null, 2)}
-              </pre>
-            </div>
+            <GovernanceRowDetails>
+              <GovernanceJevDetails
+                calls={row.accounting.jevCalls}
+                variants={[{ kind: "settings-check", check: row }]}
+              />
+            </GovernanceRowDetails>
           ),
         }}
       />

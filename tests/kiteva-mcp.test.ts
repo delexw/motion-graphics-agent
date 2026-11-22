@@ -72,6 +72,21 @@ it("saves the requested defaults at Review without starting a build", async () =
   );
 });
 
+it("preserves an explicit opt-in of dynamic effort through MCP and the draft", async () => {
+  const { store, client } = await connect();
+  const result = await client.callTool({
+    name: "create_idea",
+    arguments: {
+      idea: "Explain how a city prepares for spring.",
+      settings: { dynamicModelEffort: true },
+    },
+  });
+  expect(result.structuredContent).toMatchObject({
+    kind: "created",
+    request: { dynamicModelEffort: true },
+  });
+  expect(roomSubmission(roomDraftRequest(store.room().drafts.new)).dynamicModelEffort).toBe(true);
+});
 it("uses one settings contract for server instructions, tool descriptions and runtime defaults", async () => {
   const { client } = await connect();
   const tools = (await client.listTools()).tools;
