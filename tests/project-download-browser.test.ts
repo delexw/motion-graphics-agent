@@ -111,7 +111,7 @@ createRoot(document.getElementById('root')).render(React.createElement(ResultDow
       const address = server.httpServer!.address();
       if (!address || typeof address === "string") throw Error("No fixture port");
       await page.goto(`http://127.0.0.1:${address.port}/download-test`);
-      const open = () => page.click('button[aria-label="Downloads"]');
+      const open = () => page.locator('button[aria-label="Downloads"]').click();
       const presetButton = 'button[aria-label="Compression presets"]';
       const openPresets = () => page.locator(presetButton + '[aria-expanded="false"]').click();
       const presetSelector = (name: string) => `::-p-aria([name="${name}"][role="menuitem"])`;
@@ -188,6 +188,9 @@ createRoot(document.getElementById('root')).render(React.createElement(ResultDow
       await page.waitForSelector(presetButton + '[aria-expanded="false"]');
       await page.waitForSelector('[role="progressbar"][aria-valuenow="37"]');
       expect(starts).toBe(1);
+      await expect
+        .poll(() => page.evaluate(() => document.activeElement?.getAttribute("aria-label")))
+        .toBe("Compression presets");
       await page.keyboard.press("Escape");
       await page.waitForSelector('[role="dialog"]', { hidden: true });
       await page.waitForFunction(

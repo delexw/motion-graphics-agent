@@ -75,6 +75,7 @@ function useCompactVideoPreset(baseUrl: string, preset: CompactVideoPreset) {
 
 export function CompactVideoPresets({ baseUrl }: { baseUrl: string }) {
   const [open, setOpen] = useState(false);
+  const presetTrigger = useRef<HTMLButtonElement | HTMLAnchorElement>(null);
   const quality = useCompactVideoPreset(baseUrl, "quality");
   const limited = useCompactVideoPreset(baseUrl, "10mb");
   const options = [
@@ -99,12 +100,14 @@ export function CompactVideoPresets({ baseUrl }: { baseUrl: string }) {
               disabled: busy || state.status === "original",
               onClick: () => {
                 setOpen(false);
+                presetTrigger.current?.focus({ preventScroll: true });
                 void start();
               },
             })),
           }}
         >
           <Button
+            ref={presetTrigger}
             aria-label={label}
             aria-haspopup="menu"
             aria-expanded={open}
