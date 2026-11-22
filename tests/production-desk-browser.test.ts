@@ -380,7 +380,7 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
       await page.$eval(".dialog-body", (el) => {
         el.scrollTop = 0;
       });
-      await page.screenshot({ path: "/tmp/kiteva-production-desk.png" });
+      await page.screenshot({ path: path.join(directory, "production-desk.png") });
       expect(
         await page.$eval(".desk-preview", (el) => el.getBoundingClientRect().height),
       ).toBeGreaterThan(400);
@@ -411,7 +411,7 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
       expect(
         await page.$eval(".production-desk", (el) => el.scrollWidth <= el.clientWidth + 1),
       ).toBe(true);
-      await page.screenshot({ path: "/tmp/kiteva-production-desk-mobile.png" });
+      await page.screenshot({ path: path.join(directory, "production-desk-mobile.png") });
       await page.click(".ant-modal-close");
       await page.waitForFunction(() => !document.querySelector(".production-desk"));
       expect(await page.$$(".production-desk video")).toHaveLength(0);
@@ -475,16 +475,20 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
             document.querySelector<HTMLVideoElement>(".desk-preview video")!.currentTime - 1.75,
           ) < 0.02,
       );
+      await page.setViewport({ width: 900, height: 1000 });
       await page.goto(`${server.resolvedUrls!.local[0]}desk-fixture?beatCase=dense`);
       await page.click(".room-desk-open");
       await page.waitForSelector('.desk-track-music [data-beat-status="ready"]');
       expect(await page.$$(".desk-beat-tick")).toHaveLength(0);
       expect(await page.$eval(".desk-beat-state", (el) => el.textContent)).toBe("Beats: zoom in");
-      await page.click('[aria-label="Zoom in"]');
-      await page.click('[aria-label="Zoom in"]');
-      await page.click('[aria-label="Zoom in"]');
-      await page.click('[aria-label="Zoom in"]');
-      await page.click('[aria-label="Zoom in"]');
+      const zoomIn = '[aria-label="Zoom in"]';
+      await page.focus(zoomIn);
+      for (const zoom of [2, 3, 4, 5, 6]) {
+        await page.keyboard.press("Enter");
+        await expect
+          .poll(() => page.$eval(".desk-timeline", (el) => (el as HTMLElement).style.minWidth))
+          .toBe(`${zoom * 100}%`);
+      }
       await page.waitForFunction(() => document.querySelectorAll(".desk-beat-tick").length === 300);
       for (const [status, label] of [
         ["missing", "No beat analysis"],

@@ -1,6 +1,6 @@
 import { newBrowserPage } from "./fixtures/browser-page";
 import { mingVoices } from "../src/shared/speech";
-import { nextSelectOption } from "./fixtures/select-options";
+import { chooseRenderedSelectOption, nextSelectOption } from "./fixtures/select-options";
 import { browserDependencyScan } from "../vite.resolve";
 import { mkdtemp, rm } from "node:fs/promises";
 import path from "node:path";
@@ -94,13 +94,11 @@ function App(){const[draft,setDraft]=useState({step:4,stepLayout:'separate-speec
       await page.waitForSelector('[aria-label="Add language"]');
       expect(await page.$('[aria-label="Multiple language tracks"]')).toBeNull();
       expect(await page.$('[aria-label="Default language"]')).toBeNull();
-      await page.click('[aria-label="Add language"]');
-      await page
-        .locator(
-          '.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option[title="English"]',
-        )
-        .click();
-      await page.keyboard.press("Escape");
+      await page.locator('[aria-label="Add language"]').click();
+      await chooseRenderedSelectOption(
+        page,
+        '.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option[title="English"]',
+      );
       await page.waitForSelector('[aria-label="Generate narration en"]');
       expect(
         await page.$eval('[aria-label="Generate narration en"]', (el) =>
