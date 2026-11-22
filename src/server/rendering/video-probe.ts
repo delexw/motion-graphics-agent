@@ -9,6 +9,7 @@ export type VideoProbe = {
     avg_frame_rate: string;
     codec_name: string;
     pix_fmt?: string;
+    bit_rate?: string;
     color_transfer?: string;
     nb_read_frames?: string;
     channels?: number;

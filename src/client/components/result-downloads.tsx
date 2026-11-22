@@ -5,7 +5,7 @@ import type { GenerationJob, Run } from "../../shared/contracts";
 import type { LanguageMedia } from "../../shared/language-tracks";
 import { translateUi, useUiLanguage } from "../i18n";
 import { DownloadIconButton } from "./download-icon-button";
-import { CompactVideoOption } from "./compact-video-option";
+import { CompactVideoPresets } from "./compact-video-option";
 import { LanguageMediaDownloads } from "./language-media-downloads";
 import { ProjectDownload } from "./project-download";
 
@@ -68,7 +68,7 @@ export function ResultDownloads({
             />
           ) : (
             <>
-              <Flex gap="small" align="center" wrap>
+              <Flex gap="small" align="center" wrap style={{ width: "100%" }}>
                 {originalUrl && (
                   <DownloadIconButton
                     href={originalUrl}
@@ -78,10 +78,10 @@ export function ResultDownloads({
                   />
                 )}
                 {job.kind === "full" && <ProjectDownload run={run} job={job} />}
+                {originalUrl && job.kind === "full" && (
+                  <CompactVideoPresets key={archive} baseUrl={`${archive}/compact-video`} />
+                )}
               </Flex>
-              {originalUrl && job.kind === "full" && (
-                <CompactVideoOption key={archive} url={`${archive}/compact-video`} />
-              )}
               {originalUrl && media && (
                 <LanguageMediaDownloads media={media} downloadName={downloadName} />
               )}
