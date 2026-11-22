@@ -481,6 +481,8 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
       await page.waitForSelector('.desk-track-music [data-beat-status="ready"]');
       expect(await page.$$(".desk-beat-tick")).toHaveLength(0);
       expect(await page.$eval(".desk-beat-state", (el) => el.textContent)).toBe("Beats: zoom in");
+      // A modal opening transform changes painted width without resizing the timeline.
+      await page.$eval(".production-desk", (desk) => ((desk as HTMLElement).style.scale = "0.2"));
       const zoomIn = '[aria-label="Zoom in"]';
       await page.focus(zoomIn);
       for (const zoom of [2, 3, 4, 5, 6]) {
@@ -489,7 +491,21 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
           .poll(() => page.$eval(".desk-timeline", (el) => (el as HTMLElement).style.minWidth))
           .toBe(`${zoom * 100}%`);
       }
-      await page.waitForFunction(() => document.querySelectorAll(".desk-beat-tick").length === 300);
+      const beats = ".desk-track-music .desk-beat-strip";
+      await page.waitForFunction(
+        (selector) => {
+          const strip = document.querySelector(selector)!;
+          return strip.clientWidth > 1800 && strip.getBoundingClientRect().width < 1800;
+        },
+        {},
+        beats,
+      );
+      await page.$eval(".production-desk", (desk) =>
+        (desk as HTMLElement).style.removeProperty("scale"),
+      );
+      await expect
+        .poll(() => page.$$eval(`${beats} .desk-beat-tick`, (ticks) => ticks.length))
+        .toBe(300);
       for (const [status, label] of [
         ["missing", "No beat analysis"],
         ["stale", "Beat analysis out of date"],
