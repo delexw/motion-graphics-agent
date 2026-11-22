@@ -1,4 +1,4 @@
-import { mkdtemp, rm, stat } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import puppeteer from "puppeteer-core";
@@ -8,7 +8,9 @@ import { dataRoot } from "../src/server/runtime/paths";
 import { browserExecutablePath } from "../src/server/runtime/browser";
 
 it("shares a profile between stages, isolates projects and cancels queued access", async () => {
-  const root = await mkdtemp(path.join(dataRoot, "runs", "profile-test-"));
+  const runsRoot = path.join(dataRoot, "runs");
+  await mkdir(runsRoot, { recursive: true });
+  const root = await mkdtemp(path.join(runsRoot, "profile-test-"));
   const other = await mkdtemp(path.join(os.tmpdir(), "other-profile-"));
   const signal = new AbortController().signal;
   const first = await acquireReferenceProfile(path.join(root, "preview"), signal);

@@ -448,21 +448,17 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
         ?.textContent?.includes("Technology 1-0"),
     );
     expect(requests.at(-1)?.searchParams.get("search")).toBe("three");
+    const projectOptions = ".ant-select-dropdown:not(.ant-select-dropdown-hidden)";
     await page.locator(".governance-ant-select").click();
-    await page.waitForSelector('.ant-select-dropdown [data-project-id="option-1"]');
     await page.focus(".governance-ant-select input");
-    await chooseRenderedSelectOption(
-      page,
-      '.ant-select-dropdown:not(.ant-select-dropdown-hidden) [data-project-id="option-1"]',
-    );
+    await chooseRenderedSelectOption(page, `${projectOptions} [data-project-id="option-1"]`);
     await page.waitForSelector('.governance-panel[data-project-id="option-1"]');
     await page.locator(".governance-ant-select").click();
-    await page.waitForSelector('.ant-select-dropdown [data-project-id="option-0"]');
-    expect(await page.$('.ant-select-dropdown [data-project-id="option-2"]')).toBeTruthy();
-    await page.focus(".governance-ant-select input");
-    for (let index = 0; index < 22; index++) await page.keyboard.press("ArrowDown");
-    await page.hover(".ant-select-dropdown .ant-select-dropdown-list-holder");
-    await page.mouse.wheel({ deltaY: 1600 });
+    await page.waitForSelector(`${projectOptions} [data-project-id="option-0"]`);
+    expect(await page.$(`${projectOptions} [data-project-id="option-2"]`)).toBeTruthy();
+    await page
+      .locator(`${projectOptions} .ant-select-dropdown-list-holder`)
+      .scroll({ scrollTop: 1600 });
 
     await expect
       .poll(
@@ -478,7 +474,7 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
     expect(optionsRequest.searchParams.get("page")).toBe("2");
     expect(optionsRequest.searchParams.has("projectId")).toBe(false);
     await page.locator(".governance-ant-select input").fill("find last");
-    await page.waitForSelector('.ant-select-dropdown [data-project-id="option-25"]');
+    await page.waitForSelector(`${projectOptions} [data-project-id="option-25"]`);
     const searchedOptions = requests.filter((url) => url.pathname.endsWith("/projects")).at(-1)!;
     expect(searchedOptions.searchParams.get("search")).toBe("find last");
     expect(searchedOptions.searchParams.get("page")).toBe("1");
