@@ -30,12 +30,21 @@ const HookSchema = z.object({
 });
 const HooksResponseSchema = z.object({ data: z.array(z.object({ hooks: z.array(HookSchema) })) });
 
+export const codexHookVerificationFlags = [
+  "--disable",
+  "plugins",
+  "--disable",
+  "plugin_discovery_prefetch",
+  "--disable",
+  "remote_plugin",
+] as const;
+
 /** Read identities from Codex itself rather than reimplementing its trust hash algorithm. */
 async function listNativeHooks(home: string, signal?: AbortSignal) {
   signal?.throwIfAborted();
   const cli = fileURLToPath(import.meta.resolve("@openai/codex/bin/codex.js"));
   prepareProjectRuntime(home, "tools");
-  const child = spawn(process.execPath, [cli, "app-server"], {
+  const child = spawn(process.execPath, [cli, ...codexHookVerificationFlags, "app-server"], {
     detached: process.platform !== "win32",
     cwd: home,
     env: { ...process.env, ...projectRuntimeEnvironment(home, "tools"), CODEX_HOME: home },

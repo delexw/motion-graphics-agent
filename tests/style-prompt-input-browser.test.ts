@@ -100,7 +100,7 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
       expect(await page.$eval("#state", (el) => el.textContent)).toBe(
         "Palette #123456 and #FFF5ED",
       );
-      await page.screenshot({ path: "/tmp/kiteva-color-chips.png" });
+      await page.screenshot({ path: path.join(cacheDir, "color-chips.png") });
       await page.click("#reset");
       const initialBox = await (await page.$(editor))!.boundingBox();
       expect(initialBox).not.toBeNull();
@@ -167,21 +167,9 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
       await page.keyboard.type("Act 3: ");
       // Repeated lookup by ID, with a mouse selection this time.
       await page.keyboard.type("@style-136");
-      await page
-        .locator(
-          () =>
-            [
-              ...document.querySelectorAll<HTMLElement>(
-                '.style-prompt-suggestions [role="menuitemcheckbox"]',
-              ),
-            ].find(
-              (element) =>
-                element.checkVisibility() &&
-                element.textContent?.includes("Manga Production Theatre"),
-            ) ?? null,
-        )
-        .filter((element): element is HTMLElement => element !== null)
-        .click();
+      const mangaOption =
+        '.style-prompt-suggestions [role="menuitemcheckbox"]:has(img[src="/api/examples/style-136"])';
+      await page.locator(mangaOption).click();
       await page.waitForFunction(() =>
         document.querySelector("#state")?.textContent?.includes('<style id="style-136">'),
       );
@@ -193,7 +181,7 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
       expect(xml).toContain("opener.");
       expect(xml).toContain("ending.");
       await (await page.$(".style-prompt-input"))!.screenshot({
-        path: "/tmp/kiteva-style-mentions.png",
+        path: path.join(cacheDir, "style-mentions.png"),
       });
       await page.click("#save");
       await page.click("#restore");
@@ -327,7 +315,7 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
           popup.textContent?.includes("Playing")
         );
       });
-      await page.screenshot({ path: "/tmp/kiteva-motion-mention-preview.png" });
+      await page.screenshot({ path: path.join(cacheDir, "motion-mention-preview.png") });
       const mixed = await page.$eval("#state", (el) => el.textContent);
       await page.click("#save");
       await page.click("#restore");
