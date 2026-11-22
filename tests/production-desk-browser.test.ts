@@ -503,7 +503,8 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
       await page.goto(`${server.resolvedUrls!.local[0]}desk-fixture?beatCase=ready`);
       await page.click(".room-desk-open");
       await page.waitForSelector('.desk-track-music [data-beat-status="ready"]');
-      await page.click(".desk-track-music .desk-clip");
+      await page.locator(".desk-track-music .desk-clip").click();
+      await page.waitForSelector('[aria-label="Next beat"]');
       await page.evaluate(async () => {
         await Reflect.get(window, "setFixtureLanguage")("zh-CN");
       });

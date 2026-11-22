@@ -52,70 +52,83 @@ export async function compressVideo(
   const savingLimit = originalFile.size * (1 - minimumSaving);
   const sizeLimited = preset === "10mb";
   const maximumBytes = sizeLimited ? Math.min(compactVideoLimitBytes, savingLimit) : savingLimit;
-  const videoBitrate = sizeLimited
+  let videoBitrate = sizeLimited
     ? targetVideoBitrate(input.streams, video, maximumBytes, seconds)
     : undefined;
   if (videoBitrate !== undefined && videoBitrate < 16_000) return false;
 
   const timeout = Math.max(600_000, Math.ceil(seconds) * 6000);
   const passes = sizeLimited ? [1, 2] : [undefined];
+  const progressBoundaries = sizeLimited ? [0, 90, 100] : [0, 100];
   let reported = 0;
-  for (const [index, pass] of passes.entries()) {
-    let pending = "";
-    await command(
-      "ffmpeg",
-      [
-        "-v",
-        "error",
-        "-nostats",
-        "-progress",
-        "pipe:1",
-        "-i",
-        source,
-        ...(pass === 1 ? ["-map", "0:v:0", "-an"] : ["-map", "0", "-c", "copy"]),
-        "-c:v:0",
-        "libx264",
-        "-preset",
-        "slow",
-        ...(pass === undefined
-          ? ["-crf", "19"]
-          : [
-              "-b:v:0",
-              String(videoBitrate),
-              "-fps_mode:v:0",
-              "passthrough",
-              "-passlogfile",
-              `${target}.pass`,
-              "-pass:v:0",
-              String(pass),
-            ]),
-        ...(pass === 1 ? ["-f", "null", "-"] : ["-movflags", "+faststart", "-f", "mp4", target]),
-      ],
-      path.dirname(source),
-      signal,
-      () => {},
-      timeout,
-      false,
-      (chunk) => {
-        pending += chunk;
-        const lines = pending.split("\n");
-        pending = lines.pop() ?? "";
-        for (const line of lines) {
-          const match = /^out_time_us=(\d+)\s*$/.exec(line);
-          if (!match) continue;
-          const fraction = Math.min(1, Number(match[1]) / (seconds * 1e6));
-          const percent = Math.min(99, Math.floor(((index + fraction) / passes.length) * 100));
-          if (percent <= reported) continue;
-          reported = percent;
-          onProgress(percent);
-        }
-      },
-    );
+  for (let attempt = 0; ; attempt++) {
+    for (const [index, pass] of passes.entries()) {
+      let pending = "";
+      await command(
+        "ffmpeg",
+        [
+          "-y",
+          "-v",
+          "error",
+          "-nostats",
+          "-progress",
+          "pipe:1",
+          "-i",
+          source,
+          ...(pass === 1 ? ["-map", "0:v:0", "-an"] : ["-map", "0", "-c", "copy"]),
+          "-c:v:0",
+          "libx264",
+          "-preset",
+          "slow",
+          ...(pass === undefined
+            ? ["-crf", "19"]
+            : [
+                "-b:v:0",
+                String(videoBitrate),
+                "-fps_mode:v:0",
+                "passthrough",
+                "-passlogfile",
+                `${target}.pass`,
+                "-pass:v:0",
+                String(pass),
+              ]),
+          ...(pass === 1 ? ["-f", "null", "-"] : ["-movflags", "+faststart", "-f", "mp4", target]),
+        ],
+        path.dirname(source),
+        signal,
+        () => {},
+        timeout,
+        false,
+        (chunk) => {
+          pending += chunk;
+          const lines = pending.split("\n");
+          pending = lines.pop() ?? "";
+          for (const line of lines) {
+            const match = /^out_time_us=(\d+)\s*$/.exec(line);
+            if (!match) continue;
+            const fraction = Math.min(1, Number(match[1]) / (seconds * 1e6));
+            const completed = (index + fraction) / passes.length;
+            const start = progressBoundaries[attempt];
+            const end = progressBoundaries[attempt + 1];
+            const percent = Math.min(99, Math.floor(start + completed * (end - start)));
+            if (percent <= reported) continue;
+            reported = percent;
+            onProgress(percent);
+          }
+        },
+      );
+    }
+
+    const encodedBytes = (await stat(target)).size;
+    if (encodedBytes <= maximumBytes) break;
+    if (videoBitrate === undefined || attempt === 1) return false;
+    // Short two-pass encodes can overshoot their average bitrate. Use the
+    // measured file size to lower the bitrate before trying both passes again.
+    videoBitrate = Math.floor(videoBitrate * (maximumBytes / encodedBytes) * (1 - muxHeadroom));
+    if (videoBitrate < 16_000) return false;
   }
 
   onChecking();
-  if ((await stat(target)).size > maximumBytes) return false;
-
   const original = await countedProbe(source, signal, timeout);
   const compact = await countedProbe(target, signal, timeout);
   const from = original.streams.find((stream) => stream.codec_type === "video");

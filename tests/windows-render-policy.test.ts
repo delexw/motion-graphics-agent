@@ -112,14 +112,19 @@ it("forwards opt-in software capture settings without forwarding unrelated varia
   };
   expect(windowsCaptureEnvironment({})).toEqual({});
   expect(
-    windowsCaptureEnvironment({ PRODUCER_BROWSER_GPU_MODE: "hardware", UNRELATED: "true" }),
+    windowsCaptureEnvironment({
+      HYPERFRAMES_CHROME_SANDBOX: "0",
+      PRODUCER_BROWSER_GPU_MODE: "hardware",
+      UNRELATED: "true",
+    }),
   ).toEqual({});
+  const smokeCapture = { ...softwareCapture, CI: "true", HYPERFRAMES_CHROME_SANDBOX: "0" };
   const workspace = await mkdtemp(path.join(tmpdir(), "native-software-capture-"));
   try {
-    for (const [key, value] of Object.entries(softwareCapture)) vi.stubEnv(key, value);
+    for (const [key, value] of Object.entries(smokeCapture)) vi.stubEnv(key, value);
     vi.stubEnv("UNRELATED", "fixture");
     const result = await diagnosticCommand(process.execPath, ["-e", "0"], workspace);
-    expect(result.env).toMatchObject(softwareCapture);
+    expect(result.env).toMatchObject(smokeCapture);
     expect(result.env.UNRELATED).toBeUndefined();
   } finally {
     vi.unstubAllEnvs();

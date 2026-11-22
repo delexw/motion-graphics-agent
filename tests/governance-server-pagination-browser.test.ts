@@ -200,7 +200,7 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
         (header) => header.getAttribute("aria-expanded"),
       ),
     ).toBe("false");
-    const pictures = path.join(appRoot, "work/governance-layout");
+    const pictures = path.join(cacheDir, "screenshots");
     await mkdir(pictures, { recursive: true });
     const projectPager = 'nav[aria-label="Project pages"]';
     expect(
@@ -397,23 +397,28 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
       "Model prompts · 0 prompts",
       "Usage by model and function",
     ]);
-    for (let openSections = 3; openSections > 0; openSections--) {
-      await page.locator(`${sectionHeaders}[aria-expanded="true"]`).click();
+    const openSectionIndexes = await page.$$eval(sectionHeaders, (headers) =>
+      headers.flatMap((header, index) =>
+        header.getAttribute("aria-expanded") === "true" ? [index + 1] : [],
+      ),
+    );
+    expect(openSectionIndexes).toHaveLength(3);
+    for (const index of openSectionIndexes) {
+      const header = `${sectionGroup} > .ant-collapse-item:nth-child(${index}) > .ant-collapse-header`;
+      await page.locator(`${header}[aria-expanded="true"]`).click();
+      await page.waitForSelector(`${header}[aria-expanded="false"]`);
     }
     await page.waitForSelector(".technology-explorer", { hidden: true });
-    await page.waitForFunction(
-      (groupSelector) => {
-        const group = document.querySelector(groupSelector)!;
-        const lastHeader = group.querySelector(
-          ":scope > .ant-collapse-item:last-child > .ant-collapse-header",
-        )!;
-        return (
-          group.getBoundingClientRect().bottom - lastHeader.getBoundingClientRect().bottom <= 2
-        );
-      },
-      {},
-      sectionGroup,
-    );
+    await expect
+      .poll(() =>
+        page.$eval(sectionGroup, (group) => {
+          const lastHeader = group.querySelector(
+            ":scope > .ant-collapse-item:last-child > .ant-collapse-header",
+          )!;
+          return group.getBoundingClientRect().bottom - lastHeader.getBoundingClientRect().bottom;
+        }),
+      )
+      .toBeLessThanOrEqual(2);
     for (const width of [1200, 420]) {
       await page.setViewport({ width, height: 900 });
       const group = (await page.$(sectionGroup))!;
