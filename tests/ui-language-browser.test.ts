@@ -226,7 +226,10 @@ const h=React.createElement;function App(){const[language,setLanguage]=useState(
           if (text.length > 90 && /\b(the|with|and|from|only|when|before)\b/i.test(text))
             expect(detail, `${motion.id}: untranslated detail`).not.toContain(text);
         }
-        await page.click(".studio-modal .ant-modal-close");
+        const close = ".studio-modal .ant-modal-close";
+        await page.waitForSelector(close, { visible: true });
+        await page.focus(close);
+        await page.keyboard.press("Enter");
         await page.waitForSelector(".studio-modal", { hidden: true });
       }
       await page.goto(`${server.resolvedUrls!.local[0]}language-test`);
