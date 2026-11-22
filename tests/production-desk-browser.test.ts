@@ -283,7 +283,7 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
       expect(await page.$eval(".desk-beat-inspector", (el) => el.textContent)).toContain(
         "120 BPM (estimated)",
       );
-      await page.click('[aria-label="Next beat"]');
+      await page.locator('[aria-label="Next beat"]').click();
       await page.waitForFunction(
         () =>
           Math.abs(
@@ -464,9 +464,11 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
       await page.click(".room-desk-open");
       await page.waitForFunction(() => document.querySelectorAll(".desk-beat-tick").length === 6);
       expect(beatRequests.length - readCount).toBe(1);
-      await page.click(".desk-track-music .desk-clip:last-of-type");
-      await page.click('[aria-label="Go to start"]');
-      await page.click('[aria-label="Next beat"]');
+      const secondPlacement = '.desk-track-music .desk-clip[aria-label*="Second music placement"]';
+      await page.locator(secondPlacement).click();
+      await page.waitForSelector(`${secondPlacement}[aria-pressed="true"]`);
+      await page.locator('[aria-label="Go to start"]').click();
+      await page.locator('[aria-label="Next beat"]').click();
       await page.waitForFunction(
         () =>
           Math.abs(

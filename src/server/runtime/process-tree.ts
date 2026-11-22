@@ -68,7 +68,7 @@ async function terminate(pid: number | undefined, options: ProcessTerminationOpt
     return;
   }
   const send = (signal: NodeJS.Signals) => {
-    const running = owned.filter(alive);
+    const running = options.processGroup ? owned.filter(alive) : owned;
     if (running.length === 0) return;
     if (options.processGroup) {
       try {
