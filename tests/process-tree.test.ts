@@ -60,22 +60,29 @@ it("does not signal a macOS group after the owned processes have exited", async 
   }
 });
 
-it.each([true, false])(
-  "handles a macOS group permission error only if all owned processes have exited (%s)",
-  async (exited) => {
+it.each(["exited", "available", "denied"])(
+  "falls back to owned processes when macOS denies a group signal (%s)",
+  async (ownedProcess) => {
     let running = true;
-    const kill = vi.spyOn(process, "kill").mockImplementation((_pid, signal) => {
-      if (signal === 0) {
-        if (!running) throw Object.assign(Error("Exited"), { code: "ESRCH" });
-        return true;
+    const kill = vi.spyOn(process, "kill").mockImplementation((pid, signal) => {
+      if (pid < 0) {
+        if (ownedProcess === "exited") running = false;
+        throw Object.assign(Error("Unable to signal group"), { code: "EPERM" });
       }
-      running = !exited;
-      throw Object.assign(Error("Unable to signal group"), { code: "EPERM" });
+      if (!running) throw Object.assign(Error("Exited"), { code: "ESRCH" });
+      if (signal === 0) return true;
+      if (ownedProcess === "denied")
+        throw Object.assign(Error("Unable to signal process"), { code: "EPERM" });
+      running = false;
+      return true;
     });
     try {
       const stopping = terminateProcessTree(2345, { processGroup: true, platform: "darwin" });
-      if (exited) await expect(stopping).resolves.toBeUndefined();
-      else await expect(stopping).rejects.toMatchObject({ code: "DEPENDENCY_CLEANUP_FAILED" });
+      if (ownedProcess === "denied")
+        await expect(stopping).rejects.toMatchObject({ code: "DEPENDENCY_CLEANUP_FAILED" });
+      else await expect(stopping).resolves.toBeUndefined();
+      expect(kill).toHaveBeenCalledWith(-2345, "SIGTERM");
+      expect(kill).toHaveBeenCalledWith(2345, "SIGTERM");
     } finally {
       kill.mockRestore();
     }

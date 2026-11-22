@@ -74,9 +74,8 @@ async function terminate(pid: number | undefined, options: ProcessTerminationOpt
       try {
         kill(-pid, signal);
       } catch (error) {
-        // The last owned process can exit between the check and the signal.
-        if ((error as NodeJS.ErrnoException).code !== "EPERM" || running.some(alive)) throw error;
-        return;
+        // macOS can reject a group signal even when we can signal the owned processes.
+        if ((error as NodeJS.ErrnoException).code !== "EPERM") throw error;
       }
     }
     for (const target of running) kill(target, signal);
