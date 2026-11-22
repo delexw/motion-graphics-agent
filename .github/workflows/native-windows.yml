@@ -92,7 +92,10 @@ jobs:
         run: npx vitest run tests/native-platform.test.ts tests/process-tree.test.ts tests/workspace-links.test.ts tests/windows-render-policy.test.ts tests/windows-readiness.test.ts tests/browser-executable.test.ts tests/runtime-command.test.ts tests/file-output.test.ts tests/codex-command.test.ts tests/command-child.test.ts --maxWorkers=4
       - name: Verify native Windows security boundary and real render
         env:
-          # This fixture is a 2D animation. Hosted runners can lose Chrome's GPU process.
+          # HyperFrames can nest Chrome's sandbox inside the native Windows sandbox.
+          # The local 2D fixture still runs inside Kiteva's native sandbox.
+          HYPERFRAMES_CHROME_SANDBOX: "0"
+          # Hosted runners can lose Chrome's GPU process.
           PRODUCER_DISABLE_GPU: "true"
           PRODUCER_BROWSER_GPU_MODE: software
           PRODUCER_FORCE_SCREENSHOT: "true"

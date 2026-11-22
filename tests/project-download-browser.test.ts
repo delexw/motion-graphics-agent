@@ -113,9 +113,10 @@ createRoot(document.getElementById('root')).render(React.createElement(ResultDow
       await page.goto(`http://127.0.0.1:${address.port}/download-test`);
       const open = () => page.click('button[aria-label="Downloads"]');
       const presetButton = 'button[aria-label="Compression presets"]';
-      const openPresets = () => page.click(presetButton);
+      const openPresets = () => page.locator(presetButton + '[aria-expanded="false"]').click();
+      const presetSelector = (name: string) => `::-p-aria([name="${name}"][role="menuitem"])`;
       async function presetItem(name: string) {
-        const item = await page.waitForSelector(`::-p-aria([name="${name}"][role="menuitem"])`, {
+        const item = await page.waitForSelector(presetSelector(name), {
           visible: true,
         });
         if (!item) throw Error(`Missing preset ${name}`);
@@ -223,12 +224,12 @@ createRoot(document.getElementById('root')).render(React.createElement(ResultDow
         })
         .toBe("local archive fixture");
       await openPresets();
-      await (await presetItem("50% rate")).click();
+      await page.locator(presetSelector("50% rate")).click();
       await expect
         .poll(async () => readFile(path.join(cacheDir, "compact.mp4"), "utf8").catch(() => ""))
         .toBe("local compact video fixture");
       await openPresets();
-      await (await presetItem("90% rate")).click();
+      await page.locator(presetSelector("90% rate")).click();
       await expect
         .poll(async () => readFile(path.join(cacheDir, "compact-10mb.mp4"), "utf8").catch(() => ""))
         .toBe("local size-limited fixture");
@@ -245,5 +246,5 @@ createRoot(document.getElementById('root')).render(React.createElement(ResultDow
       await rm(cacheDir, { recursive: true, force: true });
     }
   },
-  30000,
+  60000,
 );

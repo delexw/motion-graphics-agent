@@ -28,7 +28,7 @@ async function fixture() {
   );
   await shim(
     "node",
-    'if [[ "$1" == -p ]]; then\n  if [[ -f "$INSTALL_PREFIX/node-upgraded" ]]; then echo 24;\n  elif [[ -n "${TEST_NODE_MAJOR:-}" ]]; then echo "$TEST_NODE_MAJOR";\n  else exec "$REAL_NODE" "$@"; fi\n  exit 0\nfi\nprintf "node %s\\n" "$*" >> "$INSTALL_LOG"',
+    'if [[ "$1" == -p ]]; then\n  if [[ -f "$INSTALL_PREFIX/node-upgraded" ]]; then echo 24;\n  elif [[ -n "${TEST_NODE_MAJOR:-}" ]]; then echo "$TEST_NODE_MAJOR";\n  else echo 24; fi\n  exit 0\nfi\nprintf "node %s\\n" "$*" >> "$INSTALL_LOG"',
   );
   await shim(
     "brew",
@@ -38,7 +38,7 @@ async function fixture() {
     "npm",
     'printf "npm %s\\n" "$*" >> "$INSTALL_LOG"\nif [[ "$1" == ci && "${FAIL_NPM_CI:-0}" == 1 ]]; then exit 23; fi\nif [[ "$*" == "run multiplane:setup" && "${FAIL_MULTIPLANE_SETUP:-0}" == 1 ]]; then exit 29; fi',
   );
-  for (const name of ["npx", "ffmpeg", "ffprobe"])
+  for (const name of ["npx", "ffmpeg", "ffprobe", "cargo", "rustc"])
     await shim(name, `printf '${name} %s\\n' "$*" >> "$INSTALL_LOG"`);
   await shim(
     "uv",
@@ -52,9 +52,9 @@ async function fixture() {
   await writeFile(audio, '#!/bin/bash\nprintf "audio-installer %s\\n" "$*" >> "$INSTALL_LOG"\n');
   await shim("curl", 'echo "Unexpected network access in installer test" >&2; exit 99');
   const env = {
-    ...process.env,
+    HOME: root,
     PATH: `${bin}:/usr/bin:/bin`,
-    REAL_NODE: process.execPath,
+    CARGO_HOME: path.join(root, "cargo-home"),
     INSTALL_PREFIX: root,
     INSTALL_LOG: log,
     AUDIO_INSTALLER_FIXTURE: audio,

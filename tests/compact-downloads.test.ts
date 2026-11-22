@@ -10,6 +10,7 @@ import { CompactDownloads } from "../src/server/rendering/compact-downloads";
 import { compressVideo } from "../src/server/rendering/compact-video";
 import { compactVideoLimitBytes } from "../src/shared/compact-video-download";
 import { probeVideo } from "../src/server/rendering/video-probe";
+import * as runtimeProcess from "../src/server/runtime/process";
 
 it("returns one compression job to concurrent requests and reuses the verified file for each preset", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "compact-download-"));
@@ -121,6 +122,56 @@ it("keeps the original when compression makes no useful saving and can retry a f
     expect(compress).toHaveBeenCalledTimes(2);
     expect((await readdir(directory)).filter((file) => file.startsWith(".compress-"))).toEqual([]);
   } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+it("retries both encoder passes at a lower bitrate when the first output exceeds 10 MB", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "compact-size-retry-"));
+  const source = path.join(directory, "original.mp4");
+  const target = path.join(directory, "compact.mp4");
+  const passes: Array<{ number: string; bitrate: number }> = [];
+  const checking = vi.fn();
+  const encode = vi.spyOn(runtimeProcess, "command").mockImplementation(async (tool, args) => {
+    if (tool === "ffprobe") {
+      return JSON.stringify({
+        streams: [
+          {
+            codec_type: "video",
+            codec_name: "h264",
+            width: 960,
+            height: 540,
+            pix_fmt: "yuv420p",
+            avg_frame_rate: "30/1",
+            nb_read_frames: "60",
+          },
+        ],
+        format: { duration: "2" },
+      });
+    }
+    expect(tool).toBe("ffmpeg");
+    const number = args[args.indexOf("-pass:v:0") + 1];
+    const bitrate = Number(args[args.indexOf("-b:v:0") + 1]);
+    passes.push({ number, bitrate });
+    if (number === "2") {
+      const bytes = compactVideoLimitBytes + (passes.length === 2 ? 200_000 : -200_000);
+      await writeFile(target, Buffer.alloc(bytes));
+    }
+    return "";
+  });
+  try {
+    await writeFile(source, Buffer.alloc(2 * compactVideoLimitBytes));
+    expect(
+      await compressVideo(source, target, new AbortController().signal, () => {}, checking, "10mb"),
+    ).toBe(true);
+    expect(passes.map((pass) => pass.number)).toEqual(["1", "2", "1", "2"]);
+    expect(passes[0].bitrate).toBe(passes[1].bitrate);
+    expect(passes[2].bitrate).toBe(passes[3].bitrate);
+    expect(passes[2].bitrate).toBeLessThan(passes[0].bitrate);
+    expect((await stat(target)).size).toBeLessThanOrEqual(compactVideoLimitBytes);
+    expect(checking).toHaveBeenCalledOnce();
+  } finally {
+    encode.mockRestore();
     await rm(directory, { recursive: true, force: true });
   }
 });

@@ -44,6 +44,7 @@ it("checks every PR without path filters and runs the entire suite alongside nat
     (step) => step.run === "npm run windows:check",
   );
   expect(windowsSmokeTest?.env).toEqual({
+    HYPERFRAMES_CHROME_SANDBOX: "0",
     PRODUCER_DISABLE_GPU: "true",
     PRODUCER_BROWSER_GPU_MODE: "software",
     PRODUCER_FORCE_SCREENSHOT: "true",
