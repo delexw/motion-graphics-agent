@@ -105,7 +105,7 @@ function App(){const[run,setRun]=useState(${JSON.stringify(run)});const[selected
  h('button',{id:'refresh',onClick:()=>setRun(structuredClone(run))},'Refresh'),
  h('button',{id:'add',onClick:()=>{const next=structuredClone(run);next.jobs.push({...next.jobs[0],id:'next',version:reserveJobVersion(next,'direction')});setRun(next)}},'Add'),
  h(${req.url.includes("?room") ? "RoomProject" : "VideoRefinement"},{run,onUpdated:setRun,view,onView:setView,events:[],renderFull:()=>null,renderPreview:()=>null,controls:null,onQuestion:()=>{},onEdit:()=>{},onCancel:()=>{},onRetry:()=>{}}),
- ...fullRevisionGroups(run.jobs).map(group=>h(RevisionStack,{key:group.key,group,title:'Example',selectedJobId:selected,onSelect:setSelected,events:[],onDelete:async id=>{const next=structuredClone(run);preserveJobVersions(next);next.jobs=next.jobs.filter(job=>job.id!==id);next.deletedVersions=[{id,candidateId:'direction',version:2,deletedAt:new Date().toISOString()}];setRun(next)}},(job,slots)=>h('article',null,h('h3',null,job.id),slots.switcher)))) }
+ h('section',{'data-fixture':'revision-stack'},...fullRevisionGroups(run.jobs).map(group=>h(RevisionStack,{key:group.key,group,title:'Example',selectedJobId:selected,onSelect:setSelected,events:[],onDelete:async id=>{const next=structuredClone(run);preserveJobVersions(next);next.jobs=next.jobs.filter(job=>job.id!==id);next.deletedVersions=[{id,candidateId:'direction',version:2,deletedAt:new Date().toISOString()}];setRun(next)}},(job,slots)=>h('article',null,h('h3',null,job.id),slots.switcher))))) }
 createRoot(document.getElementById('root')).render(h(App));</script>`,
                 ),
               );
@@ -191,18 +191,23 @@ createRoot(document.getElementById('root')).render(h(App));</script>`,
           jobId: "v2",
           discardedRefinementJobIds: ["v2"],
         });
-        await page.locator('.revision-tab:has(input[value="v2"])').click();
-        await page.locator('[aria-label="Delete version 2"]').click();
-        await page.waitForSelector(".ant-popconfirm", { visible: true });
-        expect(await page.$eval("article h3", (node) => node.textContent)).toBe("v2");
-        await page.locator(".ant-popconfirm:not(.ant-popover-hidden) .ant-btn-primary").click();
-        await page.waitForFunction(
-          () => !document.querySelector('[aria-label="Version 2 · Cancelled"]'),
-        );
+        const revisions = '[data-fixture="revision-stack"]';
+        await page.locator(`${revisions} .revision-tab:has(input[value="v2"])`).click();
+        await expect
+          .poll(() => page.$eval(`${revisions} article h3`, (node) => node.textContent))
+          .toBe("v2");
+        await page.locator(`${revisions} [aria-label="Delete version 2"]`).click();
+        const confirm = ".ant-popconfirm:not(.ant-popover-hidden) .ant-btn-primary";
+        await page.waitForSelector(confirm, { visible: true });
+        await page.focus(confirm);
+        await page.keyboard.press("Enter");
+        await page.waitForSelector(`${revisions} [aria-label="Version 2 · Cancelled"]`, {
+          hidden: true,
+        });
         expect(await page.$(checkbox)).toBeNull();
         await page.click("#add");
-        await page.waitForSelector('[aria-label="Version 4 · Ready"]');
-        expect(await page.$('[aria-label="Version 3 · Ready"]')).not.toBeNull();
+        await page.waitForSelector(`${revisions} [aria-label="Version 4 · Ready"]`);
+        expect(await page.$(`${revisions} [aria-label="Version 3 · Ready"]`)).not.toBeNull();
       }
       expect(errors).toEqual([]);
     } finally {
