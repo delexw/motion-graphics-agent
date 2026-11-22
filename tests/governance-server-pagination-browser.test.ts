@@ -241,16 +241,6 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
     await page.locator(`${checkDetails} .governance-jev-call-details .ant-collapse-header`).click();
     await page.waitForSelector(`${checkDetails} .governance-jev-call`);
     const detailPanel = `${checkDetails} td > :first-child`;
-    await page.waitForFunction(
-      (selector) => {
-        const panel = document.querySelector(selector)!;
-        const calls = panel.querySelector('section[aria-label="JEV calls"]')!;
-        const draft = panel.querySelector("pre")!.parentElement!;
-        return calls.getBoundingClientRect().top > draft.getBoundingClientRect().bottom;
-      },
-      {},
-      detailPanel,
-    );
     for (const [width, viewportName] of [
       [1200, "wide"],
       [420, "narrow"],
@@ -259,22 +249,25 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
       await page.$eval(`${detailPanel} .governance-jev-call`, (card) => {
         card.scrollIntoView({ block: "center" });
       });
+      await expect
+        .poll(
+          () =>
+            page.$eval(detailPanel, (panel) => {
+              const calls = panel.querySelector('section[aria-label="JEV calls"]')!;
+              const draft = panel.querySelector("pre")!.parentElement!;
+              const viewport = panel.closest(".ant-table-content")!.getBoundingClientRect();
+              return {
+                fits: panel.getBoundingClientRect().right <= viewport.right + 1,
+                noContentOverflow: calls.scrollWidth <= calls.clientWidth + 1,
+                separated: calls.getBoundingClientRect().top > draft.getBoundingClientRect().bottom,
+              };
+            }),
+          { message: viewportName, timeout: 5000 },
+        )
+        .toEqual({ fits: true, noContentOverflow: true, separated: true });
       await (await page.$(`${detailPanel} .governance-jev-call`))!.screenshot({
         path: path.join(pictures, `governance-check-${viewportName}.png`),
       });
-      expect(
-        await page.$eval(detailPanel, (panel) => {
-          const calls = panel.querySelector('section[aria-label="JEV calls"]')!;
-          const draft = panel.querySelector("pre")!.parentElement!;
-          const viewport = panel.closest(".ant-table-content")!.getBoundingClientRect();
-          return {
-            fits: panel.getBoundingClientRect().right <= viewport.right + 1,
-            noContentOverflow: calls.scrollWidth <= calls.clientWidth + 1,
-            separated: calls.getBoundingClientRect().top > draft.getBoundingClientRect().bottom,
-          };
-        }),
-        viewportName,
-      ).toEqual({ fits: true, noContentOverflow: true, separated: true });
       expect(
         await page.$eval(projectPager, (nav) => {
           const pages = nav.querySelector(".ant-pagination")!;

@@ -68,8 +68,18 @@ async function terminate(pid: number | undefined, options: ProcessTerminationOpt
     return;
   }
   const send = (signal: NodeJS.Signals) => {
-    if (options.processGroup) kill(-pid, signal);
-    for (const target of owned) kill(target, signal);
+    const running = owned.filter(alive);
+    if (running.length === 0) return;
+    if (options.processGroup) {
+      try {
+        kill(-pid, signal);
+      } catch (error) {
+        // The last owned process can exit between the check and the signal.
+        if ((error as NodeJS.ErrnoException).code !== "EPERM" || running.some(alive)) throw error;
+        return;
+      }
+    }
+    for (const target of running) kill(target, signal);
   };
   if (!closing) send("SIGTERM");
   const deadline = Date.now() + (options.graceMs ?? 1000);
