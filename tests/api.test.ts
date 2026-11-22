@@ -9,7 +9,8 @@ import { mkdtemp, writeFile, rm, mkdir, access, symlink } from "node:fs/promises
 import { randomUUID } from "node:crypto";
 import type { Run } from "../src/shared/contracts";
 import path from "node:path";
-import { appRoot, dataRoot, webPort } from "../src/server/runtime/config";
+import { tmpdir } from "node:os";
+import { dataRoot, webPort } from "../src/server/runtime/config";
 import { RequestSchema } from "../src/shared/contracts";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createApp } from "../src/server/app";
@@ -18,18 +19,26 @@ import { api } from "../src/client/lib/api";
 import sharp from "sharp";
 import { unzipSync } from "fflate";
 let server: Awaited<ReturnType<typeof createApp>>;
+let frontendRoot: string;
 beforeEach(async () => {
-  server = await createApp({ store: new Store(":memory:") });
+  frontendRoot = await mkdtemp(path.join(tmpdir(), "frontend-api-"));
+  server = await createApp({ store: new Store(":memory:"), frontendRoot });
 });
 afterEach(async () => {
-  await server.app.close();
+  try {
+    await server.app.close();
+  } finally {
+    await rm(frontendRoot, { recursive: true, force: true });
+  }
 });
 const headers = { host: "127.0.0.1:4317" };
 describe("local application API", () => {
   it("serves frontend assets created after startup and never substitutes HTML for missing assets", async () => {
     await server.app.ready();
     const filename = `late-frontend-${randomUUID()}.js`;
-    const directory = path.join(appRoot, "dist/client/assets");
+    const directory = path.join(frontendRoot, "assets");
+    const index = "<!doctype html><title>Example app</title>";
+    await writeFile(path.join(frontendRoot, "index.html"), index);
     const file = path.join(directory, filename);
     await mkdir(directory, { recursive: true });
     const source = 'console.log("rebuilt frontend");';
@@ -49,6 +58,7 @@ describe("local application API", () => {
     const page = await server.app.inject({ url: "/projects", headers });
     expect(page.statusCode).toBe(200);
     expect(page.headers["content-type"]).toContain("text/html");
+    expect(page.body).toBe(index);
   });
   it("updates effort for one saved project without changing workflow history", async () => {
     const run: Run = {
