@@ -17,7 +17,13 @@ const workflow = z.object({
   on: z.record(z.string(), z.unknown()),
   jobs: z.record(
     z.string(),
-    z.object({ if: z.string().optional(), "runs-on": z.string(), steps: z.array(step) }),
+    z.object({
+      if: z.string().optional(),
+      "runs-on": z.string(),
+      needs: z.array(z.string()).optional(),
+      strategy: z.object({ matrix: z.object({ shard: z.array(z.number()) }) }).optional(),
+      steps: z.array(step),
+    }),
   ),
 });
 const load = (name: string) =>
@@ -29,17 +35,18 @@ const merge = load("dependabot-auto-merge");
 
 it("checks every PR without path filters and runs the entire suite alongside native Windows", () => {
   expect(ci.on.pull_request).toBeNull();
-  expect(ci.jobs.quality["runs-on"]).toBe("macos-15");
-  const commands = ci.jobs.quality.steps.map((s) => s.run ?? "").join("\n");
-  for (const command of [
-    "npm run format:check",
-    "npm run lint",
-    "npm run build",
-    "npm test -- --maxWorkers=1",
-  ])
+  const quality = ci.jobs.quality;
+  const tests = ci.jobs["quality-tests"];
+  expect(quality.needs).toEqual(["quality-static", "quality-tests"]);
+  expect(tests["runs-on"]).toBe("macos-15");
+  const commands = ci.jobs["quality-static"].steps.map((s) => s.run ?? "").join("\n");
+  for (const command of ["npm run format:check", "npm run lint", "npm run build"])
     expect(commands).toContain(command);
-  expect(commands).not.toContain("npm test -- tests/");
-  expect(commands).toContain("npm run multiplane:setup");
+  expect(tests.strategy?.matrix.shard).toEqual([1, 2, 3]);
+  const testStep = tests.steps.find((step) => step.name === "Run test shard");
+  expect(testStep?.env?.TEST_SHARD).toBe("${{ matrix.shard }}/3");
+  expect(testStep?.run).toContain('npm test -- --shard="$TEST_SHARD" --maxWorkers=1');
+  expect(tests.steps.some((step) => step.run === "npm run multiplane:setup")).toBe(true);
   const windowsSmokeTest = ci.jobs["native-windows"].steps.find(
     (step) => step.run === "npm run windows:check",
   );
@@ -110,7 +117,7 @@ it.each([
     const folder = await mkdtemp(path.join(os.tmpdir(), "ci-report-"));
     try {
       await writeFile(path.join(folder, "test-results.json"), JSON.stringify(report));
-      const command = ci.jobs.quality.steps.find(
+      const command = ci.jobs["quality-tests"].steps.find(
         (s) => s.name === "Reject skipped or missing tests",
       )!.run!;
       const result = spawnSync("bash", ["-e", "-c", command], { cwd: folder, encoding: "utf8" });

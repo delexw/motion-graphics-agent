@@ -9,8 +9,32 @@ permissions:
 jobs:
   quality:
     name: Full test suite, lint and format
+    needs: [quality-static, quality-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All macOS test shards and static checks passed."
+  quality-static:
+    name: Lint, format and build
     runs-on: macos-15
     timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run build
+  quality-tests:
+    name: macOS tests (shard ${{ matrix.shard }} of 3)
+    runs-on: macos-15
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     env:
       PUPPETEER_CACHE_DIR: ${{ github.workspace }}/.data/browser-cache
     steps:
@@ -31,12 +55,11 @@ jobs:
         run: npm run multiplane:setup
       - name: Prepare public authoring resources for offline integration tests
         run: node --import tsx --input-type=module -e "import { updateSkill } from './src/server/agents/bundled-skills/installation.ts'; import { bundledSkills } from './src/server/agents/bundled-skills/registry.ts'; for (const skill of bundledSkills) await updateSkill(skill);"
-      - run: npm run format:check
-      - run: npm run lint
-      - run: npm run build
-      # Browser/render fixtures share a three-CPU runner; avoid competing render processes.
-      - name: Run every test
-        run: npm test -- --maxWorkers=1 --reporter=default --reporter=json --outputFile=test-results.json
+      # Keep browser and render tests serial within each runner.
+      - name: Run test shard
+        env:
+          TEST_SHARD: ${{ matrix.shard }}/3
+        run: npm test -- --shard="$TEST_SHARD" --maxWorkers=1 --reporter=default --reporter=json --outputFile=test-results.json
       - name: Reject skipped or missing tests
         run: |
           node --input-type=module -e "import { readFileSync } from 'node:fs'; const r = JSON.parse(readFileSync('test-results.json', 'utf8')); if (!r.success || !r.numTotalTests || r.numPendingTests || r.numTodoTests || r.numPassedTests !== r.numTotalTests) throw Error('Full suite must pass without skipped tests');"
