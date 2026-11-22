@@ -145,6 +145,7 @@ export interface StyleCandidate extends Proposal {
   selectionDecision?: {
     round: number;
     comparedIds: string[];
+    comparedStyles?: Record<string, string[]>;
     probabilities: Record<string, number>;
   };
   id: string;

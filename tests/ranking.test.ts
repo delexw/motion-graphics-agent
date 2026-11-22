@@ -150,6 +150,10 @@ it("uses the official SDK wire format and excludes conflicting candidates", asyn
   expect(result.candidates[0].selectionDecision).toMatchObject({
     round: 1,
     comparedIds: ["candidate-1", "candidate-3"],
+    comparedStyles: {
+      "candidate-1": ["style-108", "style-107"],
+      "candidate-3": ["style-109", "style-107"],
+    },
     probabilities: { "candidate-1": 1, "candidate-3": 0 },
   });
 });

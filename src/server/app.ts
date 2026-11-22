@@ -1,3 +1,4 @@
+import { modelEffortPurpose } from "./jev/strategies/model-effort";
 import { registerCompactDownloadRoutes } from "./rendering/compact-download-routes";
 import { registerProjectReuseRoutes } from "./project-reuse/routes";
 import { projectName } from "../shared/project-name";
@@ -292,6 +293,7 @@ export async function createApp(options: { store?: Store } = {}) {
         { label: "Jev pricing", url: "https://docs.typesafe.ai/models" },
       ],
       models: [
+        { function: modelEffortPurpose, claude: jevModel, codex: jevModel, deepseek: jevModel },
         {
           function: "Request/settings compatibility check",
           claude: jevModel,
@@ -538,6 +540,14 @@ export async function createApp(options: { store?: Store } = {}) {
       return workflow.answerAssetQuestion(run, req.params.questionId, req.body);
     },
   );
+  app.patch<{ Params: { id: string } }>("/api/runs/:id/model-effort", async (req) => {
+    const run = getRun(req.params.id);
+    const { dynamicModelEffort } = z
+      .object({ dynamicModelEffort: z.boolean() })
+      .strict()
+      .parse(req.body);
+    return workflow.setDynamicModelEffort(run, dynamicModelEffort);
+  });
   app.post<{ Params: { id: string } }>("/api/runs/:id/cancel", async (req) => {
     const run = getRun(req.params.id);
     const body = z.object({ jobId: z.string().optional() }).parse(req.body || {});

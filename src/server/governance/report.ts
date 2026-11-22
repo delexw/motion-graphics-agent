@@ -1,3 +1,4 @@
+import { recordedJevCalls } from "../../shared/jev-call-accounting";
 import { codexApiCost } from "./codex-pricing";
 import { jevApiCost } from "./jev-pricing";
 import type { ClaudeTokenUsage } from "./token-usage";
@@ -6,7 +7,9 @@ import { isRunSettled } from "../../shared/contracts";
 import { projectName } from "../../shared/project-name";
 import { jobAuthoringSelection } from "./authoring-selections";
 import { renderCacheReviewDetails } from "./render-cache-reviews";
+import { combinationSelections } from "./combination-selection";
 import {
+  addModelEffortCount,
   correctionActivityPurpose,
   type GovernanceProject,
   type ModelActivity,
@@ -28,6 +31,7 @@ export function projectGovernance(
   const tools = new Set<string>();
   const calls = new Set<string>();
   const usageEvents = new Set<string>();
+  const effortInvocations = new Set<string>();
   const snapshots = new Map<string, Record<string, number>>();
   const snapshotIncrements = (key: string, values: Record<string, unknown>) => {
     const previous = snapshots.get(key) || {};
@@ -135,26 +139,36 @@ export function projectGovernance(
           : "Historical activity · function unrecorded");
     if (!d.invocationId && event.type !== "summary_cache") incompleteHistory = true;
     const row = rowFor(model, purpose);
+    if (event.type === "invocation" && typeof d.invocationId === "string") {
+      const effort = record(d.prompt).reasoningEffort;
+      if (typeof effort === "string" && effort && !effortInvocations.has(d.invocationId)) {
+        addModelEffortCount(row, effort);
+        effortInvocations.add(d.invocationId);
+      }
+    }
     if (purpose === "Render cache review" && typeof d.invocationId === "string") {
       const review = cacheReviews.get(d.invocationId);
       if (review && !row.renderCacheReviews?.some((entry) => entry.id === review.id))
         (row.renderCacheReviews ||= []).push(review);
     }
     if (purpose === "Combination evaluation" && run.rankingModel === model) {
-      row.combinationEvaluation ||= {
-        selected: run.candidates.map((candidate) => ({
-          id: candidate.id,
-          title: candidate.displayTitle || candidate.id,
-          styles: [candidate.primaryStyleId, ...candidate.supportingStyleIds],
-          rationale: candidate.rationale,
-          score: candidate.score,
-          confidence: candidate.confidence,
-          evaluationConfidence: candidate.evaluationConfidence,
-          selectionDecision: candidate.selectionDecision,
-          dimensions: candidate.dimensions,
-        })),
-        calls: [],
-      };
+      if (!row.combinationEvaluation) {
+        const selectionFor = combinationSelections(run);
+        row.combinationEvaluation = {
+          selected: run.candidates.map((candidate) => ({
+            id: candidate.id,
+            title: candidate.displayTitle || candidate.id,
+            styles: [candidate.primaryStyleId, ...candidate.supportingStyleIds],
+            rationale: candidate.rationale,
+            score: candidate.score,
+            confidence: candidate.confidence,
+            evaluationConfidence: candidate.evaluationConfidence,
+            selectionDecision: selectionFor(candidate),
+            dimensions: candidate.dimensions,
+          })),
+          calls: [],
+        };
+      }
       if (
         event.type === "invocation" &&
         typeof d.invocationId === "string" &&
@@ -343,6 +357,15 @@ export function projectGovernance(
       });
     }
   }
+  const name = projectName(run);
+  for (const { model, ...call } of recordedJevCalls(events, {
+    defaultPurpose: "Historical activity · function unrecorded",
+    project: name,
+    projectId: run.id,
+  })) {
+    const row = rows.get(`${model}|${call.purpose}`);
+    if (row) (row.jevCalls ??= []).push(call);
+  }
   const finishedTimes = [
     ...run.jobs.map((j) => j.finishedAt),
     ...events.filter((e) => ["state", "error", "interrupted"].includes(e.type)).map((e) => e.time),
@@ -350,7 +373,7 @@ export function projectGovernance(
   const finished = isRunSettled(run) && finishedTimes.length ? finishedTimes.sort().at(-1)! : null;
   return {
     id: run.id,
-    name: projectName(run),
+    name,
     status: run.phase,
     started: run.createdAt,
     finished,
@@ -378,6 +401,7 @@ export function projectGovernance(
       )
       .map((event) => {
         const data = record(event.data);
+        const recordedEffort = record(data.prompt).reasoningEffort;
         return {
           id: String(data.invocationId),
           model:
@@ -387,6 +411,12 @@ export function projectGovernance(
           time: event.time,
           jobId: event.jobId,
           source: data.prompt ? ("recorded" as const) : ("historical" as const),
+          ...(typeof data.effortDecisionId === "string"
+            ? { effortDecisionId: data.effortDecisionId }
+            : {}),
+          ...(typeof recordedEffort === "string" || recordedEffort === null
+            ? { reasoningEffort: recordedEffort }
+            : {}),
         };
       }),
     incompleteHistory,

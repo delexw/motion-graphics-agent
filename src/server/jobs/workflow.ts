@@ -1,3 +1,5 @@
+import { modelEffortPurpose } from "../jev/strategies/model-effort";
+import { withProjectModelEffort } from "../agents/project-model-effort";
 import { resolveRefinementSettings } from "./subworkflows/refinement-settings/workflow";
 import { VideoRequestSchema } from "../../shared/domains/video";
 import { setupProjectDependencies } from "../technology/project-dependencies";
@@ -286,6 +288,13 @@ export class Workflow {
     }
     this.update(run);
   }
+  setDynamicModelEffort(run: Run, enabled: boolean) {
+    const request = { ...run.request, dynamicModelEffort: enabled };
+    // Changing a future call policy does not create a workflow state transition.
+    this.store.save({ ...run, request });
+    run.request = request;
+    return run;
+  }
   private update(run: Run) {
     for (const job of run.jobs) {
       const production = job.outputType === "page" ? job.pageProduction : job.production;
@@ -348,19 +357,34 @@ export class Workflow {
   async prepare(run: Run) {
     const task = this.startTask(run.id);
     if (!task) return;
-    return activityScope("Project preparation", () => this.prepareWork(run, task), {
-      signal: task.controller.signal,
-      completionState: () =>
-        run.inputWaits?.some((wait) => !wait.jobId)
-          ? "waiting"
-          : run.phase === "failed"
-            ? "failed"
-            : run.phase === "cancelled" || run.phase === "interrupted"
-              ? "stopped"
-              : "complete",
-      onScope: (scope) =>
-        this.store.emit(run.id, "activity_scope", scope.label, undefined, { activityScope: scope }),
-    });
+    return activityScope(
+      "Project preparation",
+      () =>
+        withProjectModelEffort(
+          {
+            get request() {
+              return run.request;
+            },
+            onEffortEvent: this.providerEvent(run, undefined, modelEffortPurpose),
+          },
+          () => this.prepareWork(run, task),
+        ),
+      {
+        signal: task.controller.signal,
+        completionState: () =>
+          run.inputWaits?.some((wait) => !wait.jobId)
+            ? "waiting"
+            : run.phase === "failed"
+              ? "failed"
+              : run.phase === "cancelled" || run.phase === "interrupted"
+                ? "stopped"
+                : "complete",
+        onScope: (scope) =>
+          this.store.emit(run.id, "activity_scope", scope.label, undefined, {
+            activityScope: scope,
+          }),
+      },
+    );
   }
   private async prepareWork(run: Run, task: WorkflowTask) {
     const { controller } = task;
@@ -375,7 +399,10 @@ export class Workflow {
       const workspace = path.join(dataRoot, "runs", run.id, "brief");
       await prepareProjectLayout(workspace, { onlyIfNew: true });
       await mkdir(path.join(workspace, workspacePaths(workspace).assets), { recursive: true });
-      const preparationInputs = (request: CreativeRequest) => ({
+      const preparationInputs = ({
+        dynamicModelEffort: _dynamicModelEffort,
+        ...request
+      }: CreativeRequest) => ({
         request,
         catalog: this.catalog.hash,
         motions: this.catalog.motions,
@@ -667,6 +694,7 @@ export class Workflow {
                 agentTurn({
                   provider: run.request.provider,
                   model: run.request.mainModel || combinationModels[run.request.provider],
+                  effortTask: "planning",
                   workspace,
                   signal: controller.signal,
                   readOnly: true,
@@ -731,6 +759,7 @@ export class Workflow {
             .object({
               round: z.number(),
               comparedIds: z.array(z.string()),
+              comparedStyles: z.record(z.string(), z.array(z.string()).min(1)).optional(),
               probabilities: z.record(z.string(), z.number()),
             })
             .optional(),
@@ -962,7 +991,16 @@ export class Workflow {
     if (!task) return;
     return activityScope(
       job.kind === "preview" ? "Creating your preview" : "Creating your full result",
-      () => this.generateWork(run, job, task, feedback, decisions),
+      () =>
+        withProjectModelEffort(
+          {
+            get request() {
+              return run.request;
+            },
+            onEffortEvent: this.providerEvent(run, job, modelEffortPurpose),
+          },
+          () => this.generateWork(run, job, task, feedback, decisions),
+        ),
       {
         signal: task.controller.signal,
         completionState: () =>
@@ -1527,7 +1565,15 @@ export class Workflow {
     if (!task) throw Error("Project is stopping");
     const cancellation = addAbortListener(signal, () => task.controller.abort(signal.reason));
     try {
-      return await work(task.controller.signal);
+      return await withProjectModelEffort(
+        {
+          get request() {
+            return run.request;
+          },
+          onEffortEvent: this.providerEvent(run, undefined, modelEffortPurpose),
+        },
+        () => work(task.controller.signal),
+      );
     } catch (error) {
       this.trackDependencyFailure(run, error);
       throw error;

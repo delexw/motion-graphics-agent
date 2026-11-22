@@ -60,6 +60,7 @@ export async function runExplicitStylePreviewWorkflow(input: {
     includeCreativeAlternatives: false,
     provider: request.provider,
     model: request.mainModel || models[request.provider],
+    effortTask: "planning",
     workspace,
     signal,
     onEvent,

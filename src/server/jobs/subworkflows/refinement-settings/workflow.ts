@@ -41,6 +41,7 @@ export async function resolveRefinementSettings(input: {
   const result = await agentTurn({
     provider: request.provider,
     model: input.model,
+    effortTask: "script",
     workspace,
     signal,
     onEvent,

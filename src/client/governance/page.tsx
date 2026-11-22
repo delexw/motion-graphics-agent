@@ -1,6 +1,8 @@
+import { usesDynamicModelEffort } from "../../shared/model-effort";
 import { agentProviderIds, agentProviderDefinitions } from "../../shared/agent-providers";
 import type { Style } from "../../shared/contracts";
 import { GovernanceProjectSelect } from "./project-select";
+import { GovernanceProjectTiming } from "./project-timing";
 import { formatGovernanceCost } from "./format-cost";
 import { settingsCheckActivity } from "../../shared/settings-check-accounting";
 import { ProjectTechnologyExplorer } from "./technology-explorer";
@@ -21,14 +23,7 @@ import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import type { GovernanceReport } from "../../shared/governance";
 
-const date = (value: string | null) =>
-  value ? uiLanguage.date(value) : translateUi("Not finished / not recorded");
-const duration = (ms: number) =>
-  translateUi("{{hours}}h {{minutes}}m {{seconds}}s", {
-    hours: Math.floor(ms / 3600000),
-    minutes: Math.floor(ms / 60000) % 60,
-    seconds: Math.floor(ms / 1000) % 60,
-  });
+const projectPageSizes = [5, 10, 25];
 
 export function GovernancePage({ styles = [] }: { styles?: Pick<Style, "id" | "name_en">[] }) {
   useUiLanguage();
@@ -37,7 +32,7 @@ export function GovernancePage({ styles = [] }: { styles?: Pick<Style, "id" | "n
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(projectPageSizes[0]);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [checksPage, setChecksPage] = useState(1);
@@ -95,6 +90,11 @@ export function GovernancePage({ styles = [] }: { styles?: Pick<Style, "id" | "n
   const projects = report.projects.filter(
     (project) => selected === "all" || project.id === selected,
   );
+  const timingProject = projects[0];
+  const projectPagination =
+    selected === "all" && report.pagination && report.pagination.total > projectPageSizes[0]
+      ? report.pagination
+      : undefined;
   const checks = (report.settingsChecks ?? []).filter(
     (check) => selected === "all" || check.runId === selected,
   );
@@ -146,13 +146,18 @@ export function GovernancePage({ styles = [] }: { styles?: Pick<Style, "id" | "n
           />
           <span>
             {translateUi("Updated") + " "}
-            {date(report.generatedAt)}
+            {uiLanguage.date(report.generatedAt)}
             {" " + translateUi("· refreshes every 10s")}
           </span>
         </div>
       }
     >
       {error && <Alert type="error" title={error} showIcon />}
+      {timingProject && (
+        <Card className="governance-ant-card governance-timing-card" title={timingProject.name}>
+          <GovernanceProjectTiming project={timingProject} />
+        </Card>
+      )}
       <p>
         {translateUi("Usage and cost totals below cover only the loaded project and check pages.")}
       </p>
@@ -219,19 +224,6 @@ export function GovernancePage({ styles = [] }: { styles?: Pick<Style, "id" | "n
       >
         <GovernanceUsageTable rows={aggregateModels(activity)} styles={styles} />
       </Card>
-      {report.pagination && (
-        <Pagination
-          current={report.pagination.page}
-          pageSize={report.pagination.pageSize}
-          total={report.pagination.total}
-          showSizeChanger
-          pageSizeOptions={[5, 10, 25]}
-          onChange={(page, size) => {
-            setPage(page);
-            setPageSize(size);
-          }}
-        />
-      )}
       {projects.length === 0 && <p>{translateUi("No projects recorded yet.")}</p>}
       {projects.map((project) => (
         <Card
@@ -257,30 +249,7 @@ export function GovernancePage({ styles = [] }: { styles?: Pick<Style, "id" | "n
             </Tag>
           }
         >
-          <ProjectTechnologyExplorer projectId={project.id} jobs={project.technologyJobs ?? []} />
-          <dl className="governance-timing">
-            <div>
-              <dt>{translateUi("Started")}</dt>
-              <dd>{date(project.started)}</dd>
-            </div>
-            <div>
-              <dt>{translateUi("Finished")}</dt>
-              <dd>{date(project.finished)}</dd>
-            </div>
-            <div>
-              <dt>{translateUi("Total duration")}</dt>
-              <dd>
-                {project.durationMs === null
-                  ? translateUi("Not recorded")
-                  : duration(project.durationMs)}
-                {project.finished
-                  ? ""
-                  : ["ready", "failed", "cancelled", "interrupted"].includes(project.status)
-                    ? translateUi(" · incomplete timing")
-                    : translateUi(" · elapsed")}
-              </dd>
-            </div>
-          </dl>
+          {project.id !== timingProject?.id && <GovernanceProjectTiming project={project} />}
           {project.incompleteHistory && (
             <p className="governance-note">
               {translateUi(
@@ -292,6 +261,17 @@ export function GovernancePage({ styles = [] }: { styles?: Pick<Style, "id" | "n
             className="governance-ant-sections"
             defaultActiveKey={projects.length === 1 ? ["inputs", "usage"] : ["usage"]}
             items={[
+              {
+                key: "technologies",
+                label: translateUi("Project technologies"),
+                destroyOnHidden: true,
+                children: (
+                  <ProjectTechnologyExplorer
+                    projectId={project.id}
+                    jobs={project.technologyJobs ?? []}
+                  />
+                ),
+              },
               {
                 key: "inputs",
                 label: translateUi("User input and settings"),
@@ -336,6 +316,12 @@ export function GovernancePage({ styles = [] }: { styles?: Pick<Style, "id" | "n
                       <div>
                         <dt>{translateUi("Provider")}</dt>
                         <dd>{project.request.provider}</dd>
+                      </div>
+                      <div>
+                        <dt>{translateUi("Adjustive effort")}</dt>
+                        <dd>
+                          {translateUi(usesDynamicModelEffort(project.request) ? "Yes" : "No")}
+                        </dd>
                       </div>
                       <div>
                         <dt>{translateUi("Build route")}</dt>
@@ -467,6 +453,26 @@ export function GovernancePage({ styles = [] }: { styles?: Pick<Style, "id" | "n
           />
         </Card>
       ))}
+      {projectPagination && (
+        <nav className="governance-project-pagination" aria-label={translateUi("Project pages")}>
+          <Pagination
+            align="end"
+            current={projectPagination.page}
+            pageSize={projectPagination.pageSize}
+            total={projectPagination.total}
+            showLessItems
+            showSizeChanger
+            pageSizeOptions={projectPageSizes}
+            showTotal={(total, [start, end]) =>
+              translateUi("Projects {{start}} to {{end}} of {{total}}", { start, end, total })
+            }
+            onChange={(nextPage, size) => {
+              setPage(size === pageSize ? nextPage : 1);
+              setPageSize(size);
+            }}
+          />
+        </nav>
+      )}
       <Card title={translateUi("Accounting notes")} className="governance-ant-card">
         <p>
           {translateUi(

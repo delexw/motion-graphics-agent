@@ -1,3 +1,4 @@
+import { usesDynamicModelEffort } from "../../shared/model-effort";
 import { creativeApproachLabel } from "../../shared/creative-approach";
 import { buildRouteLabel, buildRouteOf } from "../../shared/build-route";
 import { translateUi } from "../i18n/service";
@@ -82,6 +83,9 @@ export function roomSettingsReply(request: CreativeRequest, styles: ReplyStyle[]
       value0: request.mainModel
         ? modelDisplayName(request.mainModel)
         : providerDisplayName(request.provider),
+    }),
+    translateUi("Adjustive effort: {{value0}}", {
+      value0: translateUi(usesDynamicModelEffort(request) ? "Yes" : "No"),
     }),
     translateUi("Output: {{value0}}", {
       value0: translateUi(

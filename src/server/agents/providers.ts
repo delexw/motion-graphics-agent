@@ -1,3 +1,4 @@
+import { resolveProjectCallEffort } from "./project-model-effort";
 import { workspacePaths, projectLayoutGuidance } from "../runtime/workspace";
 import { startAuthenticationBridge } from "./capabilities/reference-browser/authentication-bridge";
 import { RetryBudget } from "../../shared/retry-budget";
@@ -24,7 +25,7 @@ import type { Agent, AgentTurnOptions, ProviderEvent } from "./agent";
 import { cavemanSettings } from "./caveman";
 import { sdkExecutionGuidance } from "./execution-policy";
 import { claudeAgent } from "./claude-agent";
-import { deepseekAgent } from "./deepseek-agent";
+import { deepseekAgent, deepSeekNativeEffort } from "./deepseek-agent";
 import { codexAgent } from "./codex-agent";
 import { bundledSkillsGuidance, prepareBundledSkills } from "./bundled-skills";
 export type { ProviderEvent, AgentTurnOptions, Agent } from "./agent";
@@ -45,15 +46,14 @@ export async function agentTurn<T>(
   options: AgentTurnOptions<T>,
 ): Promise<{ value: T; sessionId?: string }> {
   const onEvent = options.onEvent;
+  const model = options.model || models[options.provider];
   options = {
     ...options,
-    reasoningEffort: options.reasoningEffort ?? agents[options.provider].defaultReasoningEffort,
     onEvent: bindActivityCallback((event: ProviderEvent) =>
       onEvent({ ...event, data: activityEventData(event.data) }),
     ),
   };
   let sessionId = options.sessionId;
-  const model = options.model || models[options.provider];
   for (const { index: attempt } of new RetryBudget(capacityRetryDelaysMs.length + 1)) {
     options.signal.throwIfAborted();
     try {
@@ -184,10 +184,26 @@ async function agentTurnAttempt<T>(
           }
         : {}),
     });
+    const agent = agents[provider];
+    const { effort: requestedEffort, decisionId } = await resolveProjectCallEffort({
+      model: selectedModel,
+      targetInvocationId: invocationId,
+      effortTask: options.effortTask,
+      taskEffort: options.reasoningEffort,
+      providerDefaultEffort: agent.defaultReasoningEffort,
+      prompt: options.prompt,
+      readOnly: options.readOnly,
+      textOnly: options.textOnly,
+      signal,
+    });
+    const reasoningEffort =
+      provider === "deepseek" ? deepSeekNativeEffort(requestedEffort) : requestedEffort;
+    signal.throwIfAborted();
     onEvent({
       type: "invocation",
       message: "Model invocation started",
       data: {
+        ...(decisionId ? { effortDecisionId: decisionId } : {}),
         caveman: {
           enabled: cavemanEnabled,
           mode: cavemanEnabled ? "compress" : "off",
@@ -200,14 +216,14 @@ async function agentTurnAttempt<T>(
               typeof value === "string" ? redactSecrets(value) : value,
             ),
           ),
-          reasoningEffort: options.reasoningEffort ?? null,
+          reasoningEffort: reasoningEffort ?? null,
         },
       },
     });
-    const agent = agents[provider];
     signal.throwIfAborted();
     const execution = await agent.run({
       ...options,
+      reasoningEffort,
       prompt,
       model: selectedModel,
       systemPrompt,

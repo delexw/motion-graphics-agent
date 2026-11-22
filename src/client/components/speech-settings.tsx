@@ -1,19 +1,10 @@
 import { videoLanguageLabel } from "../../shared/video-language";
 import { translateUi, useUiLanguage } from "../i18n";
-import { CheckCircle2, Info, Mic } from "lucide-react";
+import { CheckCircle2, Mic } from "lucide-react";
+import { SettingsHelpTip } from "./settings-help-tip";
 import { SettingsSectionHeading } from "./settings-section-heading";
 import { useEffect, useRef, useState } from "react";
-import {
-  Alert,
-  Button,
-  Input,
-  InputNumber,
-  Select,
-  Slider,
-  Space,
-  Tooltip,
-  Typography,
-} from "antd";
+import { Alert, Button, Input, InputNumber, Select, Slider, Space, Typography } from "antd";
 import {
   speechVoices,
   speechEngines,
@@ -325,19 +316,12 @@ export function SpeechSettings({
             <span className="speech-control-label">
               {translateUi("Volume") + " "}
               <span>{Math.round((value.volume ?? 1) * 100)}%</span>
-              <Tooltip
+              <SettingsHelpTip
+                label={translateUi("About narration volume")}
                 title={translateUi(
                   "Voice levels are matched automatically, with clipping protection. Applies to Listen and the finished project.",
                 )}
-              >
-                <button
-                  type="button"
-                  className="speech-help"
-                  aria-label={translateUi("About narration volume")}
-                >
-                  <Info size={14} />
-                </button>
-              </Tooltip>
+              />
             </span>
             <Slider
               ariaLabelForHandle={translateUi("Narration volume")}

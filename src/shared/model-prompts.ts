@@ -5,6 +5,8 @@ export interface ModelPromptSummary {
   time: string;
   jobId?: string;
   source: "recorded" | "historical";
+  reasoningEffort?: string | null;
+  effortDecisionId?: string;
 }
 export interface ModelPromptRecord extends ModelPromptSummary {
   system: string | null;
@@ -12,6 +14,7 @@ export interface ModelPromptRecord extends ModelPromptSummary {
   outputSchema: unknown;
   reasoningEffort: string | null;
   note?: string;
+  effortSelection?: { model: string; level: string | null };
 }
 // Preserve all text; only indent complete JSON objects/arrays on their own lines.
 export function formatModelPrompt(prompt: string) {

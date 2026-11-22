@@ -1,3 +1,4 @@
+import { defaultDynamicModelEffort } from "../../shared/model-effort";
 import { codexSolModel } from "../../shared/agent-providers";
 import { languageTrackRows, LanguageTracksSchema } from "../../shared/language-tracks";
 import { z } from "zod";
@@ -22,6 +23,7 @@ export const ideaToolGuidance = {
 export const kitevaIdeaDefaults = {
   provider: "claude",
   mainModel: defaultProviderModels.claude,
+  dynamicModelEffort: defaultDynamicModelEffort,
   resolution: "1440p",
   frameRate: 60,
   renderer: "multiplane",
@@ -40,6 +42,8 @@ const fieldGuidance: Record<string, string> = {
   provider:
     "Main agent provider: claude, codex or deepseek. Default: claude. The selected provider uses its own default main model unless overridden.",
   mainModel: `Main model identifier. Default for Claude: ${defaultProviderModels.claude} (Opus 5.5). For Codex, use ${defaultProviderModels.codex} or ${codexSolModel}. Must belong to the chosen provider; no silent substitution.`,
+  dynamicModelEffort:
+    "Project-wide switch. Off by default. Off uses each task or provider's existing effort. On lets JEV choose effort independently for each supported call. Preserve the user's choice.",
   candidateCount:
     "Number of preview directions, default 3. Zero means direct build and requires selectedStyleIds, according to Kiteva's standard request validation.",
   selectedStyleIds:

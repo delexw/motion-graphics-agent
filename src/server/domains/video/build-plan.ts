@@ -173,6 +173,7 @@ export async function prepareVideoBuildPlan(input: {
               includeCreativeAlternatives: false,
               provider,
               model: job.model,
+              effortTask: "planning",
               workspace: job.workspace,
               referenceUrls: input.referenceUrls,
               signal,

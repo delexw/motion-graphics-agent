@@ -66,6 +66,15 @@
 这里只保留最近三条按日期归档的更新记录，不按连续自然日计算。更早的记录见[变更日志](CHANGELOG.md#daily-update-archive)，版本发布记录见[完整 changelog](CHANGELOG.md)。
 
 <details>
+<summary>2026-11-22</summary>
+
+- **自适应推理强度：**每个项目可选择「是」或「否」，默认「否」。「是」允许 JEV 为每次受支持的模型调用选择推理强度；「否」使用任务或模型的默认设置。通过 MCP 创建草稿时也可以设置。
+- **治理页面：**项目时间显示在顶部，用量明细显示推理强度。JEV 仪表板先显示决策和分数，可展开查看理由、输入和比较结果。已保存的组合比较会在有记录时显示主样式和辅助样式名称。
+- **生成设置：**视频语言、制作方式和自适应推理强度的说明移至标签旁的信息图标。
+
+</details>
+
+<details>
 <summary>2026-11-19</summary>
 
 - **GPT-6.2 Astra：**新的 GPT 项目默认使用 GPT-6.2 Astra 进行创意提案、规划、生成和主模型修复。本地模型覆盖设置仍然有效；历史 GPT-6.1 Sol 选择和费用记录保持可读。
@@ -82,17 +91,6 @@
 - **音乐节拍分析：**智能体可通过已安装的 HyperFrames CLI 在本地分析准备好的配乐，保存检测到的节拍时间、估算速度和音源指纹。详见[实现记录](https://github.com/delexw/motion-graphics-agent/commit/af9e4d7)。
 - **Production Desk 节拍显示：**音乐片段显示节拍刻度、估算 BPM 和节拍数量。选中片段后，可用按钮或 `[` / `]` 跳到上一拍或下一拍。缺失或过期的分析会明确标注；打开 Desk 不会触发生成。详见[控件与限制](docs/production-desk.md#measured-music-beats)（英文）。
 - **工具活动标签：**音乐分析使用独立的中英文 Activity 标签，开发指导要求每个新工具提供独立的用户可见标签。
-
-</details>
-
-<details>
-<summary>2026-11-16</summary>
-
-- **v1.2.0 发布：**新增 DeepSeek 创作、成品项目复用及媒体工作流治理。详见[发布说明](https://github.com/delexw/motion-graphics-agent/releases/tag/v1.2.0)。
-- **DeepSeek 提供方：**通过官方 Harness SDK，使用 DeepSeek Flash 进行文本和图像辅助创作。配置 `DEEPSEEK_API_KEY`；界面、MCP 和 Governance 共用模型路由，暂未接入 OAuth。
-- **费用记录：**隔离运行时加载社区 `dsh-cost-meter` 插件。Governance 展示每次调用的美元估算，按会话与事件序号去重，缺少用量或价格时保留未知。详见[配置、安全与限制](src/server/agents/deepseek/README.md)。
-- **SDK 执行修复：**DeepSeek 修改版本时显式切换工作目录，并授予当前创作目录写权限；工具完成与失败事件保留调用 ID。Codex 默认使用 medium 推理，显式指定的级别仍然有效。
-- **准备活动：**复用已有检查点组件展示已保存的准备步骤，避免完成后出现空活动列表。
 
 </details>
 

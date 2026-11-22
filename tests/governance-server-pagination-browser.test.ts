@@ -39,7 +39,7 @@ it("requests project/search pages from the server and loads only an opened techn
                 `<!doctype html><div id="root"></div><script type="module">
 import React from 'react';import{createRoot}from'react-dom/client';import{ConfigProvider}from'antd';
 import{roomTheme,roomCssVariables}from'/src/client/theme.ts';import{GovernancePage}from'/src/client/governance/page.tsx';import'/src/client/style.css';import'/src/client/room/room.css';
-createRoot(document.getElementById('root')).render(React.createElement(ConfigProvider,{theme:roomTheme},React.createElement('div',{className:'room-utility',style:{...roomCssVariables,width:'100%',height:'auto',padding:16}},React.createElement(GovernancePage))));
+createRoot(document.getElementById('root')).render(React.createElement(ConfigProvider,{theme:roomTheme},React.createElement('div',{className:'room-utility',style:{...roomCssVariables,width:'100%',height:'auto',padding:16,background:'var(--room-surface)'}},React.createElement(GovernancePage))));
 </script>`,
               ),
             );
@@ -54,6 +54,7 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
     pipe: true,
   });
   const requests: URL[] = [];
+  let reportUnavailable = false;
   try {
     await server.listen();
     const page = await newBrowserPage(browser);
@@ -65,6 +66,10 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
       const url = new URL(request.url());
       if (url.pathname.startsWith("/api/admin/governance")) {
         requests.push(url);
+        if (reportUnavailable && url.pathname === "/api/admin/governance") {
+          void request.respond({ status: 503 });
+          return;
+        }
         const current = Number(url.searchParams.get("page") || 1);
         const pageSize = Number(url.searchParams.get("pageSize") || 5);
         const search = url.searchParams.get("search") || "";
@@ -119,16 +124,44 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
                 models: [],
                 pricingDate: "2026-01-01",
                 pricingSources: [],
-                settingsChecks: [],
+                settingsChecks: search
+                  ? []
+                  : [
+                      {
+                        id: "00000000-0000-4000-8000-000000000001",
+                        draftId: "00000000-0000-4000-8000-000000000002",
+                        runId: "00000000-0000-4000-8000-000000000003",
+                        requestHash: "fixture",
+                        startedAt: "2026-01-01T00:00:00Z",
+                        finishedAt: "2026-01-01T00:00:01Z",
+                        model: "jev-1.14.0",
+                        status: "compatible",
+                        events: [
+                          {
+                            type: "invocation",
+                            message: "Compatibility check started",
+                            data: { invocationId: "fixture-check", prompt: "Synthetic brief" },
+                          },
+                          {
+                            type: "usage",
+                            message: "Usage recorded",
+                            data: {
+                              invocationId: "fixture-check",
+                              usage: { input_tokens: 4841, output_tokens: 711 },
+                            },
+                          },
+                        ],
+                      },
+                    ],
                 pagination: { page: current, pageSize, total: search ? 1 : 26, search },
-                checksPagination: { page: 1, pageSize: 10, total: 0, search: "" },
+                checksPagination: { page: 1, pageSize: 10, total: search ? 0 : 1, search: "" },
                 projects: [
                   {
                     id: url.searchParams.get("projectId") || `project-${current}`,
                     name: `${search || "Example"} project ${current}`,
-                    status: "ready",
+                    status: current === 1 ? "ready" : "ranking",
                     started: "2026-01-01T00:00:00Z",
-                    finished: null,
+                    finished: current === 1 ? "2026-01-01T00:00:01Z" : null,
                     durationMs: 1000,
                     request: RequestSchema.parse({
                       instructions: "Synthetic fixture",
@@ -156,11 +189,124 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
     });
     await page.goto(`${server.resolvedUrls!.local[0]}governance-fixture`);
     await page.waitForSelector('.governance-panel[data-project-id="project-1"]');
-    await expect
-      .poll(() => requests.filter((url) => url.pathname.endsWith("/technologies")).length)
-      .toBe(1);
-    await page.locator(".ant-pagination-item-2 a").click();
+    const sectionGroup = ".governance-panel .governance-ant-sections";
+    const sectionHeaders = `${sectionGroup} > .ant-collapse-item > .ant-collapse-header`;
+    const technologyHeader = page
+      .locator(sectionHeaders)
+      .filter((header) => header.textContent === "Project technologies");
+    expect(
+      await page.$eval(
+        `${sectionGroup} > .ant-collapse-item:first-child > .ant-collapse-header`,
+        (header) => header.getAttribute("aria-expanded"),
+      ),
+    ).toBe("false");
+    const pictures = path.join(appRoot, "work/governance-layout");
+    await mkdir(pictures, { recursive: true });
+    const projectPager = 'nav[aria-label="Project pages"]';
+    expect(
+      await page.$eval(
+        ".governance-timing-card",
+        (timing, pager) => {
+          const usage = document.querySelector(".governance-stats")!;
+          const project = document.querySelector(".governance-panel")!;
+          const pagination = document.querySelector(pager)!;
+          return {
+            name: timing.querySelector(".ant-card-head-title")?.textContent,
+            timingAboveUsage:
+              timing.getBoundingClientRect().bottom < usage.getBoundingClientRect().top,
+            projectAbovePagination:
+              project.getBoundingClientRect().bottom < pagination.getBoundingClientRect().top,
+            duplicateTiming: Boolean(project.querySelector(".governance-timing")),
+          };
+        },
+        projectPager,
+      ),
+    ).toEqual({
+      name: "Example project 1",
+      timingAboveUsage: true,
+      projectAbovePagination: true,
+      duplicateTiming: false,
+    });
+    const checksTable =
+      '.ant-table-wrapper:has(tr[data-row-key="00000000-0000-4000-8000-000000000001"])';
+    await page.locator(`${checksTable} button.ant-table-row-expand-icon`).click();
+    const checkDetails = `${checksTable} tr.ant-table-expanded-row`;
+    await page.waitForSelector(`${checkDetails} .governance-settings-check-card`);
+    expect(await page.$(`${checkDetails} pre`)).toBeNull();
+    expect(await page.$(`${checkDetails} .governance-jev-call`)).toBeNull();
+    await page
+      .locator(`${checkDetails} .governance-settings-check-card .ant-collapse-header`)
+      .click();
+    await page.waitForSelector(`${checkDetails} pre`);
+    await page.locator(`${checkDetails} .governance-jev-call-details .ant-collapse-header`).click();
+    await page.waitForSelector(`${checkDetails} .governance-jev-call`);
+    const detailPanel = `${checkDetails} td > :first-child`;
+    await page.waitForFunction(
+      (selector) => {
+        const panel = document.querySelector(selector)!;
+        const calls = panel.querySelector('section[aria-label="JEV calls"]')!;
+        const draft = panel.querySelector("pre")!.parentElement!;
+        return calls.getBoundingClientRect().top > draft.getBoundingClientRect().bottom;
+      },
+      {},
+      detailPanel,
+    );
+    for (const [width, viewportName] of [
+      [1200, "wide"],
+      [420, "narrow"],
+    ] as const) {
+      await page.setViewport({ width, height: 900 });
+      await page.$eval(`${detailPanel} .governance-jev-call`, (card) => {
+        card.scrollIntoView({ block: "center" });
+      });
+      await (await page.$(`${detailPanel} .governance-jev-call`))!.screenshot({
+        path: path.join(pictures, `governance-check-${viewportName}.png`),
+      });
+      expect(
+        await page.$eval(detailPanel, (panel) => {
+          const calls = panel.querySelector('section[aria-label="JEV calls"]')!;
+          const draft = panel.querySelector("pre")!.parentElement!;
+          const viewport = panel.closest(".ant-table-content")!.getBoundingClientRect();
+          return {
+            fits: panel.getBoundingClientRect().right <= viewport.right + 1,
+            noContentOverflow: calls.scrollWidth <= calls.clientWidth + 1,
+            separated: calls.getBoundingClientRect().top > draft.getBoundingClientRect().bottom,
+          };
+        }),
+        viewportName,
+      ).toEqual({ fits: true, noContentOverflow: true, separated: true });
+      expect(
+        await page.$eval(projectPager, (nav) => {
+          const pages = nav.querySelector(".ant-pagination")!;
+          return (
+            nav.getBoundingClientRect().right <= document.documentElement.clientWidth &&
+            pages.scrollWidth <= nav.clientWidth + 1 &&
+            getComputedStyle(pages).justifyContent === "end"
+          );
+        }),
+      ).toBe(true);
+    }
+    await page.setViewport({ width: 1200, height: 900 });
+    await page.$eval(".room-utility", (room) => ((room as HTMLElement).style.maxWidth = "420px"));
+    await page.waitForFunction(() => {
+      const metrics = [...document.querySelectorAll(".governance-jev-call-metrics > div")];
+      return (
+        metrics.length === 4 &&
+        new Set(metrics.map((metric) => metric.getBoundingClientRect().top)).size > 1
+      );
+    });
+    await page.$eval(".room-utility", (room) => ((room as HTMLElement).style.maxWidth = ""));
+    await (await page.$(".governance-timing-card"))!.screenshot({
+      path: path.join(pictures, "governance-top-timing.png"),
+    });
+    await (await page.$(projectPager))!.screenshot({
+      path: path.join(pictures, "governance-project-pagination.png"),
+    });
+    await page.locator(`${projectPager} .ant-pagination-item-2 a`).click();
     await page.waitForSelector('.governance-panel[data-project-id="project-2"]');
+    expect(await page.$eval(".governance-timing-card", (node) => node.textContent)).toContain(
+      "In progress",
+    );
     expect(
       requests
         .filter((url) => url.pathname === "/api/admin/governance")
@@ -186,6 +332,12 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
         .at(-1)
         ?.searchParams.get("page"),
     ).toBe("1");
+    expect(await page.$(projectPager)).toBeNull();
+    expect(await page.$eval(".governance-page", (node) => node.textContent)).toContain(
+      "No settings checks recorded yet.",
+    );
+    expect(requests.filter((url) => url.pathname.endsWith("/technologies"))).toHaveLength(0);
+    await technologyHeader.click();
     await page.waitForSelector('section[aria-label="Project technologies"] .ant-table-row');
     expect(await page.$eval(".project-technologies", (node) => node.textContent)).toContain(
       "Code usage unverified",
@@ -218,8 +370,6 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
     );
     expect(new Set(fields.map((field) => Math.round(field.y))).size).toBe(1);
     expect(await page.$('section[aria-label="Project technologies"] h4')).toBeNull();
-    const pictures = path.join(appRoot, "work/governance-layout");
-    await mkdir(pictures, { recursive: true });
     await (await page.$(".technology-explorer"))!.screenshot({
       path: path.join(pictures, "technology-dark-wide.png"),
     });
@@ -238,6 +388,50 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
       path: path.join(pictures, "technology-dark-narrow.png"),
     });
     await page.setViewport({ width: 1200, height: 900 });
+
+    expect(
+      await page.$$eval(sectionHeaders, (headers) => headers.map((header) => header.textContent)),
+    ).toEqual([
+      "Project technologies",
+      "User input and settings",
+      "Model prompts · 0 prompts",
+      "Usage by model and function",
+    ]);
+    for (let openSections = 3; openSections > 0; openSections--) {
+      await page.locator(`${sectionHeaders}[aria-expanded="true"]`).click();
+    }
+    await page.waitForSelector(".technology-explorer", { hidden: true });
+    await page.waitForFunction(
+      (groupSelector) => {
+        const group = document.querySelector(groupSelector)!;
+        const lastHeader = group.querySelector(
+          ":scope > .ant-collapse-item:last-child > .ant-collapse-header",
+        )!;
+        return (
+          group.getBoundingClientRect().bottom - lastHeader.getBoundingClientRect().bottom <= 2
+        );
+      },
+      {},
+      sectionGroup,
+    );
+    for (const width of [1200, 420]) {
+      await page.setViewport({ width, height: 900 });
+      const group = (await page.$(sectionGroup))!;
+      expect(
+        await group.evaluate(
+          (element) =>
+            element.getBoundingClientRect().right <= document.documentElement.clientWidth &&
+            element.scrollWidth <= element.clientWidth + 1,
+        ),
+      ).toBe(true);
+      await group.evaluate((element) => element.scrollIntoView({ block: "center" }));
+      await group.screenshot({
+        path: path.join(pictures, `governance-project-sections-${width}.png`),
+      });
+    }
+    await page.setViewport({ width: 1200, height: 900 });
+    await technologyHeader.click();
+    await page.waitForSelector('section[aria-label="Project technologies"] .ant-table-row');
 
     await page.focus('section[aria-label="Project technologies"] .ant-pagination-item-2 a');
     await page.keyboard.press("Enter");
@@ -290,6 +484,18 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
     const searchedOptions = requests.filter((url) => url.pathname.endsWith("/projects")).at(-1)!;
     expect(searchedOptions.searchParams.get("search")).toBe("find last");
     expect(searchedOptions.searchParams.get("page")).toBe("1");
+    await page.keyboard.press("Escape");
+    const refresh = page.locator(".governance-page .page-heading button");
+    const reportError = ".governance-page .ant-alert-error";
+    reportUnavailable = true;
+    await refresh.click();
+    await page.waitForSelector(reportError);
+    expect(await page.$eval(reportError, (node) => node.textContent)).toContain(
+      "Unable to load governance data.",
+    );
+    reportUnavailable = false;
+    await refresh.click();
+    await page.waitForSelector(reportError, { hidden: true });
     expect(errors).toEqual([]);
   } finally {
     await browser.close();

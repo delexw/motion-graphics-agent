@@ -37,11 +37,29 @@ export async function recordedModelPrompt(
     time: invocation.time,
     jobId: invocation.jobId,
   };
+  const effortResult = z
+    .object({
+      decision: z.object({
+        questionKey: z.literal("effort"),
+        answer: z.object({ choice: z.string() }),
+      }),
+    })
+    .safeParse(related.find((event) => event.type === "usage")?.data);
+  const effortSelection =
+    typeof data.targetModel === "string" && typeof data.targetInvocationId === "string"
+      ? {
+          model: data.targetModel,
+          level: related.some((event) => event.type === "warning" || event.type === "error")
+            ? null
+            : (effortResult.data?.decision.answer.choice ?? null),
+        }
+      : undefined;
   const stored = PromptSchema.safeParse(data.prompt);
   if (stored.success)
     return {
       ...base,
       ...stored.data,
+      ...(effortSelection ? { effortSelection } : {}),
       system: stored.data.system === null ? null : redactSecrets(stored.data.system),
       user: redactSecrets(stored.data.user),
       outputSchema: JSON.parse(

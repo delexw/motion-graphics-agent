@@ -14,12 +14,17 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 - Production Desk music beat ticks, estimated BPM, beat counts and previous/next beat controls, with keyboard shortcuts. Desk validates saved maps and reports missing, stale or invalid analysis without running generation.
 - A distinct English/Chinese Activity label for music analysis, with agent guidance requiring a distinct label for each new tool.
 
+- Per-project **Adjustive effort** for supported model calls. It defaults to No and is available in the project UI and MCP.
+
 ### Changed
 
 - Full-video previews and controls resize together. A check icon and border show which direction was selected.
 
 - New Codex projects default to GPT-6.2 Astra across the interface, MCP and creative pipeline. Production principles and full-video repair budgets apply to Astra and remain available for historical GPT-6.1 Sol projects.
 - Governance estimates GPT-6.2 Astra usage with its published token prices and retains historical model labels and rates.
+
+- Governance puts project timing first and shows reasoning effort by usage row. JEV dashboards show decisions and scores up front, with style names and recorded details in expandable sections.
+- Generation settings use shared info tips for video language, build route and adjustive effort.
 
 ## [1.2.0] — 2026-11-16
 
@@ -259,6 +264,24 @@ Kiteva uses the [MIT License](LICENSE). Third-party components retain their own 
 ## Daily update archive
 
 README recent updates show the three most recent dated entries, regardless of gaps between dates. Move entries beyond those three here when updating the READMEs. Historical English and Simplified Chinese entries are preserved below; the versioned release notes above remain unchanged.
+
+### 2026-11-16
+
+**English**
+
+- **v1.2.0 released:** DeepSeek authoring, finished-project reuse and governed media workflows. See the [release notes](https://github.com/delexw/motion-graphics-agent/releases/tag/v1.2.0).
+- **DeepSeek provider:** Select DeepSeek Flash for text and image-based authoring through the official Harness SDK. Configure `DEEPSEEK_API_KEY`; UI, MCP and Governance share provider routing. OAuth is not integrated.
+- **Cost accounting:** The isolated SDK runtime loads the community `dsh-cost-meter` plugin. Governance labels per-call USD estimates, counts stable session/sequence records once, and preserves unknown usage and prices. See [setup, security and limits](src/server/agents/deepseek/README.md).
+- **SDK execution fixes:** Resumed DeepSeek refinements explicitly switch working directory and grant the current authoring workspace. Tool completion/error events retain their call IDs. Codex defaults to medium reasoning while preserving explicit effort overrides.
+- **Preparation activity:** Completed preparation displays the existing saved checkpoints instead of an empty generic event list.
+
+**简体中文**
+
+- **v1.2.0 发布：**新增 DeepSeek 创作、成品项目复用及媒体工作流治理。详见[发布说明](https://github.com/delexw/motion-graphics-agent/releases/tag/v1.2.0)。
+- **DeepSeek 提供方：**通过官方 Harness SDK，使用 DeepSeek Flash 进行文本和图像辅助创作。配置 `DEEPSEEK_API_KEY`；界面、MCP 和 Governance 共用模型路由，暂未接入 OAuth。
+- **费用记录：**隔离运行时加载社区 `dsh-cost-meter` 插件。Governance 展示每次调用的美元估算，按会话与事件序号去重，缺少用量或价格时保留未知。详见[配置、安全与限制](src/server/agents/deepseek/README.md)。
+- **SDK 执行修复：**DeepSeek 修改版本时显式切换工作目录，并授予当前创作目录写权限；工具完成与失败事件保留调用 ID。Codex 默认使用 medium 推理，显式指定的级别仍然有效。
+- **准备活动：**复用已有检查点组件展示已保存的准备步骤，避免完成后出现空活动列表。
 
 ### 2026-11-15
 

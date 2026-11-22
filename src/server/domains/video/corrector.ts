@@ -304,6 +304,7 @@ export class VideoCorrectionCoordinator {
           includeCreativeAlternatives: false,
           provider,
           model,
+          effortTask: tier === "main" ? "repair" : "quickRepair",
           reasoningEffort,
           workspace: job.workspace,
           signal,

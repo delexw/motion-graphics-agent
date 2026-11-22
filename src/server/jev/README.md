@@ -91,3 +91,20 @@ pre-start checks separately from project activity, including rejected requests w
 Records include the request hash, draft/project link, timestamps, outcome, conflicts,
 redacted native request payload, response and provider-reported usage. The provider's internal
 prompt is not available. No live provider calls are used by verification tests.
+
+## Model call effort
+
+Projects opt in with the JEV dynamic effort switch or the MCP idea setting
+`dynamicModelEffort`. It defaults to off, including for older projects without a
+saved choice. The [project effort router](../agents/project-model-effort.ts)
+selects the strategy for each call.
+
+- The [default effort strategy](../agents/default-model-effort.ts) uses explicit
+  task effort when set, then the provider default.
+- The [dynamic effort strategy](strategies/model-effort.ts) asks JEV to compare
+  every supported level against the evidence for the individual call. The JEV
+  request supplies no default, minimum or preferred level. When JEV cannot
+  choose or the model has no known levels, the call uses the default strategy.
+
+Governance links the JEV decision to the invocation and records the effort sent
+to the provider.

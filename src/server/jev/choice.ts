@@ -36,7 +36,6 @@ export async function runJevChoice(options: JevChoiceOptions) {
     probabilities: z.record(idSchema, z.number().finite().min(0).max(1)),
   });
   const payload = jevChoicePayload(options);
-  const client = jevClient();
   options.onEvent({
     type: "invocation",
     message: `${options.label} started`,
@@ -53,7 +52,7 @@ export async function runJevChoice(options: JevChoiceOptions) {
       },
     },
   });
-  const result = await client.systemOne(payload, { signal: options.signal });
+  const result = await jevClient().systemOne(payload, { signal: options.signal });
   options.onEvent({
     type: "usage",
     message: `${options.label} complete`,

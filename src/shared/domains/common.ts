@@ -20,6 +20,7 @@ export const SharedRequestSchema = z.object({
   preference: CreativeApproachSchema.default("context"),
   provider: ProviderSchema.default("codex"),
   mainModel: z.string().trim().min(1).optional(),
+  dynamicModelEffort: z.boolean().optional(),
   candidateCount: z.number().int().min(0).max(5).default(5),
   selectedStyleIds: z
     .array(z.string().regex(/^style-\d{3}$/))

@@ -128,6 +128,7 @@ export async function reviewFinishedResult(input: {
         includeCreativeAlternatives: false,
         provider: input.request.provider,
         model: job.model,
+        effortTask: "review",
         workspace: job.workspace,
         signal,
         promptContext,

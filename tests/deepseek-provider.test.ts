@@ -180,6 +180,30 @@ it("dispatches through the registered adapter with shared invocation attribution
   });
   expect(sdk.close).toHaveBeenCalledTimes(1);
 });
+it("passes a native DeepSeek effort to the SDK and records it in Governance", async () => {
+  const onEvent = vi.fn();
+  await agentTurn({
+    provider: "deepseek",
+    workspace: "/tmp/fixture",
+    model: "deepseek-flash",
+    prompt: "Return a result",
+    schema: z.object({ ok: z.boolean() }),
+    textOnly: true,
+    reasoningEffort: "xhigh",
+    signal: new AbortController().signal,
+    onEvent,
+  });
+  expect(sdk.construct).toHaveBeenCalledWith(expect.objectContaining({ reasoningEffort: "max" }));
+  expect(onEvent).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "invocation",
+      data: expect.objectContaining({
+        prompt: expect.objectContaining({ reasoningEffort: "max" }),
+      }),
+    }),
+  );
+});
+
 it("does not inherit unrelated provider credentials", async () => {
   vi.stubEnv("ANTHROPIC_API_KEY", "synthetic-unrelated");
   vi.stubEnv("OPENAI_API_KEY", "synthetic-other");

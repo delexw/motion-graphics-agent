@@ -1,3 +1,4 @@
+import type { EffortTask, ModelEffort } from "../../shared/model-effort";
 import type { AgentMcpCapability } from "./capabilities/shared/types";
 import type { z } from "zod";
 import type { Provider } from "../../shared/contracts";
@@ -22,7 +23,8 @@ export interface AgentTurnOptions<T> {
   planMode?: boolean;
   model?: string;
   textOnly?: boolean;
-  reasoningEffort?: "low" | "medium" | "high" | "xhigh";
+  reasoningEffort?: ModelEffort;
+  effortTask?: EffortTask;
   referenceUrls?: string[];
   enableVideoCapture?: boolean;
   captureChapterId?: string;
