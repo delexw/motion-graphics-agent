@@ -10,7 +10,12 @@ vi.mock("../src/server/agents/bundled-skills/installation", () => ({
     calls.order.push("skills");
   },
 }));
-vi.mock("../src/server/agents/bundled-skills/registry", () => ({ bundledSkills: [] }));
+vi.mock("../src/server/agents/capabilities/bevy/installation", () => ({
+  refreshBevy: async () => {
+    calls.order.push("bevy");
+    return { status: "current", version: "0.20.1" };
+  },
+}));
 vi.mock("../src/server/agents/capabilities/audio-studio/installation", () => ({
   refreshAudioStudio: calls.update,
 }));
@@ -43,7 +48,7 @@ it.each([false, true])(
       calls.order.push("listen");
     });
     await import("../src/server/index");
-    expect(calls.order).toEqual(["skills", "audio", "app", "listen"]);
+    expect(calls.order).toEqual(["bevy", "skills", "audio", "app", "listen"]);
     expect(warn).toHaveBeenCalledTimes(fails ? 1 : 0);
   },
 );

@@ -61,9 +61,12 @@ step() { printf '\n==> %s\n' "$1"; }
 node_ready() { command -v node >/dev/null 2>&1 && [[ "$(node -p 'Number(process.versions.node.split(".")[0])')" -ge 24 ]]; }
 
 # Homebrew is needed only when a system prerequisite must be installed.
+if [[ -x "${CARGO_HOME:-$HOME/.cargo}/bin/cargo" ]]; then
+  export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"
+fi
 need_brew=0
 node_ready || need_brew=1
-for executable in npm git ffmpeg ffprobe uv; do
+for executable in npm git ffmpeg ffprobe uv cargo rustc; do
   command -v "$executable" >/dev/null 2>&1 || need_brew=1
 done
 if [[ "$need_brew" == 1 ]]; then
@@ -88,9 +91,10 @@ if [[ "$need_brew" == 1 ]]; then
   command -v git >/dev/null 2>&1 || brew install git
   if ! command -v ffmpeg >/dev/null 2>&1 || ! command -v ffprobe >/dev/null 2>&1; then brew install ffmpeg; fi
   command -v uv >/dev/null 2>&1 || brew install uv
+  if ! command -v cargo >/dev/null 2>&1 || ! command -v rustc >/dev/null 2>&1; then brew install rust; fi
 fi
 node_ready || { echo 'Node.js 24+ is required. Check which node executable your PATH selects.' >&2; exit 1; }
-for executable in npm git ffmpeg ffprobe uv; do
+for executable in npm git ffmpeg ffprobe uv cargo rustc; do
   command -v "$executable" >/dev/null 2>&1 || { echo "Required executable unavailable after setup: $executable" >&2; exit 1; }
 done
 
@@ -162,4 +166,4 @@ if [[ "$build" == 1 ]]; then step 'Building Kiteva'; npm run build; fi
 step 'Dependency setup finished'
 echo 'Next: configure .env.local, sign in to your chosen provider, then run npm start.'
 echo 'For demo recording, grant OpenScreen Screen Recording and Accessibility permissions in macOS Settings.'
-echo 'Managed skills and installed Audio Studio are checked for updates at setup and on every backend launch.'
+echo 'Managed skills, Bevy and installed Audio Studio are checked for updates at setup and on every backend launch.'

@@ -27,11 +27,14 @@ actual capabilities rather than infer functionality from names or equate audio m
 
 ## Visual Choice guidance
 
+JEV can choose [Bevy](../agents/capabilities/README.md#bevy) for shots that benefit from native
+rendering or simulation. The build agent checks the local toolchain and GPU before use.
+
 Each visual option owns its source-grounded distinctions: Animate UI and React Bits in their
 capability folders, Anatomy beside its bundled skill, and local authoring in
-`agents/local-authoring.ts`. Each option stores its Choice description directly as readable text: what it provides, advantages, disadvantages, implementation costs,
-video adaptation, missing capabilities and when to choose it. The comparison text is supplied once,
-not duplicated in state. Source references stay in comments beside the option metadata for maintenance.
+`agents/local-authoring.ts`. Each option supplies three short lines covering best fit, strength and trade-off. The same format
+lets JEV compare use cases, visual benefits and setup costs across tools. Choice compares the current
+brief and renderer without using option order, popularity or past selections. Source references stay in comments beside the option metadata for maintenance.
 
 Visual Choice performs no catalog search or package/skill inventory collection. JEV compares the
 written tradeoffs with the complete original idea, image instructions, selected Motion Graphics and

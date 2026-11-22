@@ -15,6 +15,7 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 - A distinct English/Chinese Activity label for music analysis, with agent guidance requiring a distinct label for each new tool.
 
 - Per-project **Adjustive effort** for supported model calls. It defaults to No and is available in the project UI and MCP.
+- Bevy is available to the authoring agent. Install and startup prepare the runtime and use the bundled-skill registry to refresh compatible community guides.
 
 ### Changed
 

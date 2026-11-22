@@ -6,7 +6,7 @@ import { fromBufferPromise } from "yauzl";
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
 import { appRoot } from "../../runtime/config";
-import type { BundledSkill } from "./types";
+import type { SkillSource } from "./types";
 
 export const authoringSkillRoot = path.join(appRoot, "skills");
 const sourceDirectorySchema = z
@@ -26,7 +26,7 @@ const manifestSchema = z.object({
   files: z.record(z.string(), z.string().regex(/^[a-f0-9]{64}$/)),
 });
 
-export async function installedSkill(skill: BundledSkill, root = authoringSkillRoot) {
+export async function installedSkill(skill: SkillSource, root = authoringSkillRoot) {
   if (!(await lstat(path.join(root, skill.id))).isDirectory())
     throw Error("Skill installation must not be a link");
   const manifest = manifestSchema.parse(
@@ -35,18 +35,22 @@ export async function installedSkill(skill: BundledSkill, root = authoringSkillR
   if (manifest.repository !== skill.repository) throw Error(`Unexpected ${skill.name} repository`);
   if (manifest.sourceDirectory !== skill.sourceDirectory)
     throw Error(`Unexpected ${skill.name} source directory`);
+  if (skill.collection && manifest.revision !== skill.collection.revision)
+    throw Error(`Unexpected ${skill.name} revision`);
   const directory = path.join(root, skill.id, manifest.revision);
-  await verifySkillFiles(directory, manifest, skill.name);
+  await verifySkillFiles(directory, manifest, skill);
   return { directory, manifest };
 }
 
 async function verifySkillFiles(
   directory: string,
   manifest: z.infer<typeof manifestSchema>,
-  name: string,
+  skill: SkillSource,
 ) {
   if (!(await lstat(directory)).isDirectory()) throw Error("Skill revision must not be a link");
   for (const [file, hash] of Object.entries(manifest.files)) {
+    if (skill.collection && !collectionFile(file))
+      throw Error(`Unexpected ${skill.name} collection file: ${file}`);
     if (
       file.includes("\\") ||
       path.posix.isAbsolute(file) ||
@@ -66,15 +70,31 @@ async function verifySkillFiles(
         .update(await readFile(target))
         .digest("hex") !== hash
     )
-      throw Error(`${name} integrity check failed: ${file}`);
+      throw Error(`${skill.name} integrity check failed: ${file}`);
   }
-  if (!manifest.files["SKILL.md"] || !manifest.files.LICENSE)
-    throw Error(`${name} installation needs SKILL.md and LICENSE`);
+  requireSkillFiles(manifest.files, skill);
+}
+
+function collectionFile(file: string) {
+  return file === "LICENSE" || (file.startsWith("skills/") && file.endsWith(".md"));
+}
+
+function requireSkillFiles(files: Record<string, string>, skill: SkillSource) {
+  const entrypoint = skill.collection?.entrypoint ?? "SKILL.md";
+  if (!files[entrypoint] || !files.LICENSE)
+    throw Error(`${skill.name} installation needs ${entrypoint} and LICENSE`);
 }
 
 /** Download without running any upstream code; publish a complete immutable revision atomically. */
-export async function updateSkill(skill: BundledSkill, root = authoringSkillRoot) {
+export async function updateSkill(skill: SkillSource, root = authoringSkillRoot) {
   const sourceDirectory = sourceDirectorySchema.optional().parse(skill.sourceDirectory);
+  const pinnedRevision = skill.collection
+    ? manifestSchema.shape.revision.parse(skill.collection.revision)
+    : undefined;
+  if (pinnedRevision) {
+    const installed = await installedSkill(skill, root).catch(() => undefined);
+    if (installed) return installed;
+  }
   const base = path.join(root, skill.id);
   await mkdir(base, { recursive: true });
   if (!(await lstat(base)).isDirectory()) throw Error("Skill installation must not be a link");
@@ -87,7 +107,7 @@ export async function updateSkill(skill: BundledSkill, root = authoringSkillRoot
       );
     if (!repository) throw Error("Skill source must be an HTTPS GitHub repository");
     const response = await fetch(
-      `https://codeload.github.com/${repository[1]}/${repository[2]}/zip/HEAD`,
+      `https://codeload.github.com/${repository[1]}/${repository[2]}/zip/${pinnedRevision ?? "HEAD"}`,
       {
         signal: AbortSignal.timeout(30_000),
         redirect: "error",
@@ -120,6 +140,8 @@ export async function updateSkill(skill: BundledSkill, root = authoringSkillRoot
         .string()
         .regex(/^[a-f0-9]{40}$/)
         .parse(archive.comment);
+      if (pinnedRevision && revision !== pinnedRevision)
+        throw Error(`Unexpected ${skill.name} archive revision`);
       let archiveRoot: string | undefined;
       let expandedBytes = 0;
       let entryCount = 0;
@@ -152,6 +174,7 @@ export async function updateSkill(skill: BundledSkill, root = authoringSkillRoot
         const relative = sourceDirectory
           ? repositoryRelative.slice(sourceDirectory.length + 1)
           : repositoryRelative;
+        if (skill.collection && !collectionFile(relative)) continue;
         if (!relative || names.includes(relative))
           throw Error("Invalid or duplicate skill archive file");
         const destination = path.join(checkout, relative);
@@ -179,9 +202,9 @@ export async function updateSkill(skill: BundledSkill, root = authoringSkillRoot
       revision,
       files,
     });
-    if (!files["SKILL.md"] || !files.LICENSE)
-      throw Error(`${skill.name} installation needs SKILL.md and LICENSE`);
-    if (!(await readFile(path.join(checkout, "SKILL.md"), "utf8")).includes(`name: ${skill.id}`))
+    requireSkillFiles(files, skill);
+    const entrypoint = skill.collection?.entrypoint ?? "SKILL.md";
+    if (!(await readFile(path.join(checkout, entrypoint), "utf8")).includes(`name: ${skill.id}`))
       throw Error(`Unexpected ${skill.name} skill identity`);
     const destination = path.join(base, revision);
     const exists = await lstat(destination).catch((error: NodeJS.ErrnoException) => {
@@ -191,7 +214,7 @@ export async function updateSkill(skill: BundledSkill, root = authoringSkillRoot
     // Validate an existing revision as well; never switch the active pointer to corrupt files.
     const pointer = path.join(scratch, "current.json");
     await writeFile(pointer, JSON.stringify(manifest, null, 2));
-    await verifySkillFiles(destination, manifest, skill.name);
+    await verifySkillFiles(destination, manifest, skill);
     await rename(pointer, path.join(base, "current.json"));
     return await installedSkill(skill, root);
   } finally {
@@ -200,7 +223,7 @@ export async function updateSkill(skill: BundledSkill, root = authoringSkillRoot
 }
 
 export async function refreshSkills(
-  skills: readonly BundledSkill[],
+  skills: readonly SkillSource[],
   root = authoringSkillRoot,
   report: (message: string) => void = console.warn,
 ) {
@@ -214,7 +237,9 @@ export async function refreshSkills(
         report(`${skill.name} update unavailable; using the verified local installation.`);
       } catch {
         report(
-          `${skill.name} is unavailable. Connect to the internet and relaunch Kiteva before starting a creative task.`,
+          skill.optional
+            ? `${skill.name} is unavailable.`
+            : `${skill.name} is unavailable. Connect to the internet and relaunch Kiteva before starting a creative task.`,
         );
       }
     }

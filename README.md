@@ -81,6 +81,7 @@ The three most recent dated entries are listed here, regardless of gaps between 
 - **Adjustive effort:** This per-project Yes/No setting defaults to No. Yes lets JEV choose effort for each supported model call. No uses the configured task or model default. MCP can set it when creating a draft.
 - **Governance:** Project timing appears at the top, and usage rows show reasoning effort. JEV dashboards show decisions and scores first, with expandable rationale, inputs and comparisons. Saved combination comparisons show primary and supporting style names where available.
 - **Generation settings:** Video language, build route and adjustive effort have info tips beside their labels.
+- **Bevy authoring:** Kiteva can select Bevy for shots. Setup and startup prepare the managed runtime and refresh compatible community guides through the bundled-skill registry.
 
 </details>
 

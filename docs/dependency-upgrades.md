@@ -14,6 +14,29 @@ Restarting an MCP connection discovers its tools; it does not itself upgrade the
 server or prove model readiness. Keep executable/package versions, source revisions,
 model weights and copied project artifacts distinct.
 
+## Bevy managed updates
+
+The shared updater checks crates.io for the latest stable Bevy release at launch
+and during `install.sh`. The macOS installer provisions Rust and Cargo when needed.
+Kiteva resolves an exact Bevy version, generates a Cargo lockfile, vendors the crates
+and verifies that Cargo can resolve the locked graph offline. The check does not
+compile a scene or exercise the GPU.
+
+A cross-process lease serialises maintenance. Only a verified dependency bundle
+becomes current. A failed update retains the previous verified bundle, and prior
+release directories stay available for projects pinned to them. New build turns
+receive the current manifest and Cargo configuration. Scene compilation happens
+in each project and uses the shared vendored sources. See the
+[Bevy agent capability](../src/server/agents/capabilities/README.md#bevy).
+
+The shared bundled-skill updater reads the registry entry for the MIT-licensed
+[community Bevy skills](https://github.com/chrisgliddon/bevy-skills). The entry
+pins the reviewed revision and limits it to Bevy 0.20.
+Kiteva retains the licence and Markdown guides, verifies their hashes, and
+reuses the verified revision offline. The guides are optional. An unavailable
+or incompatible collection leaves Bevy available with the official headless
+renderer example.
+
 ## Audio Studio managed updates
 
 Both backend startup and `install.sh` call `src/server/dependencies.ts` through the
@@ -70,7 +93,7 @@ report a missing model, license, device or runtime requirement.
 ## Manual retry and diagnosis
 
 Run `npm run dependencies:update` for the shared skills/installed-MCP check, or
-`npm run dependencies:update -- --skip-audio-studio` to check skills alone.
+`npm run dependencies:update -- --skip-audio-studio` to check skills and Bevy.
 
 Run `npm run audio-studio:update` to use the same managed updater without restarting
 Kiteva. It prints the revision/version selected or the fallback/unavailability reason.

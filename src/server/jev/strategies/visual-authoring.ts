@@ -1,4 +1,5 @@
 import { animateUiAuthoring } from "../../agents/capabilities/animate-ui/metadata";
+import { bevyAuthoring } from "../../agents/capabilities/bevy/metadata";
 import { reactBitsAuthoring } from "../../agents/capabilities/react-bits/metadata";
 import { img2threejsAuthoring } from "../../agents/bundled-skills/img2threejs-metadata";
 import { briefAttachmentKind } from "../../requests/brief-attachments";
@@ -25,11 +26,12 @@ import { videoRendererOf } from "../../../shared/video-renderers";
 import type { ProviderEvent } from "../../agents/agent";
 
 export const authoringResourceSelectionGuidance =
-  "AUTHORING RESOURCE SELECTION: Read authoringResources in style-context.json when present. JEV chose exactly one primary authoring resource using its Choice API for this specific brief and renderer. Use that chosen capability, bundled skill or local-code approach; read its skill or component guidance before implementation. Do not mix in an alternative component library or bundled skill by default. Ordinary local implementation code remains available. This is not a Motion Graphic selection or a replacement for the main model's production plan. If a selected resource proves incompatible or unavailable on inspection, preserve the requested result with available tools and document the reason. If JEV is unavailable or the field is absent, choose appropriate available resources directly. Never force a component or skill into a scene solely because it is installed. All calls retain the current provider and default reasoning effort.";
+  "AUTHORING RESOURCE SELECTION: Read authoringResources in style-context.json when present. JEV chose exactly one primary authoring resource using its Choice API for this specific brief and renderer. Use that chosen capability, bundled skill or local-code approach; read its skill or component guidance before implementation. Do not mix in an alternative component library or bundled skill by default. Ordinary local implementation code remains available. This is not a Motion Graphic selection or a replacement for the main model's production plan. If a selected resource proves incompatible or unavailable on inspection, preserve the requested result with available tools and document the reason. If JEV is unavailable or the field is absent, choose appropriate available resources directly. Never force a component or skill into a scene solely because it is installed.";
 
 export const authoringResources: AuthoringResource[] = [
   animateUiAuthoring,
   reactBitsAuthoring,
+  bevyAuthoring,
   ...bundledSkills
     .filter((skill) => skill.purpose === "visual_authoring")
     .map(
@@ -88,7 +90,7 @@ export async function selectAuthoringResources(input: {
       .map((s) => ({ id: s.id, name: s.name_en, visualDirection: s.visual_cues })),
     resources: authoringResources.map(({ id, name, kind }) => ({ id, name, kind })),
     policy:
-      "Choose one primary authoring resource by comparing the advantages, disadvantages and costs written in the Choice option descriptions against the original idea, image instructions, selected Motion Graphics and renderer contract. Honor explicit compatible resource requests. Local code remains available with any choice. Do not change selected styles, renderer, settings, explicit act assignments or user exclusions. Respect each resource's scene ownership: a Stageshow demo keeps its native appearance unless the user requests UI styling; selected MG contributes motion only within that demo. No option has a fixed preference. Compare img2threejs for reconstructing a specific pictured object against Anatomy for explanatory mechanisms; retain local code and other candidates. Image instructions alone do not establish an available reconstruction image. Use imageReferences observations/evidence and supplied metadata, and never infer unseen geometry as verified. Evaluate visual fit and adaptation effort rather than novelty or catalog size. These descriptions explain capabilities, not runtime readiness: the main model must inspect current source/skills, dependencies and license constraints before use. Video effects must support seekable composition time. The main model owns production planning and reads selected styles through creative_pool.",
+      "Choose one primary authoring resource by comparing the best fit, strength and trade-off in each Choice description against the original idea, image instructions, selected Motion Graphics and renderer contract. Honor explicit compatible resource requests. Local code remains available with any choice. Do not change selected styles, renderer, settings, explicit act assignments or user exclusions. Respect each resource's scene ownership: a Stageshow demo keeps its native appearance unless the user requests UI styling; selected MG contributes motion only within that demo. Give every option the same comparison and choose by fit for this job. Option order, popularity and previous selections carry no weight. Compare img2threejs for reconstructing a specific pictured object against Anatomy for explanatory mechanisms; retain local code and other candidates. Image instructions alone do not establish an available reconstruction image. Use imageReferences observations/evidence and supplied metadata, and never infer unseen geometry as verified. Evaluate visual fit and adaptation effort rather than novelty or catalog size. These descriptions explain capabilities, not runtime readiness: the main model must inspect current source/skills, dependencies and license constraints before use. Video effects must support seekable composition time. The main model owns production planning and reads selected styles through creative_pool.",
   };
   try {
     const result = await runJevChoice({
@@ -96,7 +98,7 @@ export async function selectAuthoringResources(input: {
       label: "Authoring resource selection",
       questionKey: "resource",
       question:
-        "Which primary resource best fits this job? Compare each option's textual advantages, disadvantages, implementation costs and video adaptation needs against state.policy and the requested result. Choose local_code when a specialized component or skill adds no useful fidelity. Select exactly one option.",
+        "Which primary resource best fits this job? Compare each option's best fit, strength and trade-off against the brief and renderer. Honour explicit compatible requests and weigh fidelity, setup effort and seekability consistently. Select exactly one option.",
       criteria: Object.fromEntries(
         authoringResources.map((resource) => [resource.id, resource.guidance]),
       ),

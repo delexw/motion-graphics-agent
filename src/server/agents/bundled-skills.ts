@@ -2,10 +2,11 @@ import { stageProceduralModelRuntime } from "./bundled-skills/procedural-runtime
 import { createHash } from "node:crypto";
 import { lstat, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { bundledSkills } from "./bundled-skills/registry";
+import { bundledSkills, compatibleBundledSkills } from "./bundled-skills/registry";
 export { bundledSkillsGuidance } from "./bundled-skills/registry";
 export { anatomySkillPath, claudeAnatomySkillName } from "./bundled-skills/anatomy";
 import { installedSkill, authoringSkillRoot } from "./bundled-skills/installation";
+import type { SkillRuntimeVersions } from "./bundled-skills/types";
 
 export function claudeBundledSkills(workspace: string, enabled: boolean) {
   return {
@@ -19,25 +20,38 @@ export async function prepareBundledSkills(
   workspace: string,
   signal: AbortSignal,
   skillRoot = authoringSkillRoot,
+  runtimeVersions: SkillRuntimeVersions = {},
 ) {
   signal.throwIfAborted();
   const root = path.resolve(workspace);
   await mkdir(root, { recursive: true });
-  for (const skill of bundledSkills) {
-    const installation = await installedSkill(skill, skillRoot).catch(() => {
+  const referenceEntries = new Map<string, string>();
+  for (const skill of compatibleBundledSkills(runtimeVersions)) {
+    const installation = await installedSkill(skill, skillRoot).catch(() => undefined);
+    signal.throwIfAborted();
+    if (!installation) {
+      if (skill.optional) continue;
       throw Error(
         `${skill.name} is not installed or failed verification. Connect to the internet and relaunch Kiteva.`,
       );
-    });
+    }
     // mkdir alone would follow a link left by generated code outside the workspace.
+    const workspacePath =
+      typeof skill.workspacePath === "function"
+        ? skill.workspacePath(workspace, installation.manifest.revision)
+        : skill.workspacePath;
     let folder = root;
-    for (const segment of skill.workspacePath.split("/")) {
+    for (const segment of workspacePath.split("/")) {
       folder = path.join(folder, segment);
       await mkdir(folder, { recursive: true });
       if (!(await lstat(folder)).isDirectory())
         throw Error("Bundled skill directory must not be a link");
     }
-    if (skill.nodePackageType && !installation.manifest.files["package.json"]) {
+    if (
+      "nodePackageType" in skill &&
+      skill.nodePackageType &&
+      !installation.manifest.files["package.json"]
+    ) {
       const metadataFile = path.join(folder, "package.json");
       const existing = await lstat(metadataFile).catch((error: NodeJS.ErrnoException) => {
         if (error.code !== "ENOENT") throw error;
@@ -71,6 +85,9 @@ export async function prepareBundledSkills(
       });
       if (existing && !existing.isFile()) throw Error("Bundled skill file must not be a link");
       await writeFile(file, bytes, { signal });
+    }
+    if ("compatibility" in skill) {
+      referenceEntries.set(skill.id, `${workspacePath}/${skill.collection.entrypoint}`);
     }
   }
   await stageProceduralModelRuntime(root, signal);
@@ -106,4 +123,5 @@ export async function prepareBundledSkills(
     }),
     { signal },
   );
+  return referenceEntries;
 }

@@ -469,7 +469,13 @@ it.each(["claude", "codex"] as const)(
         ? calls.query.mock.calls[0][0].options
         : calls.codex.mock.calls[0][0].config;
     const servers = provider === "claude" ? options.mcpServers : options.mcp_servers;
-    expect(Object.keys(servers)).toEqual(["react_bits", "animate_ui", "creative_pool"]);
+    expect(Object.keys(servers)).toEqual([
+      "react_bits",
+      "animate_ui",
+      "creative_pool",
+      "music_analysis",
+      "bevy",
+    ]);
     const pool = servers.creative_pool;
     expect(provider === "claude" ? pool.args : pool.enabled_tools).toEqual(
       provider === "claude"
