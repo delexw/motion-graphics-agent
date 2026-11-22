@@ -24,7 +24,8 @@ export function MusicBeatStrip({ clip, state }: { clip: DeskClip; state?: DeskMu
   useEffect(() => {
     const element = container.current;
     if (!element) return;
-    const update = () => setWidth(element.getBoundingClientRect().width);
+    // The modal can scale during its opening animation without changing layout width.
+    const update = () => setWidth(element.clientWidth);
     update();
     const observer = new ResizeObserver(update);
     observer.observe(element);
