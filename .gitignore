@@ -46,6 +46,7 @@ coverage/
 # Upstream authoring skills are installed and refreshed at launch.
 /skills/
 /.agents/*
+!/.agents/testing.md
 !/.agents/backend/
 !/.agents/frontend/
 

@@ -1,16 +1,13 @@
-import { afterEach, expect, it, vi } from "vitest";
+import { expect, it, vi } from "vitest";
 vi.mock("node:fs/promises", () => ({
   copyFile: vi.fn(),
-  symlink: vi.fn().mockResolvedValue(undefined),
+  symlink: vi.fn(),
 }));
 import { copyFile, symlink } from "node:fs/promises";
 import { linkSdkFile, linkWorkspaceDirectory } from "../src/server/runtime/workspace-links";
-afterEach(() => {
-  vi.clearAllMocks();
-  vi.restoreAllMocks();
-});
 it("uses junctions for Windows workspace dependencies", async () => {
   vi.spyOn(process, "platform", "get").mockReturnValue("win32");
+  vi.mocked(symlink).mockResolvedValueOnce(undefined);
   await linkWorkspaceDirectory("C:\\app\\node_modules", "C:\\job\\node_modules");
   expect(symlink).toHaveBeenCalledWith(
     "C:\\app\\node_modules",

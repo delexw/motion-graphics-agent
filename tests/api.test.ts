@@ -11,17 +11,17 @@ import type { Run } from "../src/shared/contracts";
 import path from "node:path";
 import { appRoot, dataRoot, webPort } from "../src/server/runtime/config";
 import { RequestSchema } from "../src/shared/contracts";
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createApp } from "../src/server/app";
 import { Store } from "../src/server/jobs/store";
 import { api } from "../src/client/lib/api";
 import sharp from "sharp";
 import { unzipSync } from "fflate";
 let server: Awaited<ReturnType<typeof createApp>>;
-beforeAll(async () => {
+beforeEach(async () => {
   server = await createApp({ store: new Store(":memory:") });
 });
-afterAll(async () => {
+afterEach(async () => {
   await server.app.close();
 });
 const headers = { host: "127.0.0.1:4317" };
