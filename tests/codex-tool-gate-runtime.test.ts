@@ -9,7 +9,10 @@ import { quote } from "shell-quote";
 import TOML from "@iarna/toml";
 import { z } from "zod";
 import { expect, it } from "vitest";
-import { prepareCodexToolHook } from "../src/server/agents/codex-tool-hooks";
+import {
+  codexHookVerificationFlags,
+  prepareCodexToolHook,
+} from "../src/server/agents/codex-tool-hooks";
 
 it.skipIf(process.platform !== "darwin")(
   "the real Codex pre-tool hook blocks a Blender call before execution while allowing a normal command",
@@ -103,6 +106,7 @@ it.skipIf(process.platform !== "darwin")(
         process.execPath,
         [
           fileURLToPath(import.meta.resolve("@openai/codex/bin/codex.js")),
+          ...codexHookVerificationFlags,
           "exec",
           "--json",
           "--skip-git-repo-check",
