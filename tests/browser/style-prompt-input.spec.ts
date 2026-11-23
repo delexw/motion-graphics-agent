@@ -161,13 +161,11 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
     await page.keyboard.press("Enter");
     await page.keyboard.up("Shift");
     await page.keyboard.type("Act 3: ");
-    // Repeat the lookup by ID without moving the caret out of the editor.
+    // Select the exact ID while preserving the editor selection and surrounding text.
     await page.keyboard.type("@style-136");
     const mangaOption =
       '.style-prompt-suggestions [role="menuitemcheckbox"]:has(img[src="/api/examples/style-136"])';
-    await page.locator(mangaOption).first().waitFor({ state: "visible" });
-    await page.keyboard.press("ArrowDown");
-    await page.keyboard.press("Enter");
+    await page.locator(mangaOption).click();
     await page.waitForFunction(() =>
       document.querySelector("#state")?.textContent?.includes('<style id="style-136">'),
     );
