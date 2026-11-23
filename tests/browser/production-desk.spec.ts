@@ -223,6 +223,11 @@ createRoot(document.getElementById('root')).render(React.createElement(App));</s
           const url = new URL("/desk-fixture", origin);
           url.search = query;
           await page.goto(url.href, { waitUntil: "commit" });
+          // Cold Vite transforms run before RoomProject can mount the Desk control.
+          await page
+            .locator(".room-desk-open")
+            .first()
+            .waitFor({ state: "visible", timeout: 30_000 });
         },
         beatRequests,
         heldBeatResponse: () => heldBeatResponse,
@@ -508,7 +513,7 @@ test("shows missing, unreadable, source and in-progress tracks without editing",
   desk,
 }) => {
   await page.setViewportSize({ width: 460, height: 1000 });
-  await desk.navigate(`missing`);
+  await desk.navigate("missing");
   await page.locator(".room-desk-open").first().click();
   await page.waitForFunction(() =>
     document.querySelector(".desk-notes")?.textContent?.includes("Storyboard could not be loaded"),
@@ -524,7 +529,7 @@ test("shows missing, unreadable, source and in-progress tracks without editing",
   ).toBeAttached();
   await expect(page.locator(".desk-track")).toHaveCount(4);
   await expect(page.locator(".desk-clip")).toHaveCount(0);
-  await desk.navigate(`brokenAudio`);
+  await desk.navigate("brokenAudio");
   await page.locator(".room-desk-open").first().click();
   await page
     .locator('.desk-track-music [data-waveform-status="error"]')
@@ -537,7 +542,7 @@ test("shows missing, unreadable, source and in-progress tracks without editing",
       .evaluate((el) => el.textContent),
   ).toContain("Waveform unavailable");
   await expect(page.locator(".desk-track")).toHaveCount(4);
-  await desk.navigate(`sourceTracks`);
+  await desk.navigate("sourceTracks");
   await page.locator(".room-desk-open").first().click();
   await page
     .locator('.desk-track-sfx [data-waveform-status="ready"]')
@@ -548,7 +553,7 @@ test("shows missing, unreadable, source and in-progress tracks without editing",
     .first()
     .waitFor({ state: "attached" });
   await expect(page.locator(".desk-track-sfx .desk-clip-planned")).toHaveCount(0);
-  await desk.navigate(`pending`);
+  await desk.navigate("pending");
   await page.locator(".room-desk-open").first().click();
   await page
     .locator('.desk-track-sfx [data-waveform-status="ready"]')
@@ -576,7 +581,7 @@ test("seeks repeated music placements and reveals dense beats as the timeline zo
   desk,
 }) => {
   await page.setViewportSize({ width: 460, height: 1000 });
-  await desk.navigate(`beatCase=repeated`);
+  await desk.navigate("beatCase=repeated");
   const readCount = desk.beatRequests.length;
   await page.locator(".room-desk-open").first().click();
   await page.waitForFunction(() => document.querySelectorAll(".desk-beat-tick").length === 6);
@@ -596,7 +601,7 @@ test("seeks repeated music placements and reveals dense beats as the timeline zo
       ) < 0.02,
   );
   await page.setViewportSize({ width: 900, height: 1000 });
-  await desk.navigate(`beatCase=dense`);
+  await desk.navigate("beatCase=dense");
   await page.locator(".room-desk-open").first().click();
   await page
     .locator('.desk-track-music [data-beat-status="ready"]')
@@ -666,7 +671,7 @@ test("shows beat analysis states, translates the inspector and cancels an unused
     );
     await expect(page.locator(".desk-beat-tick")).toHaveCount(0);
   }
-  await desk.navigate(`beatCase=ready`);
+  await desk.navigate("beatCase=ready");
   await page.locator(".room-desk-open").first().click();
   await page
     .locator('.desk-track-music [data-beat-status="ready"]')
@@ -684,7 +689,7 @@ test("shows beat analysis states, translates the inspector and cancels an unused
       .first()
       .evaluate((el) => el.textContent),
   ).toContain("估计");
-  await desk.navigate(`beatCase=held`);
+  await desk.navigate("beatCase=held");
   await page.locator(".room-desk-open").first().click();
   await page.locator('[data-beat-status="loading"]').first().waitFor({ state: "attached" });
   await expect.poll(() => desk.heldBeatResponse() !== undefined).toBe(true);
