@@ -94,8 +94,8 @@ replace preventing unauthorized access.
 When adding an environment value, document its consumer, necessity and whether it
 reaches agent commands or only the SDK/host service. Verify both allowed and denied
 access with fixtures for each provider. Relevant tests include
-`tests/runtime-child-environment.test.ts`, `tests/project-sdk-homes.test.ts`,
-`tests/provider-reference-tools.test.ts` and `tests/project-file-isolation.test.ts`.
+`tests/unit/runtime-child-environment.test.ts`, `tests/integration/project-sdk-homes.test.ts`,
+`tests/integration/provider-reference-tools.test.ts` and `tests/integration/project-file-isolation.test.ts`.
 
 ## Shared resources and limits
 
@@ -116,11 +116,11 @@ and then removes its runtime files with the project. See [cancellation](process-
 
 ## Verification
 
-- [Concurrent file and renderer boundary tests](../tests/project-file-isolation.test.ts)
-- [Provider-home copying and session migration](../tests/project-sdk-homes.test.ts)
-- [Real browser profile isolation and cleanup](../tests/project-browser-isolation.test.ts)
-- [SDK command policy and environment rewriting](../tests/sdk-execution-policy.test.ts)
-- [Native Windows policy serialization](../tests/windows-render-policy.test.ts)
+- [Concurrent file and renderer boundary tests](../tests/integration/project-file-isolation.test.ts)
+- [Provider-home copying and session migration](../tests/integration/project-sdk-homes.test.ts)
+- [Real browser profile isolation and cleanup](../tests/integration/project-browser-isolation.test.ts)
+- [SDK command policy and environment rewriting](../tests/integration/sdk-execution-policy.test.ts)
+- [Native Windows policy serialization](../tests/integration/windows-render-policy.test.ts)
 
 Local verification also exercised real Claude and Codex calls from two projects per provider,
 then resumed each from a full-build workspace with its own remembered marker. Native macOS

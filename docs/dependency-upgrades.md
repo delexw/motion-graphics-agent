@@ -120,8 +120,8 @@ and [environment boundaries](project-file-isolation.md#environment-and-sandbox-b
 Test changes with local archives, command fixtures and MCP transports. Include new,
 unchanged and failed updates, invalid contracts, damaged files, cancellation and
 concurrent startup. Do not use live inference to verify upgrades. Audio Studio's
-fixtures are `tests/audio-studio-installation.test.ts` and
-`tests/audio-studio-startup.test.ts`.
+fixtures are `tests/integration/audio-studio-installation.test.ts` and
+`tests/unit/audio-studio-startup.test.ts`.
 
 ## Audio Studio dependency layers
 

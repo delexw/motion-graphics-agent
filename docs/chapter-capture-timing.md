@@ -108,7 +108,7 @@ the next builder; startup failures, cancellation and stop failures close the own
 processes as part of releasing it. Reported cleanup failures propagate through the
 [project stop/delete lifecycle](process-lifecycle.md), so deletion retains project files.
 
-`tests/recording-slot.test.ts` covers separate-process exclusion and queued
+`tests/integration/recording-slot.test.ts` covers separate-process exclusion and queued
 cancellation with local fixtures. Actual native recording, frame review and WebM
 export require separate verification on the target desktop; unattended tests do
 not certify desktop recording.

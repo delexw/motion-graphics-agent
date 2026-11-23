@@ -90,14 +90,14 @@ stale-lock recovery and diagnostics, and [worker setup](openscreen-worker.md) fo
 
 ## Verification
 
-Automated coverage includes [queue cancellation](../tests/work-queue-cancellation.test.ts),
-[command cleanup](../tests/runtime-command.test.ts), [process trees](../tests/process-tree.test.ts),
-[scope isolation](../tests/process-scope.test.ts),
-[both installed SDK cancellation paths](../tests/sdk-cancellation-runtime.test.ts),
-[stop/delete and shutdown](../tests/event-stream-shutdown.test.ts),
-[playback preparation](../tests/playback-copy-queue.test.ts),
-[worker transport](../tests/openscreen-worker.test.ts) and
-[project exports](../tests/project-export.test.ts). SDK cancellation probes use local dummy
+Automated coverage includes [queue cancellation](../tests/unit/work-queue-cancellation.test.ts),
+[command cleanup](../tests/integration/runtime-command.test.ts), [process trees](../tests/unit/process-tree.test.ts),
+[scope isolation](../tests/integration/process-scope.test.ts),
+[both installed SDK cancellation paths](../tests/integration/sdk-cancellation-runtime.test.ts),
+[stop/delete and shutdown](../tests/integration/event-stream-shutdown.test.ts),
+[playback preparation](../tests/integration/playback-copy-queue.test.ts),
+[worker transport](../tests/integration/openscreen-worker.test.ts) and
+[project exports](../tests/integration/project-export.test.ts). SDK cancellation probes use local dummy
 executables; they do not make model API calls.
 
 Interactive native desktop-recording tests are not part of the unattended suite. The local fixture tests above cover process ownership, cancellation, worker transport and export handling; they do not establish that screen recording works on a particular desktop. Verify actual native recording separately on the target desktop before relying on it.

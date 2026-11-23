@@ -44,4 +44,4 @@ SDK and downloader transport retries remain native: Claude emits its SDK retry e
 
 ## Verification
 
-`tests/retry-budget.test.ts` covers exhaustion, numbering, cancellation, independent scopes and conflicting limits. `tests/correction-identity.test.ts` covers stable identity across regenerated reports and separate sources. `tests/video-corrector.test.ts` tests both providers: exhaust one shot, repair another with its full allowance, then confirm the first stays exhausted. Existing chapter, brief, page, capacity, speech and renderer tests cover their retained policies.
+`tests/unit/retry-budget.test.ts` covers exhaustion, numbering, cancellation, independent scopes and conflicting limits. `tests/unit/correction-identity.test.ts` covers stable identity across regenerated reports and separate sources. `tests/unit/video-corrector.test.ts` tests both providers: exhaust one shot, repair another with its full allowance, then confirm the first stays exhausted. Existing chapter, brief, page, capacity, speech and renderer tests cover their retained policies.

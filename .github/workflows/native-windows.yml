@@ -12,7 +12,7 @@ jobs:
     needs: [quality-static, quality-tests]
     runs-on: ubuntu-latest
     steps:
-      - run: echo "All macOS test shards and static checks passed."
+      - run: echo "All macOS test suites and static checks passed."
   quality-static:
     name: Lint, format and build
     runs-on: macos-15
@@ -28,13 +28,13 @@ jobs:
       - run: npm run lint
       - run: npm run build
   quality-tests:
-    name: macOS tests (shard ${{ matrix.shard }} of 3)
+    name: macOS tests (${{ matrix.suite }})
     runs-on: macos-15
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        suite: [unit, integration, browser]
     env:
       PUPPETEER_CACHE_DIR: ${{ github.workspace }}/.data/browser-cache
     steps:
@@ -56,13 +56,30 @@ jobs:
       - name: Prepare public authoring resources for offline integration tests
         run: node --import tsx --input-type=module -e "import { updateSkill } from './src/server/agents/bundled-skills/installation.ts'; import { bundledSkills } from './src/server/agents/bundled-skills/registry.ts'; for (const skill of bundledSkills) await updateSkill(skill);"
       # Keep browser and render tests serial within each runner.
-      - name: Run test shard
+      - name: Run Vitest suite
+        if: matrix.suite != 'browser'
         env:
-          TEST_SHARD: ${{ matrix.shard }}/3
-        run: npm test -- --shard="$TEST_SHARD" --maxWorkers=1 --reporter=default --reporter=json --outputFile=test-results.json
+          TEST_SUITE: ${{ matrix.suite }}
+        run: npx --no-install vitest run "tests/$TEST_SUITE" --maxWorkers=1 --reporter=default --reporter=json --outputFile=test-results.json
       - name: Reject skipped or missing tests
+        if: matrix.suite != 'browser'
         run: |
           node --input-type=module -e "import { readFileSync } from 'node:fs'; const r = JSON.parse(readFileSync('test-results.json', 'utf8')); if (!r.success || !r.numTotalTests || r.numPendingTests || r.numTodoTests || r.numPassedTests !== r.numTotalTests) throw Error('Full suite must pass without skipped tests');"
+      - name: Run Playwright browser tests
+        id: playwright
+        if: matrix.suite == 'browser'
+        run: npm run test:browser -- --workers=1
+      - name: Reject skipped or missing Playwright tests
+        if: ${{ !cancelled() && steps.playwright.outcome == 'success' }}
+        run: |
+          node --input-type=module -e "import { readFileSync } from 'node:fs'; const { stats } = JSON.parse(readFileSync('test-results/playwright.json', 'utf8')); if (!stats.expected || stats.unexpected || stats.flaky || stats.skipped) throw Error('Playwright suite must pass without flaky or skipped tests');"
+      - name: Upload Playwright traces on failure
+        if: failure() && matrix.suite == 'browser'
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-failure
+          path: test-results/
+          if-no-files-found: ignore
   speech-dependencies:
     name: Python speech dependencies
     runs-on: macos-15
@@ -112,7 +129,7 @@ jobs:
       - name: Check types and build
         run: npm run build
       - name: Check native platform contracts
-        run: npx vitest run tests/native-platform.test.ts tests/process-tree.test.ts tests/workspace-links.test.ts tests/windows-render-policy.test.ts tests/windows-readiness.test.ts tests/browser-executable.test.ts tests/runtime-command.test.ts tests/file-output.test.ts tests/codex-command.test.ts tests/command-child.test.ts --maxWorkers=4
+        run: npx vitest run tests/unit/native-platform.test.ts tests/unit/process-tree.test.ts tests/unit/workspace-links.test.ts tests/integration/windows-render-policy.test.ts tests/unit/windows-readiness.test.ts tests/unit/browser-executable.test.ts tests/integration/runtime-command.test.ts tests/integration/file-output.test.ts tests/integration/codex-command.test.ts tests/integration/command-child.test.ts --maxWorkers=4
       - name: Verify native Windows security boundary and real render
         env:
           # HyperFrames can nest Chrome's sandbox inside the native Windows sandbox.

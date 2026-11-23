@@ -13,7 +13,7 @@ Renderer capability facts live next to their renderer names:
 
 Authoring contracts live in `hyperframes/contract.ts` and `multiplane/contract.ts` beside their renderer definitions. `contracts.ts` dispatches them; the video domain re-exports that API for existing callers. Renderer audio guidance remains in the same metadata, shared with JEV and authoring prompts.
 
-`tests/renderer-execution.test.ts` changes one policy flag temporarily and verifies propagation to every Multiplane command, both prompts and reproduction instructions. Keep renderer rules in these owners rather than copying flags or stage decisions into route prompts. `renderer-metadata.ts` selects the definition without duplicating its facts. Existing render execution remains in `../domains/video/render.ts` and the Multiplane CLI adapter in `multiplane.ts`.
+`tests/unit/renderer-execution.test.ts` changes one policy flag temporarily and verifies propagation to every Multiplane command, both prompts and reproduction instructions. Keep renderer rules in these owners rather than copying flags or stage decisions into route prompts. `renderer-metadata.ts` selects the definition without duplicating its facts. Existing render execution remains in `../domains/video/render.ts` and the Multiplane CLI adapter in `multiplane.ts`.
 
 The JEV style-combination, visual-authoring and audio-authoring strategies receive the selected renderer's metadata instead of only its ID. Interactive page jobs keep their separate HTML context. Renderer metadata describes integration, not proof that optional audio generators are installed. Audio Studio tool contracts and argument ranges come from actual MCP discovery, with model readiness explicitly unprobed.
 

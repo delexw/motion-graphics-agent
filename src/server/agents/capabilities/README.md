@@ -65,8 +65,8 @@ For environment variables, credentials, filesystem/network isolation and their
 limits, read [environment and sandbox boundaries](../../../../docs/project-file-isolation.md#environment-and-sandbox-boundaries).
 For command networking and host MCP credentials, read
 [research and command execution](#research-and-command-execution).
-Tests use `tests/provider-reference-tools.test.ts`, `tests/react-bits-tools.test.ts`
-and `tests/sdk-execution-policy.test.ts`; never invoke real inference to verify policy.
+Tests use `tests/integration/provider-reference-tools.test.ts`, `tests/integration/react-bits-tools.test.ts`
+and `tests/integration/sdk-execution-policy.test.ts`; never invoke real inference to verify policy.
 
 ## Capability architecture
 

@@ -5,7 +5,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   resolve: { alias: browserAliases },
   test: {
-    include: ["tests/**/*.test.{ts,tsx}"],
+    include: ["tests/{unit,integration}/**/*.test.{ts,tsx}"],
     testTimeout: 15000,
     setupFiles: ["tests/setup.ts"],
     // Never inherit real provider credentials or load them from local dotenv files.

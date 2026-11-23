@@ -58,8 +58,17 @@ If you touched browser-facing behaviour, also run `npm run verify:browser` (need
 `verify-continuation.ts` and similar scripts call real models and use real API credit or subscription usage. Only
 run them when your change needs it, and say so in the PR.
 
-Add or update tests in `tests/` for behaviour you change. There are already tests for contracts,
-workflow checkpoints, governance, renderers, skills and the UI. Follow their style.
+Run a single suite when working on a specific change.
+
+| Tests                                    | Folder               | Command                    |
+| ---------------------------------------- | -------------------- | -------------------------- |
+| Unit tests                               | `tests/unit/`        | `npm run test:unit`        |
+| Local server, process and renderer tests | `tests/integration/` | `npm run test:integration` |
+| Browser integration tests                | `tests/browser/`     | `npm run test:browser`     |
+
+The browser suite uses Playwright Test and needs a local Chromium browser. Use a
+fresh browser context, fixture server and data for every test case. Run one spec
+with `npm run test:browser -- tests/browser/project-download.spec.ts`.
 
 ## Quality bar for creative changes
 

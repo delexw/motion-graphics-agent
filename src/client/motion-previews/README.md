@@ -95,10 +95,10 @@ All drawings are original code; no source imagery is reused. The [frame-findings
 
 Verification:
 
-- `tests/motion-drawing.test.ts`: catalog coverage, motion semantics, finite drawing coordinates and repeatable seeks.
-- `tests/motion-orbit-preview.test.ts`: camera path and front/back occlusion.
-- `tests/terminal-lyric-anime.test.ts`: motion-047 rotation and mask semantics, motion-048 crops, assembly, fixed-cell deletion and seek stability, plus real canvas frames when the optional native canvas package is installed.
-- `tests/pixel-quest-explainer.test.ts`: motion-049 tick, finish, exit and next-step replacement semantics, authored request order, no drawn queue, explicit lane-label colour and contrast, English-only copy and seek stability.
-- `tests/motion-techniques.test.ts`: motion-051 to motion-055 catalog completeness, creative-pool discovery, field components and drop radius, glyph spacing and arc-length travel, camera-facing tile faces, perspective and seamless finish, particle targets and word coverage, speed-driven streaks, settled holds, and forward, backward and direct seeks on rendered canvas frames.
-- `tests/mg-frame-findings.test.tsx`: the three frame-finding motions, the seven improved studies, variant contracts, catalog links and seek stability.
+- `tests/unit/motion-drawing.test.ts`: catalog coverage, motion semantics, finite drawing coordinates and repeatable seeks.
+- `tests/unit/motion-orbit-preview.test.ts`: camera path and front/back occlusion.
+- `tests/unit/terminal-lyric-anime.test.ts`: motion-047 rotation and mask semantics, motion-048 crops, assembly, fixed-cell deletion and seek stability, plus real canvas frames when the optional native canvas package is installed.
+- `tests/unit/pixel-quest-explainer.test.ts`: motion-049 tick, finish, exit and next-step replacement semantics, authored request order, no drawn queue, explicit lane-label colour and contrast, English-only copy and seek stability.
+- `tests/unit/motion-techniques.test.ts`: motion-051 to motion-055 catalog completeness, creative-pool discovery, field components and drop radius, glyph spacing and arc-length travel, camera-facing tile faces, perspective and seamless finish, particle targets and word coverage, speed-driven streaks, settled holds, and forward, backward and direct seeks on rendered canvas frames.
+- `tests/unit/mg-frame-findings.test.tsx`: the three frame-finding motions, the seven improved studies, variant contracts, catalog links and seek stability.
 - `scripts/verify-motion-explorer.ts`: every catalog card and detail preview in the running app, pause/resume, pixel changes, repeatable seeking, offscreen pause and reduced motion. Run with `node --import tsx scripts/verify-motion-explorer.ts`.
