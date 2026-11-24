@@ -1,5 +1,6 @@
 import type { Run } from "../../shared/contracts";
 import type { ModelActivity } from "../../shared/governance";
+import { pixelAssetResources } from "../agents/capabilities/pixel-assets/capability";
 import { authoringResources } from "../jev/strategies/visual-authoring";
 
 /** Normalize saved authoring decisions once for the shared Governance table. */
@@ -13,7 +14,9 @@ export function jobAuthoringSelection(
     "Authoring resource selection": {
       selection: job.authoringResources,
       selectedIds: job.authoringResources?.selectedIds ?? [],
-      names: Object.fromEntries(authoringResources.map(({ id, name }) => [id, name])),
+      names: Object.fromEntries(
+        [...authoringResources, ...pixelAssetResources].map(({ id, name }) => [id, name]),
+      ),
     },
     "Audio authoring selection": {
       selection: job.audioAuthoring,

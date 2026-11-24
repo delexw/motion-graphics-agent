@@ -80,9 +80,9 @@ flowchart LR
   Technology --> Work
   Providers --> Activity
   Activity --> API
-  Providers -- "via local Caveman proxy" --> Claude
-  Providers -- "via local Caveman proxy" --> Codex
-  Providers -- "official Harness SDK; no Caveman" --> DeepSeek
+  Providers --> Claude
+  Providers --> Codex
+  Providers -- "official Harness SDK" --> DeepSeek
   Rank --> JEV
   RefMCP --> Chrome
   Sub --> Chrome
@@ -380,8 +380,7 @@ These responsibilities are kept separate in the code and in the prompts:
 - **Built-in agent tools** are job-scoped MCP capabilities: Creative Pool lookup and technology inspection,
   reference browsing and capture, React Bits and Animate UI, Narration, and Audio Studio.
   `agents/capabilities/reference-browser/` owns the browser registration, guidance, contracts and
-  tools; all supported SDK adapters consume its shared registration. Optional Caveman context retrieval
-  is registered by `agents/capabilities/context-recovery/`; its provider proxy lifecycle stays separate. The
+  tools; all supported SDK adapters consume its shared registration. The
   capability registry controls which tools exist for each stage; providers adapt the same contracts.
 - **Startup-installed skills** supply instructions, not renderers. Anatomy provides a drawing kit;
   AnySearch provides public documentation and repository research. Research remains available
@@ -534,13 +533,13 @@ UI-component tool called [Storybook](https://storybook.js.org).
 ## Data boundaries
 
 - The browser gets videos, metadata and redacted events. It never sees provider keys.
-- `.env.local` holds `TYPESAFE_API_KEY`, ports, model overrides and the Caveman switch.
+- `.env.local` holds `TYPESAFE_API_KEY`, ports and model overrides.
 - Providers accept an API key **or** an existing signed-in subscription account. Claude uses
   `ANTHROPIC_API_KEY`, `CLAUDE_CODE_OAUTH_TOKEN` or your local Claude Code sign-in (`~/.claude`). Codex
   uses `CODEX_API_KEY`/`OPENAI_API_KEY` or the Codex CLI sign-in in `~/.codex/auth.json`, which Kiteva
   copies into the project's isolated Codex home. Subscription usage or
   remaining-percentage reporting hasn't been tested. Governance displays Claude SDK-reported costs and estimates Codex costs from incremental token usage at standard API rates.
-- JEV has its own key (`TYPESAFE_API_KEY`) and talks to Typesafe directly, outside Caveman.
+- JEV has its own key (`TYPESAFE_API_KEY`) and talks to Typesafe directly.
 - Uploaded files and fetched pages are treated as data, never as instructions.
 - This is a local tool for one person. It isn't a hardened multi-tenant code execution service.
 

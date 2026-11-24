@@ -32,8 +32,8 @@ describe("native platform environment", () => {
     expect(env).not.toHaveProperty("NODE_OPTIONS");
   });
   it("chooses native binaries and the usual Python command", () => {
-    expect(nativeExecutable("caveman-mcp", "win32")).toBe("caveman-mcp.exe");
-    expect(nativeExecutable("caveman-mcp", "darwin")).toBe("caveman-mcp");
+    expect(nativeExecutable("example-tool", "win32")).toBe("example-tool.exe");
+    expect(nativeExecutable("example-tool", "darwin")).toBe("example-tool");
     expect(defaultPython("win32")).toBe("python");
     expect(defaultPython("darwin")).toBe("python3");
   });

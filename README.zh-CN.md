@@ -66,6 +66,17 @@
 这里只保留最近三条按日期归档的更新记录，不按连续自然日计算。更早的记录见[变更日志](CHANGELOG.md#daily-update-archive)，版本发布记录见[完整 changelog](CHANGELOG.md)。
 
 <details>
+<summary>2026-11-24</summary>
+
+- **像素美术工具：**JEV 可在项目的主要创作工具之外选择 LPC 角色、PixelFX 环境特效，或同时使用两者。LPC 自动为符合条件的 CC0 和 CC BY 部件生成署名，其中包括经 OGA-BY 按 CC BY 3.0 使用的部件。安装时准备两个资源，启动时检查已安装的版本。
+- **模型调用：**Claude 和 Codex 改用原生 SDK 连接，移除 Caveman 代理。视频审查使用更小的帧；任务和提供方均未设置推理强度时，默认使用中等强度。
+- **依赖更新：**三个 DeepSeek Harness 软件包一并升级到 `0.2.2-rc.5`。Dependabot 将这些软件包后续的更新归为一组，包括候选版本。
+- **创作室：**引导页的计数和问题标记使用 Ant Design 当前的标签样式。
+- **测试与 CI：**浏览器测试改用 Playwright，每个测试使用独立的浏览器上下文。GitHub Actions 分别运行单元、集成和浏览器测试，安装器测试使用本地夹具。
+
+</details>
+
+<details>
 <summary>2026-11-22</summary>
 
 - **自适应推理强度：**每个项目可选择「是」或「否」，默认「否」。「是」允许 JEV 为每次受支持的模型调用选择推理强度；「否」使用任务或模型的默认设置。通过 MCP 创建草稿时也可以设置。
@@ -83,15 +94,6 @@
 - **GPT-6.2 Sol：**可在生成设置中选择 Sol。治理页面按 OpenAI 公布的标准费率估算费用。
 - **下载：**点击下载图标，可在弹窗中下载原始 MP4、压缩版 MP4、可编辑项目 ZIP 和语言文件。「50% 压缩率」预设会检查画质，「90% 压缩率」预设以不超过 10 MB 为目标。实际节省空间因视频而异。压缩在后台运行，重新打开弹窗即可查看进度。重复点击不会启动新任务；压缩版未通过检查时，仍可下载原始文件。
 - **项目结果：**缩小项目窗口时，视频和控件会一起调整。勾选图标和边框标记已选预览。
-
-</details>
-
-<details>
-<summary>2026-11-17</summary>
-
-- **音乐节拍分析：**智能体可通过已安装的 HyperFrames CLI 在本地分析准备好的配乐，保存检测到的节拍时间、估算速度和音源指纹。详见[实现记录](https://github.com/delexw/motion-graphics-agent/commit/af9e4d7)。
-- **Production Desk 节拍显示：**音乐片段显示节拍刻度、估算 BPM 和节拍数量。选中片段后，可用按钮或 `[` / `]` 跳到上一拍或下一拍。缺失或过期的分析会明确标注；打开 Desk 不会触发生成。详见[控件与限制](docs/production-desk.md#measured-music-beats)（英文）。
-- **工具活动标签：**音乐分析使用独立的中英文 Activity 标签，开发指导要求每个新工具提供独立的用户可见标签。
 
 </details>
 
@@ -189,7 +191,7 @@ Storyboard 页面把它回放成一段小小的“幕后排练”：一位火柴
 
 ## 快速开始
 
-macOS 可以运行 [install.sh](install.sh)，一次安装缺少的系统工具、锁定版本的 npm 依赖（刷新 Claude/Codex SDK，以及兼容范围内的 DeepSeek SDK、运行时和费用插件）、独立的 Chrome for Testing、OpenScreen、Caveman、本地旁白，以及 Audio Studio MCP 和模型权重，然后构建应用。缺少系统工具时使用 Homebrew，旁白使用托管的 Python 3.11。已有配置和应用会保留。默认包含较大的模型下载，可用 `./install.sh --help` 查看选项。安装和后端启动使用同一套[托管依赖更新流程](docs/dependency-upgrades.md)（英文）。另外还需要两类访问权限：
+macOS 可以运行 [install.sh](install.sh)，一次安装缺少的系统工具、锁定版本的 npm 依赖（刷新 Claude/Codex SDK，以及兼容范围内的 DeepSeek SDK、运行时和费用插件）、独立的 Chrome for Testing、OpenScreen、本地旁白，以及 Audio Studio MCP 和模型权重，然后构建应用。缺少系统工具时使用 Homebrew，旁白使用托管的 Python 3.11。已有配置和应用会保留。默认包含较大的模型下载，可用 `./install.sh --help` 查看选项。安装和后端启动使用同一套[托管依赖更新流程](docs/dependency-upgrades.md)（英文）。另外还需要两类访问权限：
 
 - **模型提供方：用 API key，或者用已经登录的订阅账号都可以。** Claude：设置 `ANTHROPIC_API_KEY` 或
   `CLAUDE_CODE_OAUTH_TOKEN`，或者直接在这台 Mac 上登录 [Claude Code](https://code.claude.com/docs/en/overview)。
@@ -238,7 +240,6 @@ Anatomy 在服务启动时自动安装或更新。首次启动需要网络，通
 | `reference_browser` / `capture_video`                                                                                                                                                                                                                                         | 通过 [Puppeteer](https://pptr.dev) 操作网页，由本机或工作节点上的 [OpenScreen](https://github.com/getopenscreen/openscreen) 节点录制 | Kiteva 内置，两家模型都可用                                                                           |
 | [Kokoro](https://github.com/thewh1teagle/kokoro-onnx)、[Pocket TTS](https://pypi.org/project/pocket-tts/)                                                                                                                                                                     | 本地旁白                                                                                                                             | Python 环境由 `npm run speech:setup*` 搭建，模型权重下载到被 Git 忽略的 `models/`                     |
 | [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-typescript)、[Codex SDK](https://github.com/openai/codex/tree/main/sdk/typescript)、[`@typesafe-ai/sdk`](https://docs.typesafe.ai/sdk/javascript)                                                           | 模型提供方和 JEV                                                                                                                     | npm 依赖                                                                                              |
-| [Caveman](https://github.com/JuliusBrussee/caveman)                                                                                                                                                                                                                           | SDK 调用的本地 token 压缩代理                                                                                                        | npm 依赖，默认开启                                                                                    |
 | [GSAP](https://gsap.com)、[Three.js](https://threejs.org)、[PixiJS](https://pixijs.com)、[Paper.js](http://paperjs.org)、[Rough.js](https://roughjs.com)、[Motion](https://motion.dev)、[chroma.js](https://gka.github.io/chroma.js/)、[Pica](https://github.com/nodeca/pica) | 供生成的影片使用的绘图和动画库                                                                                                       | npm 依赖                                                                                              |
 | [React](https://react.dev)、[Ant Design](https://ant.design) + [Ant Design X](https://x.ant.design)、[Radix](https://radix-ui.com)、[Tailwind CSS](https://tailwindcss.com)、[Vite](https://vite.dev)、[Fastify](https://fastify.dev)、[Zod](https://zod.dev)                 | 应用界面、服务器和共享契约                                                                                                           | npm 依赖                                                                                              |
 | [FFmpeg](https://ffmpeg.org)、[Chrome](https://www.google.com/chrome/)/[Chromium](https://www.chromium.org)、[Python](https://www.python.org)、[Blender](https://www.blender.org)（可选）                                                                                     | 外部工具                                                                                                                             | 不随仓库提供，需要自己安装                                                                            |

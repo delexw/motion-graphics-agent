@@ -74,7 +74,7 @@ export async function prepareReviewFrames(input: {
         "-frames:v",
         "1",
         "-vf",
-        "scale=1920:1920:force_original_aspect_ratio=decrease",
+        "scale=1280:1280:force_original_aspect_ratio=decrease",
         "-threads",
         "1",
         file,

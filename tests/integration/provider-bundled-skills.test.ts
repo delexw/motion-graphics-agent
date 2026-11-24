@@ -23,10 +23,6 @@ vi.mock("../../src/server/agents/bundled-skills/installation", async (original) 
   };
 });
 const sdk = vi.hoisted(() => ({ query: vi.fn(), construct: vi.fn(), stream: vi.fn() }));
-vi.mock("../../src/server/agents/caveman", () => ({
-  cavemanSettings: () => ({ enabled: false }),
-  cavemanRuntime: async () => undefined,
-}));
 vi.mock("../../src/server/agents/sdk-home", () => ({
   isolatedCodexHome: async () => "/isolated-home",
 }));

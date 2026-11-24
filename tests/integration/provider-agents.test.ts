@@ -5,7 +5,8 @@ import { bundledSkills } from "../../src/server/agents/bundled-skills/registry";
 import { credentialEnvironmentVariables } from "../../src/server/runtime/credential-environment";
 import { projectRuntimeEnvironment } from "../../src/server/runtime/project-files";
 vi.mock("../../src/server/agents/claude-home", () => ({
-  prepareClaudeHome: async () => "/isolated-home",
+  prepareClaudeHome: async (...args: unknown[]) =>
+    (await sdk.prepareClaudeHome(...args)) ?? "/isolated-home",
   claudeLoginEnvironment: async () => ({
     [credentialEnvironmentVariables.claudeOauthToken]: "fixture-sdk-token",
   }),
@@ -15,12 +16,6 @@ vi.mock("../../src/server/agents/bundled-skills", async (importOriginal) => ({
   prepareBundledSkills: vi.fn(),
 }));
 import { afterEach, expect, it, vi } from "vitest";
-vi.mock("../../src/server/agents/caveman", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../src/server/agents/caveman")>()),
-  cavemanSettings: () => ({ enabled: false }),
-  cavemanRuntime: sdk.cavemanRuntime,
-  codexCavemanAuth: async () => ({ auth_mode: "apikey" }),
-}));
 import { z } from "zod";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
@@ -95,14 +90,16 @@ const sdk = vi.hoisted(() => ({
   codexEvents: vi.fn(),
   resume: vi.fn(),
   construct: vi.fn(),
-  cavemanRuntime: vi.fn(),
+  prepareClaudeHome: vi.fn().mockResolvedValue("/isolated-home"),
+  isolatedCodexHome: vi.fn().mockResolvedValue("/isolated-home"),
   delay: vi.fn().mockResolvedValue(undefined),
   stream: vi.fn(),
   threadOptions: vi.fn(),
 }));
 afterEach(() => {
   sdk.close.mockReset();
-  sdk.cavemanRuntime.mockReset();
+  sdk.prepareClaudeHome.mockReset().mockResolvedValue("/isolated-home");
+  sdk.isolatedCodexHome.mockReset().mockResolvedValue("/isolated-home");
   sdk.delay.mockReset().mockResolvedValue(undefined);
 });
 vi.mock("node:timers/promises", () => ({ setTimeout: sdk.delay }));
@@ -110,7 +107,8 @@ vi.mock("@anthropic-ai/claude-agent-sdk", () => ({
   query: (...args: unknown[]) => Object.assign(sdk.query(...args), { close: sdk.close }),
 }));
 vi.mock("../../src/server/agents/sdk-home", () => ({
-  isolatedCodexHome: async () => "/isolated-home",
+  isolatedCodexHome: async (...args: unknown[]) =>
+    (await sdk.isolatedCodexHome(...args)) ?? "/isolated-home",
 }));
 vi.mock("@openai/codex-sdk", () => ({
   Codex: class {
@@ -443,48 +441,27 @@ it.each([
   },
 );
 
-it.each([false, true])(
-  "configures official Codex transport retries with Caveman=%s",
-  async (enabled) => {
-    sdk.cavemanRuntime.mockResolvedValue(
-      enabled
-        ? {
-            url: "http://127.0.0.1:4321",
-            env: {},
-            mcp: { command: "caveman", args: ["mcp"] },
-          }
-        : undefined,
-    );
-    sdk.codexEvents.mockImplementation(async function* () {
-      yield { type: "turn.failed", error: { message: "Invalid request" } };
-    });
-    const before = sdk.construct.mock.calls.length;
-    await expect(
-      agentTurn({
-        provider: "codex",
-        workspace: "/job",
-        prompt: "Summarize",
-        model: "gpt-6.2-astra",
-        schema: z.object({ message: z.string() }),
-        signal: new AbortController().signal,
-        onEvent: vi.fn(),
-      }),
-    ).rejects.toThrow("Invalid request");
-    expect(sdk.construct.mock.calls.length).toBe(before + 1);
-    const config = sdk.construct.mock.calls.at(-1)?.[0].config;
-    if (enabled)
-      expect(config.model_providers.caveman).toEqual({
-        name: "Caveman",
-        wire_api: "responses",
-        requires_openai_auth: true,
-        request_max_retries: 6,
-        stream_max_retries: 8,
-        base_url: "http://127.0.0.1:4321/w/codex/v1",
-      });
-    else expect(config.model_providers).toBeUndefined();
-    expect(config.model_provider).toBe(enabled ? "caveman" : undefined);
-  },
-);
+it("uses the native Codex provider without custom proxy overrides", async () => {
+  sdk.codexEvents.mockImplementation(async function* () {
+    yield { type: "turn.failed", error: { message: "Invalid request" } };
+  });
+  const before = sdk.construct.mock.calls.length;
+  await expect(
+    agentTurn({
+      provider: "codex",
+      workspace: "/job",
+      prompt: "Summarize",
+      model: "gpt-6.2-astra",
+      schema: z.object({ message: z.string() }),
+      signal: new AbortController().signal,
+      onEvent: vi.fn(),
+    }),
+  ).rejects.toThrow("Invalid request");
+  expect(sdk.construct.mock.calls.length).toBe(before + 1);
+  const config = sdk.construct.mock.calls.at(-1)?.[0].config;
+  expect(config.model_providers).toBeUndefined();
+  expect(config.model_provider).toBeUndefined();
+});
 
 function capacityAttemptOptions(
   onEvent: (event: ProviderEvent) => void = vi.fn(),
@@ -888,11 +865,16 @@ it.each([claudeAgent, codexAgent])(
       const queryCalls = sdk.query.mock.calls.length;
       const codexCalls = sdk.construct.mock.calls.length;
       if (preAborted) controller.abort(reason);
-      else
-        sdk.cavemanRuntime.mockImplementationOnce(async () => {
+      else {
+        sdk.prepareClaudeHome.mockImplementationOnce(async () => {
           controller.abort(reason);
-          return undefined;
+          return "/isolated-home";
         });
+        sdk.isolatedCodexHome.mockImplementationOnce(async () => {
+          controller.abort(reason);
+          return "/isolated-home";
+        });
+      }
       await expect(
         agent.run({
           ...capacityAttemptOptions(vi.fn(), controller.signal),

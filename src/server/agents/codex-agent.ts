@@ -1,9 +1,7 @@
 import { projectRuntimeFiles } from "../runtime/project-files";
 import { withProcessScope } from "../runtime/process-scope";
-import { contextRecoveryCapabilities } from "./capabilities/context-recovery/capability";
 import { commandActivity } from "./command-activity";
 import { ModelCapacityError } from "./capacity-error";
-import { cavemanRuntime, codexCavemanAuth, codexCavemanProvider } from "./caveman";
 import { Codex, type ThreadEvent } from "@openai/codex-sdk";
 import { isolatedCodexHome } from "./sdk-home";
 import { childEnvironment, safeMessage } from "../runtime/config";
@@ -69,15 +67,11 @@ export function codexEvent(event: ThreadEvent): ProviderEvent | undefined {
   }
 }
 
-const codexTransportRetries = { request_max_retries: 6, stream_max_retries: 8 } as const;
-
 export const codexAgent: Agent = {
   provider: "codex",
   defaultReasoningEffort: "medium",
   async run(options) {
     const { workspace, signal, prompt, systemPrompt, jsonSchema, onEvent, model } = options;
-    signal.throwIfAborted();
-    const caveman = await cavemanRuntime(signal);
     signal.throwIfAborted();
     let sessionId = options.sessionId;
     const home = await isolatedCodexHome(workspace, sessionId, signal);
@@ -87,7 +81,6 @@ export const codexAgent: Agent = {
       const client = new Codex({
         env: {
           ...childEnvironment(workspace),
-          ...caveman?.env,
           CODEX_HOME: home,
           // Codex also discovers user skills under HOME/.agents, independently of CODEX_HOME.
           HOME: home,
@@ -95,32 +88,20 @@ export const codexAgent: Agent = {
         },
         config: {
           ...(process.platform === "win32" ? { windows: { sandbox: "elevated" } } : {}),
-          ...(caveman
-            ? {
-                model_provider: "caveman",
-                model_providers: {
-                  caveman: {
-                    ...codexCavemanProvider(caveman.url, await codexCavemanAuth(home)),
-                    ...codexTransportRetries,
-                  },
-                },
-              }
-            : {}),
           mcp_servers: Object.fromEntries(
-            Object.entries({
-              ...(options.textOnly ? {} : options.capabilityServers || {}),
-              ...contextRecoveryCapabilities(caveman),
-            }).map(([name, { enabledTools, toolTimeoutSeconds = 60, ...server }]) => [
-              name,
-              {
-                ...server,
-                enabled_tools: enabledTools,
-                tools: Object.fromEntries(
-                  enabledTools.map((tool) => [tool, { approval_mode: "approve" }]),
-                ),
-                tool_timeout_sec: toolTimeoutSeconds,
-              },
-            ]),
+            Object.entries(options.textOnly ? {} : options.capabilityServers || {}).map(
+              ([name, { enabledTools, toolTimeoutSeconds = 60, ...server }]) => [
+                name,
+                {
+                  ...server,
+                  enabled_tools: enabledTools,
+                  tools: Object.fromEntries(
+                    enabledTools.map((tool) => [tool, { approval_mode: "approve" }]),
+                  ),
+                  tool_timeout_sec: toolTimeoutSeconds,
+                },
+              ],
+            ),
           ),
           ...(options.exploreBriefSections && !options.textOnly
             ? { features: { multi_agent: true }, agents: { max_threads: 1, max_depth: 1 } }
@@ -161,9 +142,7 @@ export const codexAgent: Agent = {
         if (
           options.textOnly &&
           "item" in e &&
-          (["command_execution", "file_change", "web_search"].includes(e.item.type) ||
-            (e.item.type === "mcp_tool_call" &&
-              !(caveman && e.item.server === "caveman" && e.item.tool === "caveman_retrieve")))
+          ["command_execution", "file_change", "web_search", "mcp_tool_call"].includes(e.item.type)
         )
           throw Error(
             "Motion Graphic extraction requires a text-only model response; tool activity was rejected",

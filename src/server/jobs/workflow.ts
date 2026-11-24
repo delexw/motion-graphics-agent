@@ -663,10 +663,7 @@ export class Workflow {
           !this.catalog.styles.some((style) => style.id === run.request.pinnedStyleId)
         )
           throw Error("Pinned Motion Graphic was not found");
-        await writeFile(
-          path.join(workspace, "style-summaries.json"),
-          JSON.stringify(summaries, null, 2),
-        );
+        await writeFile(path.join(workspace, "style-summaries.json"), JSON.stringify(summaries));
         const proposalSchema = proposalSchemaForStyleRange(styleRange);
         await writeFile(
           path.join(workspace, "style-combinations.json"),

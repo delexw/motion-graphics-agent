@@ -16,10 +16,6 @@ vi.mock("../../src/server/agents/bundled-skills", async (importOriginal) => ({
 }));
 import { afterEach, expect, it, vi } from "vitest";
 afterEach(() => vi.unstubAllEnvs());
-vi.mock("../../src/server/agents/caveman", () => ({
-  cavemanSettings: () => ({ enabled: false }),
-  cavemanRuntime: async () => undefined,
-}));
 import { z } from "zod";
 const providerContext = new AsyncLocalStorage<ReturnType<typeof createProviderCalls>>();
 
@@ -48,7 +44,7 @@ async function withProviderFixture(
 vi.mock("@anthropic-ai/claude-agent-sdk", () => ({
   query: (...args: unknown[]) => Object.assign(providerCalls().query(...args), { close: vi.fn() }),
 }));
-vi.mock("./../src/server/agents/sdk-home", () => ({
+vi.mock("../../src/server/agents/sdk-home", () => ({
   isolatedCodexHome: async () => "/isolated-home",
 }));
 vi.mock("@openai/codex-sdk", () => ({
@@ -329,7 +325,9 @@ it.each(
         });
         expect(files[0]).not.toBe(files[1]);
         for (const [index, file] of files.entries()) {
-          const context = JSON.parse(await readFile(path.join(workspace, file), "utf8"));
+          const raw = await readFile(path.join(workspace, file), "utf8");
+          expect(raw).not.toContain("\n");
+          const context = JSON.parse(raw);
           expect(context.draft.length).toBe(20000);
           expect(context.attempt).toBe(index);
           expect(context.secret).not.toBe("private-context-secret");

@@ -1,5 +1,4 @@
 import { refreshManagedDependencies } from "./dependencies.js";
-import { stopCaveman } from "./agents/caveman.js";
 import { createApp } from "./app.js";
 import { port } from "./runtime/config.js";
 const startup = new AbortController();
@@ -18,8 +17,5 @@ await app.listen({ port, host: "127.0.0.1" });
 console.log(`Video agent: http://127.0.0.1:${port}`);
 for (const event of ["SIGINT", "SIGTERM"])
   process.on(event, () => {
-    void app
-      .close()
-      .then(stopCaveman)
-      .then(() => process.exit(0));
+    void app.close().then(() => process.exit(0));
   });

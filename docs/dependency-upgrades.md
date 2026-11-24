@@ -6,6 +6,7 @@
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | Managed Audio Studio MCP                 | Every backend startup and `install.sh`, for installed managed runtimes; manual `npm run audio-studio:update`                                      | `src/server/agents/capabilities/audio-studio/installation.ts`                         |
 | Explicit `AUDIO_STUDIO_MCP_COMMAND`      | Operator-managed; Kiteva never replaces it                                                                                                        | Configured external installation                                                      |
+| LPC and PixelFX                          | `install.sh` provisions missing sources. Backend launch checks installed sources against Kiteva's pinned revisions.                               | [Pixel asset sources](#pixel-asset-sources)                                           |
 | Bundled skills                           | Every backend startup and `install.sh`, using verified immutable revisions                                                                        | [Bundled skill installation](../src/server/agents/bundled-skills/README.md)           |
 | React Bits / Animate UI registry content | Upstream reads when a new registry client requests content; cached within that client                                                             | [Component capabilities](../src/server/agents/capabilities/README.md)                 |
 | npm dependencies and SDKs                | `install.sh` refreshes Claude/Codex and the compatible DeepSeek SDK/runtime pair; other packages use lockfile install/update; no runtime hot swap | `package.json`, `package-lock.json` and [dependency security](dependency-security.md) |
@@ -93,7 +94,7 @@ report a missing model, license, device or runtime requirement.
 ## Manual retry and diagnosis
 
 Run `npm run dependencies:update` for the shared skills/installed-MCP check, or
-`npm run dependencies:update -- --skip-audio-studio` to check skills and Bevy.
+`npm run dependencies:update -- --skip-audio-studio` to set up pixel assets and check skills and Bevy.
 
 Run `npm run audio-studio:update` to use the same managed updater without restarting
 Kiteva. It prints the revision/version selected or the fallback/unavailability reason.
@@ -151,3 +152,31 @@ finish active jobs before dependency maintenance or restart. Failed installation
 not trigger a generation-time download or silently select another provider. The SDK/runtime and the `dsh-cost-meter` host plugin
 are MIT licensed; upstream files and notices remain intact. Compatible nested overrides
 keep the runtime's HTTP, MCP client and ZIP dependencies on patched releases.
+
+## Pixel asset sources
+
+`install.sh` installs LPC and PixelFX and keeps them in `.data/pixel-assets/`.
+Use `--skip-pixel-assets` or `--minimal` to skip them. Rerun just the shared
+dependency setup with `npm run dependencies:update -- --skip-audio-studio`.
+Backend startup checks installed copies. A launch with no existing copy leaves
+that optional capability unavailable until it is installed.
+
+The [pixel asset source registry](../src/server/agents/capabilities/pixel-assets/sources.ts)
+pins the benchmarked LPC and PixelFX revisions. The updater fetches the exact
+commit, checks the revision and required files, then publishes a new source
+directory and switches to it atomically. A per-source lease serialises concurrent
+updates. A failed or cancelled update discards its staged files and retains any
+verified previous checkout. Existing jobs can continue to use the revision they
+started with. A clean manual checkout at the pinned revision stays usable.
+
+Set absolute paths in `KITEVA_LPC_ROOT` and `KITEVA_PIXELFX_ROOT` to manage
+either source yourself. Kiteva never updates those paths. Use sources you trust.
+PixelFX runs its installed Node CLI, and Kiteva reads LPC definitions and
+sprites directly. Neither source needs its own npm dependencies installed.
+Generation uses local files and never installs or updates them.
+
+After setup, run the local benchmark with a new output directory.
+
+```sh
+node --import tsx scripts/benchmark-pixel-assets.ts /absolute/path/to/new-benchmark-directory
+```

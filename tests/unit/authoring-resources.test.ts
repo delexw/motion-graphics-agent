@@ -6,6 +6,7 @@ import {
   authoringResources,
   authoringResourceSelectionGuidance,
 } from "../../src/server/jev/strategies/visual-authoring";
+import { pixelAssetResources } from "../../src/server/agents/capabilities/pixel-assets/capability";
 import { RequestSchema } from "../../src/shared/contracts";
 import { loadCatalog } from "../../src/server/catalog/catalog";
 afterEach(() => {
@@ -62,6 +63,7 @@ async function input() {
       dimensions: {},
     },
     styles: catalog.styles,
+    pixelAssets: [],
     signal: new AbortController().signal,
     onEvent: vi.fn(),
   };
@@ -247,3 +249,67 @@ it("passes supplied image facts and inspected observations without mistaking ins
   });
   expect(result.selectedIds).toEqual(["img2threejs"]);
 });
+
+it.each([
+  { installed: pixelAssetResources, selected: "both", ids: ["lpc", "pixel_fx"] },
+  { installed: pixelAssetResources, selected: "none", ids: [] },
+  { installed: pixelAssetResources.slice(1), selected: "pixel_fx", ids: ["pixel_fx"] },
+])(
+  "uses one JEV request to compare the primary resource and optional pixel tools ($selected)",
+  async ({ installed, selected, ids }) => {
+    vi.stubEnv(credentialEnvironmentVariables.typesafeApiKey, "test-placeholder");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url, init) => {
+        const body = await parseJevRequest(init);
+        expect(Object.keys(body.questions)).toEqual(["resource", "pixelAssets"]);
+        expect(Object.keys(body.questions.resource.criteria)).toEqual(
+          authoringResources.map(({ id }) => id),
+        );
+        const criteria = body.questions.pixelAssets.criteria;
+        expect(Object.keys(criteria)).toEqual([
+          "none",
+          ...installed.map(({ id }) => id),
+          ...(installed.length === 2 ? ["both"] : []),
+        ]);
+        const fixture = (choice: string, options: string[]) => ({
+          type: "choice",
+          choice,
+          confidence: 1,
+          probabilities: Object.fromEntries(options.map((id) => [id, id === choice ? 1 : 0])),
+        });
+        return Response.json({
+          model: "jev-fixture",
+          answers: {
+            resource: fixture("local_code", Object.keys(body.questions.resource.criteria)),
+            pixelAssets: fixture(selected, Object.keys(criteria)),
+          },
+          usage: { input_tokens: 10, output_tokens: 5 },
+        });
+      }),
+    );
+    const options = await input();
+    const result = await selectAuthoringResources({ ...options, pixelAssets: installed });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(result.selectedIds).toEqual(["local_code", ...ids]);
+    expect(
+      result.decisions.filter(({ id }) => id !== "local_code").slice(-installed.length),
+    ).toEqual(
+      installed.map(({ id }) => ({
+        id,
+        use: ids.includes(id),
+        probability: Number(ids.includes(id)),
+      })),
+    );
+    expect(options.onEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "usage",
+        data: expect.objectContaining({
+          decision: expect.objectContaining({
+            additionalAnswers: { pixelAssets: expect.objectContaining({ choice: selected }) },
+          }),
+        }),
+      }),
+    );
+  },
+);

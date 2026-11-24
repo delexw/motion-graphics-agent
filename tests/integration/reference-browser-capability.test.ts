@@ -4,7 +4,6 @@ import { expect, it } from "vitest";
 import { agentCapabilities } from "../../src/server/agents/capabilities/registry";
 import { referenceBrowserCapability } from "../../src/server/agents/capabilities/reference-browser/capability";
 import { enabledReferenceTools } from "../../src/server/agents/capabilities/reference-browser/types";
-import { contextRecoveryCapabilities } from "../../src/server/agents/capabilities/context-recovery/capability";
 import { browserExecutablePath } from "../../src/server/runtime/browser";
 
 it.each([
@@ -49,24 +48,6 @@ it("omits browser registration and guidance without URLs or during text-only tur
   expect(agentCapabilities("/tmp/example-job").guidance).not.toContain(
     "WEBSITE REFERENCE EXPLORATION",
   );
-});
-
-it("registers optional context recovery without taking ownership of its provider proxy", () => {
-  expect(contextRecoveryCapabilities(undefined)).toEqual({});
-  const mcp = {
-    command: "example-context-server",
-    args: [],
-    env: { CAVEMAN_HOME: "/tmp/example-context" },
-  };
-  expect(
-    contextRecoveryCapabilities({
-      url: "http://127.0.0.1:9999",
-      env: { CAVEMAN_HOME: "/tmp/example-context" },
-      mcp,
-    }),
-  ).toEqual({
-    caveman: { ...mcp, enabledTools: ["caveman_retrieve"], toolTimeoutSeconds: 60 },
-  });
 });
 
 it.skipIf(!browserExecutablePath())(

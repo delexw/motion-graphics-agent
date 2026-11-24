@@ -209,6 +209,8 @@ it("registers the tool and guidance for builds independently of Audio Studio, ex
   expect(guidance).toContain("Reanalyze after");
   expect(guidance).toContain("source-relative seconds");
   expect(agentCapabilities(f.workspace, true).servers.music_analysis).toBeUndefined();
+  expect(agentCapabilities(f.workspace, true).guidance).not.toContain("### Music analysis");
+  expect(agentCapabilities(f.workspace, true).guidance).not.toContain("### Audio Studio");
   expect(agentCapabilities(f.workspace, false, true).servers.music_analysis).toBeUndefined();
   const client = await connect(f.workspace);
   expect((await client.listTools()).tools.map((tool) => tool.name)).toEqual(["analyze_music"]);

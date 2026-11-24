@@ -447,7 +447,7 @@ export function RoomOnboarding({
                 {counts.map((count) => (
                   <Tag
                     key={count.key}
-                    bordered={false}
+                    variant="filled"
                     className={count.full ? "is-full" : undefined}
                   >
                     {count.label}

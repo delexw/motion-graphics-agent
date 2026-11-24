@@ -55,6 +55,8 @@ it("extracts timestamped PNG attachments only from the validated export and prop
         await realpath(videoPath),
         "-frames:v",
         "1",
+        "-vf",
+        "scale=1280:1280:force_original_aspect_ratio=decrease",
       ]),
       expect.any(String),
       input.signal,

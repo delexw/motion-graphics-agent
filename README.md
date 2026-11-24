@@ -76,6 +76,17 @@ links and [local gallery](docs/showcase.html) remain available for local viewing
 The three most recent dated entries are listed here, regardless of gaps between dates. See the [changelog](CHANGELOG.md#daily-update-archive) for older entries and [release history](CHANGELOG.md).
 
 <details>
+<summary>2026-11-24</summary>
+
+- **Pixel art tools:** JEV can choose LPC characters, PixelFX environment effects, or both alongside the project's primary authoring tool. LPC generates credits for eligible CC0 and CC BY parts, including parts used under CC BY 3.0 via OGA-BY. Installation prepares both sources, and startup checks installed copies.
+- **Model calls:** Claude and Codex use their native SDK routes without the Caveman proxy. Video reviews use smaller frames and default to medium effort when no task or provider setting supplies one.
+- **Dependency updates:** The three DeepSeek Harness packages move to `0.2.2-rc.5` together. Dependabot groups future updates to these packages, including release candidates.
+- **Room:** Onboarding counts and question badges use Ant Design's current tag style.
+- **Tests and CI:** Browser tests run in Playwright with a fresh browser context per test. GitHub Actions runs separate unit, integration and browser suites. Installer tests use local fixtures.
+
+</details>
+
+<details>
 <summary>2026-11-22</summary>
 
 - **Adjustive effort:** This per-project Yes/No setting defaults to No. Yes lets JEV choose effort for each supported model call. No uses the configured task or model default. MCP can set it when creating a draft.
@@ -93,15 +104,6 @@ The three most recent dated entries are listed here, regardless of gaps between 
 - **GPT-6.2 Sol:** Choose Sol in Generation settings. Governance estimates its cost from OpenAI's published Standard rates.
 - **Downloads:** Open the download icon for the original MP4, compact MP4, editable project ZIP and language files. The 50% rate preset checks picture quality. The 90% rate preset targets a copy of up to 10 MB. Actual savings vary by video. Compression runs in the background. Reopen the pop-up to see progress. Repeated clicks share one job, and Kiteva keeps the original available if the compact copy fails its checks.
 - **Project results:** Video and controls resize together in smaller project windows. A check icon and border mark the selected preview.
-
-</details>
-
-<details>
-<summary>2026-11-17</summary>
-
-- **Music beat analysis:** The agent can analyze prepared music locally with the installed HyperFrames CLI and save measured beat timestamps, estimated tempo and a source fingerprint. [Implementation](https://github.com/delexw/motion-graphics-agent/commit/af9e4d7).
-- **Beats in Production Desk:** Music clips show beat ticks, estimated BPM and beat counts. Select a clip to jump to the previous or next beat with buttons or `[` / `]`. Missing or stale analysis is labeled; opening Desk does not run generation. See [Desk controls and limits](docs/production-desk.md#measured-music-beats).
-- **Tool activity labels:** Music analysis has its own English/Chinese Activity label. Agent guidance requires a distinct customer-facing label for each new tool.
 
 </details>
 
@@ -210,7 +212,7 @@ More detail, including the workflow diagrams, is in [docs/architecture.md](docs/
 
 Native Windows 10/11 setup is experimental and has its own [installation and verification guide](docs/windows.md); WSL is not required.
 
-On macOS, [install.sh](install.sh) installs missing system prerequisites, locked npm dependencies (refreshing Claude/Codex SDKs plus the compatible DeepSeek SDK/runtime and cost-plugin ranges), isolated Chrome for Testing, OpenScreen, Caveman, local speech providers and Audio Studio MCP with model weights, then builds the app. It uses Homebrew when system tools are missing and managed Python 3.11 for speech. Existing configuration and installed apps are preserved. The default setup includes large model downloads; see `./install.sh --help` for options. Setup and backend launches share the [managed dependency update lifecycle](docs/dependency-upgrades.md). You still need two kinds of access:
+On macOS, [install.sh](install.sh) installs missing system prerequisites, locked npm dependencies (refreshing Claude/Codex SDKs plus the compatible DeepSeek SDK/runtime and cost-plugin ranges), isolated Chrome for Testing, OpenScreen, local speech providers and Audio Studio MCP with model weights, LPC and PixelFX, then builds the app. It uses Homebrew when system tools are missing and managed Python 3.11 for speech. Existing configuration and installed apps are preserved. The default setup includes large model downloads; see `./install.sh --help` for options. Setup and backend launches share the [managed dependency update lifecycle](docs/dependency-upgrades.md). You still need two kinds of access:
 
 - **A model provider, by API key or by an existing signed-in subscription.** For Claude, set
   `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`, or just be signed in to
@@ -265,7 +267,6 @@ Your projects, uploads, room layout, databases and credentials stay in Git-ignor
 | `reference_browser` / `capture_video`                                                                                                                                                                                                                                         | Website inspection via [Puppeteer](https://pptr.dev); recording via local or worker [OpenScreen](https://github.com/getopenscreen/openscreen) worker | Built into Kiteva, for both providers                                                                                                      |
 | [Kokoro](https://github.com/thewh1teagle/kokoro-onnx), [Pocket TTS](https://pypi.org/project/pocket-tts/)                                                                                                                                                                     | Local narration                                                                                                                                      | Python set up by `npm run speech:setup*`. Weights downloaded to Git-ignored `models/`                                                      |
 | [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-typescript), [Codex SDK](https://github.com/openai/codex/tree/main/sdk/typescript), [`@typesafe-ai/sdk`](https://docs.typesafe.ai/sdk/javascript)                                                           | Model providers and JEV                                                                                                                              | npm dependencies                                                                                                                           |
-| [Caveman](https://github.com/JuliusBrussee/caveman)                                                                                                                                                                                                                           | Local token-compression proxy for SDK calls                                                                                                          | npm dependency, on by default                                                                                                              |
 | [GSAP](https://gsap.com), [Three.js](https://threejs.org), [PixiJS](https://pixijs.com), [Paper.js](http://paperjs.org), [Rough.js](https://roughjs.com), [Motion](https://motion.dev), [chroma.js](https://gka.github.io/chroma.js/), [Pica](https://github.com/nodeca/pica) | Drawing and motion libraries offered to generated films                                                                                              | npm dependencies                                                                                                                           |
 | [React](https://react.dev), [Ant Design](https://ant.design) + [Ant Design X](https://x.ant.design), [Radix](https://radix-ui.com), [Tailwind CSS](https://tailwindcss.com), [Vite](https://vite.dev), [Fastify](https://fastify.dev), [Zod](https://zod.dev)                 | App UI, server and shared contracts                                                                                                                  | npm dependencies                                                                                                                           |
 | [FFmpeg](https://ffmpeg.org), [Chrome](https://www.google.com/chrome/)/[Chromium](https://www.chromium.org), [Python](https://www.python.org), [Blender](https://www.blender.org) (optional)                                                                                  | External tools                                                                                                                                       | Not bundled. `install.sh` sets up the supported macOS tools; Blender remains optional and separate                                         |

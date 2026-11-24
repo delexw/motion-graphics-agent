@@ -162,6 +162,10 @@ export const taskActivityLabels: Record<
   },
 };
 export function customerToolActivity(name: string, type: string, purpose?: string): string {
+  if (/lpc.*list_parts/.test(name)) return "Finding licensed pixel character parts…";
+  if (/lpc.*build_character/.test(name)) return "Building a pixel character…";
+  if (/pixel_fx.*list_effects/.test(name)) return "Finding pixel environment effects…";
+  if (/pixel_fx.*render_effect/.test(name)) return "Rendering a pixel environment effect…";
   if (/bevy.*render_frames/.test(name)) return "Rendering Bevy frames…";
   if (/music_analysis.*analyze_music/.test(name)) return "Analyzing music beats…";
   if (/creative_pool.*inspect_technologies/.test(name)) return "Checking tool availability…";

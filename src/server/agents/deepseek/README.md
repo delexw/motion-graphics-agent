@@ -46,7 +46,7 @@ runtime variables. MCP servers retain their own scoped environment contracts.
   text. Images are encoded as real SDK image blocks. JSON is requested with the
   output schema and validated by the shared caller; this is not native constrained decoding.
 - Common reasoning efforts map low → low, medium/high → high, xhigh → max. Native
-  plan mode and Caveman compression are unsupported; Kiteva's read-only planning
+  plan mode is unsupported; Kiteva's read-only planning
   stage remains available. Native questions are cancelled rather than auto-approved.
 - Cancellation closes and awaits the SDK-owned subprocess. Failures never cause an
   adapter-owned automatic retry. Telemetry/session-upload contributors are disabled.

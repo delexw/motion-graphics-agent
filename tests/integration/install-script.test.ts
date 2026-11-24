@@ -79,7 +79,6 @@ it("runs the complete fresh-clone setup in order using isolated command fixtures
       "npx --no-install browsers install chrome@stable",
       "npm run multiplane:setup",
       "node --import tsx scripts/setup-openscreen.ts",
-      "npm run caveman:setup",
       "uv python install 3.11",
       "npm run speech:setup\n",
       "npm run speech:setup:pocket\n",
@@ -87,7 +86,7 @@ it("runs the complete fresh-clone setup in order using isolated command fixtures
       "npm run speech:setup:ming",
       "git clone --depth 1 https://github.com/kanaworksai-hue/audio-studio-mcp.git",
       "audio-installer \n",
-      "npm run dependencies:update",
+      "npm run dependencies:update\n",
       "npm run build",
     ])
       expect(commands).toContain(command);
@@ -125,15 +124,9 @@ it("preserves configuration and reuses the Audio Studio checkout on repeat insta
 it("supports opting out of optional runtimes without skipping app dependencies", async () => {
   const f = await fixture();
   try {
-    await f.run([
-      "--minimal",
-      "--skip-openscreen",
-      "--skip-browser",
-      "--skip-caveman",
-      "--skip-build",
-    ]);
+    await f.run(["--minimal", "--skip-openscreen", "--skip-browser", "--skip-build"]);
     expect(await readFile(f.log, "utf8")).toBe(
-      "npm ci\nnpm update @anthropic-ai/claude-agent-sdk @openai/codex @openai/codex-sdk @deepseek-ai/dsh-sdk-client @deepseek-ai/dsh @deepseek-ai/dsh-llm dsh-cost-meter\nnpm run dependencies:update -- --skip-audio-studio\n",
+      "npm ci\nnpm update @anthropic-ai/claude-agent-sdk @openai/codex @openai/codex-sdk @deepseek-ai/dsh-sdk-client @deepseek-ai/dsh @deepseek-ai/dsh-llm dsh-cost-meter\nnpm run dependencies:update -- --skip-audio-studio --skip-pixel-assets\n",
     );
   } finally {
     await f.close();
@@ -177,7 +170,6 @@ it("installs a missing system tool and upgrades an unsupported Node before npm c
         "--minimal",
         "--skip-openscreen",
         "--skip-browser",
-        "--skip-caveman",
         "--skip-build",
       ],
       { env: { ...f.env, TEST_NODE_MAJOR: "20" } },

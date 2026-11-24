@@ -6,7 +6,6 @@ They are separate from authoring skills (`../bundled-skills/`), Motion Graphics 
 | Capability                                                              | Registration                                     | Guidance                                 | Implementation                                                                                                                                                                   |
 | ----------------------------------------------------------------------- | ------------------------------------------------ | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Reference browser](reference-browser/)                                 | [capability.ts](reference-browser/capability.ts) | [prompt.ts](reference-browser/prompt.ts) | [tools.ts](reference-browser/tools.ts), [server.ts](reference-browser/server.ts), [tool-registry.ts](reference-browser/tool-registry.ts), [types.ts](reference-browser/types.ts) |
-| [Context recovery](context-recovery/)                                   | [capability.ts](context-recovery/capability.ts)  | Existing Caveman turn guidance           | External Caveman MCP; proxy lifecycle remains in `agents/caveman.ts`                                                                                                             |
 | React Bits                                                              | [capability.ts](react-bits/capability.ts)        | [prompt.ts](react-bits/prompt.ts)        | [tools.ts](react-bits/tools.ts), [server.ts](react-bits/server.ts)                                                                                                               |
 | Animate UI                                                              | [capability.ts](animate-ui/capability.ts)        | [prompt.ts](animate-ui/prompt.ts)        | [tools.ts](animate-ui/tools.ts), [server.ts](animate-ui/server.ts)                                                                                                               |
 | Creative Pool                                                           | [capability.ts](creative-pool/capability.ts)     | [prompt.ts](creative-pool/prompt.ts)     | [tools.ts](creative-pool/tools.ts), [server.ts](creative-pool/server.ts)                                                                                                         |
@@ -47,8 +46,7 @@ an enabled default tool as disabled because the prompt says not to use it.
 | Native `planMode`                             | Requires `readOnly`; SDK plan permissions and explicit planning handoff govern a broader native list, alongside stage-scoped task MCP tools | No separate native plan-mode mapping; read-only sandbox remains the boundary                                                                                    |
 | Authoring/build                               | Explicit native read/write/edit/shell/Skill list plus task MCP tools                                                                        | Workspace-write sandbox and native SDK tools plus task MCP tools                                                                                                |
 
-Configured Caveman context recovery is a separate MCP exception even in text-only
-turns; it does not authorize task tools. Narration and Audio Studio are unavailable
+Narration, Audio Studio, Music analysis, Bevy and pixel asset tools are unavailable
 in read-only/text-only turns. Native web tools remain disabled; research uses the
 verified AnySearch skill when file/command tools are permitted.
 
@@ -79,7 +77,6 @@ flowchart TB
   Codex --> MCP
   MCP --> Browser["Reference browser: inspect / browser controls / capture_video"]
   Browser --> Capture["Shared capture implementation: local or desktop worker"]
-  MCP --> Recovery["Optional Caveman context recovery"]
   MCP --> Pool["Creative Pool: catalog + inspect"]
   MCP --> Components["React Bits / Animate UI"]
   MCP --> Narration["Narration create/edit + Audio Studio"]
@@ -112,7 +109,6 @@ execution-scope nesting.
 capabilities/
 ├── registry.ts
 ├── reference-browser/      # Registration/prompt/server/tools/types, tool registry and browser support
-├── context-recovery/      # External MCP registration; proxy lifecycle stays with Caveman
 ├── animate-ui/
 │   ├── capability.ts
 │   ├── prompt.ts
@@ -379,3 +375,33 @@ sequence under the project's media assets. A repeated shot name cannot overwrite
 saved sequence. A failed or cancelled run discards its staged frames. The tool
 has a three-minute timeout and requires a prepared executable. The project
 renderer uses the resulting assets and performs final export.
+
+## LPC characters and PixelFX environment effects
+
+Kiteva offers two optional asset capabilities alongside the primary authoring
+resource. When either is available, the same JEV request asks a second question
+about which of the available asset tools to use. The result and the primary
+choice appear together in Governance. A build can pair either or both tools
+with Bevy, another primary resource, or local code.
+
+- `lpc.list_parts` discovers compatible items by body layout and walk or idle
+  animation. `lpc.build_character` layers selected sprites in upstream z-order.
+  It reads the matching part definitions for each layer and uses CC0 or CC BY.
+  When a layer's upstream credits permit OGA-BY 3.0, Kiteva uses that layer
+  under CC BY 3.0 via [OGA-BY section 8(g)](https://static.opengameart.org/OGA-BY-3.0.txt).
+  The rule applies to all eligible parts, including stock bodies, clothes and
+  accessories. Credits record the selected licence and its basis. Kiteva's code is MIT.
+  The adapter uses LPC's shipped PNGs, including available colour variants.
+- `pixel_fx.list_effects` discovers installed effects in the environment
+  categories. `pixel_fx.render_effect` uses the upstream CLI to export a seeded
+  transparent sheet and matching frame data. Use frame rectangles, the loop
+  flag and the pivot from the returned metadata when compositing.
+
+Build outputs are under the project's assets directory. The LPC sheet includes a
+machine-readable manifest and `CREDITS.md` with creators, sources, licence links
+and changes. The PixelFX sheet includes its MIT licence and upstream notices.
+Project source exports include these files. When publishing a standalone film,
+include the generated LPC credits with the film, such as in its description.
+
+See [pixel asset setup](../../../../docs/dependency-upgrades.md#pixel-asset-sources)
+for the compatible revisions and the local benchmark command.

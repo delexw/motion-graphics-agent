@@ -77,7 +77,7 @@ export function RoomQuestion({
     <div className="room-question">
       <div className="room-question-scroll">
         <div className="room-question-scope">
-          <Tag bordered={false} className="is-blocking">
+          <Tag variant="filled" className="is-blocking">
             {translateUi("Paused for you")}
           </Tag>
           <span className="room-scope">{scope}</span>

@@ -1,11 +1,9 @@
 import { projectRuntimeFiles } from "../runtime/project-files";
 import { prepareClaudeHome, claudeLoginEnvironment } from "./claude-home";
 import { withProcessScope } from "../runtime/process-scope";
-import { contextRecoveryCapabilities } from "./capabilities/context-recovery/capability";
 import { commandActivity } from "./command-activity";
 import { nativeWebTools, researchToolDenial } from "./research-policy";
 import { ModelCapacityError } from "./capacity-error";
-import { cavemanRuntime } from "./caveman";
 import {
   query,
   type SDKMessage,
@@ -134,7 +132,6 @@ export const claudeAgent: Agent = {
       throw Error("Native planning requires a read-only turn");
     const home = await prepareClaudeHome(workspace, options.sessionId, signal);
     const loginEnvironment = await claudeLoginEnvironment(home, signal);
-    const caveman = await cavemanRuntime(signal);
     signal.throwIfAborted();
     return withProcessScope(signal, async (signal) => {
       let sessionId = options.sessionId;
@@ -191,10 +188,6 @@ export const claudeAgent: Agent = {
               CLAUDE_CONFIG_DIR: undefined,
               ...loginEnvironment,
               CLAUDE_CODE_TMPDIR: projectRuntimeFiles(workspace, "agent").tmp,
-              ...caveman?.env,
-              ...(caveman
-                ? { ANTHROPIC_BASE_URL: `${caveman.url}/w/claude`, ENABLE_TOOL_SEARCH: "auto" }
-                : {}),
               // Native override applies to main and helper requests, above inherited CLI settings.
               FORCE_PROMPT_CACHING_5M: "1",
               ...(options.capabilityServers && Object.keys(options.capabilityServers).length
@@ -216,10 +209,7 @@ export const claudeAgent: Agent = {
             settingSources: [],
             ...claudeBundledSkills(workspace, !options.textOnly),
             mcpServers: Object.fromEntries(
-              Object.entries({
-                ...(options.textOnly ? {} : options.capabilityServers || {}),
-                ...contextRecoveryCapabilities(caveman),
-              }).map(
+              Object.entries(options.textOnly ? {} : options.capabilityServers || {}).map(
                 ([name, { enabledTools: _tools, toolTimeoutSeconds: _timeout, ...server }]) => [
                   name,
                   { ...server, alwaysLoad: true },

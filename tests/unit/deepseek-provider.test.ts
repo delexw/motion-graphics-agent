@@ -39,10 +39,6 @@ vi.mock("../../src/server/agents/bundled-skills", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../src/server/agents/bundled-skills")>()),
   prepareBundledSkills: vi.fn(),
 }));
-vi.mock("../../src/server/agents/caveman", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../src/server/agents/caveman")>()),
-  cavemanSettings: () => ({ enabled: false }),
-}));
 import { agentTurn } from "../../src/server/agents/providers";
 import { deepseekAgent } from "../../src/server/agents/deepseek-agent";
 import type { AgentExecutionOptions } from "../../src/server/agents/agent";

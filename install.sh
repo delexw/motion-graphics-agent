@@ -7,17 +7,18 @@ usage() {
 Usage: ./install.sh [options]
 
 Install macOS prerequisites, npm dependencies, Chrome for Testing, OpenScreen,
-Caveman, local speech providers, Audio Studio MCP/model weights, and build Kiteva.
+local speech providers, Audio Studio MCP/model weights, LPC and PixelFX,
+and build Kiteva.
 The default includes large model downloads. Re-running reuses installed runtimes/caches.
 
   --speech MODE          all (default), kokoro, pocket, pocket-zh, ming, or none
   --skip-audio-studio     Skip local music generation setup
+  --skip-pixel-assets    Skip LPC character and PixelFX environment assets
   --audio-no-weights     Install Audio Studio; defer its model weights until first use
   --skip-openscreen       Skip the desktop recorder installation
   --skip-browser          Skip Chrome for Testing and Multiplane Chromium setup
-  --skip-caveman          Skip Caveman companion runtime installation
   --skip-build            Skip the app build
-  --minimal               Skip speech and Audio Studio
+  --minimal               Skip speech, Audio Studio and pixel assets
   -h, --help              Show this help
 
 Provider login/API keys and macOS Screen Recording/Accessibility permissions are
@@ -28,21 +29,21 @@ HELP
 
 speech=all
 audio_studio=1
+pixel_assets=1
 audio_weights=1
 openscreen=1
 browser=1
-caveman=1
 build=1
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --speech) [[ $# -ge 2 ]] || { echo '--speech needs a mode' >&2; exit 1; }; speech="$2"; shift 2 ;;
     --skip-audio-studio) audio_studio=0; shift ;;
+    --skip-pixel-assets) pixel_assets=0; shift ;;
     --audio-no-weights) audio_weights=0; shift ;;
     --skip-openscreen) openscreen=0; shift ;;
     --skip-browser) browser=0; shift ;;
-    --skip-caveman) caveman=0; shift ;;
     --skip-build) build=0; shift ;;
-    --minimal) speech=none; audio_studio=0; shift ;;
+    --minimal) speech=none; audio_studio=0; pixel_assets=0; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
   esac
@@ -119,10 +120,6 @@ if [[ "$openscreen" == 1 ]]; then
   step 'Installing OpenScreen if missing'
   node --import tsx scripts/setup-openscreen.ts
 fi
-if [[ "$caveman" == 1 ]]; then
-  step 'Installing Caveman companion runtimes'
-  npm run caveman:setup
-fi
 if [[ "$speech" != none ]]; then
   step 'Preparing managed Python 3.11 for local narration'
   uv python install 3.11
@@ -156,14 +153,16 @@ if [[ "$audio_studio" == 1 ]]; then
     echo 'Audio Studio generation requires Apple Silicon on macOS; skipped on this Intel Mac.'
   fi
 fi
-step 'Refreshing managed skills and installed MCP dependencies'
-if [[ "$audio_studio" == 1 ]]; then
-  npm run dependencies:update
-else
-  npm run dependencies:update -- --skip-audio-studio
+step 'Refreshing managed skills, MCP dependencies and pixel asset sources'
+managed_dependency_args=(npm run dependencies:update)
+if [[ "$audio_studio" == 0 || "$pixel_assets" == 0 ]]; then
+  managed_dependency_args+=(--)
+  if [[ "$audio_studio" == 0 ]]; then managed_dependency_args+=(--skip-audio-studio); fi
+  if [[ "$pixel_assets" == 0 ]]; then managed_dependency_args+=(--skip-pixel-assets); fi
 fi
+"${managed_dependency_args[@]}"
 if [[ "$build" == 1 ]]; then step 'Building Kiteva'; npm run build; fi
 step 'Dependency setup finished'
 echo 'Next: configure .env.local, sign in to your chosen provider, then run npm start.'
 echo 'For demo recording, grant OpenScreen Screen Recording and Accessibility permissions in macOS Settings.'
-echo 'Managed skills, Bevy and installed Audio Studio are checked for updates at setup and on every backend launch.'
+echo 'Managed skills, Bevy, and installed Audio Studio and pixel asset sources are checked at setup and backend launch.'

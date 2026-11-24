@@ -18,6 +18,7 @@ import { reactBitsCapability } from "./react-bits/capability";
 import { creativePoolCapability } from "./creative-pool/capability";
 import { creativePoolGuidance } from "./creative-pool/prompt";
 import { reactBitsGuidance } from "./react-bits/prompt";
+import { pixelAssetCapabilities } from "./pixel-assets/capability";
 import type { AgentMcpCapability } from "./shared/types";
 
 // Add each capability's registration and guidance in its own files, separate from skills.
@@ -37,6 +38,7 @@ export function agentCapabilities(
   });
   const narration = !readOnly && !textOnly ? narrationCapability(workspace) : undefined;
   const audioStudio = !readOnly && !textOnly ? audioStudioCapability(workspace) : undefined;
+  const pixelAssets = !readOnly && !textOnly ? pixelAssetCapabilities(workspace) : undefined;
   const servers: Record<string, AgentMcpCapability> = textOnly
     ? {}
     : {
@@ -48,6 +50,7 @@ export function agentCapabilities(
         ...(!readOnly ? { music_analysis: musicAnalysisCapability(workspace) } : {}),
         ...(!readOnly ? { bevy: bevyCapability(workspace) } : {}),
         ...(narration ? { narration } : {}),
+        ...pixelAssets?.servers,
       };
   return {
     servers,
@@ -55,11 +58,12 @@ export function agentCapabilities(
       ? ""
       : [
           narration ? `### Narration\n\n${narrationGuidance}` : "",
-          `### Audio Studio\n\n${audioStudioGuidance}`,
-          `### Music analysis\n\n${musicAnalysisGuidance}`,
+          !readOnly ? `### Audio Studio\n\n${audioStudioGuidance}` : "",
+          !readOnly ? `### Music analysis\n\n${musicAnalysisGuidance}` : "",
           `### React Bits\n\n${reactBitsGuidance}`,
           `### Animate UI\n\n${animateUiGuidance}`,
           `### Bevy\n\n${readOnly ? bevyGuidance : bevyBuildGuidance(bevyRuntime, bevyRouterPath)}`,
+          ...(pixelAssets?.guidance ?? []),
           `### Creative Pool\n\n${creativePoolGuidance}`,
           reference
             ? `### Website references\n\n${referenceBrowserGuidance({ ...referenceOptions, readOnly, textOnly })}`

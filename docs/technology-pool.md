@@ -174,8 +174,7 @@ generated singing. Weights and voice files are downloaded only by the setup comm
 
 Finished-result review uses the same selected main model that built the job, using the provider’s default reasoning effort. It runs as a separate read-only invocation with the existing QA evidence and Governance tracking.
 
-Agent SDK calls go through the bundled [Caveman](https://github.com/JuliusBrussee/caveman) compression proxy
-on a loopback port by default (`VIDEO_CAVEMAN_ENABLED=false` turns it off). JEV calls go directly to Typesafe.
+Agent SDK calls talk directly to their configured provider endpoints. JEV calls go directly to Typesafe.
 
 ## Tools you install yourself
 
@@ -334,7 +333,6 @@ Versions are what `npm ci` installed when this page was written. Licenses come f
 | --------------------------------------------------------------------------------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
 | [`@ant-design/x`](https://x.ant.design)                                                       | 2.9.0   | runtime | Conversation UI                                                                                                         | MIT                               |
 | [`@anthropic-ai/claude-agent-sdk`](https://github.com/anthropics/claude-agent-sdk-typescript) | 0.3.296 | runtime | Claude provider adapter                                                                                                 | SEE LICENSE IN README.md          |
-| [`@caveman-ai/cli`](https://github.com/JuliusBrussee/caveman)                                 | 4.0.1   | runtime | App-local token-compression proxy for SDK calls                                                                         | Apache-2.0                        |
 | [`@fastify/multipart`](https://github.com/fastify/fastify-multipart)                          | 9.4.0   | runtime | Asset uploads                                                                                                           | MIT                               |
 | [`@fastify/static`](https://github.com/fastify/fastify-static)                                | 8.3.0   | runtime | Serves the built UI                                                                                                     | MIT                               |
 | [`@json-render/core`](https://json-render.dev)                                                | 0.21.0  | runtime | Structured UI rendering                                                                                                 | Apache-2.0                        |

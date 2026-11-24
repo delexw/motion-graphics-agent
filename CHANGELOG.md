@@ -6,6 +6,8 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Added
 
+- LPC character sheets with generated credits and PixelFX environment effects. JEV can select either tool alongside the primary authoring resource.
+
 - GPT-6.2 Sol is available in Generation settings. Governance estimates its cost at the published Standard rates.
 
 - The Downloads pop-up collects the original MP4, editable project ZIP and language files. The compression dropdown offers 50% rate with picture checks and 90% rate with a 10 MB limit. Actual savings vary by video. Both presets run in the background and show progress when reopened. Repeated clicks on the same preset share one job. Both presets must save at least 10% and pass playback checks.
@@ -18,6 +20,11 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 - Bevy is available to the authoring agent. Install and startup prepare the runtime and use the bundled-skill registry to refresh compatible community guides.
 
 ### Changed
+
+- Claude and Codex use their native SDK routes. Video reviews use smaller frames and fall back to medium effort when the task and provider leave it unset.
+- The three DeepSeek Harness packages update together to `0.2.2-rc.5`. Dependabot groups future updates to these packages, including release candidates.
+- Room onboarding counts and question badges use Ant Design's current tag style.
+- Browser coverage runs in Playwright with a fresh context per test. CI runs unit, integration and browser suites separately.
 
 - Full-video previews and controls resize together. A check icon and border show which direction was selected.
 
@@ -265,6 +272,20 @@ Kiteva uses the [MIT License](LICENSE). Third-party components retain their own 
 ## Daily update archive
 
 README recent updates show the three most recent dated entries, regardless of gaps between dates. Move entries beyond those three here when updating the READMEs. Historical English and Simplified Chinese entries are preserved below; the versioned release notes above remain unchanged.
+
+### 2026-11-17
+
+**English**
+
+- **Music beat analysis:** The agent can analyze prepared music locally with the installed HyperFrames CLI and save measured beat timestamps, estimated tempo and a source fingerprint. [Implementation](https://github.com/delexw/motion-graphics-agent/commit/af9e4d7).
+- **Beats in Production Desk:** Music clips show beat ticks, estimated BPM and beat counts. Select a clip to jump to the previous or next beat with buttons or `[` / `]`. Missing or stale analysis is labeled; opening Desk does not run generation. See [Desk controls and limits](docs/production-desk.md#measured-music-beats).
+- **Tool activity labels:** Music analysis has its own English/Chinese Activity label. Agent guidance requires a distinct customer-facing label for each new tool.
+
+**简体中文**
+
+- **音乐节拍分析：**智能体可通过已安装的 HyperFrames CLI 在本地分析准备好的配乐，保存检测到的节拍时间、估算速度和音源指纹。详见[实现记录](https://github.com/delexw/motion-graphics-agent/commit/af9e4d7)。
+- **Production Desk 节拍显示：**音乐片段显示节拍刻度、估算 BPM 和节拍数量。选中片段后，可用按钮或 `[` / `]` 跳到上一拍或下一拍。缺失或过期的分析会明确标注；打开 Desk 不会触发生成。详见[控件与限制](docs/production-desk.md#measured-music-beats)（英文）。
+- **工具活动标签：**音乐分析使用独立的中英文 Activity 标签，开发指导要求每个新工具提供独立的用户可见标签。
 
 ### 2026-11-16
 

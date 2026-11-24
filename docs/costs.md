@@ -39,7 +39,7 @@ Claude's per-model `costUSD` is used directly. For older records without per-mod
 its reported `total_cost_usd` is used through the saved `cost` field. Counter resets start a
 new baseline. Duplicate invocation results add no new spend. Raw SDK usage and costs remain
 unchanged in the logs; cache-duration counters are shown when available but do not determine
-cost. Savings estimated by the Caveman proxy are never subtracted.
+cost.
 
 Codex usage is typed against the installed SDK `Usage` contract. Cumulative counters are
 differenced by thread before pricing, including across preview/full builds and model changes.

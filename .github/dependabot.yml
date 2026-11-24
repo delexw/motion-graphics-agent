@@ -7,6 +7,12 @@ updates:
     versioning-strategy: increase-if-necessary
     open-pull-requests-limit: 5
     groups:
+      # These packages share a release version, including release candidates.
+      deepseek-harness:
+        patterns:
+          - "@deepseek-ai/dsh"
+          - "@deepseek-ai/dsh-llm"
+          - "@deepseek-ai/dsh-sdk-client"
       compatible-packages:
         patterns:
           - "*"

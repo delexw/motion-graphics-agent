@@ -33,7 +33,7 @@ export async function resolveProjectCallEffort({
   effort: ModelEffort | undefined;
   decisionId?: string;
 }> {
-  const defaults = { taskEffort, providerDefaultEffort };
+  const defaults = { taskEffort, providerDefaultEffort, effortTask };
   const context = project.getStore();
   const request = context?.request;
   if (!context || !request || !usesDynamicModelEffort(request)) {

@@ -20,7 +20,6 @@ In PowerShell, from the repository directory:
 npm.cmd ci
 $cache = Join-Path $env:USERPROFILE '.cache\puppeteer'
 npx.cmd --no-install browsers install chrome-headless-shell@stable --path $cache
-npm.cmd run caveman:setup
 npm.cmd run windows:check
 ```
 

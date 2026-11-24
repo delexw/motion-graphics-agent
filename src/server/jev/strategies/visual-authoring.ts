@@ -1,3 +1,4 @@
+import { availablePixelAssetResources } from "../../agents/capabilities/pixel-assets/capability";
 import { animateUiAuthoring } from "../../agents/capabilities/animate-ui/metadata";
 import { bevyAuthoring } from "../../agents/capabilities/bevy/metadata";
 import { reactBitsAuthoring } from "../../agents/capabilities/react-bits/metadata";
@@ -26,7 +27,7 @@ import { videoRendererOf } from "../../../shared/video-renderers";
 import type { ProviderEvent } from "../../agents/agent";
 
 export const authoringResourceSelectionGuidance =
-  "AUTHORING RESOURCE SELECTION: Read authoringResources in style-context.json when present. JEV chose exactly one primary authoring resource using its Choice API for this specific brief and renderer. Use that chosen capability, bundled skill or local-code approach; read its skill or component guidance before implementation. Do not mix in an alternative component library or bundled skill by default. Ordinary local implementation code remains available. This is not a Motion Graphic selection or a replacement for the main model's production plan. If a selected resource proves incompatible or unavailable on inspection, preserve the requested result with available tools and document the reason. If JEV is unavailable or the field is absent, choose appropriate available resources directly. Never force a component or skill into a scene solely because it is installed.";
+  "AUTHORING RESOURCE SELECTION: Read authoringResources in style-context.json when present. JEV chose exactly one primary authoring resource using its Choice API for this specific brief and renderer. Use that chosen capability, bundled skill or local-code approach; read its skill or component guidance before implementation. Do not mix in an alternative component library or bundled skill by default. Use any selected LPC or PixelFX tool as a supplement to the primary resource for its stated purpose. Ordinary local implementation code remains available. This is not a Motion Graphic selection or a replacement for the main model's production plan. If a selected resource proves incompatible or unavailable on inspection, preserve the requested result with available tools and document the reason. If JEV is unavailable or the field is absent, choose appropriate available resources directly. Never force a component or skill into a scene solely because it is installed.";
 
 export const authoringResources: AuthoringResource[] = [
   animateUiAuthoring,
@@ -55,11 +56,18 @@ export async function selectAuthoringResources(input: {
   candidate: StyleCandidate;
   styles: Style[];
   assets?: Asset[];
+  pixelAssets?: ReturnType<typeof availablePixelAssetResources>;
   signal: AbortSignal;
   onEvent: (event: ProviderEvent) => void;
 }): Promise<AuthoringResourceSelection> {
   input.signal.throwIfAborted();
   const invocationId = randomUUID();
+  const pixelAssets = input.pixelAssets ?? availablePixelAssetResources();
+  const pixelOptions: Record<string, AuthoringResource[]> = {
+    none: [],
+    ...Object.fromEntries(pixelAssets.map((resource) => [resource.id, [resource]])),
+    ...(pixelAssets.length === 2 ? { both: pixelAssets } : {}),
+  };
   const visualInstructions = input.request.requirements?.images?.instructions;
   const state = {
     visualInstructions,
@@ -102,6 +110,22 @@ export async function selectAuthoringResources(input: {
       criteria: Object.fromEntries(
         authoringResources.map((resource) => [resource.id, resource.guidance]),
       ),
+      additionalQuestions: pixelAssets.length
+        ? {
+            pixelAssets: {
+              question:
+                "Which optional asset tools fit this brief and selected styles? Consider each tool's purpose, coverage and effort. Select both only if the production needs both roles. Choose none when the proposed scene needs neither.",
+              criteria: Object.fromEntries(
+                Object.entries(pixelOptions).map(([id, resources]) => [
+                  id,
+                  resources.length
+                    ? resources.map(({ guidance }) => guidance).join("\n")
+                    : "Use the primary authoring resource and existing assets for all visual work when these supplemental capabilities do not improve the visual result.",
+                ]),
+              ),
+            },
+          }
+        : undefined,
       state,
       signal: input.signal,
       onEvent: input.onEvent,
@@ -112,10 +136,26 @@ export async function selectAuthoringResources(input: {
       use: resource.id === answer.choice,
       probability: answer.probabilities[resource.id],
     }));
+    const pixelAnswer = result.additionalAnswers?.pixelAssets;
+    const selectedPixelIds = (pixelOptions[pixelAnswer?.choice ?? "none"] ?? []).map(
+      ({ id }) => id,
+    );
+    if (pixelAnswer) {
+      for (const { id } of pixelAssets) {
+        const probability = Object.entries(pixelOptions)
+          .filter(([, resources]) => resources.some((resource) => resource.id === id))
+          .reduce((sum, [option]) => sum + pixelAnswer.probabilities[option], 0);
+        decisions.push({
+          id,
+          use: selectedPixelIds.includes(id),
+          probability: Math.min(1, probability),
+        });
+      }
+    }
     return {
       source: "jev",
       model: result.model,
-      selectedIds: [answer.choice],
+      selectedIds: [answer.choice, ...selectedPixelIds],
       decisions,
     };
   } catch (error) {
