@@ -16,6 +16,7 @@ export const models = {
   deepseek: process.env.VIDEO_DEEPSEEK_MODEL || defaultProviderModels.deepseek,
   codex: process.env.VIDEO_CODEX_MODEL || defaultProviderModels.codex,
   claude: process.env.VIDEO_CLAUDE_MODEL || defaultProviderModels.claude,
+  gemini: process.env.VIDEO_GEMINI_MODEL || defaultProviderModels.gemini,
 };
 const localPorts = resolveLocalPorts(process.env);
 export const port = localPorts.backend;

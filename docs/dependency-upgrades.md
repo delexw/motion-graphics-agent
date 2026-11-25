@@ -153,6 +153,15 @@ not trigger a generation-time download or silently select another provider. The 
 are MIT licensed; upstream files and notices remain intact. Compatible nested overrides
 keep the runtime's HTTP, MCP client and ZIP dependencies on patched releases.
 
+## Gemini Antigravity Python SDK
+
+Gemini runs through a local Python bridge backed by `google-antigravity` in the managed
+`.data/gemini-sdk-venv` virtual environment (or `VIDEO_GEMINI_PYTHON`). Provision or
+upgrade it explicitly with `npm run gemini:setup` when no jobs are running; backend
+startup, generation and tests never download Python packages. See the
+[Gemini provider guide](../src/server/agents/gemini/README.md) for authentication,
+bridge isolation and verification boundaries.
+
 ## Pixel asset sources
 
 `install.sh` installs LPC and PixelFX and keeps them in `.data/pixel-assets/`.

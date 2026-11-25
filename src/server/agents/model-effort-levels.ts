@@ -1,13 +1,21 @@
 import type { EffortLevel } from "@anthropic-ai/claude-agent-sdk";
 import type { ModelReasoningEffort } from "@openai/codex-sdk";
-import { agentProviderDefinitions, codexSolModel } from "../../shared/agent-providers";
+import {
+  agentProviderDefinitions,
+  codexSolModel,
+  geminiCarbonModel,
+} from "../../shared/agent-providers";
 import type { ModelEffort } from "../../shared/model-effort";
 
 export const deepSeekEffortLevels = ["low", "high", "max"] as const;
 export type DeepSeekEffort = (typeof deepSeekEffortLevels)[number];
 
+export const geminiEffortLevels = ["low", "medium", "high", "xhigh"] as const;
+export type GeminiEffort = (typeof geminiEffortLevels)[number];
+export const geminiCarbonEffortLevels = ["low", "medium", "high"] as const;
+
 // The installed SDK types check these values. Per-model support still comes from
-// the Codex model catalogue and the Claude and DeepSeek model documentation.
+// the Codex model catalogue and the Claude, DeepSeek and Gemini model documentation.
 const codexLunaEfforts = [
   "low",
   "medium",
@@ -34,6 +42,9 @@ const modelEffortLevels: Readonly<Partial<Record<string, readonly ModelEffort[]>
   [agentProviderDefinitions.claude.model]: claudeEfforts,
   [agentProviderDefinitions.claude.textModel]: claudeEfforts,
   [agentProviderDefinitions.deepseek.model]: deepSeekEffortLevels,
+  [agentProviderDefinitions.gemini.model]: geminiEffortLevels,
+  [agentProviderDefinitions.gemini.textModel]: geminiEffortLevels,
+  [geminiCarbonModel]: geminiCarbonEffortLevels,
 };
 
 export function supportedModelEfforts(model: string): readonly ModelEffort[] {

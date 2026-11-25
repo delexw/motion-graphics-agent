@@ -240,3 +240,16 @@ in the idea, tool arguments or project attachments. Dedicated language, renderer
 and output settings keep their normal contracts. See [DeepSeek setup and limits](../src/server/agents/deepseek/README.md)
 for the SDK runtime, image support, API-key-only authentication and labelled cost
 estimates. This does not imply that the external MCP client uses DeepSeek.
+
+## Gemini projects
+
+The creation settings accept `provider: "gemini"` with `mainModel: "gemini-4-neon"`
+(default, Gemini 4 Neon) or `mainModel: "gemini-4-carbon"` (Gemini 4 Carbon).
+`get_idea_options` lists these pairs under `modelChoices`. When `GEMINI_API_KEY` (or
+Vertex AI environment variables) is set on the host, the backend runs Gemini through
+the Antigravity Python SDK bridge; otherwise it uses the installed `agy` CLI with your
+Antigravity login (failing explicitly if `agy` is not installed). Never put keys in the
+idea, tool arguments or project attachments. Model ownership is checked strictly without
+silent substitution. See [Gemini setup and limits](../src/server/agents/gemini/README.md)
+for transport selection, sandbox/tool boundaries, internal capability MCP wiring and
+Governance accounting.

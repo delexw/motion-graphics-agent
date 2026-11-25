@@ -718,18 +718,21 @@ it("exposes governance inputs, settings and complete model activity only on the 
     claude: "claude-haiku-5-5",
     codex: "gpt-6-luna",
     deepseek: "deepseek-flash",
+    gemini: "gemini-4-hydrogen",
   });
   expect(response.json().models).toContainEqual({
     function: "Motion Graphic combination proposals",
     claude: "Selected main model",
     codex: "Selected main model",
     deepseek: "Selected main model",
+    gemini: "Selected main model",
   });
   expect(response.json().models).toContainEqual({
     function: "Full-video result quality review",
     claude: "Selected main model",
     codex: "Selected main model",
     deepseek: "Selected main model",
+    gemini: "Selected main model",
   });
   expect(project.request).toMatchObject({
     duration: 30,
@@ -867,5 +870,49 @@ it("rejects an unverified Windows setup before saving or starting generation", a
   } finally {
     readiness.mockRestore();
     prepare.mockRestore();
+  }
+});
+
+it("reports Gemini transport readiness safely from /api/setup without exposing credentials", async () => {
+  const keys = [
+    "GEMINI_API_KEY",
+    "GOOGLE_API_KEY",
+    "GOOGLE_GENAI_USE_VERTEXAI",
+    "GOOGLE_GENAI_USE_ENTERPRISE",
+    "VIDEO_GEMINI_TRANSPORT",
+  ] as const;
+  const saved = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+  const resetGeminiEnv = () => {
+    for (const key of keys) delete process.env[key];
+  };
+  try {
+    resetGeminiEnv();
+    process.env.GEMINI_API_KEY = "test-gemini-key";
+    const sdkSetup = await server.app.inject({ url: "/api/setup", headers });
+    expect(sdkSetup.statusCode).toBe(200);
+    expect(sdkSetup.json()).toMatchObject({
+      geminiTransport: "sdk",
+      geminiCredentialPresent: true,
+    });
+    expect(sdkSetup.body).not.toContain("test-gemini-key");
+
+    resetGeminiEnv();
+    const cliSetup = await server.app.inject({ url: "/api/setup", headers });
+    expect(cliSetup.statusCode).toBe(200);
+    expect(cliSetup.json().geminiTransport).toBe("cli");
+    expect(typeof cliSetup.json().geminiCredentialPresent).toBe("boolean");
+
+    process.env.VIDEO_GEMINI_TRANSPORT = "invalid";
+    const invalidSetup = await server.app.inject({ url: "/api/setup", headers });
+    expect(invalidSetup.statusCode).toBe(200);
+    expect(invalidSetup.json()).toMatchObject({
+      geminiTransport: null,
+      geminiCredentialPresent: false,
+    });
+  } finally {
+    for (const key of keys) {
+      if (saved[key] === undefined) delete process.env[key];
+      else process.env[key] = saved[key];
+    }
   }
 });

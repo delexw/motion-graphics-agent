@@ -154,6 +154,58 @@ it("preserves explicit choices and uses the selected provider's actual default m
   ).toBe("explicit-main-model");
 });
 
+it("advertises and configures Gemini 4 Neon and Gemini 4 Carbon through MCP without silent substitution", async () => {
+  const { store, client } = await connect();
+  const options = await client.callTool({ name: "get_idea_options" });
+  expect(options.isError).not.toBe(true);
+  expect(options.structuredContent).toMatchObject({
+    kind: "options",
+    modelChoices: expect.arrayContaining([
+      { provider: "gemini", mainModel: "gemini-4-neon", label: "Gemini 4 Neon" },
+      { provider: "gemini", mainModel: "gemini-4-carbon", label: "Gemini 4 Carbon" },
+    ]),
+  });
+
+  const neonDefault = ideaRequest("A springtime city story", { provider: "gemini" });
+  expect(neonDefault).toMatchObject({
+    provider: "gemini",
+    mainModel: "gemini-4-neon",
+  });
+
+  const created = await client.callTool({
+    name: "create_idea",
+    arguments: {
+      idea: "A springtime city story rendered with Gemini Carbon",
+      settings: { provider: "gemini", mainModel: "gemini-4-carbon" },
+    },
+  });
+  expect(created.isError).not.toBe(true);
+  expect(created.structuredContent).toMatchObject({
+    kind: "created",
+    request: {
+      provider: "gemini",
+      mainModel: "gemini-4-carbon",
+    },
+  });
+  expect(store.room().drafts.new.request).toMatchObject({
+    provider: "gemini",
+    mainModel: "gemini-4-carbon",
+  });
+
+  const mismatch = await client.callTool({
+    name: "create_idea",
+    arguments: {
+      idea: "Another story with mismatched provider and model",
+      settings: { provider: "claude", mainModel: "gemini-4-carbon" },
+    },
+  });
+  expect(mismatch.isError).toBe(true);
+  expect(mismatch.structuredContent).toMatchObject({
+    kind: "error",
+    message: expect.stringContaining("no silent substitution"),
+  });
+});
+
 it("rejects unknown settings and applies canonical cross-field validation", async () => {
   const { store, client } = await connect();
   for (const settings of [

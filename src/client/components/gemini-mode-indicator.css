@@ -1,0 +1,26 @@
+.gemini-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.gemini-beta-tag.ant-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline-end: 0;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  line-height: 1;
+  border-radius: 999px;
+}
+
+.gemini-model-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}

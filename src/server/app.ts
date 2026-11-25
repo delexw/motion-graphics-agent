@@ -14,6 +14,7 @@ import { type SettingsCheckRecord, SettingsConflictError } from "../shared/reque
 import { multiplaneVersion } from "./rendering/multiplane/version";
 import { writeUploadedAsset } from "./requests/asset-storage";
 import { credentialEnvironmentVariables } from "./runtime/credential-environment";
+import { geminiSetupStatus } from "./agents/gemini/configuration";
 import { jobDownloadBasename } from "../shared/job-download-name";
 import { projectArtifactPath, renderSourcePath } from "./runtime/workspace";
 import { registerActivityChildrenRoute } from "./jobs/activity-routes";
@@ -142,32 +143,37 @@ export async function createApp(options: { store?: Store; frontendRoot?: string 
     webUrl: `http://127.0.0.1:${webPort}`,
     start: startIdeaThroughBackend,
   });
-  app.get("/api/setup", async () => ({
-    speechSupported: true,
-    languageTracksSupported: true,
-    speechStartSupported: true,
-    scriptItemsSupported: true,
-    generatedScriptItemsSupported: true,
-    videoLanguageSupported: true,
-    agentMode,
-    models,
-    jevConfigured: Boolean(process.env[credentialEnvironmentVariables.typesafeApiKey]),
-    codexCredentialPresent: Boolean(
-      process.env[credentialEnvironmentVariables.codexApiKey] ||
-      process.env[credentialEnvironmentVariables.openaiApiKey] ||
-      existsSync(path.join(userHome(), " .codex/auth.json".trim())),
-    ),
-    claudeCredentialPresent: Boolean(
-      process.env[credentialEnvironmentVariables.anthropicApiKey] ||
-      process.env[credentialEnvironmentVariables.claudeOauthToken] ||
-      existsSync(path.join(userHome(), ".claude")),
-    ),
-    modelValidation:
-      "Provider access is verified by the first brief turn. No silent model substitution.",
-    blenderConfigured: Boolean(process.env.VIDEO_BLENDER_PATH),
-    styleCount: catalog.styles.length,
-    motionCount: catalog.motions.length,
-  }));
+  app.get("/api/setup", async () => {
+    const geminiSetup = geminiSetupStatus();
+    return {
+      speechSupported: true,
+      languageTracksSupported: true,
+      speechStartSupported: true,
+      scriptItemsSupported: true,
+      generatedScriptItemsSupported: true,
+      videoLanguageSupported: true,
+      agentMode,
+      models,
+      jevConfigured: Boolean(process.env[credentialEnvironmentVariables.typesafeApiKey]),
+      codexCredentialPresent: Boolean(
+        process.env[credentialEnvironmentVariables.codexApiKey] ||
+        process.env[credentialEnvironmentVariables.openaiApiKey] ||
+        existsSync(path.join(userHome(), " .codex/auth.json".trim())),
+      ),
+      claudeCredentialPresent: Boolean(
+        process.env[credentialEnvironmentVariables.anthropicApiKey] ||
+        process.env[credentialEnvironmentVariables.claudeOauthToken] ||
+        existsSync(path.join(userHome(), ".claude")),
+      ),
+      geminiCredentialPresent: geminiSetup.ready,
+      geminiTransport: geminiSetup.transport,
+      modelValidation:
+        "Provider access is verified by the first brief turn. No silent model substitution.",
+      blenderConfigured: Boolean(process.env.VIDEO_BLENDER_PATH),
+      styleCount: catalog.styles.length,
+      motionCount: catalog.motions.length,
+    };
+  });
   app.get("/api/styles", async () => ({
     hash: catalog.hash,
     styles: catalog.styles.map((s) => ({
@@ -275,7 +281,7 @@ export async function createApp(options: { store?: Store; frontendRoot?: string 
       settingsChecks: checks.records,
       pagination: runs.pagination,
       checksPagination: checks.pagination,
-      pricingDate: "2026-11-19",
+      pricingDate: "2026-11-24",
       pricingSources: [
         { label: "OpenAI pricing", url: "https://developers.openai.com/api/docs/pricing" },
         {
@@ -290,51 +296,65 @@ export async function createApp(options: { store?: Store; frontendRoot?: string 
           label: "Claude pricing",
           url: "https://platform.claude.com/docs/en/about-claude/pricing",
         },
+        { label: "Gemini pricing", url: "https://ai.google.dev/gemini-api/docs/pricing" },
         { label: "Jev pricing", url: "https://docs.typesafe.ai/models" },
       ],
       models: [
-        { function: modelEffortPurpose, claude: jevModel, codex: jevModel, deepseek: jevModel },
+        {
+          function: modelEffortPurpose,
+          claude: jevModel,
+          codex: jevModel,
+          deepseek: jevModel,
+          gemini: jevModel,
+        },
         {
           function: "Request/settings compatibility check",
           claude: jevModel,
           codex: jevModel,
           deepseek: jevModel,
+          gemini: jevModel,
         },
         {
           function: "Refinement settings",
           claude: "Selected main model; version-local explicit changes before implementation",
           codex: "Selected main model; version-local explicit changes before implementation",
           deepseek: "Selected main model; version-local explicit changes before implementation",
+          gemini: "Selected main model; version-local explicit changes before implementation",
         },
         {
           function: "Brief asset self-review and alignment repair",
           claude: textModels.claude,
           codex: textModels.codex,
           deepseek: textModels.deepseek,
+          gemini: textModels.gemini,
         },
         {
           function: "Full-video result quality review",
           claude: "Selected main model",
           codex: "Selected main model",
           deepseek: "Selected main model",
+          gemini: "Selected main model",
         },
         {
           function: "Preview video planning",
           claude: "Not used",
           codex: "Selected main model before each preview",
           deepseek: "Selected main model before each preview",
+          gemini: "Selected main model before each preview",
         },
         {
           function: "Full video planning",
           claude: "Selected main model before implementation, in the same session",
           codex: "Selected main model before implementation, in the same session",
           deepseek: "Selected main model before implementation, in the same session",
+          gemini: "Selected main model before implementation, in the same session",
         },
         {
           function: "Previews and full generation",
           claude: models.claude,
           codex: "Selected main model",
           deepseek: models.deepseek,
+          gemini: "Selected main model",
         },
         {
           function:
@@ -342,18 +362,21 @@ export async function createApp(options: { store?: Store; frontendRoot?: string 
           claude: textModels.claude,
           codex: textModels.codex,
           deepseek: textModels.deepseek,
+          gemini: textModels.gemini,
         },
         {
           function: "Motion Graphic combination proposals",
           claude: "Selected main model",
           codex: "Selected main model",
           deepseek: "Selected main model",
+          gemini: "Selected main model",
         },
         {
           function: "Combination evaluation and direction selection",
           claude: jevModel,
           codex: jevModel,
           deepseek: jevModel,
+          gemini: jevModel,
         },
         ...Object.entries(correctionTypeLabels).map(([focus, label]) => ({
           function: label,
@@ -366,6 +389,9 @@ export async function createApp(options: { store?: Store; frontendRoot?: string 
           codex: ["pacing", "style"].includes(focus)
             ? "Selected main model"
             : `${textModels.codex} for eligible fixes; selected main model otherwise`,
+          gemini: ["pacing", "style"].includes(focus)
+            ? "Selected main model"
+            : `${textModels.gemini} for eligible fixes; selected main model otherwise`,
         })),
       ],
       projects: runs.runs.map((run) => {

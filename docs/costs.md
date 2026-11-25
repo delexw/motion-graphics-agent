@@ -32,6 +32,7 @@ for cache buckets, stable usage IDs, compaction and unknown-price handling.
 | `SDK estimate · session increments`           | Reported cumulative cost, differenced between results in the same session so resumed spend is counted once. |
 | `SDK reported cost`                           | A reported amount for a non-cumulative invocation.                                                          |
 | `Standard API estimate · short-context rates` | Codex usage increments at standard input, cached-read, cache-write and output rates.                        |
+| `Standard API estimate · Gemini API rates`    | Gemini 4 usage at standard paid-tier input, cached-read and output (including thinking) API rates.          |
 | `Plugin API estimate · dsh-cost-meter (USD)`  | Per-call plugin API estimate; not a provider bill or subscription charge.                                   |
 | `Not reported`                                | No SDK amount or supported Codex estimate is available. Unknown cost is not zero.                           |
 

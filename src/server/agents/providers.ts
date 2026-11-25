@@ -27,6 +27,7 @@ import type { Agent, AgentTurnOptions, ProviderEvent } from "./agent";
 import { sdkExecutionGuidance } from "./execution-policy";
 import { claudeAgent } from "./claude-agent";
 import { deepseekAgent, deepSeekNativeEffort } from "./deepseek-agent";
+import { geminiAgent, geminiNativeEffort } from "./gemini-agent";
 import { codexAgent } from "./codex-agent";
 import { bundledSkillsGuidance, prepareBundledSkills } from "./bundled-skills";
 export type { ProviderEvent, AgentTurnOptions, Agent } from "./agent";
@@ -36,6 +37,7 @@ const agents: Record<Provider, Agent> = {
   claude: claudeAgent,
   codex: codexAgent,
   deepseek: deepseekAgent,
+  gemini: geminiAgent,
 };
 const safety =
   styleBackgroundGuidance +
@@ -195,7 +197,11 @@ async function agentTurnAttempt<T>(
       signal,
     });
     const reasoningEffort =
-      provider === "deepseek" ? deepSeekNativeEffort(requestedEffort) : requestedEffort;
+      provider === "deepseek"
+        ? deepSeekNativeEffort(requestedEffort)
+        : provider === "gemini"
+          ? geminiNativeEffort(requestedEffort, selectedModel)
+          : requestedEffort;
     signal.throwIfAborted();
     onEvent({
       type: "invocation",

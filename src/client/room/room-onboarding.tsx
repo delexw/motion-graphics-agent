@@ -1,4 +1,5 @@
 import { SettingsHelpTip } from "../components/settings-help-tip";
+import { GeminiModeBadge, renderAgentModelOption } from "../components/gemini-mode-indicator";
 import { ProjectEffortSelect } from "../components/project-effort-select";
 import { usesDynamicModelEffort } from "../../shared/model-effort";
 import { agentModelChoices, agentModelChoiceValue } from "../../shared/agent-providers";
@@ -584,8 +585,11 @@ export function RoomOnboarding({
                 }
               />
             </label>
-            <label>
-              {translateUi("Model")}
+            <div className="settings-field">
+              <span className="settings-field-label">
+                {translateUi("Model")}
+                {request.provider === "gemini" && <GeminiModeBadge />}
+              </span>
               <Select
                 aria-label={translateUi("Model")}
                 value={agentModelChoiceValue(request)}
@@ -593,12 +597,13 @@ export function RoomOnboarding({
                   value,
                   label: modelDisplayName(mainModel ?? defaultProviderModels[provider]),
                 }))}
+                optionRender={renderAgentModelOption}
                 onChange={(value) => {
                   const choice = agentModelChoices.find((entry) => entry.value === value);
                   if (choice) patch({ provider: choice.provider, mainModel: choice.mainModel });
                 }}
               />
-            </label>
+            </div>
             <ProjectEffortSelect
               checked={usesDynamicModelEffort(request)}
               onChange={(dynamicModelEffort) => patch({ dynamicModelEffort })}

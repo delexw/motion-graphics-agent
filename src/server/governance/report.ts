@@ -1,5 +1,6 @@
 import { recordedJevCalls } from "../../shared/jev-call-accounting";
 import { codexApiCost } from "./codex-pricing";
+import { geminiApiCost } from "./gemini-pricing";
 import { jevApiCost } from "./jev-pricing";
 import type { ClaudeTokenUsage } from "./token-usage";
 import type { AgentProgressEvent, Run } from "../../shared/contracts";
@@ -125,7 +126,7 @@ export function projectGovernance(
     )
       continue;
     const model =
-      (d.provider === "deepseek" && typeof d.responseModel === "string"
+      ((d.provider === "deepseek" || d.provider === "gemini") && typeof d.responseModel === "string"
         ? d.responseModel
         : undefined) ||
       resolvedModels.get(String(d.invocationId)) ||
@@ -216,9 +217,11 @@ export function projectGovernance(
     const usageKey =
       d.provider === "deepseek" && typeof d.usageId === "string"
         ? d.usageId
-        : d.invocationId
-          ? String(d.invocationId)
-          : String(event.id);
+        : d.provider === "gemini" && typeof d.usageId === "string"
+          ? `${d.invocationId ? `${d.invocationId}|` : ""}${d.usageId}`
+          : d.invocationId
+            ? String(d.invocationId)
+            : String(event.id);
     if (usageEvents.has(usageKey)) continue;
     usageEvents.add(usageKey);
     const modelUsage = record(d.modelUsage);
@@ -331,6 +334,17 @@ export function projectGovernance(
         output_tokens: output,
       });
       basis = low === null ? "Not reported" : "Standard API estimate · short-context rates";
+    } else if (
+      (d.provider === "gemini" || (d.provider === undefined && model.startsWith("gemini-"))) &&
+      input !== null &&
+      output !== null
+    ) {
+      low = high = geminiApiCost(model, {
+        input_tokens: input,
+        cached_input_tokens: cached,
+        output_tokens: output,
+      });
+      basis = low === null ? "Not reported" : "Standard API estimate · Gemini API rates";
     } else if (d.provider === "jev" && input !== null) {
       low = high = jevApiCost(model, input);
       basis = low === null ? "Not reported" : "Standard API estimate · input tokens";

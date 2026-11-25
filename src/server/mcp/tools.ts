@@ -24,6 +24,7 @@ import { VideoRequestSchema } from "../../shared/domains/video";
 import { validateBriefSections } from "../requests/brief-sections";
 import type { McpUploads } from "./uploads";
 import {
+  ideaModelChoices,
   ideaRequest,
   confirmedLanguageSettings,
   ideaToolGuidance,
@@ -376,6 +377,7 @@ export function createKitevaMcpTools(
       run(() => ({
         kind: "options",
         defaults: kitevaIdeaDefaults,
+        modelChoices: ideaModelChoices,
         languageDefaults: { generateNarration: false, showSubtitles: false },
         optionalSettings: optionalIdeaSettings,
         settingsSchema: z.toJSONSchema(IdeaSettingsSchema),

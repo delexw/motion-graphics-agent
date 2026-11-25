@@ -1,4 +1,5 @@
 import { ProjectEffortSelect } from "./components/project-effort-select";
+import { GeminiModeBadge, renderAgentModelOption } from "./components/gemini-mode-indicator";
 import { usesDynamicModelEffort } from "../shared/model-effort";
 import { agentModelChoices, agentModelChoiceValue } from "../shared/agent-providers";
 import { defaultProviderModels, modelDisplayName } from "../shared/model-display-name";
@@ -146,6 +147,8 @@ type Setup = {
   jevConfigured: boolean;
   codexCredentialPresent: boolean;
   claudeCredentialPresent: boolean;
+  geminiCredentialPresent?: boolean;
+  geminiTransport?: "sdk" | "cli" | null;
   modelValidation: string;
   styleCount: number;
   motionCount: number;
@@ -1854,6 +1857,7 @@ function App() {
                           <StudioSelect
                             aria-label={translateUi("Model")}
                             value={agentModelChoiceValue({ provider, mainModel })}
+                            optionRender={renderAgentModelOption}
                             onValueChange={(value) => {
                               const choice = agentModelChoices.find(
                                 (entry) => entry.value === value,
@@ -1874,6 +1878,7 @@ function App() {
                                 </StudioSelectOption>
                               ))}
                           </StudioSelect>
+                          {provider === "gemini" && <GeminiModeBadge setup={setup} />}
                         </div>
                         <div className="composer-control">
                           <ProjectEffortSelect

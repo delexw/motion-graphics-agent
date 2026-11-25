@@ -1,9 +1,15 @@
 import { defaultDynamicModelEffort } from "../../shared/model-effort";
-import { codexSolModel } from "../../shared/agent-providers";
+import {
+  agentModelChoices,
+  agentModelCompatibilityError,
+  codexSolModel,
+  geminiCarbonModel,
+  type AgentProviderId,
+} from "../../shared/agent-providers";
 import { languageTrackRows, LanguageTracksSchema } from "../../shared/language-tracks";
 import { z } from "zod";
 import { VideoRequestSchema } from "../../shared/domains/video";
-import { defaultProviderModels } from "../../shared/model-display-name";
+import { defaultProviderModels, modelDisplayName } from "../../shared/model-display-name";
 import { creativeApproaches } from "../../shared/creative-approach";
 
 export const narrationSubtitleLanguageGuidance =
@@ -40,8 +46,8 @@ const fieldGuidance: Record<string, string> = {
     .map(([id, entry]) => `${id}: ${entry.description}`)
     .join(" ")} Default: creative (Explore creative ideas).`,
   provider:
-    "Main agent provider: claude, codex or deepseek. Default: claude. The selected provider uses its own default main model unless overridden.",
-  mainModel: `Main model identifier. Default for Claude: ${defaultProviderModels.claude} (Opus 5.5). For Codex, use ${defaultProviderModels.codex} or ${codexSolModel}. Must belong to the chosen provider; no silent substitution.`,
+    "Main agent provider: claude, codex, deepseek or gemini. Default: claude. The selected provider uses its own default main model unless overridden.",
+  mainModel: `Main model identifier. Default for Claude: ${defaultProviderModels.claude} (Opus 5.5). For Codex, use ${defaultProviderModels.codex} or ${codexSolModel}. For DeepSeek, use ${defaultProviderModels.deepseek}. For Gemini, use ${defaultProviderModels.gemini} (Gemini 4 Neon) or ${geminiCarbonModel} (Gemini 4 Carbon). Must belong to the chosen provider; no silent substitution.`,
   dynamicModelEffort:
     "Project-wide switch. Off by default. Off uses each task or provider's existing effort. On lets JEV choose effort independently for each supported call. Preserve the user's choice.",
   candidateCount:
@@ -106,17 +112,31 @@ export function confirmedLanguageSettings(request: Record<string, unknown>) {
   return languageTrackRows({ languageTracks: tracks });
 }
 
+export const ideaModelChoices = agentModelChoices.map(({ provider, mainModel }) => {
+  const model = mainModel ?? defaultProviderModels[provider];
+  return {
+    provider,
+    mainModel: model,
+    label: modelDisplayName(model),
+  };
+});
+
 export function ideaRequest(idea: string, settings: Record<string, unknown>) {
-  const provider = settings.provider ?? kitevaIdeaDefaults.provider;
-  return VideoRequestSchema.parse({
+  const provider = (settings.provider ?? kitevaIdeaDefaults.provider) as AgentProviderId;
+  const resolvedMainModel =
+    (settings.mainModel as string | undefined) ??
+    defaultProviderModels[provider as keyof typeof defaultProviderModels];
+  const parsed = VideoRequestSchema.parse({
     ...kitevaIdeaDefaults,
     ...settings,
     provider,
-    mainModel:
-      settings.mainModel ?? defaultProviderModels[provider as keyof typeof defaultProviderModels],
+    mainModel: resolvedMainModel,
     instructions: idea,
     outputType: "video",
   });
+  const modelConflict = agentModelCompatibilityError(parsed.provider, parsed.mainModel);
+  if (modelConflict) throw Error(modelConflict);
+  return parsed;
 }
 
 export const kitevaMcpInstructions = [

@@ -6,6 +6,8 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Added
 
+- Gemini 4 Neon and Carbon are available in project settings and MCP as beta authoring models. The provider supports the Antigravity CLI login and a configured Gemini API. Governance records usage and available cost estimates.
+
 - Remote MCP clients can send a local file over a short-lived, single-use upload link and attach it with `confirm_upload`. Kiteva applies the same validation and attachment rules as the web app.
 
 - LPC character sheets with generated credits and PixelFX environment effects. JEV can select either tool alongside the primary authoring resource.
@@ -22,6 +24,8 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 - Bevy is available to the authoring agent. Install and startup prepare the runtime and use the bundled-skill registry to refresh compatible community guides.
 
 ### Changed
+
+- Activity uses file-specific labels for more provider operations, including creating and finding project files.
 
 - Claude and Codex use their native SDK routes. Video reviews use smaller frames and fall back to medium effort when the task and provider leave it unset.
 - The three DeepSeek Harness packages update together to `0.2.2-rc.5`. Dependabot groups future updates to these packages, including release candidates.

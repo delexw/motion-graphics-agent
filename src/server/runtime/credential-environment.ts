@@ -3,6 +3,8 @@ export const credentialEnvironmentVariables = {
   typesafeApiKey: "TYPESAFE_API_KEY",
   openaiApiKey: "OPENAI_API_KEY",
   deepseekApiKey: "DEEPSEEK_API_KEY",
+  geminiApiKey: "GEMINI_API_KEY",
+  googleApiKey: "GOOGLE_API_KEY",
   codexApiKey: "CODEX_API_KEY",
   anthropicApiKey: "ANTHROPIC_API_KEY",
   claudeOauthToken: "CLAUDE_CODE_OAUTH_TOKEN",

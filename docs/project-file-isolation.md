@@ -37,6 +37,10 @@ before starting a dependency. They never change the server's own environment.
 - DeepSeek uses the official Harness SDK with a project-local home, per-invocation
   policy overlay and explicit environment. Its [provider guide](../src/server/agents/deepseek/README.md)
   records tool-stage enforcement, authentication and current limitations.
+- Gemini uses the Antigravity Python SDK bridge with project-local `HOME`, `app_data_dir`,
+  `save_dir` and cache directories plus an explicit scoped environment. Its
+  [provider guide](../src/server/agents/gemini/README.md) records stage tool hooks,
+  workspace containment, MCP forwarding and authentication limits.
 
 - Claude uses its project-local home. Existing file-based credentials are copied, not linked;
   the normal macOS Keychain login can seed a private project credential file containing only

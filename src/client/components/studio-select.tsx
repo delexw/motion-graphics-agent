@@ -1,5 +1,5 @@
 import { Select } from "antd";
-import { Children, isValidElement, type ReactNode } from "react";
+import { Children, isValidElement, type ComponentProps, type ReactNode } from "react";
 
 type StudioSelectOptionProps = { value?: string | number; children: ReactNode; disabled?: boolean };
 export function studioSelectOptions(children: ReactNode) {
@@ -27,6 +27,7 @@ export function StudioSelect({
   children: ReactNode;
   className?: string;
   disabled?: boolean;
+  optionRender?: ComponentProps<typeof Select>["optionRender"];
   "aria-label"?: string;
   "aria-describedby"?: string;
 }) {

@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "multiplane:setup": "node --import tsx scripts/setup-multiplane.ts",
+    "gemini:setup": "node --import tsx scripts/setup-gemini-sdk.ts",
     "speech:setup:ming": "node --import tsx scripts/setup-ming-tts.ts",
     "speech:setup:pocket": "node --import tsx scripts/setup-pocket-tts.ts",
     "speech:setup": "node --import tsx scripts/setup-speech.ts",

@@ -194,8 +194,10 @@ export function customerToolActivity(name: string, type: string, purpose?: strin
       : "Exploring your website reference…";
   const task = purpose ? taskActivityLabels[purpose] : undefined;
   if (task) return /structuredoutput/i.test(name) ? task.saving : task.working;
-  if (type === "file_change" || /write|edit|patch/i.test(name)) return "Updating the design…";
-  if (/read|glob|grep|list/i.test(name)) return "Reading project content…";
+  if (type === "file_change" || /write|edit|patch|create_file/i.test(name))
+    return "Updating the design…";
+  if (/read|glob|grep|list|view_file|find_file|search_directory/i.test(name))
+    return "Reading project content…";
   if (type === "web_search" || /search|fetch/i.test(name)) return "Looking up reference material…";
   if (/render|preview/i.test(name)) return "Preparing the preview…";
   if (/structuredoutput/i.test(name)) return "Finalizing the project details…";
