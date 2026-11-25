@@ -13,7 +13,10 @@ import puppeteer, { type Browser } from "puppeteer-core";
 import { expect, it, vi } from "vitest";
 import { browserExecutablePath } from "../../src/server/runtime/browser";
 import { createLocalReferenceBrowser } from "../../src/server/jobs/subworkflows/website-reference";
-import { isAuthenticationRedirect } from "../../src/server/agents/capabilities/reference-browser/authentication";
+import {
+  authenticateReferenceBrowser,
+  isAuthenticationRedirect,
+} from "../../src/server/agents/capabilities/reference-browser/authentication";
 
 it("recognizes authentication paths without treating ordinary redirects as sign-in", () => {
   for (const url of [
@@ -24,6 +27,47 @@ it("recognizes authentication paths without treating ordinary redirects as sign-
     expect(isAuthenticationRedirect(url)).toBe(true);
   expect(isAuthenticationRedirect("https://example.com/articles/login-guide")).toBe(false);
   expect(isAuthenticationRedirect("https://example.com/home")).toBe(false);
+});
+
+it("returns the cancellation reason without waiting for protocol calls on a browser shutting down", async () => {
+  vi.stubEnv("KITEVA_AUTH_BRIDGE_URL", "");
+  const controller = new AbortController();
+  const reason = Error("Stop project");
+  const instructions = {
+    setContent: vi.fn(),
+    waitForFunction: vi.fn(async () => {
+      controller.abort(reason);
+      throw reason;
+    }),
+    close: vi.fn(),
+  };
+  const page = {
+    goto: vi.fn(),
+    bringToFront: vi.fn(),
+    on: vi.fn(),
+    off: vi.fn(),
+    isClosed: vi.fn(() => false),
+    setRequestInterception: vi.fn(),
+  };
+  const browser = {
+    newPage: vi.fn().mockResolvedValueOnce(instructions).mockResolvedValueOnce(page),
+    on: vi.fn(),
+    off: vi.fn(),
+  };
+
+  const origin = "http://127.0.0.1:9000";
+  await expect(
+    authenticateReferenceBrowser(
+      browser as unknown as Browser,
+      origin,
+      new Set([origin]),
+      controller.signal,
+    ),
+  ).rejects.toBe(reason);
+  expect(browser.off).toHaveBeenCalledWith("targetcreated", expect.any(Function));
+  expect(page.off).toHaveBeenCalledWith("request", expect.any(Function));
+  expect(page.setRequestInterception.mock.calls).toEqual([[true]]);
+  expect(instructions.close).not.toHaveBeenCalled();
 });
 
 async function listen(server: Server) {
@@ -142,8 +186,9 @@ it
       );
 
       if (action === "cancel") {
-        controller.abort(Error("Stop project"));
-        await expect(inspecting).rejects.toThrow();
+        const reason = Error("Stop project");
+        controller.abort(reason);
+        await expect(inspecting).rejects.toBe(reason);
         expect(finished).toBe(false);
         return;
       }

@@ -119,10 +119,12 @@ export async function authenticateReferenceBrowser(
     return authenticated;
   } finally {
     browser.off("targetcreated", onTarget);
-    for (const [page, listener] of configured) {
-      page.off("request", listener);
+    for (const [page, listener] of configured) page.off("request", listener);
+    // The session owner terminates the browser on abort. Protocol calls during that
+    // shutdown can wait for replies from targets that are already being destroyed.
+    signal.throwIfAborted();
+    for (const page of configured.keys())
       if (!page.isClosed()) await page.setRequestInterception(false).catch(() => {});
-    }
     await instructions.close().catch(() => {});
     if (browser.connected) {
       for (const grant of permissions.values()) await (await grant)();

@@ -70,6 +70,7 @@
 
 - **远程 MCP 上传：**通过 `request_upload` 获取限时上传链接，将文件上传到 Kiteva，再用 `confirm_upload` 将文件添加到草稿或项目。上传链接五分钟内有效，且只能使用一次。Kiteva 确认文件时使用与网页端相同的附件规则。详见 [MCP 上传指南](docs/agent-mcp.md#import-and-attach-files)。
 - **Gemini 创作（测试版）：**可在项目设置或通过 MCP 选择 Gemini 4 Neon 或 Carbon。Kiteva 使用 Antigravity CLI 登录或已配置的 Gemini API。治理页面记录 Gemini 用量，并在有费率时显示费用估算。详见[配置与限制](src/server/agents/gemini/README.md)。
+- **网站登录：**取消登录后，由负责管理浏览器的进程关闭它，已取消的请求无需等待浏览器响应。
 
 </details>
 

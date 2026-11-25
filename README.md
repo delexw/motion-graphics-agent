@@ -80,6 +80,7 @@ The three most recent dated entries are listed here, regardless of gaps between 
 
 - **Remote MCP uploads:** Request a scoped link with `request_upload`, send the file to Kiteva, then attach it with `confirm_upload`. The one-use link expires after five minutes. Kiteva applies the web app's attachment rules when it confirms the file. See the [MCP upload guide](docs/agent-mcp.md#import-and-attach-files).
 - **Gemini authoring (beta):** Select Gemini 4 Neon or Carbon in project settings or through MCP. Kiteva uses the Antigravity CLI login or the configured Gemini API. Governance records Gemini usage and shows cost estimates when rates are available. [Setup and limits](src/server/agents/gemini/README.md)
+- **Website sign-in:** Cancelling a sign-in hands browser shutdown to the process that owns it, so the cancelled request can return without waiting on the closing browser.
 
 </details>
 

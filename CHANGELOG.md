@@ -40,6 +40,10 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 - Governance puts project timing first and shows reasoning effort by usage row. JEV dashboards show decisions and scores up front, with style names and recorded details in expandable sections.
 - Generation settings use shared info tips for video language, build route and adjustive effort.
 
+### Fixed
+
+- Cancelling website sign-in stops waiting for browser controls while the owned browser shuts down.
+
 ## [1.2.0] — 2026-11-16
 
 DeepSeek authoring, finished-project reuse and governed multilingual media workflows.

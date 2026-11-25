@@ -499,7 +499,8 @@ export async function createLocalReferenceBrowser(
           try {
             if (browser.connected && !signal.aborted) await persistent?.save(browser);
           } finally {
-            await browser.close();
+            // On abort the process scope already owns browser shutdown.
+            if (!signal.aborted) await browser.close();
           }
         } finally {
           try {
