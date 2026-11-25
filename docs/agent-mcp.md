@@ -123,23 +123,58 @@ is not promised. Use the existing `start_idea` with the returned draft ID and re
 only when the user asks to start; it retains the normal settings review and governed
 production pipeline. Do not reconstruct the source by manually calling `create_idea`.
 
-## Import and attach generated assets
+## Import and attach files
 
 Use the same draft and attachment rules as the UI. `create_idea` returns a stable
-`draftId`; `read_idea` accepts that ID (or `draft:new`) and returns its latest room
-revision. `import_asset` requires a target `{kind: "draft", id: draftId}` or an
-existing `{kind: "project", id: projectId}`. Its source is either a selected absolute
-`local_file` path on the Kiteva host or a `comfyui_output` HTTP(S) `/view` URL with
-`type=output` or `type=temp`. Downloads are bounded, DNS-pinned and never follow
-redirects. Credentials, arbitrary website endpoints and unsupported files are rejected.
+`draftId`, and `read_idea` returns its latest revision.
 
-The files are copied to ignored runtime uploads, not application source or Git.
-Returned `asset.id` values are the real attachment IDs. Draft imports attach them
-using the UI's shared section and limit rules; project imports remain available
-for that project's later edits and do not modify or restart an active build.
-`get_idea_options` exposes the shared upload limits and accepted extensions.
-Images accept image files only. Videos are a separate brief section accepting MP4/MOV/WebM clips; audio accepts
-WAV/MP3/M4A/FLAC. Existing byte/count limits still apply.
+### Upload a file from the client machine
+
+1. Call `request_upload` with `target: {kind: "draft", id: draftId}` or
+   `target: {kind: "project", id: projectId}`, plus the original `filename` and exact
+   size in `bytes`.
+2. Resolve the returned `uploadUrl` against the MCP server URL. Send the raw file
+   with `PUT` and the returned `headers`. Keep the destination on the MCP server's
+   origin. The upload header authorises one file and expires after five minutes.
+   Send only the returned headers for this upload. Keep the user's login token
+   and the upload header out of logs.
+3. After HTTP 204, call `confirm_upload` with the returned `uploadId`. The tool
+   returns the real `asset.id` and, for a draft, its latest revision. Confirm
+   before the link expires. If the confirmation response is lost, inspect the
+   draft or project before requesting another link.
+
+For the PUT, a coding agent can use:
+
+```sh
+curl --fail --request PUT \
+  --header 'Content-Type: application/octet-stream' \
+  --header "X-Kiteva-Upload-Token: $UPLOAD_TOKEN" \
+  --upload-file "$LOCAL_FILE" "$UPLOAD_URL"
+```
+
+Kiteva's listener is loopback-only. For a remote host, forward both MCP and the
+upload path over the same connection, for example
+`ssh -N -L 18417:127.0.0.1:18417 user@kiteva-host`. Use
+`http://127.0.0.1:18417/mcp` for the MCP client. For a deployment that puts an
+authenticated gateway in front of Kiteva, keep both routes on the same origin.
+The gateway must authenticate the MCP calls, and the binary PUT uses the
+one-file credential issued by `request_upload`. This flow reuses Kiteva's
+single-workspace access boundary. Keep pending uploads on the same Kiteva
+instance until confirmation. Restarting the server clears pending links and bytes.
+
+### Import an existing server-side file or ComfyUI output
+
+Call `import_asset` with the same target. Use `local_file` for a selected absolute
+path on the machine running Kiteva. Use `comfyui_output` for a ComfyUI HTTP(S)
+`/view` or `/api/view` URL with `type=output` or `type=temp`. Downloads are
+bounded, DNS-pinned and never follow redirects. Credentials, arbitrary website
+endpoints and unsupported files are rejected.
+
+Both paths use the same validation and attachment rules. Files go to ignored
+runtime uploads. Draft files attach automatically. Project files become available
+for later edits. Neither path starts a build. `get_idea_options` lists accepted
+extensions and limits. Videos have their own section and accept MP4, MOV and WebM.
+The music section accepts WAV, MP3, M4A and FLAC.
 
 `manage_idea_assets` provides `list`, `attach`, `detach`, and `remove_from_pool` for
 a stable draftId. Mutations require the latest revision and assetId. Its returned

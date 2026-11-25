@@ -1,14 +1,17 @@
 import { CallToolResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { afterEach, expect, it, vi } from "vitest";
-import { mkdtemp, writeFile, readdir, rm } from "node:fs/promises";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import Fastify from "fastify";
+import { expect, it, onTestFinished, vi } from "vitest";
+import { mkdtemp, readFile, writeFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
 import { Store } from "../../src/server/jobs/store";
 import { createKitevaMcpTools } from "../../src/server/mcp/tools";
+import { registerKitevaMcpRoutes } from "../../src/server/mcp/routes";
 import { loadCatalog } from "../../src/server/catalog/catalog";
 import { RoomPatchSchema } from "../../src/shared/room";
 import { toggleRoomAsset } from "../../src/shared/brief-attachments";
@@ -16,13 +19,15 @@ import { type VideoRequest, VideoRequestSchema } from "../../src/shared/domains/
 import type { KitevaMcpResult } from "../../src/shared/kiteva-mcp";
 import type { AssetOwner } from "../../src/shared/asset-owner";
 import type { Run } from "../../src/shared/contracts";
+import { kitevaMcpPath } from "../../src/shared/kiteva-mcp";
+import { assetLimits } from "../../src/shared/asset-limits";
+import { customerToolActivity } from "../../src/shared/activity-model";
 
-const cleanups: (() => Promise<unknown> | void)[] = [];
-afterEach(async () => {
-  for (const close of cleanups.splice(0).reverse()) await close();
-});
-
-async function setup() {
+async function setup(transport: "memory" | "http" = "memory") {
+  const cleanups: (() => Promise<unknown> | void)[] = [];
+  onTestFinished(async () => {
+    for (const close of cleanups.reverse()) await close();
+  });
   const directory = await mkdtemp(path.join(tmpdir(), "mcp-assets-"));
   cleanups.push(() => rm(directory, { recursive: true, force: true }));
   const store = new Store(":memory:");
@@ -39,19 +44,29 @@ async function setup() {
     store.save(run);
     return { id: run.id, phase: run.phase };
   });
-  const server = createKitevaMcpTools({
+  const dependencies = {
     store,
     start,
     catalog: await loadCatalog(),
     webUrl: "http://localhost:18419",
     assetDirectory: path.join(directory, "runtime"),
-  });
+  };
   const client = new Client({ name: "asset-test", version: "1" });
-  const [left, right] = InMemoryTransport.createLinkedPair();
-  await server.connect(left);
-  await client.connect(right);
+  let serverUrl: string | undefined;
+  if (transport === "http") {
+    const app = Fastify();
+    registerKitevaMcpRoutes(app, dependencies);
+    cleanups.push(() => app.close());
+    serverUrl = await app.listen({ host: "127.0.0.1", port: 0 });
+    await client.connect(new StreamableHTTPClientTransport(new URL(kitevaMcpPath, serverUrl)));
+  } else {
+    const server = createKitevaMcpTools(dependencies);
+    cleanups.push(() => server.close());
+    const [left, right] = InMemoryTransport.createLinkedPair();
+    await server.connect(left);
+    await client.connect(right);
+  }
   cleanups.push(() => client.close());
-  cleanups.push(() => server.close());
   const call = async (name: string, args: Record<string, unknown> = {}) => {
     const result = CallToolResultSchema.parse(await client.callTool({ name, arguments: args }));
     return { ...result, data: result.structuredContent as KitevaMcpResult };
@@ -67,8 +82,130 @@ async function setup() {
       "base64",
     ),
   );
-  return { store, start, client, call, directory, target, file };
+  const requestUpload = async (owner: AssetOwner, filename: string, bytes: number) => {
+    const result = await call("request_upload", { target: owner, filename, bytes });
+    if (result.data.kind !== "upload_requested" || !serverUrl) throw Error("Upload link required");
+    return { ...result.data, url: new URL(result.data.uploadUrl, serverUrl) };
+  };
+  return { store, start, client, call, directory, target, file, requestUpload, cleanups };
 }
+
+it("receives raw client bytes through a one-use link and confirms through the UI attachment rules", async () => {
+  const { store, call, target, start, requestUpload, client } = await setup("http");
+  const filename = "reference.svg";
+  const bytes = Buffer.from(
+    '<svg xmlns="http://www.w3.org/2000/svg"><!--' +
+      "x".repeat(600_000) +
+      '--><rect width="1" height="1"/></svg>',
+  );
+  const before = VideoRequestSchema.parse(store.room().drafts.new.request);
+  const ticket = await requestUpload(target, filename, bytes.length);
+  const { url, method, headers, uploadId } = ticket;
+  expect(url.pathname).toBe(`/mcp/uploads/${uploadId}`);
+  expect(Object.keys(headers).sort()).toEqual(["content-type", "x-kiteva-upload-token"]);
+  expect((await client.listTools()).tools.map((tool) => tool.name)).toEqual(
+    expect.arrayContaining(["request_upload", "confirm_upload"]),
+  );
+  expect((await call("confirm_upload", { uploadId })).isError).toBe(true);
+
+  const upload = () => fetch(url, { method, headers, body: new Uint8Array(bytes) });
+  const responses = await Promise.all([upload(), upload()]);
+  expect(responses.map(({ status }) => status).sort()).toEqual([204, 403]);
+  expect(store.room().drafts.new.request.assetIds || []).toEqual([]);
+
+  const confirmations = await Promise.all([
+    call("confirm_upload", { uploadId }),
+    call("confirm_upload", { uploadId }),
+  ]);
+  expect(confirmations.filter((result) => result.isError)).toHaveLength(1);
+  const imported = confirmations.find((result) => result.data.kind === "asset_imported")?.data;
+  if (imported?.kind !== "asset_imported") throw Error("Import failed");
+  const { asset, revision } = imported;
+  expect(asset).toMatchObject({
+    originalName: filename,
+    bytes: bytes.length,
+    owner: target,
+    attached: true,
+  });
+  expect(revision).toBe(store.room().revision);
+  expect(store.room().drafts.new.request).toEqual(toggleRoomAsset(before, asset, []));
+  expect(await readFile(store.getAsset(asset.id)!.path)).toEqual(bytes);
+  expect(start).not.toHaveBeenCalled();
+  expect(customerToolActivity("mcp__kiteva__request_upload", "tool_call")).toBe(
+    "Preparing a file upload…",
+  );
+  expect(customerToolActivity("confirm_upload", "tool_call")).toBe("Confirming a file upload…");
+});
+
+it("rejects unsupported, oversized, unauthorised and expired uploads without attaching anything", async () => {
+  const { store, call, target, directory, requestUpload } = await setup("http");
+  const before = store.room();
+  for (const filename of ["../reference.png", "folder\\reference.png", "reference.exe"]) {
+    expect((await call("request_upload", { target, filename, bytes: 1 })).isError).toBe(true);
+  }
+  expect(
+    (
+      await call("request_upload", {
+        target,
+        filename: "reference.png",
+        bytes: assetLimits.images.bytes + 1,
+      })
+    ).data,
+  ).toMatchObject({ kind: "error", message: "Images, videos and documents: 10 MB per file" });
+  expect(
+    (
+      await call("request_upload", {
+        target: { kind: "draft", id: randomUUID() },
+        filename: "reference.png",
+        bytes: 1,
+      })
+    ).isError,
+  ).toBe(true);
+
+  const { url, method, headers, uploadId, expiresAt } = await requestUpload(
+    target,
+    "reference.png",
+    1,
+  );
+  expect(
+    (await fetch(url, { method, headers: { "content-type": headers["content-type"] }, body: "x" }))
+      .status,
+  ).toBe(403);
+  expect(
+    (
+      await fetch(url, {
+        method,
+        headers: { ...headers, origin: "https://example.com" },
+        body: "x",
+      })
+    ).status,
+  ).toBe(403);
+  expect((await fetch(url, { method, headers, body: "xy" })).status).toBe(400);
+  vi.spyOn(Date, "now").mockReturnValue(Date.parse(expiresAt));
+  expect((await fetch(url, { method, headers, body: "x" })).status).toBe(403);
+  expect((await call("confirm_upload", { uploadId })).isError).toBe(true);
+  expect(store.room()).toEqual(before);
+  expect(await readdir(directory)).not.toContain("runtime");
+});
+
+it("checks the uploaded document at confirmation and discards rejected bytes", async () => {
+  const { store, call, target, directory, requestUpload } = await setup("http");
+  const before = store.room();
+  const body = "word ".repeat(assetLimits.documents.pages * assetLimits.documents.wordsPerPage + 1);
+  const { url, method, headers, uploadId } = await requestUpload(
+    target,
+    "notes.txt",
+    Buffer.byteLength(body),
+  );
+  expect((await fetch(url, { method, headers, body })).status).toBe(204);
+  expect((await call("confirm_upload", { uploadId })).data).toMatchObject({
+    kind: "error",
+    message: "Documents must total at most 30 pages",
+  });
+  expect((await call("confirm_upload", { uploadId })).isError).toBe(true);
+  expect(store.room()).toEqual(before);
+  expect(await readdir(path.join(directory, "runtime", "draft", target.id))).toEqual([]);
+});
 
 it("links draft, imported asset and started project IDs and preserves UI attachment semantics", async () => {
   const { store, call, target, file, start } = await setup();
@@ -181,7 +318,7 @@ it("rejects cross-project reuse, wrong draft ID and stale edits", async () => {
 });
 
 it("imports a ComfyUI view URL through a real local HTTP download", async () => {
-  const { call, target } = await setup();
+  const { call, target, cleanups } = await setup();
   const http = createServer((_req, res) => {
     res.setHeader("content-type", "text/markdown");
     res.end("# Input notes\nUse the selected media.");
@@ -286,7 +423,7 @@ it("migrates legacy image-section clips without changing attachment IDs or notes
 });
 
 it("keeps project imports scoped and does not restart or change the active build request", async () => {
-  const { store, call, file, target, start } = await setup();
+  const { store, call, file, target, start, requestUpload } = await setup("http");
   const projectId = randomUUID();
   const request = VideoRequestSchema.parse(store.room().drafts.new.request);
   store.save({
@@ -297,10 +434,14 @@ it("keeps project imports scoped and does not restart or change the active build
     candidates: [],
     jobs: [],
   } as Run);
-  const result = await call("import_asset", {
-    target: { kind: "project", id: projectId },
-    source: { kind: "local_file", path: file },
-  });
+  const bytes = new Uint8Array(await readFile(file));
+  const { url, method, headers, uploadId } = await requestUpload(
+    { kind: "project", id: projectId },
+    path.basename(file),
+    bytes.length,
+  );
+  expect((await fetch(url, { method, headers, body: bytes })).status).toBe(204);
+  const result = await call("confirm_upload", { uploadId });
   expect(result.isError).not.toBe(true);
   if (result.data.kind !== "asset_imported") throw Error("Import failed");
   expect(result.data.asset.attached).toBe(false);
@@ -320,7 +461,7 @@ it("keeps project imports scoped and does not restart or change the active build
 });
 
 it("rejects a draft changed during download and removes the unregistered runtime file", async () => {
-  const { store, call, target, directory } = await setup();
+  const { store, call, target, directory, cleanups } = await setup();
   const http = createServer((_req, res) => {
     const room = store.room();
     store.patchRoom(

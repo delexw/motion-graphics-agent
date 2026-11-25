@@ -5,7 +5,8 @@ import path from "node:path";
 import ipaddr from "ipaddr.js";
 import { z } from "zod";
 import type { AssetOwner } from "../../shared/asset-owner";
-import { assetLimits } from "../../shared/asset-limits";
+import { assetLimits, validateAssetLimits } from "../../shared/asset-limits";
+import type { Asset } from "../../shared/contracts";
 import { dataRoot } from "../runtime/config";
 import type { Store } from "../jobs/store";
 import { referenceResource } from "../requests/reference-resource";
@@ -68,18 +69,46 @@ async function validateComfyUrl(value: string) {
   return { url, addresses };
 }
 
-export async function importMcpAsset(
-  store: Store,
-  target: AssetOwner,
-  source: z.infer<typeof AssetSourceSchema>,
-  directory = path.join(dataRoot, "uploads"),
-) {
+function inspectAssetTarget(store: Store, target: AssetOwner) {
   const room = store.room();
   const draft = Object.values(room.drafts).find((item) => item.id === target.id);
   const project = target.kind === "project" ? store.get(target.id) : undefined;
   if (target.kind === "draft" && !draft)
     throw Error("Draft not found; create/read the draft first");
   if (target.kind === "project" && !project) throw Error("Project not found");
+  const ids =
+    target.kind === "draft"
+      ? (draft!.request.assetIds as string[]) || []
+      : project!.request.assetIds;
+  const existing = new Map(ids.map((id) => store.getAsset(id)!).map((a) => [a.id, a]));
+  return { revision: room.revision, existing: [...existing.values()] };
+}
+
+export function validateMcpUpload(
+  store: Store,
+  target: AssetOwner,
+  filename: string,
+  bytes: number,
+) {
+  if (
+    filename !== path.posix.basename(filename) ||
+    filename !== path.win32.basename(filename) ||
+    filename.includes("\0") ||
+    !roomMaterialSection(filename) ||
+    !assetMimeTypes[path.extname(filename).toLowerCase()]
+  )
+    throw Error("Use a supported filename without a path");
+  const { existing } = inspectAssetTarget(store, target);
+  validateAssetLimits([...existing, { name: filename, bytes }]);
+}
+
+export async function importMcpAsset(
+  store: Store,
+  target: AssetOwner,
+  source: z.infer<typeof AssetSourceSchema>,
+  directory?: string,
+) {
+  const snapshot = inspectAssetTarget(store, target);
   let filename: string;
   let buffer: Buffer;
   if (source.kind === "local_file") {
@@ -112,20 +141,29 @@ export async function importMcpAsset(
       throw Error(`ComfyUI rejected asset download (${response.status})`);
     buffer = response.body;
   }
-  const ids =
-    target.kind === "draft"
-      ? (draft!.request.assetIds as string[]) || []
-      : project!.request.assetIds;
-  const existing = new Map(ids.map((id) => store.getAsset(id)!).map((a) => [a.id, a]));
+  return attachMcpAssetBytes(store, target, filename, buffer, directory, snapshot);
+}
+
+export async function attachMcpAssetBytes(
+  store: Store,
+  target: AssetOwner,
+  filename: string,
+  buffer: Buffer,
+  directory = path.join(dataRoot, "uploads"),
+  { revision, existing }: { revision: number; existing: Asset[] } = inspectAssetTarget(
+    store,
+    target,
+  ),
+) {
   const asset = await writeUploadedAsset(
     buffer,
     filename,
     assetMimeTypes[path.extname(filename).toLowerCase()],
     path.join(directory, target.kind, target.id),
-    [...existing.values()],
+    existing,
   );
   try {
-    return store.commitImportedAsset(asset, target, room.revision);
+    return store.commitImportedAsset(asset, target, revision);
   } catch (error) {
     await rm(asset.path, { force: true });
     throw error;

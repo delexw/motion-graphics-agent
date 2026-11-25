@@ -1169,6 +1169,8 @@
   "Rendering a pixel environment effect…": "正在渲染像素环境特效…",
   "Rendering Bevy frames…": "正在渲染 Bevy 帧…",
   "Analyzing music beats…": "正在分析音乐节拍…",
+  "Preparing a file upload…": "正在准备文件上传…",
+  "Confirming a file upload…": "正在确认文件上传…",
   "Creating narration…": "正在生成旁白…",
   "Editing narration…": "正在编辑旁白…",
   "Refining story timing": "调整故事节奏",

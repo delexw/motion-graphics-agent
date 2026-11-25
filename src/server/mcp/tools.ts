@@ -22,6 +22,7 @@ import { projectName } from "../../shared/project-name";
 import { RoomPatchSchema, hasRoomDraftContent } from "../../shared/room";
 import { VideoRequestSchema } from "../../shared/domains/video";
 import { validateBriefSections } from "../requests/brief-sections";
+import type { McpUploads } from "./uploads";
 import {
   ideaRequest,
   confirmedLanguageSettings,
@@ -56,13 +57,10 @@ function search<T extends { id: string }>(
     .map((match) => matches.get(String(match.id))!);
 }
 
-export function createKitevaMcpTools({
-  store,
-  catalog,
-  webUrl,
-  start,
-  assetDirectory,
-}: KitevaMcpDependencies) {
+export function createKitevaMcpTools(
+  { store, catalog, webUrl, start, assetDirectory }: KitevaMcpDependencies,
+  uploads?: McpUploads,
+) {
   const clientId = `kiteva-mcp-${randomUUID()}`;
   const server = new McpServer(
     { name: "kiteva", version: "1.0.0" },
@@ -108,6 +106,50 @@ export function createKitevaMcpTools({
     owner: asset.owner,
     attached,
   });
+  const importedAsset = (target: AssetOwner, asset: Asset): KitevaMcpResult => ({
+    kind: "asset_imported",
+    target,
+    asset: publicAsset(asset, target.kind === "draft"),
+    revision: target.kind === "draft" ? store.room().revision : undefined,
+  });
+  if (uploads) {
+    server.registerTool(
+      "request_upload",
+      {
+        description:
+          "Request a five-minute, single-use upload link for one selected file on the client machine. Pass the exact draftId or projectId, filename and byte count. Resolve uploadUrl against the MCP server URL, then PUT the raw file using the returned headers. Send only the scoped upload credential in those headers. Do not include the user's login token or put file bytes in tool arguments. After HTTP 204, call confirm_upload. This step neither attaches the file nor starts a build.",
+        inputSchema: {
+          target: AssetTargetSchema,
+          filename: z
+            .string()
+            .min(1)
+            .max(255)
+            .describe("Original filename with extension, without a path."),
+          bytes: z
+            .number()
+            .int()
+            .positive()
+            .describe("Exact number of bytes in the selected file."),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
+      },
+      ({ target, filename, bytes }) => run(() => uploads.request(target, filename, bytes)),
+    );
+    server.registerTool(
+      "confirm_upload",
+      {
+        description:
+          "After a successful upload PUT, validate and attach the file to the original draft or project. Pass only the uploadId from request_upload. Returns the asset ID and current draft revision, or reports if the upload is unfinished, expired or already used. Does not start a build. If the response is uncertain, inspect the draft or project before requesting a new link.",
+        inputSchema: { uploadId: z.string().uuid() },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
+      },
+      ({ uploadId }) =>
+        run(async () => {
+          const { target, asset } = await uploads.confirm(uploadId);
+          return importedAsset(target, asset);
+        }),
+    );
+  }
   const scopedAssets = (target: AssetOwner) => {
     const room = store.room();
     const draft = Object.values(room.drafts).find((item) => item.id === target.id);
@@ -131,20 +173,14 @@ export function createKitevaMcpTools({
     "import_asset",
     {
       description:
-        "Import one selected local file or ComfyUI output into an existing draft/project. Use the exact draftId from create_idea/read_idea or projectId from start_idea. Files go to private runtime storage, never source code or Git. Draft imports attach using the same UI section/limit rules: image files belong to images, MP4/MOV/WebM clips to videos, audio to music and documents to main; project imports are available for that project's later edits and never restart a build. Returns actual asset ID and current revision. No model calls. Do not automatically retry an uncertain import.",
+        "Import one selected file already on the Kiteva server (local_file) or a ComfyUI output (comfyui_output). For a file on the client machine, use request_upload and confirm_upload. Use the exact draftId from create_idea/read_idea or projectId from start_idea. Draft imports attach using the same UI section and limit rules. Project imports are available for later edits and never restart a build. Returns the asset ID and, for a draft, the current revision. No model calls. Do not automatically retry an uncertain import.",
       inputSchema: { target: AssetTargetSchema, source: AssetSourceSchema },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
     },
     ({ target, source }) =>
-      run(async () => {
-        const asset = await importMcpAsset(store, target, source, assetDirectory);
-        return {
-          kind: "asset_imported",
-          target,
-          asset: publicAsset(asset, target.kind === "draft"),
-          revision: target.kind === "draft" ? store.room().revision : undefined,
-        };
-      }),
+      run(async () =>
+        importedAsset(target, await importMcpAsset(store, target, source, assetDirectory)),
+      ),
   );
   server.registerTool(
     "manage_idea_assets",

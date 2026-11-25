@@ -37,6 +37,14 @@ export type KitevaMcpResult =
     }
   | { kind: "started"; id: string; projectId: string; phase: string; url: string; draftId?: string }
   | { kind: "asset_imported"; target: AssetOwner; asset: KitevaMcpAsset; revision?: number }
+  | {
+      kind: "upload_requested";
+      uploadId: string;
+      uploadUrl: string;
+      method: "PUT";
+      headers: Record<string, string>;
+      expiresAt: string;
+    }
   | { kind: "assets"; target: AssetOwner; assets: KitevaMcpAsset[]; revision?: number }
   | {
       kind: "options";

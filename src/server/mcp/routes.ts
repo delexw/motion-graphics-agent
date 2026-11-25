@@ -1,7 +1,9 @@
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { assetLimits } from "../../shared/asset-limits";
 import { kitevaMcpPath } from "../../shared/kiteva-mcp";
 import { createKitevaMcpTools, type KitevaMcpDependencies } from "./tools";
+import { McpUploads, mcpUploadPath, mcpUploadTokenHeader, mcpUploadContentType } from "./uploads";
 
 /** Bundle the agent interface into the application's existing HTTP listener. */
 export function registerKitevaMcpRoutes(app: FastifyInstance, dependencies: KitevaMcpDependencies) {
@@ -16,35 +18,58 @@ export function registerKitevaMcpRoutes(app: FastifyInstance, dependencies: Kite
       submitting = false;
     }
   };
+  const uploads = new McpUploads(dependencies.store, dependencies.assetDirectory);
   const connections = new Set<() => Promise<void>>();
   app.addHook("onClose", async () => {
+    uploads.close();
     await Promise.allSettled([...connections].map((close) => close()));
+  });
+  const checkLocalAccess = async (request: FastifyRequest, reply: FastifyReply) => {
+    // The existing app is local-only. Preserve that boundary for direct/dev access too.
+    let hostname: string;
+    try {
+      hostname = new URL(`http://${request.headers.host}`).hostname;
+    } catch {
+      return reply.code(403).send({ error: "Local host required" });
+    }
+    if (!["127.0.0.1", "localhost", "[::1]"].includes(hostname))
+      return reply.code(403).send({ error: "Local host required" });
+    const origin = request.headers.origin;
+    if (
+      origin &&
+      !new Set([new URL(dependencies.webUrl).origin, `http://${request.headers.host}`]).has(origin)
+    )
+      return reply.code(403).send({ error: "Foreign origin rejected" });
+  };
+  void app.register(async (uploadRoutes) => {
+    uploadRoutes.addContentTypeParser(
+      mcpUploadContentType,
+      { parseAs: "buffer" },
+      (_request, body, done) => done(null, body),
+    );
+    uploadRoutes.put<{ Params: { id: string }; Body: Buffer }>(`${mcpUploadPath}/:id`, {
+      bodyLimit: assetLimits.audio.bytes,
+      onRequest: [
+        checkLocalAccess,
+        async (request) => {
+          uploads.authorizePut(request.params.id, request.headers[mcpUploadTokenHeader]);
+        },
+      ],
+      handler: async (request, reply) => {
+        if (!Buffer.isBuffer(request.body))
+          return reply.code(415).send({ error: "Send the raw file as application/octet-stream" });
+        uploads.receive(request.params.id, request.headers[mcpUploadTokenHeader], request.body);
+        return reply.code(204).send();
+      },
+    });
   });
   app.route({
     method: ["POST", "GET", "DELETE"],
     url: kitevaMcpPath,
     bodyLimit: 512_000,
-    onRequest: async (request, reply) => {
-      // The existing app is local-only. Preserve that boundary for direct/dev access too.
-      let hostname: string;
-      try {
-        hostname = new URL(`http://${request.headers.host}`).hostname;
-      } catch {
-        return reply.code(403).send({ error: "Local host required" });
-      }
-      if (!["127.0.0.1", "localhost", "[::1]"].includes(hostname))
-        return reply.code(403).send({ error: "Local host required" });
-      const origin = request.headers.origin;
-      if (
-        origin &&
-        !new Set([new URL(dependencies.webUrl).origin, `http://${request.headers.host}`]).has(
-          origin,
-        )
-      )
-        return reply.code(403).send({ error: "Foreign origin rejected" });
-    },
+    onRequest: checkLocalAccess,
     handler: async (request, reply) => {
-      const server = createKitevaMcpTools({ ...dependencies, start });
+      const server = createKitevaMcpTools({ ...dependencies, start }, uploads);
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
         enableJsonResponse: true,

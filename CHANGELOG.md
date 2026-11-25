@@ -6,6 +6,8 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Added
 
+- Remote MCP clients can send a local file over a short-lived, single-use upload link and attach it with `confirm_upload`. Kiteva applies the same validation and attachment rules as the web app.
+
 - LPC character sheets with generated credits and PixelFX environment effects. JEV can select either tool alongside the primary authoring resource.
 
 - GPT-6.2 Sol is available in Generation settings. Governance estimates its cost at the published Standard rates.
@@ -272,6 +274,24 @@ Kiteva uses the [MIT License](LICENSE). Third-party components retain their own 
 ## Daily update archive
 
 README recent updates show the three most recent dated entries, regardless of gaps between dates. Move entries beyond those three here when updating the READMEs. Historical English and Simplified Chinese entries are preserved below; the versioned release notes above remain unchanged.
+
+### 2026-11-19
+
+**English**
+
+- **GPT-6.2 Astra:** New GPT projects use GPT-6.2 Astra for creative proposals, planning, generation and main-model repairs. Local model overrides still apply. Historical GPT-6.1 Sol selections and cost estimates remain readable.
+- **Astra cost estimates:** Governance uses the published GPT-6.2 Astra token rates for new usage while retaining historical Sol rates.
+- **GPT-6.2 Sol:** Choose Sol in Generation settings. Governance estimates its cost from OpenAI's published Standard rates.
+- **Downloads:** Open the download icon for the original MP4, compact MP4, editable project ZIP and language files. The 50% rate preset checks picture quality. The 90% rate preset targets a copy of up to 10 MB. Actual savings vary by video. Compression runs in the background. Reopen the pop-up to see progress. Repeated clicks share one job, and Kiteva keeps the original available if the compact copy fails its checks.
+- **Project results:** Video and controls resize together in smaller project windows. A check icon and border mark the selected preview.
+
+**简体中文**
+
+- **GPT-6.2 Astra：**新的 GPT 项目默认使用 GPT-6.2 Astra 进行创意提案、规划、生成和主模型修复。本地模型覆盖设置仍然有效；历史 GPT-6.1 Sol 选择和费用记录保持可读。
+- **Astra 费用估算：**Governance 使用已公布的 GPT-6.2 Astra token 价格估算新用量，并保留历史 Sol 价格。
+- **GPT-6.2 Sol：**可在生成设置中选择 Sol。治理页面按 OpenAI 公布的标准费率估算费用。
+- **下载：**点击下载图标，可在弹窗中下载原始 MP4、压缩版 MP4、可编辑项目 ZIP 和语言文件。「50% 压缩率」预设会检查画质，「90% 压缩率」预设以不超过 10 MB 为目标。实际节省空间因视频而异。压缩在后台运行，重新打开弹窗即可查看进度。重复点击不会启动新任务；压缩版未通过检查时，仍可下载原始文件。
+- **项目结果：**缩小项目窗口时，视频和控件会一起调整。勾选图标和边框标记已选预览。
 
 ### 2026-11-17
 

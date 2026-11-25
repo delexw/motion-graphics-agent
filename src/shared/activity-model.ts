@@ -162,6 +162,8 @@ export const taskActivityLabels: Record<
   },
 };
 export function customerToolActivity(name: string, type: string, purpose?: string): string {
+  if (/(?:^|__)request_upload$/.test(name)) return "Preparing a file upload…";
+  if (/(?:^|__)confirm_upload$/.test(name)) return "Confirming a file upload…";
   if (/lpc.*list_parts/.test(name)) return "Finding licensed pixel character parts…";
   if (/lpc.*build_character/.test(name)) return "Building a pixel character…";
   if (/pixel_fx.*list_effects/.test(name)) return "Finding pixel environment effects…";
