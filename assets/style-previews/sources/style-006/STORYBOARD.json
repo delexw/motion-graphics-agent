@@ -1,0 +1,64 @@
+{
+  "version": 3,
+  "title": "Art Deco — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Steps arrive in pairs",
+      "startSeconds": 0,
+      "endSeconds": 0.66,
+      "purpose": "Establish the axis: three nested stepped side frames arrive in mirrored pairs, outermost first, around closed inlaid doors that hold the idea as one gold diamond split on the seam.",
+      "visuals": ["Stationary black ground and double gold frame with stepped corners", "Three graduated setback frames per side: dark bodies, gold raised edges, ivory inner bevel; each pair slides in toward x=640", "Closed door leaves with dark bodies and fine vertical gold inlay; half-diamonds meet on the seam", "Arch outlines draw from both bases toward the apex; ground lines extend outward from the axis; towers draw"],
+      "assets": ["index.html (procedural SVG)"],
+      "beats": [
+        {"startSeconds": 0, "endSeconds": 0.3, "development": "Outermost step pair and arch outlines arrive; doors closed on the axis.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 0.3, "endSeconds": 0.66, "development": "Middle and inner step pairs land; doors begin to part.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-2",
+      "title": "Mirrored opening",
+      "startSeconds": 0.66,
+      "endSeconds": 1.3,
+      "purpose": "Characteristic action: the nested stepped door leaves open from the central axis in a mirrored sweep, uncovering the sunburst, ziggurat and focal medallion.",
+      "visuals": ["Three nested leaves per side telescope outward at staggered rates, clipped by the arch", "Sunburst rays draw from the hub, centre ray first then pairs outward, kept inside the arch behind the title field", "Ziggurat halves draw from the top centre down both sides; flutes rise; stem draws up", "Medallion uncovered by a clip opening from the axis"],
+      "assets": ["index.html (procedural SVG)"],
+      "beats": [
+        {"startSeconds": 0.66, "endSeconds": 1.0, "development": "Doors clear the centre; rays, rings and ziggurat edges appear.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 1.0, "endSeconds": 1.3, "development": "Doors leave the arch; the medallion focal mark opens symmetrically from the axis.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-3",
+      "title": "The idea connects",
+      "startSeconds": 1.3,
+      "endSeconds": 2.2,
+      "purpose": "Show the subject's change: lines run from the medallion to diamond nodes and down to the ziggurat, forming a connected system; the approved copy opens from the axis.",
+      "visuals": ["Ivory network lines draw outward; each diamond node lands exactly when its line arrives", "Branch lines link the upper nodes to the ziggurat", "Subtitle rules extend outward; subtitle and title uncovered by centre-out clips (glyphs never distort)", "Chevron band opens from the centre"],
+      "assets": ["index.html (procedural SVG)"],
+      "beats": [
+        {"startSeconds": 1.3, "endSeconds": 1.8, "development": "Network lines and nodes complete the connected system.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 1.8, "endSeconds": 2.2, "development": "Subtitle 'AN IDEA BECOMES' readable; title 'A CONNECTED SYSTEM' fully uncovered at 2.22 s; chevron band opening.", "captions": ["AN IDEA BECOMES", "A CONNECTED SYSTEM"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-4",
+      "title": "One shine and hold",
+      "startSeconds": 2.2,
+      "endSeconds": 3,
+      "purpose": "Finish with one eye-catching shine on the medallion, then a settled reading hold.",
+      "visuals": ["A single ivory glint crosses the gold disc and ring inside its own clip, then exits", "Full composition settled by 2.62 s"],
+      "assets": ["index.html (procedural SVG)"],
+      "beats": [
+        {"startSeconds": 2.2, "endSeconds": 2.62, "development": "The glint crosses the medallion; the chevron band completes at 2.4 s.", "captions": ["AN IDEA BECOMES", "A CONNECTED SYSTEM"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 2.62, "endSeconds": 3, "development": "Static settled frame: title, network and stepped frames held for reading.", "captions": ["AN IDEA BECOMES", "A CONNECTED SYSTEM"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.38}
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["The step pairs arrive 0.11 s apart, so the side frames build in about 0.66 s; the doors overlap that build, starting at 0.3 s and clearing by 1.15 s.", "Title is fully legible from 2.22 s to 3.0 s (0.78 s of stable exposure, glyphs static throughout)."],
+    "justifiedHolds": ["2.62–3.0 s settled hold so the finished system and title can be read."]
+  },
+  "notes": ["Silent preview: visible changes carry the rhythm.", "STYLE.json still lists no tech.preview_recipes, so no reviewed recipe can be demonstrated; this refresh implements the updated catalogue guide (paired outer steps, metal reserved for raised edges, fine inlay, single closing shine in a separate glint clip).", "No BACKGROUND_REVIEW.json supplied.", "Metal is approximated with flat gold strokes, ivory bevel lines and one gradient glint; not physically lit."]
+}

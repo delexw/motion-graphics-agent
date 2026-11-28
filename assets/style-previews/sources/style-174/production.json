@@ -1,0 +1,26 @@
+{
+  "characters": [],
+  "displayTitle": "Ink Cartoon",
+  "displayDescription": "An ink figure raises a lit idea and a single sideways set shift reveals the connected system it starts.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP 3.15.1 (local gsap.min.js)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Cels are flat procedural vector drawings on Canvas 2D. They approximate hand-inked midcentury cels; there are no real brush or paper scans.",
+    "STYLE.json has no preview recipes and no background review was supplied, so the preview shows the catalogue's main characteristic action.",
+    "Blender was not used, as instructed."
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "version": 3,
+  "title": "Printed Long Take — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Long take across the plate",
+      "startSeconds": 0,
+      "endSeconds": 3,
+      "purpose": "A carved light trace on a dark, fixed engraving plate travels from a single seed to a connected system while the viewport advances in one uninterrupted move across changing hatch density.",
+      "visuals": [
+        "Dark ink surround (#15120F) with a fixed 1160x480 viewport onto a 1440-unit registered plate (#1F1A15), panned about 280 px",
+        "Seeded, softened engraving texture: 28 pt stipple (I), 35-degree line hatch narrowing from 20 to 14 (II), crosshatch mesh 14 to 11 (III)",
+        "Cream carved trace (#EADBC0) with offset shadow cut; landmark rings pop as it passes",
+        "Small red accent (#C0463A) only on the hub and its dashed registration line",
+        "Zone labels printed under the plate, registered to it; fixed caption on clean ink"
+      ],
+      "assets": [
+        "index.html",
+        "gsap.min.js"
+      ],
+      "beats": [
+        {
+          "startSeconds": 0,
+          "endSeconds": 0.95,
+          "development": "The camera starts moving at once across the seed stipple; the trace cuts out from the start node and the caption fades up on clean ink. The camera lingers around 0.95 s as the stipple gives way to line hatching.",
+          "captions": [
+            "An idea becomes a connected system"
+          ],
+          "audio": {
+            "music": "",
+            "effects": [],
+            "subtitles": []
+          },
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 0.95,
+          "endSeconds": 2.12,
+          "development": "The camera returns to its steady rate across the narrowing line hatch, bringing the crosshatch mesh into the frame. Landmark nodes appear along the trace as it passes.",
+          "captions": [
+            "An idea becomes a connected system"
+          ],
+          "audio": {
+            "music": "",
+            "effects": [],
+            "subtitles": []
+          },
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 2.12,
+          "endSeconds": 3,
+          "development": "The camera comes to rest at 2.3 s as the trace reaches the red hub and registration line. Links grow outward into a four-node mesh, fully settled by 2.62 s, then everything holds.",
+          "captions": [
+            "An idea becomes a connected system"
+          ],
+          "audio": {
+            "music": "",
+            "effects": [],
+            "subtitles": []
+          },
+          "readingHoldSeconds": 0.38
+        }
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": [
+      "Single uninterrupted camera move (about 280 px, under about 5 px per frame) with a deliberate linger at the stipple-to-line change and an ease onto the hub; no cuts or viewport resets.",
+      "Caption fully legible from 0.6 s on a solid ink band outside the engraved field."
+    ],
+    "justifiedHolds": [
+      "2.62-3.0 s settled hold on the completed connected system and caption."
+    ]
+  },
+  "notes": [
+    "Silent preview.",
+    "All canvas state is derived from GSAP timeline time through a setter-driven time driver; hf-seek redraws from tl.time(). Texture and stipple jitter are cached once with seed 183.",
+    "No preview recipes supplied; demonstrates the primary characteristic action."
+  ]
+}

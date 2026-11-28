@@ -4,6 +4,7 @@ import { useRef, type ReactNode } from "react";
 import { Paperclip, Link, X } from "lucide-react";
 import { briefSectionFileAccept, type BriefSectionName } from "../../shared/brief-sections";
 import { Button, Input } from "antd";
+import { MusicStylePicker } from "./music-style-picker";
 import type { TextAreaRef } from "antd/es/input/TextArea";
 import {
   Attachments,
@@ -30,6 +31,8 @@ export function BriefRequirements({
   onUpload,
   urls,
   onUrlsChange,
+  musicStyle,
+  onMusicStyleChange,
 }: {
   children: ReactNode;
   instructions: { music: string; images: string; videos: string; urls: string };
@@ -40,6 +43,8 @@ export function BriefRequirements({
   onUpload: (files: FileList | null, section: Exclude<BriefSectionName, "urls">) => Promise<void>;
   urls: string;
   onUrlsChange: (value: string) => void;
+  musicStyle: string | undefined;
+  onMusicStyleChange: (style: string | undefined) => void;
 }) {
   useUiLanguage();
   const fileInputs = useRef<
@@ -153,6 +158,9 @@ export function BriefRequirements({
             )}
           </div>
           {section !== "urls" && <p className="secondary">{assetLimitHelp[section]}</p>}
+          {section === "music" && (
+            <MusicStylePicker style={musicStyle} onChange={onMusicStyleChange} />
+          )}
           {section === "main" ? (
             children
           ) : (

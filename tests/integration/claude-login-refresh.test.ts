@@ -24,7 +24,7 @@ vi.mock("node:child_process", async (original) => {
   });
   return { ...(await original<typeof import("node:child_process")>()), execFile };
 });
-import { prepareClaudeHome } from "../../src/server/agents/claude-home";
+import { claudeLoginRenewed, prepareClaudeHome } from "../../src/server/agents/claude-home";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -68,6 +68,28 @@ it.skipIf(process.platform !== "darwin")(
         prepareClaudeHome(path.join(root, "project"), undefined, controller.signal),
       ).rejects.toThrow("Stopped");
       expect(keychain.calls).toBe(2);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+);
+
+it.skipIf(process.platform !== "darwin")(
+  "reports a renewed login only when the stored access token differs from the one in use",
+  async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "claude-login-"));
+    vi.stubEnv("HOME", root);
+    vi.stubEnv("CLAUDE_CONFIG_DIR", "");
+    vi.stubEnv(credentialEnvironmentVariables.anthropicApiKey, "");
+    vi.stubEnv(credentialEnvironmentVariables.claudeOauthToken, "");
+    const workspace = path.join(root, "project");
+    const used = { [credentialEnvironmentVariables.claudeOauthToken]: "old-fixture" };
+    try {
+      keychain.login = JSON.stringify({ claudeAiOauth: { accessToken: "old-fixture" } });
+      expect(await claudeLoginRenewed(workspace, used)).toBe(false);
+      keychain.login = JSON.stringify({ claudeAiOauth: { accessToken: "new-fixture" } });
+      expect(await claudeLoginRenewed(workspace, used)).toBe(true);
+      expect(await claudeLoginRenewed(workspace, {})).toBe(false);
     } finally {
       await rm(root, { recursive: true, force: true });
     }

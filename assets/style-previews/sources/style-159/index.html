@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Silhouette Double Exposure — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #DCE5E9; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+  #stage { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .copy { position: absolute; left: 6.1%; top: 32%; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #142536; }
+  .eyebrow { font-size: 15px; letter-spacing: 5px; color: #005885; margin: 0 0 22px 2px; }
+  .headline { margin: 0; font-size: 44px; line-height: 52px; font-weight: 300; white-space: nowrap; }
+  .headline b { font-weight: 700; display: block; }
+  .rule { width: 120px; height: 2px; background: #142536; margin: 26px 0 0 2px; transform-origin: left center; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="stage" width="1280" height="720"></canvas>
+  <div class="copy" id="copy">
+    <p class="eyebrow" id="eyebrow">THE INNER VIEW</p>
+    <h1 class="headline" id="headline">An idea becomes<b>a connected system</b></h1>
+    <div class="rule" id="rule"></div>
+  </div>
+</div>
+<script src="gsap.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var W = 1280, H = 720, HORIZON = 470;
+  var C = { bg: "#EDF1F3", fg: "#142536", active: "#005885", secondary: "#B9D5DE", deep: "#0A2236", light: "#EAF4F7" };
+
+  // ---------- seeded randomness ----------
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  var canvas = document.getElementById("stage");
+  var ctx = canvas.getContext("2d");
+
+  // ---------- the matte: a locked head silhouette ----------
+  var HEAD_D = "M640 640V545C600 522 578 470 590 420C560 380 560 300 600 240C650 170 760 150 840 190C900 220 932 280 925 340L956 400C961 410 951 418 940 421L935 450C941 460 931 470 925 476L928 500C925 526 900 531 870 526L860 560V640Z";
+  var head = new Path2D(HEAD_D);
+  var svgPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  svgPath.setAttribute("d", HEAD_D);
+  var HEAD_LEN = 1700;
+  try { HEAD_LEN = svgPath.getTotalLength() || 1700; } catch (e) {}
+
+  // ---------- cached static exterior world (fog, hills, horizon, seeded grain) ----------
+  var bgCache = document.createElement("canvas"); bgCache.width = W; bgCache.height = H;
+  (function () {
+    var b = bgCache.getContext("2d");
+    var g = b.createRadialGradient(W * 0.6, H * 0.55, 40, W * 0.6, H * 0.55, W * 0.85);
+    g.addColorStop(0, "#F3F7F8"); g.addColorStop(1, "#C3D3DA");
+    b.fillStyle = g; b.fillRect(0, 0, W, H);
+    // distant hills on the shared horizon
+    b.fillStyle = "#9DB6C0";
+    b.beginPath(); b.moveTo(0, 470); b.lineTo(90, 446); b.lineTo(170, 462); b.lineTo(260, 440); b.lineTo(340, 470); b.closePath(); b.fill();
+    b.beginPath(); b.moveTo(1000, 470); b.lineTo(1060, 452); b.lineTo(1120, 466); b.lineTo(1200, 448); b.lineTo(1280, 470); b.closePath(); b.fill();
+    // ground tint below the horizon
+    var gg = b.createLinearGradient(0, HORIZON, 0, H);
+    gg.addColorStop(0, "rgba(157,182,192,0.22)"); gg.addColorStop(1, "rgba(157,182,192,0)");
+    b.fillStyle = gg; b.fillRect(0, HORIZON, W, H - HORIZON);
+    b.strokeStyle = "rgba(20,37,54,0.45)"; b.lineWidth = 1.5;
+    b.beginPath(); b.moveTo(0, HORIZON); b.lineTo(W, HORIZON); b.stroke();
+    // seeded paper-fog grain (static, kept away from the copy area)
+    var r = mulberry32(159);
+    for (var i = 0; i < 2600; i++) {
+      var x = r() * W, y = r() * H;
+      if (x < 560 && y > 200 && y < 420) continue;
+      b.fillStyle = r() > 0.5 ? "rgba(255,255,255,0.10)" : "rgba(20,37,54,0.035)";
+      b.fillRect(x, y, 1.2, 1.2);
+    }
+  })();
+
+  // ---------- interior scene data (seeded) ----------
+  var rnd = mulberry32(2024);
+  var stars = [];
+  for (var s = 0; s < 70; s++) stars.push({ x: 420 + rnd() * 760, y: 150 + rnd() * 270, r: 0.6 + rnd() * 1.3, a: 0.25 + rnd() * 0.55 });
+  var buildings = [];
+  (function () {
+    var x = 420;
+    while (x < 1180) {
+      var w = 26 + Math.floor(rnd() * 40);
+      var h = 26 + Math.floor(rnd() * 70);
+      var step = rnd() > 0.55 ? Math.floor(rnd() * 24) + 10 : 0;
+      buildings.push({ x: x, w: w, h: h, step: step });
+      x += w + 6 + Math.floor(rnd() * 18);
+    }
+  })();
+  // network in interior coordinates (final registered positions)
+  var nodes = [
+    { x: 700, y: 290, idea: true },
+    { x: 640, y: 370 },
+    { x: 700, y: 430 },
+    { x: 760, y: 390 },
+    { x: 790, y: 245 },
+    { x: 830, y: 350 },
+    { x: 880, y: 410 }
+  ];
+  var edges = [[0, 1], [1, 2], [2, 3], [3, 0], [0, 4], [4, 5], [5, 6], [6, 3], [5, 2]];
+
+  var inner = document.createElement("canvas"); inner.width = W; inner.height = H;
+  var ictx = inner.getContext("2d");
+
+  // ---------- animated state: GSAP is the single owner of every property ----------
+  var S = {
+    outline: 0,     // outline stroke draw 0..1
+    fill: 0,        // outer silhouette value fill
+    reveal: 0,      // interior wipe through the matte 0..1
+    panX: 150,      // interior independent pan
+    panY: 64,       // interior vertical register (horizon alignment)
+    net: 0,         // network growth 0..edges.length
+    align: 0,       // alignment highlight 0..1
+    link: 0,        // exterior connector draw 0..1
+    landmark: 0     // exterior landmark pop 0..1
+  };
+
+  function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+
+  function drawInterior() {
+    var c = ictx;
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.globalCompositeOperation = "source-over";
+    c.clearRect(0, 0, W, H);
+    var hy = HORIZON + S.panY; // interior horizon line (moves until registered)
+
+    // sky
+    var sky = c.createLinearGradient(0, 140, 0, hy);
+    sky.addColorStop(0, C.deep); sky.addColorStop(1, C.active);
+    c.fillStyle = sky; c.fillRect(0, 0, W, hy);
+    // stars (slower parallax layer of the interior pan)
+    for (var i = 0; i < stars.length; i++) {
+      var st = stars[i];
+      c.globalAlpha = st.a;
+      c.fillStyle = C.light;
+      c.beginPath(); c.arc(st.x + S.panX * 0.45, st.y + S.panY * 0.6, st.r, 0, 6.2832); c.fill();
+    }
+    c.globalAlpha = 1;
+    // lower ground inside the head — cool, temperature-matched to the exterior fog
+    var low = c.createLinearGradient(0, hy, 0, 650);
+    low.addColorStop(0, C.secondary); low.addColorStop(1, "#6F98A9");
+    c.fillStyle = low; c.fillRect(0, hy, W, H - hy);
+    // skyline (full interior pan)
+    c.fillStyle = "rgba(10,34,54,0.62)";
+    for (var b = 0; b < buildings.length; b++) {
+      var bd = buildings[b], bx = bd.x + S.panX;
+      c.fillRect(bx, hy - bd.h, bd.w, bd.h);
+      if (bd.step) c.fillRect(bx + bd.w * 0.3, hy - bd.h - bd.step, bd.w * 0.4, bd.step);
+    }
+    // soft haze at the interior horizon
+    var hz = c.createLinearGradient(0, hy - 26, 0, hy + 6);
+    hz.addColorStop(0, "rgba(185,213,222,0)"); hz.addColorStop(1, "rgba(185,213,222,0.55)");
+    c.fillStyle = hz; c.fillRect(0, hy - 26, W, 32);
+    // interior horizon line — becomes the shared feature
+    c.strokeStyle = "rgba(234,244,247," + (0.35 + 0.55 * S.align) + ")";
+    c.lineWidth = 1.5 + S.align;
+    c.beginPath(); c.moveTo(0, hy); c.lineTo(W, hy); c.stroke();
+
+    // network (moves with the interior pan)
+    var ox = S.panX * 0.8, oy = S.panY;
+    var idea = nodes[0];
+    var glowA = clamp01(S.net / 2);
+    if (glowA > 0) {
+      var gl = c.createRadialGradient(idea.x + ox, idea.y + oy, 0, idea.x + ox, idea.y + oy, 64 + 10 * S.align);
+      gl.addColorStop(0, "rgba(159,227,255," + (0.9 * glowA) + ")"); gl.addColorStop(1, "rgba(159,227,255,0)");
+      c.fillStyle = gl; c.beginPath(); c.arc(idea.x + ox, idea.y + oy, 80, 0, 6.2832); c.fill();
+    }
+    c.lineWidth = 1.4; c.strokeStyle = "rgba(234,244,247,0.6)";
+    var shown = {}; shown[0] = S.net > 0;
+    for (var e = 0; e < edges.length; e++) {
+      var p = clamp01(S.net - e);
+      if (p <= 0) break;
+      var a = nodes[edges[e][0]], z = nodes[edges[e][1]];
+      c.beginPath();
+      c.moveTo(a.x + ox, a.y + oy);
+      c.lineTo(a.x + ox + (z.x - a.x) * p, a.y + oy + (z.y - a.y) * p);
+      c.stroke();
+      if (p >= 1) shown[edges[e][1]] = true;
+    }
+    for (var n = 0; n < nodes.length; n++) {
+      if (!shown[n]) continue;
+      var nd = nodes[n], nx = nd.x + ox, ny = nd.y + oy;
+      if (nd.idea) {
+        c.fillStyle = "#FFFFFF"; c.beginPath(); c.arc(nx, ny, 10, 0, 6.2832); c.fill();
+      } else {
+        c.fillStyle = C.light; c.beginPath(); c.arc(nx, ny, 6, 0, 6.2832); c.fill();
+        c.strokeStyle = "rgba(234,244,247,0.4)"; c.beginPath(); c.arc(nx, ny, 13, 0, 6.2832); c.stroke();
+        c.strokeStyle = "rgba(234,244,247,0.6)";
+      }
+    }
+
+    // reveal wipe (bottom-up, feathered) then the silhouette alpha matte
+    var edgeY = 660 - S.reveal * 560;
+    c.globalCompositeOperation = "destination-in";
+    var m = c.createLinearGradient(0, edgeY - 50, 0, edgeY + 10);
+    m.addColorStop(0, "rgba(0,0,0,0)"); m.addColorStop(1, "rgba(0,0,0,1)");
+    c.fillStyle = m; c.fillRect(0, 0, W, H);
+    c.fillStyle = "#000"; c.fill(head);
+    c.globalCompositeOperation = "source-over";
+  }
+
+  function render() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
+    ctx.drawImage(bgCache, 0, 0);
+
+    // outer silhouette value
+    if (S.fill > 0) { ctx.globalAlpha = S.fill; ctx.fillStyle = C.fg; ctx.fill(head); ctx.globalAlpha = 1; }
+    // interior exposure through the matte
+    if (S.reveal > 0) { drawInterior(); ctx.drawImage(inner, 0, 0); }
+    // locked outline
+    if (S.outline > 0) {
+      ctx.save();
+      ctx.strokeStyle = C.fg; ctx.lineWidth = 3; ctx.lineJoin = "round";
+      ctx.setLineDash([HEAD_LEN * S.outline, HEAD_LEN]);
+      ctx.stroke(head);
+      ctx.restore();
+    }
+    // alignment: shared horizon highlight just outside the join
+    if (S.align > 0) {
+      ctx.strokeStyle = "rgba(0,88,133," + (0.7 * S.align) + ")";
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(540, HORIZON); ctx.lineTo(590, HORIZON); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(925, HORIZON); ctx.lineTo(1000, HORIZON); ctx.stroke();
+    }
+    // exterior connector from interior node to the fixed outside landmark
+    if (S.link > 0) {
+      var x0 = 880, y0 = 410, x1 = 1160, y1 = 470;
+      ctx.save();
+      ctx.strokeStyle = C.active; ctx.lineWidth = 2; ctx.lineCap = "round";
+      ctx.setLineDash([2, 6]);
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + (x1 - x0) * S.link, y0 + (y1 - y0) * S.link); ctx.stroke();
+      ctx.restore();
+    }
+    if (S.landmark > 0) {
+      var k = S.landmark;
+      ctx.fillStyle = C.active;
+      ctx.beginPath(); ctx.arc(1160, HORIZON, 9 * k, 0, 6.2832); ctx.fill();
+      ctx.strokeStyle = "rgba(0,88,133,0.4)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(1160, HORIZON, 18 * k, 0, 6.2832); ctx.stroke();
+    }
+  }
+
+  // ---------- one paused, seekable GSAP timeline ----------
+  var tl = gsap.timeline({ paused: true, onUpdate: render });
+  // 1. establish the outer form
+  tl.fromTo(S, { outline: 0 }, { outline: 1, duration: 0.55, ease: "power2.inOut", immediateRender: false }, 0);
+  tl.fromTo(S, { fill: 0 }, { fill: 1, duration: 0.35, ease: "sine.inOut", immediateRender: false }, 0.25);
+  // copy on its own calm plate, outside the silhouette
+  tl.fromTo("#eyebrow", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", immediateRender: false }, 0.15);
+  tl.fromTo("#headline", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out", immediateRender: false }, 0.3);
+  tl.fromTo("#rule", { scaleX: 0 }, { scaleX: 1, duration: 0.4, ease: "power2.inOut", immediateRender: false }, 0.55);
+  // 2. reveal the interior with one continuous move; interior pans independently of the locked outline
+  tl.fromTo(S, { reveal: 0 }, { reveal: 1, duration: 0.9, ease: "power2.inOut", immediateRender: false }, 0.5);
+  tl.fromTo(S, { panX: 150, panY: 64 }, { panX: 0, panY: 0, duration: 1.6, ease: "power2.inOut", immediateRender: false }, 0.5);
+  tl.fromTo(S, { net: 0 }, { net: edges.length, duration: 1.0, ease: "none", immediateRender: false }, 0.95);
+  // 3. align the interior horizon with the outer world, then hold
+  tl.fromTo(S, { align: 0 }, { align: 1, duration: 0.3, ease: "sine.inOut", immediateRender: false }, 2.0);
+  tl.fromTo(S, { link: 0 }, { link: 1, duration: 0.35, ease: "power2.out", immediateRender: false }, 2.05);
+  tl.fromTo(S, { landmark: 0 }, { landmark: 1, duration: 0.25, ease: "back.out(1.6)", immediateRender: false }, 2.4);
+  tl.set({}, {}, 3);
+
+  // initial hidden state for DOM copy at t=0
+  gsap.set("#eyebrow", { opacity: 0, y: 10 });
+  gsap.set("#headline", { opacity: 0, y: 14 });
+  gsap.set("#rule", { scaleX: 0 });
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  tl.seek(0, false);
+  render();
+
+  window.addEventListener("hf-seek", function (ev) {
+    var t = ev && ev.detail && typeof ev.detail.time === "number" ? ev.detail.time : tl.time();
+    tl.seek(t, false);
+    render();
+  });
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

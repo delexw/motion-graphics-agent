@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "City Rhythm",
+  "displayDescription": "A signal lamp match-cuts to a train headlight, then one fixed view compresses 18:00 to 23:00 as a city block lights up connected.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP 3.15.1 (local gsap.min.js, single paused timeline window.__timelines.video)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative procedural vector city, not footage of a real place; periodic intervals (90 s, 4 min) and the 18:00–23:00 span are labelled illustrations, compressed to under 1 s each.",
+    "Lighting is approximated with flat vector fills, radial glow gradients and an opacity crossfade from a dusk to a night gradient; no physical light simulation.",
+    "No reviewed preview recipes were provided (STYLE.json has no tech.preview_recipes), so the preview demonstrates the catalogue's core characteristic action.",
+    "No BACKGROUND_REVIEW.json was supplied; scene palette is taken from the ILLUSTRATION reference (night navy, amber, teal, cream) per scene_dependent background policy.",
+    "Blender not used. GSAP is loaded from the host-provided local gsap.min.js; the dependency-finalisation tool failed because the project's dependency record file is missing, so no technology record was written."
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "version": 3,
+  "title": "Replay Telestrator — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Play, freeze, telestrate, release",
+      "startSeconds": 0,
+      "endSeconds": 3,
+      "purpose": "Show an idea's signal move through a network once, freeze at the decision point, trace its route with telestrator marks and release to the consequence: the whole system lights up.",
+      "visuals": [
+        "Dark navy grid 'footage' with blue-grey network nodes and edges",
+        "White IDEA node emitting a glowing signal along the edges",
+        "REPLAY tag with timecode (play / pause / resume states)",
+        "Yellow telestrator marks: origin ring, solid observed route, dashed decision ring, dashed inferred route with arrowhead, system ring",
+        "Red X striking the rejected branch",
+        "Bottom caption bar"
+      ],
+      "assets": ["index.html", "gsap.min.js"],
+      "beats": [
+        {
+          "startSeconds": 0,
+          "endSeconds": 1,
+          "development": "REPLAY chrome and caption slide in; the signal leaves the IDEA node and travels the edges to the decision node, leaving a lit trail.",
+          "captions": ["An idea becomes a connected system"],
+          "audio": {"music": "", "effects": [], "subtitles": []},
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 1,
+          "endSeconds": 2.05,
+          "development": "Freeze: white frame flash, footage dims, timecode switches to pause. Telestrator circles IDEA, traces the observed path, rings the decision node, strikes the rejected branch with a red X and sketches a dashed NEXT route whose arrowhead appears only when the shaft arrives.",
+          "captions": ["IDEA", "NEXT ▸"],
+          "audio": {"music": "", "effects": [], "subtitles": []},
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 2.05,
+          "endSeconds": 3,
+          "development": "Release: playback resumes, the signal follows the sketched route into the system node, which blooms while its outbound edges and all nodes light up; SYSTEM ring and label settle by 2.65 s and hold.",
+          "captions": ["SYSTEM"],
+          "audio": {"music": "", "effects": [], "subtitles": []},
+          "readingHoldSeconds": 0.35
+        }
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["Brisk three-phase rhythm: ~1 s play, ~1 s telestration, ~0.6 s consequence with a short settled hold."],
+    "justifiedHolds": ["2.65–3.00 s settled hold so caption and labels read cleanly."]
+  },
+  "notes": [
+    "Single paused GSAP timeline at window.__timelines.video; signal position and trail derive from one proxy tween, recomputed on every seek.",
+    "Silent preview."
+  ]
+}

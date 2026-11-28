@@ -16,6 +16,7 @@ export interface AgentTurnOptions<T> {
   promptContext?: unknown;
   schema: z.ZodType<T>;
   signal: AbortSignal;
+  executionTimeoutMs?: number;
   sessionId?: string;
   onEvent: (event: ProviderEvent) => void;
   includeCreativeAlternatives?: boolean;
@@ -47,4 +48,13 @@ export interface Agent {
   readonly provider: Provider;
   readonly defaultReasoningEffort?: AgentTurnOptions<unknown>["reasoningEffort"];
   run(options: AgentExecutionOptions): Promise<{ result: unknown; sessionId?: string }>;
+}
+
+export function agentExecutionSignal({
+  signal,
+  executionTimeoutMs,
+}: Pick<AgentExecutionOptions, "signal" | "executionTimeoutMs">) {
+  return executionTimeoutMs === undefined
+    ? signal
+    : AbortSignal.any([signal, AbortSignal.timeout(executionTimeoutMs)]);
 }

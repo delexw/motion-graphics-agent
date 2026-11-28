@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Scratch Film",
+  "displayDescription": "A bulb is scratched into dark film stock in three exposures, then teal incisions connect it into a network.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Film scratching, emulsion grain and wear are procedural Canvas 2D approximations, not photographed or physically scratched film.",
+    "No reviewed preview recipe was supplied in STYLE.json, so the preview demonstrates the primary characteristic action only.",
+    "No BACKGROUND_REVIEW.json was supplied; no source-frame evidence was applied.",
+    "Blender was not used, per user instruction."
+  ]
+}

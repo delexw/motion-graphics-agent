@@ -1,4 +1,3 @@
-import { SavedProjectEffortSelect } from "./project-effort-select";
 import { defaultProviderModels } from "../../shared/model-display-name";
 import { hasOnScreenSubtitles } from "../../shared/script-items";
 import { creativeApproachLabel } from "../../shared/creative-approach";
@@ -11,6 +10,7 @@ import { videoRendererOf, videoRenderers } from "../../shared/video-renderers";
 import { Fragment } from "react";
 import { StyleExampleMedia } from "../style-card";
 import type { Run, Style, StyleExample } from "../../shared/contracts";
+import { usesDynamicModelEffort } from "../../shared/model-effort";
 import { modelDisplayName } from "../../shared/model-display-name";
 import { speechEngines, speechVoicesForEngine } from "../../shared/speech";
 import type { VideoRequest } from "../../shared/domains/video";
@@ -48,12 +48,10 @@ export function ProjectSettings({
   run,
   styles = [],
   examples = [],
-  onUpdated,
 }: {
   run: Run;
   styles?: Pick<Style, "id" | "name_en">[];
   examples?: StyleExample[];
-  onUpdated?: (run: Run) => void;
 }) {
   useUiLanguage();
   const request = run.request;
@@ -89,6 +87,13 @@ export function ProjectSettings({
           videoRenderers[videoRendererOf(request)].label,
           hasOnScreenSubtitles(request) ? "Subtitles on" : "No subtitles",
           ...narrationSettingsLabels(request),
+          ...(request.requirements?.music.style
+            ? [
+                translateUi("Music: {{value0}}", {
+                  value0: translateUi(request.requirements.music.style),
+                }),
+              ]
+            : []),
         ]
       : [request.viewport === "mobile" ? "Mobile layout" : "Desktop layout"]),
     request.candidateCount === 0
@@ -98,6 +103,9 @@ export function ProjectSettings({
     ...(buildRouteOf(request) === "automatic-previews"
       ? [creativeApproachLabel(request)]
       : ["Selected Motion Graphics"]),
+    translateUi("Adjustive effort: {{value0}}", {
+      value0: translateUi(usesDynamicModelEffort(request) ? "Yes" : "No"),
+    }),
   ];
   return (
     <div
@@ -109,7 +117,6 @@ export function ProjectSettings({
           <span key={setting}>{translateUi(setting)}</span>
         ))}
       </div>
-      {onUpdated && <SavedProjectEffortSelect key={run.id} run={run} onUpdated={onUpdated} />}
       {request.projectReuse && (
         <p>
           {translateUi("Created from:")} <ProjectSourceLink source={request.projectReuse} />

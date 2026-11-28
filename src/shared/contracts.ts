@@ -140,7 +140,11 @@ export {
   type Proposal,
 } from "./agents/schemas/proposals";
 import type { Proposal } from "./agents/schemas/proposals";
+import type { CombinedStyleGuide } from "./agents/schemas/combined-style-guide";
+import type { SceneBackgroundTreatment } from "./agents/scene-background";
 export interface StyleCandidate extends Proposal {
+  combinedStyleGuide?: CombinedStyleGuide;
+  sceneBackgroundTreatment?: SceneBackgroundTreatment;
   evaluationConfidence?: number;
   selectionDecision?: {
     round: number;

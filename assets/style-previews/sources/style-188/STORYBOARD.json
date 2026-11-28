@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "title": "Silent Film Projection — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1-choice",
+      "title": "The physical choice",
+      "startSeconds": 0,
+      "endSeconds": 0.9,
+      "purpose": "A top-hatted lamplighter silhouette on a blue-tinted night street weighs a loose plug, winds back and thrusts it into the pole's junction box.",
+      "visuals": ["Wide stage framing: full figure, both hands, two poles and an unlit lamp string", "Tinted night stock (#294359 / #111722) with dark film edges outside the gate", "Pose motion sampled at 12 exposures per second"],
+      "assets": [],
+      "beats": [
+        {"startSeconds": 0, "endSeconds": 0.44, "development": "Anticipation: he looks at the plug and draws his hand back while the sagging wire follows it.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 0.44, "endSeconds": 0.9, "development": "The thrust: the arm reaches up to the box, the wire pulls taut and a small spark flashes on contact.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-2-intertitle",
+      "title": "Intertitle",
+      "startSeconds": 0.9,
+      "endSeconds": 1.9,
+      "purpose": "Hard cut to a bordered editorial card that names the idea.",
+      "visuals": ["Dark card with cream double border, corner diamonds and a teal active diamond", "Large centred serif lines; scratches kept outside the lettering"],
+      "assets": [],
+      "beats": [
+        {"startSeconds": 0.9, "endSeconds": 1.9, "development": "Card appears complete on the cut and holds for reading.", "captions": ["An idea becomes", "a connected system."], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 1}
+      ]
+    },
+    {
+      "id": "scene-3-consequence",
+      "title": "The whole street lights up",
+      "startSeconds": 1.9,
+      "endSeconds": 3,
+      "purpose": "Cut back on the immediate consequence: the system connects and lights up.",
+      "visuals": ["Bulbs light one by one from the plug back to the far pole", "House windows across the street light up", "Lamplighter steps back with arms open"],
+      "assets": [],
+      "beats": [
+        {"startSeconds": 1.9, "endSeconds": 2.6, "development": "Lamp cascade, windows switching on and the figure's reaction.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 2.6, "endSeconds": 3, "development": "Settled lit street held as the result.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["Action, card and consequence each take about a third of the reel; the motion is complete by 2.6 s."],
+    "justifiedHolds": ["1.0 s intertitle hold for the five-word line", "0.4 s held final lit street as the payoff"]
+  },
+  "notes": ["Silent preview: no music, effects or narration.", "No reviewed preview recipes were supplied (tech.preview_recipes is absent and the task lists []); the preview demonstrates the catalogue characteristic action: physical choice, intertitle, immediate consequence.", "No BACKGROUND_REVIEW.json was supplied.", "Background follows the scene-dependent policy: blue-tinted night stock instead of the sepia reference."]
+}

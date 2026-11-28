@@ -1,4 +1,7 @@
-import { beforeMangaReferenceStudy } from "../fixtures/manga-reference-baseline";
+import {
+  beforeMangaReferenceStudy,
+  withoutStylePrompt,
+} from "../fixtures/manga-reference-baseline";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
@@ -8,6 +11,10 @@ import {
   motionGraphicTechnologyPool,
   projectRenderTechnologyPool,
 } from "../../src/shared/technology-pool";
+import {
+  formatStyleGuide,
+  parseStyleGuide,
+} from "../../src/shared/agents/schemas/combined-style-guide";
 import { resolveStyleTechnology } from "../../src/shared/style-technology";
 import {
   technologyReviewedPrompt,
@@ -107,9 +114,12 @@ describe("shared technology pool", () => {
       }
       // Optional Motion Graphic variants are a later additive field (mg-frame-findings).
       delete (preservedStyle as Record<string, unknown>).motion_graphic_variants;
-      expect(createHash("sha256").update(JSON.stringify(preservedStyle)).digest("hex")).toBe(
-        fingerprints[String(style.id)],
-      );
+      expect(
+        createHash("sha256")
+          .update(JSON.stringify(withoutStylePrompt(preservedStyle)))
+          .digest("hex"),
+        String(style.id),
+      ).toBe(fingerprints[String(style.id)]);
     }
   });
   it("rejects unknown keys, duplicate references and orphan overrides", () => {
@@ -156,8 +166,13 @@ describe("shared technology pool", () => {
     expect(motionGraphicTechnologyPool.ffmpeg).toBe(technologyPool.ffmpeg);
     expect(Object.keys(technologyPool)).toHaveLength(92);
   });
-  it("replaces stale review instructions instead of accumulating project pipeline choices", () => {
-    const template = "Use {{subject}}. Draw paths with the old implementation.";
+  it("updates the implementation section and preserves the complete style guide", async () => {
+    const [style] = (await loadCatalog()).styles;
+    const original = parseStyleGuide(style.executable_prompt_template)!;
+    const template = formatStyleGuide(
+      { ...original.sections, "Implementation tools": "Draw paths with the old implementation." },
+      original.summary,
+    );
     const first = technologyReviewedPrompt(
       template,
       "the old implementation",
@@ -165,14 +180,16 @@ describe("shared technology pool", () => {
       "Precise contours",
     );
     const next = technologyReviewedPrompt(first, "SVG", "Canvas 2D", "Bounded dot rendering");
-    expect(next).toBe(
-      "Use {{subject}}. Draw paths with Canvas 2D.\nReviewed technology choice: Canvas 2D Bounded dot rendering",
-    );
+    expect(parseStyleGuide(next)).toEqual({
+      summary: original.summary,
+      sections: {
+        ...original.sections,
+        "Implementation tools":
+          "Draw paths with Canvas 2D.\nReviewed technology choice: Canvas 2D Bounded dot rendering",
+      },
+    });
     expect(technologyReviewedPrompt(next, "Canvas 2D", "Canvas 2D", "Bounded dot rendering")).toBe(
       next,
-    );
-    expect(technologyReviewedPrompt("Use {{subject}}.", "", "SVG", "Precise contours")).toBe(
-      "Use {{subject}}.\nReviewed technology choice: SVG Precise contours",
     );
   });
   it("requires explicit assessment of every eligible pool entry and every requested style", () => {
@@ -244,6 +261,10 @@ it("recommends optional Matter.js only for reviewed 2D physics uses and preserve
     "style-106",
     "style-111",
     "style-136",
+    "style-158",
+    "style-172",
+    "style-182",
+    "style-192",
   ]);
   for (const style of matches) {
     const entry = style.tech.recommended_stack.find((tool) => tool.name === "Matter.js")!;

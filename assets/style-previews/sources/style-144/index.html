@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Archive Light Table — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #1B2026; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; }
+  #stage { display: block; width: 100%; height: 100%; }
+  .mono { font-family: "Courier New", Courier, monospace; }
+  .serif { font-family: Georgia, "Times New Roman", serif; }
+</style>
+<script src="gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <!-- backlit lamp surface -->
+    <radialGradient id="lamp" cx="0.42" cy="0.45" r="0.78">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.6" stop-color="#E6EEF2"/>
+      <stop offset="1" stop-color="#C9DAE3"/>
+    </radialGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#B9D5DE" stroke-width="1"/>
+    </pattern>
+    <radialGradient id="glassSheen" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.55"/>
+      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="1" stop-color="#9FC2D0" stop-opacity="0.25"/>
+    </radialGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+    <!-- registration mark -->
+    <g id="reg" fill="none" stroke="#142536" stroke-width="1.5">
+      <circle r="11"/><path d="M-20 0H20M0-20V20"/>
+    </g>
+    <circle id="node" r="13" fill="#F4F8FA" stroke="#142536" stroke-width="3"/>
+
+    <!-- shared network geometry (aligned / table coordinates) -->
+    <g id="netLinks" fill="none" stroke-width="3" stroke-linecap="round">
+      <path d="M546 338L420 260M546 338L440 440M546 338L676 250M420 260L676 250M440 440L420 260"/>
+    </g>
+    <g id="newLink">
+      <path d="M546 338L690 430M676 250L690 430" fill="none" stroke="#005885" stroke-width="3" stroke-dasharray="8 6"/>
+      <circle cx="690" cy="430" r="34" fill="none" stroke="#005885" stroke-width="2"/>
+      <circle cx="690" cy="430" r="22" fill="#005885"/>
+    </g>
+    <g id="core">
+      <circle cx="546" cy="338" r="24" fill="#142536"/>
+      <path d="M538 346q-8-14 8-22q16 8 8 22z" fill="#F4F8FA"/>
+    </g>
+
+    <!-- aligned artwork, used only inside the magnifier -->
+    <g id="alignedArt">
+      <rect x="116" y="76" width="1048" height="520" fill="#F3F7F9"/>
+      <rect x="116" y="76" width="1048" height="520" fill="url(#grid)" opacity="0.5"/>
+      <rect x="246" y="140" width="560" height="400" fill="#B9D5DE" opacity="0.5"/>
+      <use href="#netLinks" stroke="#142536"/>
+      <use href="#newLink"/>
+      <use href="#node" x="420" y="260"/><use href="#node" x="440" y="440"/><use href="#node" x="676" y="250"/>
+      <use href="#core"/>
+    </g>
+    <clipPath id="lensClip" clipPathUnits="userSpaceOnUse"><circle cx="0" cy="0" r="58"/></clipPath>
+  </defs>
+
+  <!-- stationary bezel, lamp and grain -->
+  <rect width="1280" height="720" fill="#1B2026"/>
+  <rect x="96" y="56" width="1088" height="560" rx="14" fill="#2C343B"/>
+  <rect x="116" y="76" width="1048" height="520" rx="6" fill="url(#lamp)"/>
+  <rect x="116" y="76" width="1048" height="520" fill="url(#grid)" opacity="0.5"/>
+
+  <!-- ACETATE A: base plate (independent layer) -->
+  <g id="plateA">
+    <rect x="246" y="140" width="560" height="400" fill="#DCE9EE" fill-opacity="0.35" stroke="#7FA7B6" stroke-width="1.5" stroke-dasharray="6 6"/>
+    <use href="#reg" x="278" y="172"/><use href="#reg" x="774" y="172"/>
+    <use href="#reg" x="278" y="508"/><use href="#reg" x="774" y="508"/>
+    <use href="#netLinks" stroke="#5C8796"/>
+    <g fill="#F4F8FA" stroke="#5C8796" stroke-width="3">
+      <circle cx="420" cy="260" r="13"/><circle cx="440" cy="440" r="13"/><circle cx="676" cy="250" r="13"/>
+    </g>
+    <circle cx="546" cy="338" r="24" fill="#5C8796"/>
+    <!-- opaque archive tab, outside lens path -->
+    <g id="tabA">
+      <rect x="246" y="546" width="196" height="26" rx="2" fill="#FFFFFF" stroke="#142536" stroke-width="1.5"/>
+      <text x="258" y="564" class="mono" font-size="13" letter-spacing="1.5" fill="#142536">PLATE 07 / BASE A</text>
+    </g>
+  </g>
+
+  <!-- ACETATE B: overlay registration (independent layer) -->
+  <g id="plateB">
+    <rect x="246" y="140" width="560" height="400" fill="#B9D5DE" fill-opacity="0.42" stroke="#5C8796" stroke-width="1.5"/>
+    <path d="M298 190V160H328" fill="none" stroke="#142536" stroke-width="3"/>
+    <path d="M754 490V520H724" fill="none" stroke="#142536" stroke-width="3"/>
+    <g id="regB">
+      <use href="#reg" x="278" y="172"/><use href="#reg" x="774" y="172"/>
+      <use href="#reg" x="278" y="508"/><use href="#reg" x="774" y="508"/>
+    </g>
+    <use href="#netLinks" stroke="#142536"/>
+    <use href="#newLink"/>
+    <use href="#node" x="420" y="260"/><use href="#node" x="440" y="440"/><use href="#node" x="676" y="250"/>
+    <use href="#core"/>
+    <g id="tabB">
+      <rect x="246" y="108" width="128" height="26" rx="2" fill="#FFFFFF" stroke="#142536" stroke-width="1.5"/>
+      <text x="258" y="126" class="mono" font-size="13" letter-spacing="1.5" fill="#142536">OVERLAY B</text>
+    </g>
+  </g>
+
+  <!-- registration "ticks meet" halos -->
+  <g id="halos" fill="none" stroke="#FFFFFF" stroke-width="4">
+    <circle class="halo" cx="278" cy="172" r="18"/><circle class="halo" cx="774" cy="172" r="18"/>
+    <circle class="halo" cx="278" cy="508" r="18"/><circle class="halo" cx="774" cy="508" r="18"/>
+  </g>
+
+  <!-- caption card (static, opaque) -->
+  <g id="card">
+    <rect x="872" y="120" width="258" height="280" fill="#FFFFFF" stroke="#142536" stroke-width="2"/>
+    <text x="894" y="156" class="mono" font-size="15" letter-spacing="2" fill="#142536">PLATE 07 / OVERLAY B</text>
+    <g id="headline" class="serif" font-size="32" fill="#142536">
+      <text x="894" y="214">An idea</text>
+      <text x="894" y="254">becomes a</text>
+      <text x="894" y="294">connected</text>
+      <text x="894" y="334">system</text>
+    </g>
+    <text id="status" x="894" y="378" class="mono" font-size="15" fill="#005885">ALIGNED · 1 NEW LINK</text>
+  </g>
+
+  <!-- viewing lens: moves once -->
+  <g id="lens">
+    <ellipse cx="14" cy="20" rx="66" ry="62" fill="#0E1A26" opacity="0.22" filter="url(#soft)"/>
+    <path d="M52 52L104 104" stroke="#0E1A26" stroke-opacity="0.18" stroke-width="18" stroke-linecap="round" filter="url(#soft)" transform="translate(10 14)"/>
+    <path d="M46 46L104 104" stroke="#142536" stroke-width="16" stroke-linecap="round"/>
+    <g clip-path="url(#lensClip)">
+      <g id="magPan"><g transform="scale(1.8)"><use href="#alignedArt"/></g></g>
+      <circle r="58" fill="url(#glassSheen)"/>
+    </g>
+    <circle r="62" fill="none" stroke="#142536" stroke-width="9"/>
+    <circle r="57" fill="none" stroke="#DDEBF1" stroke-width="1.5" opacity="0.8"/>
+    <path d="M-38 -30A48 48 0 0 1 -6 -48" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+  </g>
+  <circle id="find" cx="690" cy="430" r="52" fill="none" stroke="#005885" stroke-width="2.5"/>
+</svg>
+</div>
+<script>
+(function () {
+  var S = 1.8;                    // magnification
+  var L0 = { x: 1000, y: 520 };   // lens resting spot on the lamp
+  var L1 = { x: 690, y: 430 };    // the one discrepancy (new link node)
+
+  var tl = gsap.timeline({ paused: true, defaults: { overwrite: false } });
+
+  // Offset registrations at t=0, slide into alignment (two independent acetate layers)
+  tl.fromTo("#plateA", { x: -64, y: 22, rotation: 2.2, svgOrigin: "526 340" },
+                       { x: 0, y: 0, rotation: 0, svgOrigin: "526 340", duration: 1.05, ease: "power2.inOut" }, 0.15);
+  tl.fromTo("#plateB", { x: 96, y: -58, rotation: -3.5, svgOrigin: "526 340" },
+                       { x: 0, y: 0, rotation: 0, svgOrigin: "526 340", duration: 1.1, ease: "power2.inOut" }, 0.15);
+
+  // Headline settles in quickly; status waits for the discovery
+  tl.fromTo("#headline", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, 0.05);
+  tl.fromTo("#status", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "sine.inOut" }, 2.38);
+
+  // Ticks meet: white halos on registration marks (accent reserved for discrepancy)
+  tl.fromTo(".halo", { opacity: 0, scale: 1.6, transformOrigin: "50% 50%" },
+                     { opacity: 0.95, scale: 1, duration: 0.14, ease: "power2.out", stagger: 0.02 }, 1.25);
+  tl.to(".halo", { opacity: 0, duration: 0.25, ease: "sine.inOut" }, 1.45);
+
+  // Lens moves once to the discrepancy; magnified art pans with the same ease and timing
+  tl.fromTo("#lens", { x: L0.x, y: L0.y }, { x: L1.x, y: L1.y, duration: 0.75, ease: "power2.inOut" }, 1.62);
+  tl.fromTo("#magPan", { x: -S * L0.x, y: -S * L0.y }, { x: -S * L1.x, y: -S * L1.y, duration: 0.75, ease: "power2.inOut" }, 1.62);
+
+  // Quiet discovery pulse in the single saturated ink
+  tl.fromTo("#find", { opacity: 0, scale: 0.75, transformOrigin: "50% 50%" },
+                     { opacity: 1, scale: 1.12, duration: 0.22, ease: "power2.out" }, 2.36);
+  tl.to("#find", { opacity: 0, scale: 1.2, duration: 0.18, ease: "sine.inOut" }, 2.5);
+
+  // Pad to full duration (settled hold 2.68–3.0)
+  tl.set({}, {}, 3);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  tl.seek(0);
+  window.addEventListener("hf-seek", function (e) {
+    var t = e && e.detail && typeof e.detail.time === "number" ? e.detail.time : null;
+    if (t !== null) tl.seek(t, false);
+  });
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

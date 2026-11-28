@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "Pictogram Catalogue",
+  "displayDescription": "One bulb pictogram is carried card to card, growing links and then a ring of nodes: an idea becomes a connected system.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP (local gsap.min.js, one paused seekable timeline at window.__timelines.video)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "STYLE.json has no reviewed preview recipes and no BACKGROUND_REVIEW.json was supplied, so the preview shows the style's core action: one shared pictogram is carried forward while the wider symbol changes.",
+    "Flat vector pictograms only. No material, lighting or depth simulation is part of this style.",
+    "The scene palette follows ILLUSTRATION.svg (deep blue sheet, light cards, navy symbols, coral accent for new parts), as allowed by the scene-dependent background policy.",
+    "No Blender or 3D tools were used, as instructed.",
+    "creative_pool.select_project_technologies failed with ENOENT because PROJECT_DEPENDENCIES.json is missing. Only native SVG and the supplied local gsap.min.js are used, with no npm dependencies."
+  ]
+}

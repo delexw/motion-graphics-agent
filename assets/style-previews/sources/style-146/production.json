@@ -1,0 +1,25 @@
+{
+  "characters": [],
+  "displayTitle": "Assembly Line",
+  "displayDescription": "One idea rides a conveyor through Spark, Shape and Connect stations, changing state at each hand-off into a linked system.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview — no music, effects or narration.",
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative flat vector diagram; the conveyor, stamp, mould and probe are schematic machines, not physical simulations (roller spin and belt tread are keyed to the part's travel distance).",
+    "STYLE.json lists no reviewed preview recipes and no BACKGROUND_REVIEW.json was supplied, so the preview demonstrates the catalogue characteristic action rather than a separate recipe.",
+    "Blender excluded per user instruction; built with SVG + local GSAP only."
+  ]
+}

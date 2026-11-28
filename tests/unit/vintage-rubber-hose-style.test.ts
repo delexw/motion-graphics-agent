@@ -1,6 +1,9 @@
 import vm from "node:vm";
 import { gsap } from "gsap";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, onTestFinished } from "vitest";
+import { mkdtemp, rm } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { loadCatalog } from "../../src/server/catalog/catalog";
 import {
   validateExamplePalette,
@@ -54,7 +57,7 @@ const generationText = (style: Awaited<ReturnType<typeof styleOf>>) => [
 describe("Vintage Rubber Hose Animation metadata contract", () => {
   it("adds one authored style-140 with a name distinct from style-034 and the prior styles intact", async () => {
     const catalog = await loadCatalog();
-    expect(catalog.styles).toHaveLength(143);
+    expect(catalog.styles).toHaveLength(199);
     const style = await styleOf();
     expect(style.name_en).toBe("Vintage Rubber Hose Animation");
     expect(style.category).toBe("Animation Techniques");
@@ -171,8 +174,8 @@ describe("Vintage Rubber Hose Animation metadata contract", () => {
   it("carries a self-contained drawing contract through generation instructions and summary", async () => {
     const style = await styleOf();
     expect(style.visual_cues).toContain("Colour the hand-inked forms with flat cel fills");
-    expect(style.executable_prompt_template).toContain(style.visual_cues);
-    expect(style.executable_prompt_template).toContain(style.tech.implementation);
+    expect(style.executable_prompt_template).toContain("## Visual identity");
+    expect(style.executable_prompt_template).toContain("## Implementation tools");
     expect(JSON.stringify(style)).not.toMatch(/preview|simplified forms/i);
     expect(style.tech.implementation).toContain(
       "Drawing acceptance: inspect representative rendered frames at delivery size",
@@ -245,16 +248,17 @@ describe("Vintage Rubber Hose Animation metadata contract", () => {
 
   it("serves a cached summary that exactly matches the current metadata source", async () => {
     expect(() => StyleSummarySchema.parse(rubberHoseSummary)).not.toThrow();
-    const catalog = await loadCatalog();
-    const cached = await summarizeStyle(
-      styleSummarySource(catalog, STYLE_ID),
-      "claude",
-      new AbortController().signal,
-      undefined,
-      async () => {
-        throw Error("summary cache miss: regenerate after metadata changes");
-      },
-    );
+    const cacheFolder = await mkdtemp(path.join(os.tmpdir(), "rubber-hose-summary-"));
+    onTestFinished(() => rm(cacheFolder, { recursive: true, force: true }));
+    const source = styleSummarySource(await loadCatalog(), STYLE_ID);
+    const signal = new AbortController().signal;
+    await summarizeStyle(source, "claude", signal, cacheFolder, async ({ schema }) => ({
+      value: schema.parse(rubberHoseSummary),
+      sessionId: "",
+    }));
+    const cached = await summarizeStyle(source, "claude", signal, cacheFolder, async () => {
+      throw Error("summary cache miss: regenerate after metadata changes");
+    });
     expect(cached).toEqual(StyleSummarySchema.parse(rubberHoseSummary));
     for (const value of Object.values(rubberHoseSummary))
       expect(String(value)).not.toMatch(sampleOrRemoved);

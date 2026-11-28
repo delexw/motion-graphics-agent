@@ -1,0 +1,29 @@
+{
+  "characters": [],
+  "displayTitle": "Printed Take",
+  "displayDescription": "One continuous pan across a registered engraving plate as a carved light trace grows from seed to a connected node network.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP 3.15.1 (local gsap.min.js)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Engraving is a procedural Canvas 2D approximation: seeded stipple, tone-modulated parallel hatch and crosshatch stand in for physical burin cuts; no real plate relief, ink transfer or paper texture is simulated.",
+    "Carved-light depth is suggested by an offset dark shadow cut beneath a light stroke, not by lighting or a height map.",
+    "No reviewed preview recipes were supplied (STYLE.json has no tech.preview_recipes) and no BACKGROUND_REVIEW.json exists, so the preview demonstrates the primary Motion Graphic action only.",
+    "Blender was not used, per the user's instruction.",
+    "creative_pool.select_project_technologies failed with a host error (PROJECT_DEPENDENCIES.json missing), so the technology record was not written; runtime uses only the browser Canvas 2D API and the supplied local gsap.min.js.",
+    "The engraving texture is softened (cached 1 px blur, low mark contrast of about 13 luma levels over the plate) and the long take covers a compressed 1440-unit plate with a gentle ~280 px pan (at most ~5 px per frame), so the registered marks stay coherent through video encoding; finer burin-scale density and a longer traverse are approximated."
+  ]
+}

@@ -2,11 +2,12 @@ import { ProviderSchema } from "../../shared/domains/common";
 import { agentProviderIds } from "../../shared/agent-providers";
 import type { ProviderEvent } from "../agents/providers";
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile, rename, rm } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { z } from "zod";
 import { agentTurn } from "../agents/providers";
-import { appRoot, dataRoot } from "../runtime/config";
+import { appRoot } from "../runtime/config";
 import type { Catalog } from "./catalog";
 import type { Provider } from "../../shared/contracts";
 import { WorkQueue } from "../jobs/queue";
@@ -55,8 +56,8 @@ export async function summarizeStyle(
   onEvent: (event: ProviderEvent) => void = () => {},
 ): Promise<StyleSummary> {
   signal.throwIfAborted();
-  const model = summaryModels[provider];
   const styleId = String(source.style.id);
+  const model = summaryModels[provider];
   const hash = createHash("sha256").update(JSON.stringify({ revision, source })).digest("hex");
   const folder = path.join(cacheFolder, "shared");
   const file = path.join(folder, `${styleId}-${hash}.json`);
@@ -119,24 +120,30 @@ export async function summarizeStyle(
   const task = queue.run(async () => {
     signal.throwIfAborted();
     await mkdir(folder, { recursive: true });
-    const result = await generate({
-      provider,
-      model,
-      promptContext: { originalSource: source },
-      readOnly: true,
-      workspace: path.join(dataRoot, "style-summary-workspaces"),
-      signal: AbortSignal.any([signal, AbortSignal.timeout(180000)]),
-      schema: ExtractionSummarySchema,
-      onEvent,
-      prompt: `Read ALL supplied original metadata without skipping fields. Write concise COMPLETE sentences, about 200 characters per field where practical; never cut off a sentence to fit a limit. Target about 2600 characters across the full summary by compressing phrasing, not omitting decision constraints. Extract decision-useful information for Jev to choose Motion Graphics for either videos or interactive HTML. Cover identity, use cases, limitations, palette roles/constraints (distinguish scene-dependent background suggestions from approved exact colors), motion and interactions, audio, assets, compatible combinations and production responsibilities. Distinguish explicit facts from inferred suitability. Do not invent missing information; say unspecified. Resolve prompt placeholders conceptually rather than copying executable prompts. Names of libraries are useful only with their visual or interaction capability. Preserve exceptions and constraints. In decisionGuidance write standalone comparison prose under these labels: Identity; Advantages; Disadvantages; Combination fit; Visual constraints. Explain the distinctive result, message/audience fit, limitations, meaningful supporting roles, palette/material/motion compatibility and when this style should stand alone. Preserve genuinely required visual restrictions and distinguish facts from inference. Exclude library inventories, implementation commands, renderer defaults/fallbacks, exact contrast statistics, optional motion IDs and generic audio disclaimers from decisionGuidance. Do not invent constraints. Keep decisionGuidance about 800 characters where practical without cutting sentences. Return styleId ${styleId}. Read the complete originalSource in the required input JSON. Do not write code, browse, modify files or inspect unrelated sources.`,
-    });
-    const summary = StyleSummarySchema.extend({ decisionGuidance: z.string().min(1) }).parse(
-      result.value,
-    );
-    if (summary.styleId !== styleId)
-      throw Error("Model returned a different Motion Graphic summary");
-    await saveSummaryCache(file, { summary, model, provider }, signal);
-    return summary;
+    const workspace = await mkdtemp(path.join(os.tmpdir(), "kiteva-style-summary-"));
+    try {
+      const result = await generate({
+        provider,
+        model,
+        promptContext: { originalSource: source },
+        readOnly: true,
+        workspace,
+        signal,
+        executionTimeoutMs: 180_000,
+        schema: ExtractionSummarySchema,
+        onEvent,
+        prompt: `Read ALL supplied original metadata without skipping fields. Write concise COMPLETE sentences, about 200 characters per field where practical; never cut off a sentence to fit a limit. Target about 2600 characters across the full summary by compressing phrasing, not omitting decision constraints. Extract decision-useful information for Jev to choose Motion Graphics for either videos or interactive HTML. Cover identity, use cases, limitations, palette roles/constraints (distinguish scene-dependent background suggestions from approved exact colors), motion and interactions, audio, assets, compatible combinations and production responsibilities. Distinguish explicit facts from inferred suitability. Do not invent missing information; say unspecified. Resolve prompt placeholders conceptually rather than copying executable prompts. Names of libraries are useful only with their visual or interaction capability. Preserve exceptions and constraints. In decisionGuidance write standalone comparison prose under these labels: Identity; Advantages; Disadvantages; Combination fit; Visual constraints. Explain the distinctive result, message/audience fit, limitations, meaningful supporting roles, palette/material/motion compatibility and when this style should stand alone. Preserve genuinely required visual restrictions and distinguish facts from inference. Exclude library inventories, implementation commands, renderer defaults/fallbacks, exact contrast statistics, optional motion IDs and generic audio disclaimers from decisionGuidance. Do not invent constraints. Keep decisionGuidance about 800 characters where practical without cutting sentences. Return styleId ${styleId}. Read the complete originalSource in the required input JSON. Do not write code, browse, modify files or inspect unrelated sources.`,
+      });
+      const summary = StyleSummarySchema.extend({ decisionGuidance: z.string().min(1) }).parse(
+        result.value,
+      );
+      if (summary.styleId !== styleId)
+        throw Error("Model returned a different Motion Graphic summary");
+      await saveSummaryCache(file, { summary, model, provider }, signal);
+      return summary;
+    } finally {
+      await rm(workspace, { recursive: true, force: true, maxRetries: 3 });
+    }
   });
   flights.set(key, task);
   try {

@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LiDAR Survey — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #070B12; overflow: hidden; }
+  #video { position: relative; width: 100%; height: 100%; background: #070B12; overflow: hidden; }
+  #gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .mono { font-family: Menlo, "SF Mono", "Courier New", monospace; }
+  .sans { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  #kicker { position: absolute; left: 60px; top: 50px; font-size: 13px; letter-spacing: 4px; color: #76E1CB; }
+  #title { position: absolute; left: 60px; top: 74px; font-size: 38px; line-height: 46px; color: #F5F4E8; font-weight: 400; }
+  #legend { position: absolute; left: 60px; top: 200px; width: 16px; height: 360px;
+    background: linear-gradient(to top, #2B3FD9 0%, #22B8C9 35%, #76E1CB 60%, #F2D35B 80%, #F2604B 100%); }
+  .tick { position: absolute; left: 86px; font-size: 12px; color: #9DB0C2; }
+  #legendTitle { position: absolute; left: 60px; top: 176px; font-size: 11px; letter-spacing: 2px; color: #9DB0C2; }
+  #sliceBand { position: absolute; left: 56px; width: 24px; border-top: 2px solid #76E1CB; border-bottom: 2px solid #76E1CB;
+    background: rgba(118,225,203,0.12); box-sizing: border-box; }
+  #sliceLabel { position: absolute; left: 148px; font-size: 12px; color: #76E1CB; white-space: nowrap; }
+  #readout { position: absolute; left: 60px; top: 600px; font-size: 12px; color: #9DB0C2; letter-spacing: 1px; }
+  #caption { position: absolute; left: 60px; top: 646px; font-size: 13px; color: #F5F4E8; padding: 6px 10px 6px 0; }
+  #scaleLabel { position: absolute; font-size: 11px; color: #C9D3DC; transform: translate(-50%, 0); white-space: nowrap; }
+  #outline line { stroke: #F5F4E8; stroke-width: 2.5; stroke-linecap: round; }
+</style>
+</head>
+<body>
+<div id="video" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="gl" width="1280" height="720"></canvas>
+  <svg id="overlay" viewBox="0 0 1280 720" preserveAspectRatio="none">
+    <g id="outline"></g>
+    <g id="nodes"></g>
+  </svg>
+  <div id="kicker" class="mono">LIDAR SURVEY 168 · ILLUSTRATIVE STUDY</div>
+  <div id="title" class="sans">An idea becomes a connected system</div>
+  <div id="legendTitle" class="mono">HEIGHT</div>
+  <div id="legend"></div>
+  <div class="tick mono" style="top:196px">24 m</div>
+  <div class="tick mono" style="top:372px">12 m</div>
+  <div class="tick mono" style="top:552px">0 m</div>
+  <div id="sliceBand"></div>
+  <div id="sliceLabel" class="mono">SLICE 11.0–13.5 m</div>
+  <div id="readout" class="mono">RETURNS 0</div>
+  <div id="caption" class="mono">hidden outline: 5 nodes · 5 links</div>
+  <div id="scaleLabel" class="mono">20 m</div>
+</div>
+<script src="gsap.min.js"></script>
+<script src="chroma.min.js"></script>
+<script src="vendor/three.bundle.js"></script>
+<script>
+(function () {
+  "use strict";
+  var W = 1280, H = 720;
+  var SLICE_MIN = 11.0, SLICE_MAX = 13.5, HMAX = 24;
+
+  // ---------- deterministic PRNG ----------
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  var rnd = mulberry32(168);
+
+  // ---------- height legend (fixed mapping, same stops as the HTML legend) ----------
+  var scale = chroma.scale(["#2B3FD9", "#22B8C9", "#76E1CB", "#F2D35B", "#F2604B"])
+    .domain([0, 0.35 * HMAX, 0.6 * HMAX, 0.8 * HMAX, HMAX]).mode("rgb");
+
+  // ---------- illustrative procedural survey (metres) ----------
+  function ground(x, z) {
+    var h = 3.2 + 2.4 * Math.sin(x * 0.09) + 1.7 * Math.cos(z * 0.13 + x * 0.04) + 1.4 * Math.sin((x + z) * 0.05);
+    return Math.max(0.2, h);
+  }
+  var NODES = [[-26, 8], [-12, -6], [2, 6], [16, -8], [28, 5]];
+  var LINKS = [[0, 1], [1, 2], [2, 3], [3, 4], [1, 3]];
+  var NODE_TOP = 12.6, WALL_TOP = 12.0, NODE_R = 2.4;
+
+  var P = [];
+  function add(x, y, z) { P.push(x, y, z); }
+  // ground returns, jittered grid
+  for (var gx = -40; gx <= 40; gx += 0.62) {
+    for (var gz = -25; gz <= 25; gz += 0.62) {
+      if (rnd() < 0.12) continue; // dropouts keep it sparse
+      var x = gx + (rnd() - 0.5) * 0.4, z = gz + (rnd() - 0.5) * 0.4;
+      add(x, ground(x, z) + (rnd() - 0.5) * 0.15, z);
+    }
+  }
+  // hidden structure: plinths
+  NODES.forEach(function (n) {
+    var i, a, r;
+    for (i = 0; i < 160; i++) { // top
+      a = rnd() * Math.PI * 2; r = Math.sqrt(rnd()) * NODE_R;
+      add(n[0] + Math.cos(a) * r, NODE_TOP + (rnd() - 0.5) * 0.5, n[1] + Math.sin(a) * r);
+    }
+    var g = ground(n[0], n[1]);
+    for (i = 0; i < 120; i++) { // sides
+      a = rnd() * Math.PI * 2;
+      add(n[0] + Math.cos(a) * NODE_R, g + rnd() * (NODE_TOP - g), n[1] + Math.sin(a) * NODE_R);
+    }
+  });
+  // hidden structure: link walls
+  LINKS.forEach(function (l) {
+    var a = NODES[l[0]], b = NODES[l[1]];
+    var dx = b[0] - a[0], dz = b[1] - a[1], len = Math.hypot(dx, dz);
+    var ux = dx / len, uz = dz / len, nx = -uz, nz = ux;
+    for (var s = NODE_R; s <= len - NODE_R; s += 0.35) {
+      var px = a[0] + ux * s, pz = a[1] + uz * s;
+      for (var k = 0; k < 2; k++) {
+        var o = (rnd() - 0.5) * 0.7;
+        add(px + nx * o, WALL_TOP + (rnd() - 0.5) * 0.7, pz + nz * o);
+      }
+      if (rnd() < 0.55) {
+        var gh = ground(px, pz);
+        add(px + nx * 0.35 * (rnd() < 0.5 ? -1 : 1), gh + rnd() * (WALL_TOP - gh), pz);
+      }
+    }
+  });
+  // vegetation canopies (14.5 m and above) away from the structure
+  var TREES = [[-34, -18], [-20, 18], [-4, -18], [8, 19], [22, 17], [34, -16], [10, -20], [-18, -20], [36, 18], [-2, 18], [24, -20]];
+  TREES.forEach(function (t) {
+    var cy = 18 + rnd() * 2.2, R = 2.6 + rnd() * 0.9;
+    for (var i = 0; i < 150; i++) {
+      var u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, rr = R * Math.cbrt(0.35 + 0.65 * rnd());
+      var sq = Math.sqrt(1 - u * u);
+      add(t[0] + rr * sq * Math.cos(th), cy + rr * u * 0.8, t[1] + rr * sq * Math.sin(th));
+    }
+  });
+
+  var N = P.length / 3;
+  var pos = new Float32Array(P), col = new Float32Array(N * 3), key = new Float32Array(N);
+  var keys = [];
+  for (var i = 0; i < N; i++) {
+    var y = pos[i * 3 + 1];
+    var c = scale(Math.min(HMAX, Math.max(0, y))).gl();
+    col[i * 3] = c[0]; col[i * 3 + 1] = c[1]; col[i * 3 + 2] = c[2];
+    // scan order: pushbroom sweep along x with a small per-line stagger in z
+    key[i] = (pos[i * 3] + 40) / 80 * 0.97 + ((pos[i * 3 + 2] + 25) / 50) * 0.03;
+    keys.push(key[i]);
+  }
+  keys.sort(function (a, b) { return a - b; });
+  function countReturns(s) { var lo = 0, hi = keys.length; while (lo < hi) { var m = (lo + hi) >> 1; if (keys[m] <= s) lo = m + 1; else hi = m; } return lo; }
+
+  // ---------- Three.js scene ----------
+  var canvas = document.getElementById("gl");
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, preserveDrawingBuffer: true, alpha: false });
+  renderer.setPixelRatio(1);
+  renderer.setSize(W, H, false);
+  renderer.setClearColor(0x070B12, 1);
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(34, W / H, 1, 600);
+  camera.setViewOffset(W, H, -100, -18, W, H);
+  var TARGET = new THREE.Vector3(0, 6, 0);
+
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  geo.setAttribute("aKey", new THREE.BufferAttribute(key, 1));
+  var mat = new THREE.ShaderMaterial({
+    uniforms: { uScan: { value: 0 }, uSlice: { value: 0 }, uMin: { value: SLICE_MIN }, uMax: { value: SLICE_MAX }, uSize: { value: 3.1 } },
+    vertexShader: [
+      "attribute float aKey; attribute vec3 color;",
+      "uniform float uScan, uSlice, uMin, uMax, uSize;",
+      "varying vec3 vCol; varying float vA;",
+      "void main(){",
+      "  vec4 mv = modelViewMatrix * vec4(position,1.0);",
+      "  gl_Position = projectionMatrix * mv;",
+      "  float seen = step(aKey, uScan);",
+      "  float fresh = seen * (1.0 - smoothstep(0.0, 0.035, uScan - aKey));",
+      "  float inb = step(uMin, position.y) * step(position.y, uMax);",
+      "  float a = mix(0.92, mix(0.09, 1.0, inb), uSlice);",
+      "  float s = uSize * (1.0 + 0.9*fresh) * mix(1.0, mix(0.7, 1.35, inb), uSlice);",
+      "  gl_PointSize = seen * s * clamp(120.0 / -mv.z, 0.75, 1.4);",
+      "  vCol = color; vA = a * seen;",
+      "}"].join("\n"),
+    fragmentShader: [
+      "varying vec3 vCol; varying float vA;",
+      "void main(){",
+      "  vec2 d = gl_PointCoord - 0.5; float r = dot(d,d);",
+      "  if (r > 0.25 || vA <= 0.0) discard;",
+      "  gl_FragColor = vec4(vCol, vA * (1.0 - smoothstep(0.16, 0.25, r)));",
+      "}"].join("\n"),
+    transparent: true, depthWrite: false
+  });
+  scene.add(new THREE.Points(geo, mat));
+
+  // slice planes (outline rectangles at the two thresholds)
+  function rectLoop(y) {
+    var g = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-40, y, -25), new THREE.Vector3(40, y, -25), new THREE.Vector3(40, y, 25), new THREE.Vector3(-40, y, 25)]);
+    var l = new THREE.LineLoop(g, new THREE.LineBasicMaterial({ color: 0x76E1CB, transparent: true, opacity: 0 }));
+    scene.add(l); return l;
+  }
+  var sliceLo = rectLoop(SLICE_MIN), sliceHi = rectLoop(SLICE_MAX);
+
+  // 20 m ground scale bar on the front edge
+  var sb = [-40, 0, 28, -20, 0, 28, -40, 0, 27, -40, 0, 29, -30, 0, 27.5, -30, 0, 28.5, -20, 0, 27, -20, 0, 29];
+  var sbGeo = new THREE.BufferGeometry(); sbGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(sb), 3));
+  scene.add(new THREE.LineSegments(sbGeo, new THREE.LineBasicMaterial({ color: 0xC9D3DC, transparent: true, opacity: 0.85 })));
+
+  // sensor + beam fan
+  var SENSOR = new THREE.Vector3(24, 30, -34);
+  var sensorDot = new THREE.Mesh(new THREE.SphereGeometry(0.9, 16, 12), new THREE.MeshBasicMaterial({ color: 0xF5F4E8 }));
+  sensorDot.position.copy(SENSOR); scene.add(sensorDot);
+  var fanPos = new Float32Array(9);
+  var fanGeo = new THREE.BufferGeometry(); fanGeo.setAttribute("position", new THREE.BufferAttribute(fanPos, 3));
+  var fanMat = new THREE.MeshBasicMaterial({ color: 0x76E1CB, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+  scene.add(new THREE.Mesh(fanGeo, fanMat));
+  var frontPos = new Float32Array(6);
+  var frontGeo = new THREE.BufferGeometry(); frontGeo.setAttribute("position", new THREE.BufferAttribute(frontPos, 3));
+  var frontMat = new THREE.LineBasicMaterial({ color: 0x76E1CB, transparent: true, opacity: 0 });
+  scene.add(new THREE.Line(frontGeo, frontMat));
+
+  // ---------- DOM overlay ----------
+  var $ = function (id) { return document.getElementById(id); };
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var linkEls = LINKS.map(function () { var e = document.createElementNS(SVGNS, "line"); $("outline").appendChild(e); return e; });
+  var nodeEls = NODES.map(function (n, i) {
+    var e = document.createElementNS(SVGNS, "circle");
+    e.setAttribute("fill", i === 2 ? "#76E1CB" : "#F5F4E8");
+    e.setAttribute("stroke", "#070B12"); e.setAttribute("stroke-width", "2");
+    $("nodes").appendChild(e); return e;
+  });
+  function legendY(m) { return 200 + 360 * (1 - m / HMAX); }
+  var bandTop = legendY(SLICE_MAX), bandBot = legendY(SLICE_MIN);
+  $("sliceBand").style.top = bandTop + "px"; $("sliceBand").style.height = (bandBot - bandTop) + "px";
+  $("sliceLabel").style.top = ((bandTop + bandBot) / 2 - 8) + "px";
+
+  // ---------- single state object owned by the GSAP timeline ----------
+  var S = { scan: 0, beam: 0, az: -11, el: 27, slice: 0, outline: 0, nodes: 0 };
+  var v = new THREE.Vector3();
+  function project(x, y, z) { v.set(x, y, z).project(camera); return [(v.x + 1) / 2 * W, (1 - v.y) / 2 * H]; }
+
+  function render() {
+    var az = S.az * Math.PI / 180, el = S.el * Math.PI / 180, R = 124;
+    camera.position.set(TARGET.x + R * Math.cos(el) * Math.sin(az), TARGET.y + R * Math.sin(el), TARGET.z + R * Math.cos(el) * Math.cos(az));
+    camera.lookAt(TARGET); camera.updateMatrixWorld(true);
+
+    mat.uniforms.uScan.value = S.scan <= 0 ? -1 : S.scan;
+    mat.uniforms.uSlice.value = S.slice;
+    sliceLo.material.opacity = sliceHi.material.opacity = 0.55 * S.slice;
+
+    var sx = -40 + 80 * Math.min(1, Math.max(0, S.scan));
+    fanPos.set([SENSOR.x, SENSOR.y, SENSOR.z, sx, ground(sx, -25), -25, sx, ground(sx, 25), 25]);
+    fanGeo.attributes.position.needsUpdate = true; fanGeo.computeBoundingSphere();
+    frontPos.set([sx, ground(sx, -25), -25, sx, ground(sx, 25), 25]);
+    frontGeo.attributes.position.needsUpdate = true; frontGeo.computeBoundingSphere();
+    fanMat.opacity = 0.13 * S.beam; frontMat.opacity = 0.9 * S.beam;
+
+    renderer.render(scene, camera);
+
+    // readout and projected overlays
+    $("readout").textContent = "RETURNS " + countReturns(S.scan <= 0 ? -1 : S.scan).toLocaleString("en-US") + " · SWEEP X " + sx.toFixed(1) + " m";
+    var sp = project(-30, 0, 30.5);
+    $("scaleLabel").style.left = sp[0] + "px"; $("scaleLabel").style.top = (sp[1] + 4) + "px";
+    var np = NODES.map(function (n) { return project(n[0], NODE_TOP + 0.6, n[1]); });
+    LINKS.forEach(function (l, i) {
+      var p = Math.min(1, Math.max(0, S.outline * LINKS.length - i));
+      var a = np[l[0]], b = np[l[1]], e = linkEls[i];
+      e.setAttribute("x1", a[0]); e.setAttribute("y1", a[1]);
+      e.setAttribute("x2", a[0] + (b[0] - a[0]) * p); e.setAttribute("y2", a[1] + (b[1] - a[1]) * p);
+      e.style.opacity = p > 0 ? 1 : 0;
+    });
+    nodeEls.forEach(function (e, i) {
+      var p = Math.min(1, Math.max(0, S.nodes * NODES.length - i));
+      e.setAttribute("cx", np[i][0]); e.setAttribute("cy", np[i][1]);
+      e.setAttribute("r", (i === 2 ? 8 : 6) * p); e.style.opacity = p > 0 ? 1 : 0;
+    });
+  }
+
+  // ---------- one paused, seekable GSAP timeline ----------
+  gsap.set(["#sliceBand", "#sliceLabel", "#caption"], { opacity: 0 });
+  var tl = gsap.timeline({ paused: true, onUpdate: render });
+  tl.fromTo(["#kicker", "#title"], { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out", stagger: 0.06 }, 0)
+    // 1. sensor view: beam on, pushbroom scan builds returns in scan order
+    .fromTo(S, { beam: 0 }, { beam: 1, duration: 0.15, ease: "none" }, 0.05)
+    .fromTo(S, { scan: 0 }, { scan: 1, duration: 1.2, ease: "none" }, 0.12)
+    .to(S, { beam: 0, duration: 0.2, ease: "power1.out" }, 1.32)
+    // 2. slight orbit separates true depth from overlapping returns
+    .fromTo(S, { az: -11, el: 27 }, { az: 9, el: 32, duration: 2.1, ease: "power2.inOut" }, 0.4)
+    // 3. wait (1.32–1.6), then toggle the height slice 11.0–13.5 m
+    .fromTo(S, { slice: 0 }, { slice: 1, duration: 0.25, ease: "power2.inOut" }, 1.6)
+    .to(["#sliceBand", "#sliceLabel"], { opacity: 1, duration: 0.2, ease: "power1.out" }, 1.6)
+    // 4. the hidden outline: connected nodes trace in
+    .fromTo(S, { nodes: 0 }, { nodes: 1, duration: 0.35, ease: "power1.out" }, 1.82)
+    .fromTo(S, { outline: 0 }, { outline: 1, duration: 0.45, ease: "power1.inOut" }, 1.9)
+    .to("#caption", { opacity: 1, duration: 0.2, ease: "power1.out" }, 2.25)
+    .to({}, { duration: 0.01 }, 2.99);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  window.addEventListener("hf-seek", function (e) {
+    var t = e && e.detail && typeof e.detail.time === "number" ? e.detail.time : tl.time();
+    tl.seek(t, false); render();
+  });
+  tl.seek(0); render();
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

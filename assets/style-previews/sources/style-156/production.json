@@ -1,0 +1,29 @@
+{
+  "characters": [],
+  "displayTitle": "Crayon Miniature",
+  "displayDescription": "Wax-crayon miniature tabletop: an idea sphere connects to a system cylinder while a house slides in by parallax.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Three.js (WebGL)",
+    "Canvas 2D (procedural crayon textures)"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, sound effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Wax crayon is approximated with seeded procedural Canvas 2D stroke textures plus a bump map on Three.js standard materials; it is not a scanned or physically simulated crayon medium.",
+    "Contact shadows combine a soft shadow map with time-keyed gradient blobs; no ambient occlusion or depth-of-field blur.",
+    "No Blender was used, per the user's instruction; the scene is built entirely in Three.js.",
+    "STYLE.json supplies no preview_recipes and no BACKGROUND_REVIEW.json exists, so the preview demonstrates the catalogue characteristic action rather than a reviewed recipe.",
+    "Silent preview."
+  ]
+}

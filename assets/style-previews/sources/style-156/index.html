@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Crayon Miniature World — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #C9DEE2; }
+  #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #C9DEE2; }
+  #stage { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #sign {
+    position: absolute; left: 3.9%; top: 5.6%; width: 36.7%; height: 13.9%;
+    box-sizing: border-box; padding: 0 2%;
+    background: rgba(255, 255, 255, 0.95); border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(20, 37, 54, 0.16);
+    display: flex; flex-direction: column; justify-content: center;
+    font-family: "Avenir Next", "Trebuchet MS", "Helvetica Neue", Arial, sans-serif;
+    font-weight: 700; font-size: 32px; line-height: 1.18; letter-spacing: 0;
+    opacity: 0;
+  }
+  #sign .l1 { color: #142536; }
+  #sign .l2 { color: #C2412A; }
+</style>
+<script src="./gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="stage" width="1280" height="720"></canvas>
+  <div id="sign" data-reveal-group="sign"><span class="l1">An idea becomes</span><span class="l2">a connected system</span></div>
+</div>
+
+<script>
+// ---- One paused GSAP timeline owns every animated value (scene state + caption sign). ----
+(function () {
+  var S = window.__sceneState = {
+    camX: -2.35, camY: 1.0, camZ: 3.25,       // camera at miniature height, close on the idea sphere
+    tgtX: -2.0,  tgtY: 0.82, tgtZ: 0.0,
+    sphereLift: 0.32, sphereScale: 0.82, sphereRot: 0.0,
+    sphereShadow: 0.18,                        // contact-shadow receiver opacity, keyed with the lift
+    connector: 0.0,                            // wax tube drawn from idea to system
+    n0: 0, n1: 0, n2: 0, n3: 0, n4: 0,          // system nodes
+    edges: 0.0                                 // node-to-node wax links
+  };
+  var tl = gsap.timeline({ paused: true, defaults: { lazy: false } });
+  // Establish the closest form: the idea sphere settles onto the table, shadow tightens.
+  tl.to(S, { sphereLift: 0, sphereScale: 1, sphereShadow: 0.62, duration: 0.5, ease: "back.out(1.2)" }, 0);
+  tl.to(S, { sphereRot: 1.15, duration: 2.45, ease: "sine.inOut" }, 0);
+  // Caption sign (container + its words revealed together).
+  tl.fromTo("#sign", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, 0.08);
+  // Camera trucks right at miniature height: system cylinder arrives, the house slides in by parallax.
+  tl.to(S, { camX: 0.85, camY: 1.28, camZ: 5.45, tgtX: 0.55, tgtY: 0.8, tgtZ: 0.0, duration: 1.9, ease: "power2.inOut" }, 0.55);
+  // The idea draws its wax connector to the system.
+  tl.to(S, { connector: 1, duration: 1.0, ease: "sine.inOut" }, 0.85);
+  // Nodes switch on, then the links are drawn.
+  tl.to(S, { n0: 1, duration: 0.25, ease: "back.out(1.2)" }, 1.80);
+  tl.to(S, { n1: 1, duration: 0.25, ease: "back.out(1.2)" }, 1.88);
+  tl.to(S, { n2: 1, duration: 0.25, ease: "back.out(1.2)" }, 1.96);
+  tl.to(S, { n3: 1, duration: 0.25, ease: "back.out(1.2)" }, 2.04);
+  tl.to(S, { n4: 1, duration: 0.25, ease: "back.out(1.2)" }, 2.12);
+  tl.to(S, { edges: 1, duration: 0.45, ease: "power2.inOut" }, 2.0);
+  // Settled hold until 3.0 s.
+  tl.set({}, {}, 3);
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+})();
+</script>
+
+<script type="module">
+import { technology as THREE } from "./technology-three_js-YjlxEc/index.js";
+
+const S = window.__sceneState;
+const tl = window.__timelines.video;
+
+// ---------- deterministic helpers ----------
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const PAPER = "#F4EEDF";
+
+// Wax crayon texture: paper ground, short directional pigment strokes, paper tooth gaps.
+// Painted once at load with a seeded PRNG and mapped into object UVs, so marks stick to surfaces.
+function crayonCanvas({ w = 512, h = 512, shades, angle = 0, jitter = 0.25, strokes = 9000, len = [14, 40],
+                        width = [2.5, 5.5], gaps = 900, seed = 1, extra = null }) {
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d");
+  const rnd = mulberry32(seed);
+  g.fillStyle = PAPER; g.fillRect(0, 0, w, h);
+  g.globalAlpha = 0.82; g.fillStyle = shades[0]; g.fillRect(0, 0, w, h); g.globalAlpha = 1;
+  g.lineCap = "round";
+  const drawWrapped = (fn) => { for (const ox of [-w, 0, w]) for (const oy of [-h, 0, h]) { g.save(); g.translate(ox, oy); fn(); g.restore(); } };
+  for (let i = 0; i < strokes; i++) {
+    const x = rnd() * w, y = rnd() * h;
+    const a = angle + (rnd() - 0.5) * 2 * jitter;
+    const L = len[0] + rnd() * (len[1] - len[0]);
+    const dx = Math.cos(a) * L / 2, dy = Math.sin(a) * L / 2;
+    g.strokeStyle = shades[Math.floor(rnd() * shades.length)];
+    g.globalAlpha = 0.35 + rnd() * 0.3;
+    g.lineWidth = width[0] + rnd() * (width[1] - width[0]);
+    const nearEdge = x < L || y < L || x > w - L || y > h - L;
+    const draw = () => { g.beginPath(); g.moveTo(x - dx, y - dy); g.lineTo(x + dx, y + dy); g.stroke(); };
+    if (nearEdge) drawWrapped(draw); else draw();
+  }
+  if (extra) { g.globalAlpha = 1; extra(g, rnd, w, h); }
+  // paper-tooth gaps where the wax skipped
+  g.fillStyle = PAPER;
+  for (let i = 0; i < gaps; i++) {
+    const x = rnd() * w, y = rnd() * h;
+    g.globalAlpha = 0.22 + rnd() * 0.22;
+    const r = 1.0 + rnd() * 1.6;
+    g.fillRect(x, y, r * (1.5 + rnd() * 2.5), r);
+  }
+  g.globalAlpha = 1;
+  return c;
+}
+function texFrom(canvas, repeat = [1, 1]) {
+  const t = new THREE.CanvasTexture(canvas);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(repeat[0], repeat[1]);
+  t.anisotropy = 4;
+  t.needsUpdate = true;
+  return t;
+}
+function bumpFrom(canvas, repeat = [1, 1]) {
+  const t = new THREE.CanvasTexture(canvas);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(repeat[0], repeat[1]);
+  t.needsUpdate = true;
+  return t;
+}
+function waxMaterial(canvas, repeat, extra = {}) {
+  return new THREE.MeshStandardMaterial({
+    map: texFrom(canvas, repeat), bumpMap: bumpFrom(canvas, repeat), bumpScale: 0.5,
+    roughness: 0.92, metalness: 0, ...extra
+  });
+}
+// wobbly crayon line used for drawn marks inside textures
+function crayonLine(g, rnd, pts, color, width) {
+  g.strokeStyle = color; g.lineCap = "round"; g.lineJoin = "round";
+  for (let pass = 0; pass < 3; pass++) {
+    g.globalAlpha = 0.45 + rnd() * 0.3; g.lineWidth = width * (0.7 + rnd() * 0.5);
+    g.beginPath();
+    pts.forEach(([x, y], i) => { const jx = x + (rnd() - 0.5) * 2.2, jy = y + (rnd() - 0.5) * 2.2; i ? g.lineTo(jx, jy) : g.moveTo(jx, jy); });
+    g.stroke();
+  }
+  g.globalAlpha = 1;
+}
+
+// ---------- renderer / scene ----------
+const canvas = document.getElementById("stage");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, alpha: false });
+renderer.setPixelRatio(1);
+renderer.setSize(1280, 720, false);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.autoUpdate = true;
+
+const scene = new THREE.Scene();
+// Stationary crayon sky backdrop (scene-dependent pale morning blue → mint, paper tooth grain).
+{
+  const c = document.createElement("canvas"); c.width = 640; c.height = 360;
+  const g = c.getContext("2d");
+  const grd = g.createLinearGradient(0, 0, 0, 360);
+  grd.addColorStop(0, "#9FC9D6"); grd.addColorStop(1, "#E3EEE6");
+  g.fillStyle = grd; g.fillRect(0, 0, 640, 360);
+  const rnd = mulberry32(77);
+  g.lineCap = "round";
+  for (let i = 0; i < 700; i++) {   // soft horizontal wax drag
+    const x = rnd() * 640, y = rnd() * 360;
+    g.strokeStyle = rnd() < 0.5 ? "rgba(255,255,255,0.07)" : "rgba(120,170,185,0.05)";
+    g.lineWidth = 1 + rnd() * 1.5;
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x + 10 + rnd() * 26, y + (rnd() - 0.5) * 2); g.stroke();
+  }
+  const bg = new THREE.CanvasTexture(c); bg.colorSpace = THREE.SRGBColorSpace;
+  scene.background = bg;
+}
+
+const camera = new THREE.PerspectiveCamera(40, 1280 / 720, 0.1, 60);
+
+// One shared light for every form
+scene.add(new THREE.HemisphereLight(0xEAF4F6, 0x5E7C68, 1.35));
+const sun = new THREE.DirectionalLight(0xFFF4E2, 2.4);
+sun.position.set(-4.5, 7.5, 5.5);
+sun.target.position.set(0, 0, 0);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -7; sun.shadow.camera.right = 7;
+sun.shadow.camera.top = 7; sun.shadow.camera.bottom = -7;
+sun.shadow.camera.near = 1; sun.shadow.camera.far = 25;
+sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.02;
+sun.shadow.radius = 4;
+scene.add(sun, sun.target);
+
+// ---------- table-top leaf platform ----------
+{
+  const shape = new THREE.Shape();
+  shape.moveTo(-6, 0);
+  shape.quadraticCurveTo(0, 5.2, 6, 0);
+  shape.quadraticCurveTo(0, -5.2, -6, 0);
+  const depth = 0.22;
+  const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false, curveSegments: 48 });
+  geo.rotateX(-Math.PI / 2);
+  geo.translate(0, -depth, 0.6);
+  const cnv = crayonCanvas({ shades: ["#6E9A7A", "#668F72", "#77A281", "#7AA584"], angle: 0.35, strokes: 6000, gaps: 500, seed: 11 });
+  const mat = waxMaterial(cnv, [0.14, 0.14]);
+  const sideCnv = crayonCanvas({ shades: ["#4D7560", "#41664F", "#56806A"], angle: 0, strokes: 9000, seed: 12 });
+  const sideMat = waxMaterial(sideCnv, [0.15, 1.5]);
+  const ground = new THREE.Mesh(geo, [mat, sideMat]);
+  ground.receiveShadow = true;
+  scene.add(ground);
+}
+
+// ---------- contact shadow blobs (time-keyed receivers) ----------
+const blobTex = (() => {
+  const c = document.createElement("canvas"); c.width = c.height = 128;
+  const g = c.getContext("2d");
+  const r = g.createRadialGradient(64, 64, 4, 64, 64, 62);
+  r.addColorStop(0, "rgba(22,44,34,1)"); r.addColorStop(0.55, "rgba(22,44,34,0.55)"); r.addColorStop(1, "rgba(22,44,34,0)");
+  g.fillStyle = r; g.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(c);
+})();
+function blob(x, z, sx, sz, op) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1),
+    new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, opacity: op, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2; m.position.set(x, 0.004, z); m.scale.set(sx, sz, 1);
+  m.renderOrder = 1;
+  scene.add(m); return m;
+}
+
+// ---------- form 1: the idea (orange wax sphere with drawn latitude/longitude marks) ----------
+const SPHERE_R = 0.75, SPHERE_POS = new THREE.Vector3(-2.0, SPHERE_R, 0.0);
+const sphere = (() => {
+  const cnv = crayonCanvas({
+    w: 1024, h: 512, shades: ["#F0B23E", "#F5C35A", "#E8A030", "#F7CF6E", "#DE9530"], angle: 0.15, strokes: 9000, gaps: 1100, seed: 21,
+    extra: (g, rnd, w, h) => {
+      for (const v of [0.22, 0.36, 0.5, 0.64, 0.78]) {
+        const pts = []; for (let i = 0; i <= 64; i++) pts.push([i / 64 * w, v * h + Math.sin(i * 0.7) * 1.5]);
+        crayonLine(g, rnd, pts, "#8A4A12", 5);
+      }
+      for (let k = 0; k < 8; k++) {
+        const u = (k + 0.5) / 8 * w; const pts = []; for (let i = 0; i <= 32; i++) pts.push([u + Math.sin(i * 0.9) * 1.5, i / 32 * h]);
+        crayonLine(g, rnd, pts, "#8A4A12", 5);
+      }
+    }
+  });
+  const m = new THREE.Mesh(new THREE.SphereGeometry(SPHERE_R, 64, 40), waxMaterial(cnv, [1, 1]));
+  m.castShadow = true; m.receiveShadow = true;
+  m.position.copy(SPHERE_POS);
+  scene.add(m); return m;
+})();
+const sphereBlob = blob(SPHERE_POS.x + 0.08, SPHERE_POS.z + 0.05, 1.9, 1.25, 0.5);
+
+// ---------- form 2: the system (blue wax cylinder with vertical strokes) ----------
+const CYL_R = 0.62, CYL_H = 1.8, CYL_POS = new THREE.Vector3(1.2, CYL_H / 2, -0.6);
+{
+  const side = crayonCanvas({ w: 1024, h: 512, shades: ["#2E6A93", "#26597D", "#3F7FA8", "#1C4868", "#4A88B2"], angle: Math.PI / 2, jitter: 0.08, len: [22, 56], strokes: 8000, gaps: 1000, seed: 31 });
+  const top = crayonCanvas({ w: 256, h: 256, shades: ["#A8D0E4", "#B9D5DE", "#94C2DA"], angle: 0.6, strokes: 2600, gaps: 700, seed: 32 });
+  const bottom = crayonCanvas({ w: 256, h: 256, shades: ["#163B57", "#1C4868"], angle: 0.6, strokes: 2600, seed: 33 });
+  const cyl = new THREE.Mesh(new THREE.CylinderGeometry(CYL_R, CYL_R, CYL_H, 72, 1),
+    [waxMaterial(side, [1, 1]), waxMaterial(top, [1, 1]), waxMaterial(bottom, [1, 1])]);
+  cyl.position.copy(CYL_POS); cyl.castShadow = true; cyl.receiveShadow = true;
+  scene.add(cyl);
+}
+blob(CYL_POS.x + 0.06, CYL_POS.z + 0.05, 1.65, 1.35, 0.55);
+
+// ---------- form 3: miniature house (purple wax), revealed by parallax in the right foreground ----------
+{
+  const wall = crayonCanvas({ shades: ["#7A6BB0", "#7062A8", "#8476BA", "#6C5EA4"], angle: 0.9, strokes: 6000, gaps: 800, seed: 41,
+    extra: (g, rnd) => {
+      crayonLine(g, rnd, [[190, 300], [190, 512]], "#F3E2C8", 6); crayonLine(g, rnd, [[322, 300], [322, 512]], "#F3E2C8", 6);
+      crayonLine(g, rnd, [[190, 300], [322, 300]], "#F3E2C8", 6);
+      crayonLine(g, rnd, [[110, 120], [210, 120], [210, 210], [110, 210], [110, 120]], "#F3E2C8", 5);
+      crayonLine(g, rnd, [[300, 120], [400, 120], [400, 210], [300, 210], [300, 120]], "#F3E2C8", 5);
+    } });
+  const roof = crayonCanvas({ shades: ["#A89BD8", "#B8ACE2", "#968AC9"], angle: 0, strokes: 5000, gaps: 700, seed: 42 });
+  const house = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.85, 0.95), waxMaterial(wall, [1, 1]));
+  body.position.y = 0.425; body.castShadow = body.receiveShadow = true;
+  const tri = new THREE.Shape(); tri.moveTo(-0.66, 0); tri.lineTo(0, 0.55); tri.lineTo(0.66, 0); tri.lineTo(-0.66, 0);
+  const rg = new THREE.ExtrudeGeometry(tri, { depth: 1.05, bevelEnabled: false }); rg.translate(0, 0, -0.525);
+  const roofM = new THREE.Mesh(rg, waxMaterial(roof, [1.4, 1.4]));
+  roofM.position.y = 0.85; roofM.castShadow = roofM.receiveShadow = true;
+  house.add(body, roofM);
+  house.position.set(2.75, 0, 1.25); house.rotation.y = -0.45;
+  scene.add(house);
+  blob(2.8, 1.3, 1.9, 1.6, 0.5);
+}
+
+// ---------- connector (idea → system), drawn along its length ----------
+const nodeAngle = [-0.62, 0.0, 0.58, -0.3, 0.34];
+const nodeY = [1.32, 1.5, 1.28, 0.72, 0.68];
+const onCyl = (th, y, rOff = 0) => new THREE.Vector3(CYL_POS.x + (CYL_R + rOff) * Math.sin(th), y, CYL_POS.z + (CYL_R + rOff) * Math.cos(th));
+const connCurve = new THREE.CatmullRomCurve3([
+  new THREE.Vector3(-1.32, 1.05, 0.08),
+  new THREE.Vector3(-0.75, 1.55, 0.05),
+  new THREE.Vector3(0.05, 1.72, -0.05),
+  new THREE.Vector3(0.62, 1.48, -0.05),
+  onCyl(nodeAngle[0], nodeY[0], 0.03)
+]);
+const CONN_TUB = 120, CONN_RAD = 14;
+const connCnv = crayonCanvas({ w: 512, h: 128, shades: ["#E0563B", "#EA6B4E", "#C9452D", "#F7A38E"], angle: 0, strokes: 2500, gaps: 300, seed: 51 });
+const connGeo = new THREE.TubeGeometry(connCurve, CONN_TUB, 0.085, CONN_RAD, false);
+const connector = new THREE.Mesh(connGeo, waxMaterial(connCnv, [6, 1]));
+connector.castShadow = true;
+scene.add(connector);
+const tipMat = waxMaterial(connCnv, [1, 1]);
+const tip = new THREE.Mesh(new THREE.SphereGeometry(0.085, 20, 14), tipMat);
+const tailCap = new THREE.Mesh(new THREE.SphereGeometry(0.085, 20, 14), tipMat);
+tailCap.position.copy(connCurve.getPointAt(0));
+tip.castShadow = tailCap.castShadow = true;
+scene.add(tip, tailCap);
+
+// ---------- system nodes and links on the cylinder ----------
+const nodeCnv = crayonCanvas({ w: 128, h: 64, shades: ["#E0563B", "#C9452D", "#EE7A5C"], strokes: 900, gaps: 160, seed: 61 });
+const nodes = nodeAngle.map((th, i) => {
+  const n = new THREE.Mesh(new THREE.SphereGeometry(0.085, 20, 14), waxMaterial(nodeCnv, [1, 1]));
+  n.position.copy(onCyl(th, nodeY[i], 0.04)); n.castShadow = true;
+  scene.add(n); return n;
+});
+const linkPairs = [[0, 1], [1, 2], [1, 3], [3, 4], [4, 1]];
+const linkCnv = crayonCanvas({ w: 256, h: 64, shades: ["#F3E2C8", "#FFF3DE", "#E6D2B4"], strokes: 1400, gaps: 220, seed: 71 });
+const linkMat = waxMaterial(linkCnv, [4, 1]);
+const LINK_TUB = 24, LINK_RAD = 8;
+const links = linkPairs.map(([a, b]) => {
+  const pts = [];
+  for (let k = 0; k <= 8; k++) {
+    const f = k / 8;
+    pts.push(onCyl(nodeAngle[a] + (nodeAngle[b] - nodeAngle[a]) * f, nodeY[a] + (nodeY[b] - nodeY[a]) * f, 0.035));
+  }
+  const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), LINK_TUB, 0.024, LINK_RAD, false), linkMat);
+  scene.add(m); return m;
+});
+
+// ---------- draw from shared timeline state ----------
+const look = new THREE.Vector3();
+function draw() {
+  camera.position.set(S.camX, S.camY, S.camZ);
+  look.set(S.tgtX, S.tgtY, S.tgtZ);
+  camera.lookAt(look);
+  camera.updateMatrixWorld();
+
+  sphere.position.set(SPHERE_POS.x, SPHERE_R * S.sphereScale + S.sphereLift, SPHERE_POS.z);
+  sphere.scale.setScalar(S.sphereScale);
+  sphere.rotation.set(0.18, S.sphereRot, 0);
+  const lift = S.sphereLift / 0.32;
+  sphereBlob.material.opacity = S.sphereShadow;
+  sphereBlob.scale.set((1.9 + lift * 0.5) * S.sphereScale, (1.25 + lift * 0.35) * S.sphereScale, 1);
+
+  const p = Math.min(1, Math.max(0, S.connector));
+  const segs = Math.round(p * CONN_TUB);
+  connGeo.setDrawRange(0, segs * CONN_RAD * 6);
+  tailCap.visible = p > 0.001;
+  tip.visible = p > 0.001;
+  tip.position.copy(connCurve.getPointAt(segs / CONN_TUB));
+
+  const ns = [S.n0, S.n1, S.n2, S.n3, S.n4];
+  nodes.forEach((n, i) => { const s = Math.max(0, ns[i]); n.visible = s > 0.001; n.scale.setScalar(Math.max(0.001, s)); });
+  const e = Math.min(1, Math.max(0, S.edges));
+  links.forEach((m) => { m.geometry.setDrawRange(0, Math.round(e * LINK_TUB) * LINK_RAD * 6); m.visible = e > 0.001; });
+
+  renderer.render(scene, camera);
+}
+
+// Redraw whenever the timeline renders (seek/time/progress all route through render).
+const origRender = tl.render.bind(tl);
+tl.render = function (...args) { const r = origRender(...args); draw(); return r; };
+window.addEventListener("hf-seek", draw);
+window.__drawScene = draw;
+draw();
+window.__sceneReady = true;
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "Marker Paper",
+  "displayDescription": "Broad marker strokes build an idea into a connected system, then a red strike-through revises '1 idea' to '5 linked parts!'.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP 3.15.1 (local gsap.min.js, single paused timeline at window.__timelines.video)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Marker ink is a procedural approximation: seeded wobbly polylines with per-stroke pressure width, dry-streak knockouts and multiply compositing at per-stroke alpha; no real fluid bleed or paper absorption.",
+    "Handwriting uses system fonts (Marker Felt / Chalkboard SE, falling back to Comic Sans MS or cursive) revealed with a left-to-right clip, not traced pen paths.",
+    "Fixed overhead framing; the optional crop move after the ink action is omitted so the paper grain stays stationary.",
+    "No reviewed preview recipes were listed in STYLE.json and no BACKGROUND_REVIEW.json was supplied; the preview demonstrates the style's characteristic action.",
+    "Blender was not used. The technology record could not be written because this preview workspace has no project dependency file; only browser Canvas 2D and the host-supplied local GSAP file are used."
+  ]
+}

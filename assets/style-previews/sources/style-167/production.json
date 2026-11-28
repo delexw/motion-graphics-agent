@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Iso Manual",
+  "displayDescription": "Isometric instruction-manual steps: orient, peg-into-socket lock, then a side link locks to complete a connected system.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioTracks": [],
+  "limitations": [
+    "Procedural SVG on a shared orthographic isometric basis; flat three-tone face shading approximates lighting, no real lighting or materials.",
+    "Peg and tab insertion use exact plane cuts rather than true 3D occlusion.",
+    "No reviewed preview recipes were provided, so the preview demonstrates the primary align-and-lock action.",
+    "No BACKGROUND_REVIEW.json supplied; background chosen as a stationary cool slate drafting desk with a neutral manual page.",
+    "Blender not used per instruction."
+  ]
+}

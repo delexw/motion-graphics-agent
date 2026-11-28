@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Transit Map — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #F3F6F8; overflow: hidden; }
+  #root { width: 100%; height: 100%; position: relative; }
+  #map { width: 100%; height: 100%; display: block; }
+  text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; fill: #142536; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg id="map" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <!-- stationary background -->
+  <rect width="1280" height="720" fill="#F3F6F8"/>
+
+  <!-- existing network: red (horizontal) and green (vertical) routes -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="14">
+    <path id="route-red" d="M100 360H1180" stroke="#D9483B"/>
+    <path id="route-green" d="M780 90V640" stroke="#2E9E5B"/>
+  </g>
+
+  <!-- ordinary stops on red / green: ticks + labels revealed as the route passes -->
+  <g id="red-stops">
+    <g class="rstop" data-at="260"><path d="M260 360v16" stroke="#D9483B" stroke-width="5"/><text x="260" y="404" font-size="20" text-anchor="middle">Tools</text></g>
+    <g class="rstop" data-at="420"><path d="M420 360v16" stroke="#D9483B" stroke-width="5"/><text x="420" y="404" font-size="20" text-anchor="middle">Data</text></g>
+    <g class="rstop" data-at="600"><path d="M600 360v16" stroke="#D9483B" stroke-width="5"/><text x="600" y="404" font-size="20" text-anchor="middle">Teams</text></g>
+    <g class="rstop" data-at="980"><path d="M980 360v16" stroke="#D9483B" stroke-width="5"/><text x="980" y="404" font-size="20" text-anchor="middle">Services</text></g>
+    <g class="rstop" data-at="1100"><path d="M1100 360v16" stroke="#D9483B" stroke-width="5"/></g>
+  </g>
+  <g id="green-stops">
+    <g class="gstop" data-at="180"><path d="M780 180h-16" stroke="#2E9E5B" stroke-width="5"/><text x="800" y="186" font-size="20">Feedback</text></g>
+    <g class="gstop" data-at="540"><path d="M780 540h-16" stroke="#2E9E5B" stroke-width="5"/><text x="800" y="546" font-size="20">Support</text></g>
+  </g>
+
+  <!-- the new connection: blue route, drawn by length -->
+  <path id="route-blue" d="M180 160H580L780 360L940 520H1180" fill="none" stroke="#005885" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- blue stations (revealed when the drawing shaft reaches them) -->
+  <g id="bst-idea" class="bst">
+    <circle cx="180" cy="160" r="18" fill="#fff" stroke="#005885" stroke-width="7"/>
+    <text x="180" y="124" font-size="20" font-weight="700" text-anchor="middle">Idea</text>
+  </g>
+  <g id="bst-sketch" class="bst">
+    <circle cx="380" cy="160" r="11" fill="#fff" stroke="#142536" stroke-width="5"/>
+    <text x="380" y="132" font-size="20" text-anchor="middle">Sketch</text>
+  </g>
+  <g id="bst-proto" class="bst">
+    <circle cx="580" cy="160" r="11" fill="#fff" stroke="#142536" stroke-width="5"/>
+    <text x="580" y="132" font-size="20" text-anchor="middle">Prototype</text>
+  </g>
+  <g id="bst-users" class="bst">
+    <circle cx="1060" cy="520" r="11" fill="#fff" stroke="#142536" stroke-width="5"/>
+    <text x="1060" y="560" font-size="20" text-anchor="middle">Users</text>
+  </g>
+  <g id="bst-network" class="bst">
+    <circle cx="1180" cy="520" r="18" fill="#fff" stroke="#005885" stroke-width="7"/>
+    <circle id="network-fill" cx="1180" cy="520" r="8" fill="#005885" opacity="0"/>
+    <text x="1180" y="568" font-size="20" font-weight="700" text-anchor="middle">Network</text>
+  </g>
+
+  <!-- interchange symbol: seated after the link reaches the crossing -->
+  <g id="interchange">
+    <rect x="754" y="326" width="52" height="68" rx="26" fill="#fff" stroke="#142536" stroke-width="6"/>
+  </g>
+  <g id="interchange-label">
+    <text x="824" y="322" font-size="20" font-weight="700">System Central</text>
+  </g>
+
+  <!-- marker travelling along the real blue segments -->
+  <g id="marker" opacity="0">
+    <circle id="marker-halo" r="22" fill="#005885" opacity="0.18"/>
+    <circle r="13" fill="#142536" stroke="#fff" stroke-width="4"/>
+  </g>
+
+  <!-- caption card: container and its copy reveal together -->
+  <g id="card">
+    <rect x="60" y="560" width="520" height="110" rx="8" fill="#fff" stroke="#D3DCE2" stroke-width="2"/>
+    <circle cx="112" cy="615" r="30" fill="#005885"/>
+    <text x="112" y="623" font-size="22" font-weight="700" text-anchor="middle" style="fill:#fff">N</text>
+    <text x="162" y="605" font-size="26" font-weight="700">An idea becomes</text>
+    <text x="162" y="640" font-size="26" font-weight="700">a connected system</text>
+  </g>
+</svg>
+</div>
+<script src="gsap.min.js"></script>
+<script>
+(function () {
+  // Fixed route vectors (blue = the new connection)
+  var BLUE = [[180,160],[580,160],[780,360],[940,520],[1180,520]];
+  var segLen = [], total = 0;
+  for (var i = 1; i < BLUE.length; i++) {
+    var l = Math.hypot(BLUE[i][0]-BLUE[i-1][0], BLUE[i][1]-BLUE[i-1][1]);
+    segLen.push(l); total += l;
+  }
+  function pointAt(d) {
+    d = Math.max(0, Math.min(total, d));
+    for (var i = 0; i < segLen.length; i++) {
+      if (d <= segLen[i] || i === segLen.length - 1) {
+        var t = segLen[i] ? d / segLen[i] : 0;
+        var a = BLUE[i], b = BLUE[i+1];
+        return [a[0] + (b[0]-a[0])*t, a[1] + (b[1]-a[1])*t];
+      }
+      d -= segLen[i];
+    }
+  }
+  // Distance along blue to each station
+  var dSketch = 200, dProto = 400, dCross = 400 + segLen[1];
+  var dUsers = 400 + segLen[1] + segLen[2] + 120;
+
+  var RED_LEN = 1080, GREEN_LEN = 550;
+  var red = document.getElementById('route-red');
+  var green = document.getElementById('route-green');
+  var blue = document.getElementById('route-blue');
+  var marker = document.getElementById('marker');
+
+  var proxy = { d: 0 };
+  function placeMarker() {
+    var p = pointAt(proxy.d);
+    marker.setAttribute('transform', 'translate(' + p[0].toFixed(2) + ' ' + p[1].toFixed(2) + ')');
+  }
+
+  var tl = gsap.timeline({ paused: true, onUpdate: placeMarker });
+
+  // initial states (set at time 0 on the timeline itself)
+  tl.set(red,   { attr: { 'stroke-dasharray': RED_LEN,   'stroke-dashoffset': RED_LEN } }, 0);
+  tl.set(green, { attr: { 'stroke-dasharray': GREEN_LEN, 'stroke-dashoffset': GREEN_LEN } }, 0);
+  tl.set(blue,  { attr: { 'stroke-dasharray': total,     'stroke-dashoffset': total } }, 0);
+  tl.set('.rstop, .gstop, .bst', { opacity: 0 }, 0);
+  tl.set('#interchange', { opacity: 0, scale: 0.35, svgOrigin: '780 360' }, 0);
+  tl.set('#interchange-label', { opacity: 0, x: -14 }, 0);
+  tl.set('#card', { opacity: 0, y: 24 }, 0);
+  tl.set('#marker', { opacity: 0 }, 0);
+  tl.set('#network-fill', { opacity: 0 }, 0);
+  tl.set('#marker-halo', { attr: { r: 22 } }, 0);
+
+  // 1) Draw the original routes (0.05 – 0.75)
+  var redStart = 0.05, redDur = 0.6;
+  tl.to(red, { attr: { 'stroke-dashoffset': 0 }, duration: redDur, ease: 'none' }, redStart);
+  document.querySelectorAll('.rstop').forEach(function (el) {
+    var at = (parseFloat(el.dataset.at) - 100) / RED_LEN;
+    tl.to(el, { opacity: 1, duration: 0.2, ease: 'sine.out' }, redStart + at * redDur);
+  });
+  var grStart = 0.18, grDur = 0.5;
+  tl.to(green, { attr: { 'stroke-dashoffset': 0 }, duration: grDur, ease: 'none' }, grStart);
+  document.querySelectorAll('.gstop').forEach(function (el) {
+    var at = (parseFloat(el.dataset.at) - 90) / GREEN_LEN;
+    tl.to(el, { opacity: 1, duration: 0.2, ease: 'sine.out' }, grStart + at * grDur);
+  });
+
+  // Caption card with its copy (0.15 – 0.5)
+  tl.to('#card', { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' }, 0.15);
+
+  // 2) Draw the new connection by length (0.75 – 1.45)
+  var blStart = 0.75, blDur = 0.7;
+  tl.to('#bst-idea', { opacity: 1, duration: 0.15 }, blStart - 0.05);
+  tl.to(blue, { attr: { 'stroke-dashoffset': 0 }, duration: blDur, ease: 'none' }, blStart);
+  function at(d) { return blStart + (d / total) * blDur; }
+  tl.to('#bst-sketch',  { opacity: 1, duration: 0.15 }, at(dSketch));
+  tl.to('#bst-proto',   { opacity: 1, duration: 0.15 }, at(dProto));
+  tl.to('#bst-users',   { opacity: 1, duration: 0.15 }, at(dUsers));
+  tl.to('#bst-network', { opacity: 1, duration: 0.15 }, at(total) - 0.04);
+
+  // 3) Seat the interchange symbol at the crossing once the link has reached it
+  tl.to('#interchange', { opacity: 1, duration: 0.12, ease: 'none' }, at(dCross) + 0.02);
+  tl.to('#interchange', { scale: 1, duration: 0.34, ease: 'back.out(1.7)' }, at(dCross) + 0.02);
+  tl.to('#interchange-label', { opacity: 1, x: 0, duration: 0.3, ease: 'power2.out' }, 1.42);
+
+  // 4) Marker runs only after the interchange reads (1.85 – 2.6)
+  tl.to('#marker', { opacity: 1, duration: 0.1 }, 1.82);
+  tl.fromTo(proxy, { d: 0 }, { d: total, duration: 0.78, ease: 'power2.inOut', immediateRender: false }, 1.85);
+  tl.to('#marker-halo', { attr: { r: 30 }, duration: 0.12, ease: 'sine.out', yoyo: true, repeat: 1 }, 1.85 + 0.78 * 0.5);
+
+  // 5) Transfer arrival at Network terminus (2.6 – 2.7), then settled hold
+  tl.to('#network-fill', { opacity: 1, duration: 0.1 }, 2.6);
+  tl.set({}, {}, 3);
+
+  placeMarker();
+  tl.seek(0);
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  window.addEventListener('hf-seek', function (e) {
+    var t = e && e.detail && typeof e.detail.time === 'number' ? e.detail.time : null;
+    if (t !== null) tl.seek(t, false);
+    placeMarker();
+  });
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

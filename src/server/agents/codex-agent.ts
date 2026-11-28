@@ -3,7 +3,8 @@ import { withProcessScope } from "../runtime/process-scope";
 import { commandActivity } from "./command-activity";
 import { ModelCapacityError } from "./capacity-error";
 import { Codex, type ThreadEvent } from "@openai/codex-sdk";
-import { isolatedCodexHome } from "./sdk-home";
+import { isolatedCodexHome, syncCodexLogin } from "./sdk-home";
+import { ModelLoginRenewedError } from "./login-renewed-error";
 import { childEnvironment, safeMessage } from "../runtime/config";
 import type { Agent, ProviderEvent } from "./agent";
 
@@ -67,6 +68,9 @@ export function codexEvent(event: ThreadEvent): ProviderEvent | undefined {
   }
 }
 
+const codexLoginFailure =
+  /refresh token|access token could not be refreshed|sign in again|log in again|401 Unauthorized/i;
+
 export const codexAgent: Agent = {
   provider: "codex",
   defaultReasoningEffort: "medium",
@@ -123,47 +127,61 @@ export const codexAgent: Agent = {
           : {}),
         modelReasoningEffort: options.reasoningEffort ?? codexAgent.defaultReasoningEffort,
       };
-      signal.throwIfAborted();
-      const thread = sessionId ? client.resumeThread(sessionId, opts) : client.startThread(opts);
-      const input = options.images?.length
-        ? [
-            { type: "text" as const, text: `${systemPrompt}\n\n${prompt}` },
-            ...options.images.map((path) => ({ type: "local_image" as const, path })),
-          ]
-        : `${systemPrompt}\n\n${prompt}`;
-      const { events } = await thread.runStreamed(input, {
-        signal,
-        outputSchema: jsonSchema,
-      });
-      let completed = false;
-      let answer = "";
-      for await (const e of events) {
+      try {
         signal.throwIfAborted();
-        if (
-          options.textOnly &&
-          "item" in e &&
-          ["command_execution", "file_change", "web_search", "mcp_tool_call"].includes(e.item.type)
-        )
-          throw Error(
-            "Motion Graphic extraction requires a text-only model response; tool activity was rejected",
-          );
-        const mapped = codexEvent(e);
-        if (mapped) onEvent({ ...mapped, message: safeMessage(mapped.message) });
-        signal.throwIfAborted();
-        if (e.type === "thread.started") sessionId = e.thread_id;
-        if (e.type === "item.completed" && e.item.type === "agent_message") answer = e.item.text;
-        if (e.type === "turn.failed") {
-          if (/\bmodel is (?:currently )?at capacity\b/i.test(e.error.message))
-            throw new ModelCapacityError(e.error.message, "codex");
-          throw Error(e.error.message);
+        const thread = sessionId ? client.resumeThread(sessionId, opts) : client.startThread(opts);
+        const input = options.images?.length
+          ? [
+              { type: "text" as const, text: `${systemPrompt}\n\n${prompt}` },
+              ...options.images.map((path) => ({ type: "local_image" as const, path })),
+            ]
+          : `${systemPrompt}\n\n${prompt}`;
+        const { events } = await thread.runStreamed(input, {
+          signal,
+          outputSchema: jsonSchema,
+        });
+        let completed = false;
+        let answer = "";
+        for await (const e of events) {
+          signal.throwIfAborted();
+          if (
+            options.textOnly &&
+            "item" in e &&
+            ["command_execution", "file_change", "web_search", "mcp_tool_call"].includes(
+              e.item.type,
+            )
+          )
+            throw Error(
+              "Motion Graphic extraction requires a text-only model response; tool activity was rejected",
+            );
+          const mapped = codexEvent(e);
+          if (mapped) onEvent({ ...mapped, message: safeMessage(mapped.message) });
+          signal.throwIfAborted();
+          if (e.type === "thread.started") sessionId = e.thread_id;
+          if (e.type === "item.completed" && e.item.type === "agent_message") answer = e.item.text;
+          if (e.type === "turn.failed") {
+            if (/\bmodel is (?:currently )?at capacity\b/i.test(e.error.message))
+              throw new ModelCapacityError(e.error.message, "codex");
+            throw Error(e.error.message);
+          }
+          if (e.type === "turn.completed") completed = true;
         }
-        if (e.type === "turn.completed") completed = true;
-      }
-      signal.throwIfAborted();
-      if (!completed) throw Error("Codex stream ended without a completed turn");
-      result = JSON.parse(answer);
+        signal.throwIfAborted();
+        if (!completed) throw Error("Codex stream ended without a completed turn");
+        result = JSON.parse(answer);
 
-      return { result, sessionId };
+        return { result, sessionId };
+      } catch (error) {
+        if (
+          !signal.aborted &&
+          codexLoginFailure.test(error instanceof Error ? error.message : String(error)) &&
+          (await syncCodexLogin(home)) === "project_updated"
+        )
+          throw new ModelLoginRenewedError("codex");
+        throw error;
+      } finally {
+        await syncCodexLogin(home);
+      }
     });
   },
 };

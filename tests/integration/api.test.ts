@@ -60,52 +60,6 @@ describe("local application API", () => {
     expect(page.headers["content-type"]).toContain("text/html");
     expect(page.body).toBe(index);
   });
-  it("updates effort for one saved project without changing workflow history", async () => {
-    const run: Run = {
-      id: randomUUID(),
-      request: RequestSchema.parse({ instructions: "Explain a simple story" }),
-      phase: "ready",
-      createdAt: "2026-01-01T00:00:00Z",
-      candidates: [],
-      jobs: [],
-    };
-    const other = { ...run, id: randomUUID() };
-    server.store.save(run);
-    server.store.save(other);
-    const route = `/api/runs/${run.id}/model-effort`;
-    try {
-      const disabled = await server.app.inject({
-        method: "PATCH",
-        url: route,
-        headers,
-        payload: { dynamicModelEffort: false },
-      });
-      expect(disabled.statusCode).toBe(200);
-      expect(disabled.json().request.dynamicModelEffort).toBe(false);
-      expect(server.store.get(run.id)?.request.dynamicModelEffort).toBe(false);
-      expect(server.store.get(other.id)?.request.dynamicModelEffort).toBeUndefined();
-      const invalid = await server.app.inject({
-        method: "PATCH",
-        url: route,
-        headers,
-        payload: { dynamicModelEffort: "false" },
-      });
-      expect(invalid.statusCode).toBe(400);
-      expect(server.store.get(run.id)?.request.dynamicModelEffort).toBe(false);
-      const enabled = await server.app.inject({
-        method: "PATCH",
-        url: route,
-        headers,
-        payload: { dynamicModelEffort: true },
-      });
-      expect(enabled.statusCode).toBe(200);
-      expect(server.store.get(run.id)?.request.dynamicModelEffort).toBe(true);
-      expect(server.store.events(run.id)).toEqual([]);
-    } finally {
-      server.store.delete(run.id);
-      server.store.delete(other.id);
-    }
-  });
   it("rejects project attachment limits even when the frontend is bypassed", async () => {
     const assetIds = Array.from({ length: 9 }, () => randomUUID());
     for (const id of assetIds)
@@ -558,9 +512,13 @@ describe("local application API", () => {
   it("serves all styles and full metadata without leaking credentials", async () => {
     const response = await server.app.inject({ url: "/api/styles", headers });
     expect(response.statusCode).toBe(200);
-    expect(response.json().styles).toHaveLength(143);
+    expect(response.json().styles).toHaveLength(199);
     const details = await server.app.inject({ url: "/api/styles/style-108", headers });
     expect(details.json().tech.style_renderer.recommended_stack_refs).toContain("Three.js");
+    const newStyle = await server.app.inject({ url: "/api/styles/style-196", headers });
+    expect(newStyle.statusCode).toBe(200);
+    expect(newStyle.json()).toMatchObject({ name_en: "Transit Map" });
+    expect(newStyle.json().executable_prompt_template).toContain("## Characteristic actions");
     const setup = await server.app.inject({ url: "/api/setup", headers });
     expect(Object.keys(setup.json())).not.toContain("apiKey");
   });

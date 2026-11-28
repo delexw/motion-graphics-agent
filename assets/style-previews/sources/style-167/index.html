@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Isometric Instruction Manual — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #CBD4DA; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; }
+  #stage { display: block; width: 100%; height: 100%; }
+  text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-start="0" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet">
+  <!-- Stationary drafting-desk surface and manual page -->
+  <rect width="1280" height="720" fill="#CBD4DA"/>
+  <rect x="46" y="46" width="1200" height="640" fill="#AEBAC2"/>
+  <rect x="40" y="40" width="1200" height="640" fill="#F4F6F7" stroke="#142536" stroke-width="2"/>
+  <path d="M40 110H1240" stroke="#142536" stroke-width="2"/>
+
+  <!-- Header: step badge + approved title + step tag -->
+  <circle cx="90" cy="75" r="22" fill="#005885"/>
+  <g font-weight="700" font-size="22" fill="#FFFFFF" text-anchor="middle">
+    <text id="num1" x="90" y="83">1</text>
+    <text id="num2" x="90" y="83" opacity="0">2</text>
+    <text id="num3" x="90" y="83" opacity="0">3</text>
+  </g>
+  <text x="128" y="84" font-weight="700" font-size="24" fill="#142536">An idea becomes a connected system</text>
+  <g font-size="16" fill="#46596B" text-anchor="end" letter-spacing="0.5">
+    <text id="tag1" x="1210" y="82">STEP 1 / 3 · ORIENT</text>
+    <text id="tag2" x="1210" y="82" opacity="0">STEP 2 / 3 · ALIGN + LOCK</text>
+    <text id="tag3" x="1210" y="82" opacity="0">STEP 3 / 3 · CONNECT</text>
+  </g>
+
+  <!-- Fixed floor footprint reference (stationary) -->
+  <path id="floor" fill="none" stroke="#B9C4CB" stroke-width="1.5" stroke-dasharray="3 6"/>
+
+  <!-- Part A (fixed base) -->
+  <g id="partA"></g>
+  <ellipse id="socket" fill="#142536"/>
+  <path id="slot" fill="#142536"/>
+
+  <!-- Engagement axis for B (z axis through peg + socket) -->
+  <path id="axisB" fill="none" stroke="#005885" stroke-width="2" stroke-dasharray="5 5" opacity="0"/>
+
+  <!-- Part B: peg (clipped exactly at A's top plane) then body -->
+  <path id="peg" fill="#005885" stroke="#0B3C57" stroke-width="1.5"/>
+  <g id="partB"></g>
+
+  <!-- Part C: link tab then body, revealed after B locks -->
+  <g id="cWrap" opacity="0">
+    <g id="tab"></g>
+    <g id="partC"></g>
+  </g>
+
+  <!-- Lock pulses -->
+  <ellipse id="ringB" fill="none" stroke="#005885" stroke-width="3" opacity="0"/>
+  <circle id="ringC" fill="none" stroke="#005885" stroke-width="3" opacity="0"/>
+
+  <!-- Direction arrows: shaft drawn via dashoffset, head hidden until shaft arrives -->
+  <g id="arrowB" opacity="1">
+    <path id="shaftB" fill="none" stroke="#005885" stroke-width="4" stroke-linecap="round" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/>
+    <path id="headB" data-arrowhead-for="shaftB" fill="#005885" opacity="0"/>
+  </g>
+  <g id="arrowC" opacity="1">
+    <path id="shaftC" fill="none" stroke="#005885" stroke-width="4" stroke-linecap="round" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/>
+    <path id="headC" data-arrowhead-for="shaftC" fill="#005885" opacity="0"/>
+  </g>
+
+  <!-- Component labels, outside geometry -->
+  <g font-size="17" fill="#142536">
+    <g id="labA">
+      <path id="leadA" fill="none" stroke="#142536" stroke-width="1.2"/>
+      <text id="txtA" text-anchor="end">A · socket up</text>
+    </g>
+    <g id="labB">
+      <path id="leadB" fill="none" stroke="#142536" stroke-width="1.2"/>
+      <text id="txtB" text-anchor="end">B · peg down</text>
+    </g>
+    <g id="labC" opacity="0">
+      <text id="txtC">C · link tab</text>
+    </g>
+  </g>
+
+  <!-- Payoff -->
+  <g id="check" opacity="0">
+    <circle cx="1010" cy="300" r="34" fill="#005885"/>
+    <path d="M994 300L1006 313L1028 287" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text id="caption" x="1010" y="372" text-anchor="middle" font-size="20" font-weight="700" fill="#142536" opacity="0">Joints locked → system complete</text>
+</svg>
+</div>
+<script src="gsap.min.js"></script>
+<script src="chroma.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var NS = "http://www.w3.org/2000/svg";
+  var O = { x: 500, y: 440 }, E = 100, C30 = Math.cos(Math.PI / 6);
+  // Shared orthographic isometric basis for every part.
+  function P(x, y, z) { return [O.x + C30 * E * (x - y), O.y + 0.5 * E * (x + y) - E * z]; }
+  function poly(pts) { return "M" + pts.map(function (p) { return p[0].toFixed(2) + " " + p[1].toFixed(2); }).join("L") + "Z"; }
+  function $(id) { return document.getElementById(id); }
+  function el(tag, parent) { var n = document.createElementNS(NS, tag); parent.appendChild(n); return n; }
+
+  var INK = "#142536", ACTIVE_EDGE = "#005885";
+  var NEUTRAL = { top: "#FFFFFF", py: "#DCE1E4", px: "#B4BCC2" };
+  var ACTIVE = { top: "#B9D5DE", py: "#9FBCC7", px: "#7F9DA9" };
+  function mixFaces(k) {
+    return {
+      top: chroma.mix(NEUTRAL.top, ACTIVE.top, k, "rgb").hex(),
+      py: chroma.mix(NEUTRAL.py, ACTIVE.py, k, "rgb").hex(),
+      px: chroma.mix(NEUTRAL.px, ACTIVE.px, k, "rgb").hex(),
+      edge: chroma.mix(INK, ACTIVE_EDGE, k, "rgb").hex()
+    };
+  }
+
+  // Cube builder: three visible faces (+z, +y, +x) and an outline.
+  function makeCube(group) {
+    return { py: el("path", group), px: el("path", group), top: el("path", group), line: el("path", group) };
+  }
+  function drawBox(c, x0, y0, z0, sx, sy, sz, f) {
+    var x1 = x0 + sx, y1 = y0 + sy, z1 = z0 + sz;
+    c.top.setAttribute("d", poly([P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1)]));
+    c.py.setAttribute("d", poly([P(x0, y1, z0), P(x1, y1, z0), P(x1, y1, z1), P(x0, y1, z1)]));
+    c.px.setAttribute("d", poly([P(x1, y0, z0), P(x1, y1, z0), P(x1, y1, z1), P(x1, y0, z1)]));
+    c.top.setAttribute("fill", f.top); c.py.setAttribute("fill", f.py); c.px.setAttribute("fill", f.px);
+    var a = P(x0, y0, z1), b = P(x1, y0, z1), cc = P(x1, y1, z1), d = P(x0, y1, z1);
+    var e0 = P(x1, y0, z0), e1 = P(x1, y1, z0), e2 = P(x0, y1, z0);
+    var path = poly([a, b, cc, d]) + "M" + cc + "L" + e1 + "M" + b + "L" + e0 + "L" + e1 + "L" + e2 + "L" + d;
+    c.line.setAttribute("d", path.replace(/,/g, " "));
+    c.line.setAttribute("fill", "none"); c.line.setAttribute("stroke", f.edge);
+    c.line.setAttribute("stroke-width", "2.4"); c.line.setAttribute("stroke-linejoin", "round");
+    [c.top, c.py, c.px].forEach(function (n) { n.setAttribute("stroke", "none"); });
+  }
+
+  // ---------- static geometry ----------
+  var A = makeCube($("partA"));
+  drawBox(A, 0, 0, 0, 1, 1, 1, mixFaces(0));
+  $("floor").setAttribute("d", poly([P(-0.15, -0.15, 0), P(2.15, -0.15, 0), P(2.15, 1.15, 0), P(-0.15, 1.15, 0)]));
+
+  var R = 0.17, RX = R * Math.SQRT2 * C30 * E, RY = R * Math.SQRT1_2 * E; // circle in xy-plane -> iso ellipse
+  var sc = P(0.5, 0.5, 1);
+  $("socket").setAttribute("cx", sc[0]); $("socket").setAttribute("cy", sc[1]);
+  $("socket").setAttribute("rx", RX); $("socket").setAttribute("ry", RY);
+  $("ringB").setAttribute("cx", sc[0]); $("ringB").setAttribute("cy", sc[1]);
+  $("ringB").setAttribute("rx", RX); $("ringB").setAttribute("ry", RY);
+
+  var TY0 = 0.36, TY1 = 0.64, TZ0 = 0.32, TZ1 = 0.68, TL = 0.42; // tab / slot section
+  $("slot").setAttribute("d", poly([P(1, TY0, TZ0), P(1, TY1, TZ0), P(1, TY1, TZ1), P(1, TY0, TZ1)]));
+  var slotC = P(1, 0.5, 0.5);
+  $("ringC").setAttribute("cx", slotC[0]); $("ringC").setAttribute("cy", slotC[1]); $("ringC").setAttribute("r", 18);
+
+  var B = makeCube($("partB")), Cc = makeCube($("partC")), T = makeCube($("tab"));
+  var PEG_L = 0.45;
+
+  // Arrows (static paths; heads placed at shaft endpoints)
+  function arrow(shaftId, headId, p0, p1) {
+    $(shaftId).setAttribute("d", "M" + p0[0] + " " + p0[1] + "L" + p1[0] + " " + p1[1]);
+    var dx = p1[0] - p0[0], dy = p1[1] - p0[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+    var tip = [p1[0] + ux * 14, p1[1] + uy * 14], bx = p1[0] - ux * 4, by = p1[1] - uy * 4;
+    $(headId).setAttribute("d", poly([tip, [bx - uy * 10, by + ux * 10], [bx + uy * 10, by - ux * 10]]));
+  }
+  // B descends along -z: arrow parallel to the z axis beside B's right edge.
+  var bTop = P(1, 0, 1.75), bBot = P(1, 0, 1.2);
+  arrow("shaftB", "headB", [bTop[0] + 46, bTop[1] - 30], [bBot[0] + 46, bBot[1] - 22]);
+  // C slides along -x: arrow parallel to the x axis on the floor in front of the gap.
+  arrow("shaftC", "headC", P(3.05, 1.42, 0), P(1.55, 1.42, 0));
+
+  // Engagement axis for B: dashed line through peg centre down to socket.
+  var ax0 = P(0.5, 0.5, 2 - PEG_L), ax1 = P(0.5, 0.5, 1);
+  $("axisB").setAttribute("d", "M" + ax0[0] + " " + ax0[1] + "L" + ax1[0] + " " + ax1[1]);
+
+  // Labels with leaders (outside geometry)
+  var aL = P(0, 1, 0.5);
+  $("leadA").setAttribute("d", "M" + (aL[0] - 8) + " " + aL[1] + "H" + (aL[0] - 70));
+  $("txtA").setAttribute("x", aL[0] - 78); $("txtA").setAttribute("y", aL[1] + 6);
+
+  // ---------- seekable state (GSAP getter/setter methods -> deterministic redraw) ----------
+  var S = { bz: 2, bk: 1, cx: 2.35, ck: 1 };
+  function render() {
+    // Part B and its peg; the peg is cut exactly at A's top plane (z = 1).
+    var fb = mixFaces(S.bk);
+    drawBox(B, 0, 0, S.bz, 1, 1, 1, fb);
+    var zTop = S.bz, zBot = Math.max(S.bz - PEG_L, 1);
+    var t = P(0.5, 0.5, zTop), b = P(0.5, 0.5, zBot);
+    var peg = $("peg");
+    if (zTop - zBot < 0.004) { peg.setAttribute("d", ""); }
+    else {
+      peg.setAttribute("d", "M" + (t[0] - RX) + " " + t[1] + "L" + (b[0] - RX) + " " + b[1] +
+        "A" + RX + " " + RY + " 0 0 0 " + (b[0] + RX) + " " + b[1] + "L" + (t[0] + RX) + " " + t[1] + "Z");
+    }
+    // Part C and its link tab; the tab is cut exactly at A's +x face (x = 1).
+    var fc = mixFaces(S.ck);
+    drawBox(Cc, S.cx, 0, 0, 1, 1, 1, fc);
+    var tx0 = Math.max(S.cx - TL, 1), tlen = S.cx - tx0;
+    var tabFaces = { top: chroma.mix("#DCE1E4", "#3C85AA", S.ck, "rgb").hex(), py: chroma.mix("#B4BCC2", "#005885", S.ck, "rgb").hex(), px: "#000", edge: fc.edge };
+    if (tlen < 0.004) { T.top.setAttribute("d", ""); T.py.setAttribute("d", ""); T.px.setAttribute("d", ""); T.line.setAttribute("d", ""); }
+    else {
+      drawBox(T, tx0, TY0, TZ0, tlen, TY1 - TY0, TZ1 - TZ0, tabFaces);
+      T.px.setAttribute("d", ""); T.line.setAttribute("stroke-width", "1.6");
+    }
+    // B label follows B along the z axis
+    var bL = P(0, 1, S.bz + 0.5);
+    $("leadB").setAttribute("d", "M" + (bL[0] - 8).toFixed(2) + " " + bL[1].toFixed(2) + "H" + (bL[0] - 70).toFixed(2));
+    $("txtB").setAttribute("x", (bL[0] - 78).toFixed(2)); $("txtB").setAttribute("y", (bL[1] + 6).toFixed(2));
+    // C label follows C along the same x axis
+    var cl = P(S.cx + 1, 0, 0.5);
+    $("txtC").setAttribute("x", (cl[0] + 18).toFixed(2)); $("txtC").setAttribute("y", (cl[1] + 6).toFixed(2));
+  }
+  function gs(key) { return function (v) { if (arguments.length) { S[key] = v; render(); } return S[key]; }; }
+  var drive = { bz: gs("bz"), bk: gs("bk"), cx: gs("cx"), ck: gs("ck") };
+  render();
+
+  // ---------- one paused, seekable GSAP timeline ----------
+  var tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+  // Step 1 — orientation shown before motion
+  tl.fromTo("#axisB", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "sine.inOut" }, 0.08)
+    .fromTo("#shaftB", { attr: { "stroke-dashoffset": 1 } }, { attr: { "stroke-dashoffset": 0 }, duration: 0.3, ease: "power2.inOut" }, 0.28)
+    .fromTo("#headB", { opacity: 0 }, { opacity: 1, duration: 0.04, ease: "none" }, 0.58)
+  // Step 2 — align + lock
+    .fromTo("#tag1", { opacity: 1 }, { opacity: 0, duration: 0.14, ease: "sine.inOut" }, 0.55)
+    .fromTo("#tag2", { opacity: 0 }, { opacity: 1, duration: 0.14, ease: "sine.inOut" }, 0.62)
+    .fromTo("#num1", { opacity: 1 }, { opacity: 0, duration: 0.1, ease: "none" }, 0.55)
+    .fromTo("#num2", { opacity: 0 }, { opacity: 1, duration: 0.1, ease: "none" }, 0.62)
+    .fromTo(drive, { bz: 2 }, { bz: 1, duration: 0.55, ease: "power2.inOut" }, 0.66)
+    .fromTo("#axisB", { opacity: 1 }, { opacity: 0, duration: 0.2, ease: "sine.inOut" }, 0.7)
+    .fromTo("#arrowB", { opacity: 1 }, { opacity: 0, duration: 0.2, ease: "sine.inOut" }, 1.0)
+    .fromTo("#ringB", { opacity: 1, attr: { rx: RX, ry: RY } }, { opacity: 0, attr: { rx: RX * 3.2, ry: RY * 3.2 }, duration: 0.32, ease: "power2.inOut" }, 1.21)
+    .fromTo(drive, { bk: 1 }, { bk: 0, duration: 0.18, ease: "sine.inOut" }, 1.21)
+  // assembled hold 1.21 – 1.5, then Step 3 — connect
+    .fromTo("#tag2", { opacity: 1 }, { opacity: 0, duration: 0.14, ease: "sine.inOut" }, 1.5)
+    .fromTo("#tag3", { opacity: 0 }, { opacity: 1, duration: 0.14, ease: "sine.inOut" }, 1.57)
+    .fromTo("#num2", { opacity: 1 }, { opacity: 0, duration: 0.1, ease: "none" }, 1.5)
+    .fromTo("#num3", { opacity: 0 }, { opacity: 1, duration: 0.1, ease: "none" }, 1.57)
+    .fromTo("#cWrap", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "sine.inOut" }, 1.52)
+    .fromTo("#labC", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "sine.inOut" }, 1.56)
+    .fromTo("#shaftC", { attr: { "stroke-dashoffset": 1 } }, { attr: { "stroke-dashoffset": 0 }, duration: 0.24, ease: "power2.inOut" }, 1.64)
+    .fromTo("#headC", { opacity: 0 }, { opacity: 1, duration: 0.04, ease: "none" }, 1.88)
+    .fromTo(drive, { cx: 2.35 }, { cx: 1, duration: 0.45, ease: "power2.inOut" }, 1.92)
+    .fromTo("#arrowC", { opacity: 1 }, { opacity: 0, duration: 0.2, ease: "sine.inOut" }, 2.17)
+    .fromTo("#ringC", { opacity: 1, attr: { r: 18 } }, { opacity: 0, attr: { r: 52 }, duration: 0.3, ease: "power2.inOut" }, 2.37)
+    .fromTo(drive, { ck: 1 }, { ck: 0, duration: 0.16, ease: "sine.inOut" }, 2.37)
+    .fromTo("#check", { opacity: 0, scale: 0.65, svgOrigin: "1010 300" }, { opacity: 1, scale: 1, svgOrigin: "1010 300", duration: 0.24, ease: "back.out(1.2)" }, 2.4)
+    .fromTo("#caption", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "sine.inOut" }, 2.46)
+    .to({}, { duration: 0.01 }, 2.99);
+
+  tl.seek(0);
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

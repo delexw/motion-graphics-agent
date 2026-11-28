@@ -10,6 +10,7 @@ vi.mock("../../src/server/agents/claude-home", () => ({
   claudeLoginEnvironment: async () => ({
     [credentialEnvironmentVariables.claudeOauthToken]: "fixture-sdk-token",
   }),
+  claudeLoginRenewed: (...args: unknown[]) => sdk.claudeLoginRenewed(...args),
 }));
 vi.mock("../../src/server/agents/bundled-skills", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../src/server/agents/bundled-skills")>()),
@@ -91,7 +92,9 @@ const sdk = vi.hoisted(() => ({
   resume: vi.fn(),
   construct: vi.fn(),
   prepareClaudeHome: vi.fn().mockResolvedValue("/isolated-home"),
+  claudeLoginRenewed: vi.fn().mockResolvedValue(false),
   isolatedCodexHome: vi.fn().mockResolvedValue("/isolated-home"),
+  syncCodexLogin: vi.fn().mockResolvedValue("unchanged"),
   delay: vi.fn().mockResolvedValue(undefined),
   stream: vi.fn(),
   threadOptions: vi.fn(),
@@ -99,7 +102,9 @@ const sdk = vi.hoisted(() => ({
 afterEach(() => {
   sdk.close.mockReset();
   sdk.prepareClaudeHome.mockReset().mockResolvedValue("/isolated-home");
+  sdk.claudeLoginRenewed.mockReset().mockResolvedValue(false);
   sdk.isolatedCodexHome.mockReset().mockResolvedValue("/isolated-home");
+  sdk.syncCodexLogin.mockReset().mockResolvedValue("unchanged");
   sdk.delay.mockReset().mockResolvedValue(undefined);
 });
 vi.mock("node:timers/promises", () => ({ setTimeout: sdk.delay }));
@@ -109,6 +114,7 @@ vi.mock("@anthropic-ai/claude-agent-sdk", () => ({
 vi.mock("../../src/server/agents/sdk-home", () => ({
   isolatedCodexHome: async (...args: unknown[]) =>
     (await sdk.isolatedCodexHome(...args)) ?? "/isolated-home",
+  syncCodexLogin: (...args: unknown[]) => sdk.syncCodexLogin(...args),
 }));
 vi.mock("@openai/codex-sdk", () => ({
   Codex: class {
@@ -492,6 +498,45 @@ async function* completedCapacityRetry() {
   };
   yield { type: "turn.completed", usage: { input_tokens: 10, output_tokens: 5 } };
 }
+async function* codexLoginFailure() {
+  yield { type: "thread.started", thread_id: "direction-session" };
+  yield {
+    type: "turn.failed",
+    error: {
+      message:
+        "Your access token could not be refreshed because your refresh token was already used. Please log out and sign in again.",
+    },
+  };
+}
+it("continues the saved Codex thread when the main login was renewed during the turn", async () => {
+  sdk.resume.mockReset();
+  sdk.codexEvents
+    .mockReset()
+    .mockImplementationOnce(codexLoginFailure)
+    .mockImplementationOnce(completedCapacityRetry);
+  sdk.syncCodexLogin.mockResolvedValueOnce("project_updated");
+  const onEvent = vi.fn();
+  expect(await agentTurn(capacityAttemptOptions(onEvent))).toEqual({
+    value: { message: "done" },
+    sessionId: "direction-session",
+  });
+  expect(sdk.resume).toHaveBeenCalledExactlyOnceWith("direction-session");
+  expect(sdk.syncCodexLogin).toHaveBeenNthCalledWith(1, "/isolated-home");
+  expect(sdk.delay).not.toHaveBeenCalled();
+  expect(onEvent).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "retry",
+      data: expect.objectContaining({ reason: "login_renewed", retry: 1 }),
+    }),
+  );
+});
+it("reports a Codex login failure when no newer login is available", async () => {
+  sdk.codexEvents.mockReset().mockImplementation(codexLoginFailure);
+  await expect(agentTurn(capacityAttemptOptions())).rejects.toThrow(
+    "refresh token was already used",
+  );
+  expect(sdk.codexEvents).toHaveBeenCalledTimes(1);
+});
 it("retries a terminal capacity response in the captured session and meters a fresh invocation", async () => {
   sdk.codexEvents
     .mockReset()
@@ -686,6 +731,52 @@ it("bounds persistent Claude overload to four attempts", async () => {
   );
   expect(sdk.query).toHaveBeenCalledTimes(4);
   expect(sdk.delay.mock.calls.map(([ms]) => ms)).toEqual([10000, 30000, 60000]);
+});
+async function* claudeAuthenticationFailure() {
+  yield {
+    type: "system",
+    subtype: "init",
+    skills: bundledSkills.map((skill) => skill.claudeName),
+    session_id: "claude-direction",
+  };
+  yield claudeAssistantError("authentication_failed");
+  yield claudeFailedResult("success");
+}
+it("continues the saved Claude session at once when its login was renewed mid-turn", async () => {
+  sdk.claudeLoginRenewed.mockResolvedValue(true);
+  sdk.query
+    .mockReset()
+    .mockImplementationOnce(claudeAuthenticationFailure)
+    .mockImplementationOnce(claudeRecoveredTurn);
+  const onEvent = vi.fn();
+  const options = claudeCapacityOptions(onEvent);
+  expect(await agentTurn(options)).toEqual({
+    value: { message: "done" },
+    sessionId: "claude-direction",
+  });
+  expect(sdk.query).toHaveBeenCalledTimes(2);
+  expect(sdk.query.mock.calls[1][0].options).toMatchObject({ resume: "claude-direction" });
+  expect(sdk.claudeLoginRenewed).toHaveBeenCalledExactlyOnceWith(
+    options.workspace,
+    { [credentialEnvironmentVariables.claudeOauthToken]: "fixture-sdk-token" },
+    expect.any(AbortSignal),
+  );
+  expect(sdk.delay).not.toHaveBeenCalled();
+  expect(onEvent).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "retry",
+      data: expect.objectContaining({ reason: "login_renewed", retry: 1 }),
+    }),
+  );
+});
+it("bounds Claude login renewals to three continuations", async () => {
+  sdk.claudeLoginRenewed.mockResolvedValue(true);
+  sdk.query.mockReset().mockImplementation(claudeAuthenticationFailure);
+  await expect(agentTurn(claudeCapacityOptions())).rejects.toThrow(
+    "The claude login was renewed during this turn",
+  );
+  expect(sdk.query).toHaveBeenCalledTimes(4);
+  expect(sdk.delay).not.toHaveBeenCalled();
 });
 it.each([
   "authentication_failed",

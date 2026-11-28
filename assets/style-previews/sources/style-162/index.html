@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vector Flow Field — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #0A1C22; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #0A1C22; }
+  #stage { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: 0 0; }
+  canvas { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; }
+  .mono { position: absolute; font-family: Menlo, "SF Mono", Consolas, monospace; font-size: 14px; letter-spacing: 2px; color: #9DBDC1; white-space: nowrap; }
+  #lbl-seed { left: 60px; top: 78px; }
+  #param { right: 60px; top: 66px; padding: 10px 14px; background: rgba(8,22,27,0.92); border: 1px solid #2E4F57; border-radius: 4px; color: #C9DADB; }
+  #param b { color: #76E1CB; font-weight: 700; }
+  #lbl-boundary { left: 760px; top: 506px; color: #76E1CB; padding: 4px 6px; margin-left: -6px; background: rgba(8,22,27,0.85); }
+  #headline { position: absolute; left: 60px; top: 598px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 40px; color: #F5F4E8; white-space: nowrap; }
+  #headline strong { font-weight: 700; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <div id="stage">
+    <canvas id="field" width="1280" height="720"></canvas>
+    <div class="mono" id="lbl-seed">FIELD 01 // SEED REGION</div>
+    <div class="mono" id="param">COUPLING k = <b id="kval">0.00</b></div>
+    <div class="mono" id="lbl-boundary" data-reveal-after="boundary-ellipse">BOUNDARY: SYSTEM</div>
+    <div id="headline">An idea becomes a <strong>connected system</strong></div>
+  </div>
+</div>
+<script src="gsap.min.js"></script>
+<script>
+(function () {
+  var W = 1280, H = 720;
+  var C = { x: 920, y: 360 };          // system centre (vortex + sink)
+  var RX = 160, RY = 112;              // highlighted boundary ellipse
+  var canvas = document.getElementById('field');
+  var ctx = canvas.getContext('2d');
+  var kval = document.getElementById('kval');
+  var stage = document.getElementById('stage');
+  var root = document.getElementById('root');
+
+  function fit() {
+    var s = Math.min(root.clientWidth / W, root.clientHeight / H) || 1;
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  // ---- Static background cached once (stationary gradient) ----
+  var bg = document.createElement('canvas');
+  bg.width = W; bg.height = H;
+  (function () {
+    var b = bg.getContext('2d');
+    var g = b.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, '#0A1C22'); g.addColorStop(1, '#0F2A30');
+    b.fillStyle = g; b.fillRect(0, 0, W, H);
+    // quiet backing band behind the headline
+    b.fillStyle = 'rgba(6,18,22,0.55)';
+    b.fillRect(0, 580, W, 140);
+    // seed-region rule
+    b.strokeStyle = '#3E6168'; b.lineWidth = 1;
+    b.beginPath(); b.moveTo(60.5, 168); b.lineTo(60.5, 552); b.stroke();
+  })();
+
+  // ---- Frozen seeded release points (regular region) ----
+  var SEEDS = [];
+  for (var i = 0; i < 24; i++) SEEDS.push({ x: 240, y: 172 + i * 16.5 });
+
+  // ---- Shared vector field: corridor flow + sink + vortex, coupled by k ----
+  function field(x, y, k) {
+    var dx = C.x - x, dy = C.y - y;
+    var d = Math.sqrt(dx * dx + dy * dy) + 1e-6;
+    var g = Math.exp(-(d * d) / (2 * 300 * 300));
+    var ux = dx / d, uy = dy / d;
+    var px = -uy, py = ux;             // perpendicular -> counter-clockwise swirl
+    var corridor = 1 - 0.85 * k * g;
+    var vx = corridor + k * g * (1.25 * ux + 1.05 * px);
+    var vy = 0.04 * Math.sin(x / 140) + k * g * (1.25 * uy + 1.05 * py);
+    var m = Math.sqrt(vx * vx + vy * vy) + 1e-6;
+    return [vx / m, vy / m];
+  }
+
+  // RK2 streamline from a frozen seed, deterministic for given k
+  function streamline(s, k, maxSteps) {
+    var pts = [s.x, s.y], x = s.x, y = s.y, h = 4;
+    for (var n = 0; n < maxSteps; n++) {
+      var a = field(x, y, k);
+      var b = field(x + a[0] * h * 0.5, y + a[1] * h * 0.5, k);
+      x += b[0] * h; y += b[1] * h;
+      pts.push(x, y);
+      var ex = (x - C.x) / 26, ey = (y - C.y) / 26;
+      if (ex * ex + ey * ey < 1) break;  // reached the core
+      if (x > 1240 || y < 130 || y > 570 || x < 230) break;
+    }
+    return pts;
+  }
+
+  var state = {};
+  var vals = { grow: 0, k: 0, boundary: 0, hairs: 0 };
+  ['grow', 'k', 'boundary', 'hairs'].forEach(function (key) {
+    Object.defineProperty(state, key, {
+      get: function () { return vals[key]; },
+      set: function (v) { vals[key] = v; draw(); }
+    });
+  });
+
+  function draw() {
+    var k = vals.k, grow = vals.grow, bnd = vals.boundary, hairs = vals.hairs;
+    ctx.drawImage(bg, 0, 0);
+
+    // Field-direction hairs over the plane (orientation = local vector)
+    if (hairs > 0) {
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineWidth = 1.3;
+      ctx.strokeStyle = 'rgba(80,122,135,' + (0.55 * hairs).toFixed(3) + ')';
+      ctx.beginPath();
+      for (var gy = 150; gy <= 560; gy += 28) {
+        for (var gx = 272; gx <= 1236; gx += 28) {
+          var ex = (gx - C.x) / RX, ey = (gy - C.y) / RY;
+          if (ex * ex + ey * ey < 1.15) continue;  // keep the boundary interior clear
+          var v = field(gx, gy, k), L = 7;
+          ctx.moveTo(gx - v[0] * L, gy - v[1] * L);
+          ctx.lineTo(gx + v[0] * L, gy + v[1] * L);
+        }
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Seed-region dashes (regular release marks)
+    ctx.save();
+    ctx.strokeStyle = '#7FA3A8'; ctx.lineWidth = 1.4; ctx.lineCap = 'round';
+    ctx.globalAlpha = Math.min(1, grow * 3);
+    ctx.beginPath();
+    for (var si = 0; si < SEEDS.length; si++) {
+      for (var dxs = 66; dxs < 228; dxs += 24) {
+        ctx.moveTo(dxs, SEEDS[si].y); ctx.lineTo(dxs + 11, SEEDS[si].y);
+      }
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // Streamlines (subdued traces) — re-integrated from frozen seeds each frame
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 120, W, 456); ctx.clip();
+    ctx.lineWidth = 1.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    var maxSteps = 420;
+    for (var t = 0; t < SEEDS.length; t++) {
+      var pts = streamline(SEEDS[t], k, maxSteps);
+      var n = pts.length / 2;
+      var stagger = t * 0.012;
+      var p = Math.max(0, Math.min(1, (grow - stagger) / (1 - 0.3)));
+      var shown = Math.floor(n * p);
+      if (shown < 2) continue;
+      var grad = ctx.createLinearGradient(240, 0, 1100, 0);
+      grad.addColorStop(0, 'rgba(127,163,168,0.30)');
+      grad.addColorStop(1, 'rgba(233,241,236,0.92)');
+      ctx.strokeStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(pts[0], pts[1]);
+      for (var q = 1; q < shown; q++) ctx.lineTo(pts[q * 2], pts[q * 2 + 1]);
+      ctx.stroke();
+      // travelling head dot shows direction while growing
+      if (p < 1) {
+        ctx.fillStyle = 'rgba(233,241,236,0.9)';
+        ctx.beginPath(); ctx.arc(pts[(shown - 1) * 2], pts[(shown - 1) * 2 + 1], 1.8, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.restore();
+
+    // Highlighted boundary (the one high-contrast element)
+    if (bnd > 0) {
+      ctx.save();
+      ctx.strokeStyle = '#76E1CB'; ctx.lineWidth = 2.5;
+      var a0 = Math.PI;                       // start at the inflow node (760,360)
+      ctx.beginPath();
+      ctx.ellipse(C.x, C.y, RX, RY, 0, a0, a0 + Math.PI * 2 * bnd);
+      ctx.stroke();
+      ctx.fillStyle = '#76E1CB';
+      var nodes = [[Math.PI, 760, 360], [Math.PI * 1.5, 920, 248], [0, 1080, 360], [Math.PI * 0.5, 920, 472]];
+      for (var ni = 0; ni < nodes.length; ni++) {
+        var rel = (nodes[ni][0] - a0 + Math.PI * 4) % (Math.PI * 2);
+        if (rel <= Math.PI * 2 * bnd + 1e-6 || bnd >= 1) {
+          ctx.beginPath(); ctx.arc(nodes[ni][1], nodes[ni][2], 5, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+      var core = Math.min(1, bnd * 1.4);
+      ctx.beginPath(); ctx.arc(C.x, C.y, 12 * core, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 0.4 * core;
+      ctx.beginPath(); ctx.arc(C.x, C.y, 24, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
+
+    kval.textContent = k.toFixed(2);
+  }
+
+  // ---- One paused, seekable GSAP timeline owns every animated value ----
+  var tl = gsap.timeline({ paused: true });
+  tl.set(state, { grow: 0, k: 0, boundary: 0, hairs: 0 }, 0);
+  tl.set('#lbl-boundary', { opacity: 0 }, 0);
+  tl.set('#headline', { opacity: 0, y: 14 }, 0);
+  tl.set(['#lbl-seed', '#param'], { opacity: 0 }, 0);
+  // Beat 1 — establish field direction: seeds release, traces flow straight down the corridor
+  tl.to(['#lbl-seed', '#param'], { opacity: 1, duration: 0.3, ease: 'power2.out' }, 0);
+  tl.to(state, { hairs: 1, duration: 0.5, ease: 'sine.inOut' }, 0.05);
+  tl.to(state, { grow: 1, duration: 0.85, ease: 'power2.out' }, 0.1);
+  // Beat 2 — vary one parameter: coupling k rises, all paths bend into the system together
+  tl.to(state, { k: 1, duration: 1.25, ease: 'sine.inOut' }, 0.95);
+  // Beat 3 — highlight the boundary, then its label (after container is complete)
+  tl.to(state, { boundary: 1, duration: 0.6, ease: 'power2.inOut' }, 1.6);
+  tl.to('#lbl-boundary', { opacity: 1, duration: 0.2, ease: 'power2.out' }, 2.22);
+  tl.to('#headline', { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }, 2.0);
+  tl.to({}, { duration: 0.01 }, 2.99);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+
+  function redraw() { draw(); }
+  window.addEventListener('hf-seek', redraw);
+  document.addEventListener('hf-seek', redraw);
+  tl.seek(0);
+  draw();
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

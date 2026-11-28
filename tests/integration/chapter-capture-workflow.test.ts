@@ -226,22 +226,29 @@ it.each(["chapters", "retry", "exhausted", "none", "legacy", "narration"] as con
     if (mode === "narration") expect(job.speechTrack?.file).toBe("audio/model-created.wav");
     const assembly = vi.mocked(agentTurn).mock.calls[0][0];
     expect(assembly.enableVideoCapture).toBe(mode === "legacy" ? undefined : false);
-    expect(assembly.prompt).toContain(footagePlacementGuidance);
-    expect(assembly.prompt.split(footagePlacementGuidance)).toHaveLength(2);
-    expect(assembly.prompt).toContain(chapterCardsGuidance);
-    expect(assembly.prompt.split(chapterCardsGuidance)).toHaveLength(2);
+    expect(assembly.prompt).toMatch(/^# Video build guide/);
+    expect(assembly.prompt).toContain("Read VIDEO_REQUIREMENTS.md");
+    expect(assembly.prompt).not.toContain(footagePlacementGuidance);
+    const assemblyRequirements = await readFile(
+      path.join(workspace, "VIDEO_REQUIREMENTS.md"),
+      "utf8",
+    );
+    expect(assemblyRequirements).toContain(footagePlacementGuidance);
+    expect(assemblyRequirements.split(footagePlacementGuidance)).toHaveLength(2);
+    expect(assemblyRequirements).toContain(chapterCardsGuidance);
+    expect(assemblyRequirements.split(chapterCardsGuidance)).toHaveLength(2);
     const planningPrompt = vi.mocked(prepareVideoBuildPlan).mock.calls[0][0].prompt;
     expect(planningPrompt).toContain("SCOPE AND STORY");
     expect(planningPrompt).toContain(chapterCardsGuidance);
     expect(planningPrompt).not.toContain("## 3. Read the native document");
     expect(planningPrompt).not.toContain("RECORDED FRAME SEQUENCE");
     if (mode === "legacy") {
-      expect(assembly.prompt).toContain("## 3. Read the native document");
+      expect(assemblyRequirements).toContain("## 3. Read the native document");
     } else {
-      expect(assembly.prompt).toContain("APPLICATION DEMONSTRATION: ASSEMBLY");
-      expect(assembly.prompt).not.toContain("## 3. Read the native document");
-      expect(assembly.prompt).not.toContain("DISCOVER:");
-      expect(assembly.prompt).not.toContain("FILE PICKERS:");
+      expect(assemblyRequirements).toContain("APPLICATION DEMONSTRATION: ASSEMBLY");
+      expect(assemblyRequirements).not.toContain("## 3. Read the native document");
+      expect(assemblyRequirements).not.toContain("DISCOVER:");
+      expect(assemblyRequirements).not.toContain("FILE PICKERS:");
     }
     if (hasChapters) {
       expect(prepareChapterCaptures).toHaveBeenCalledTimes(mode === "retry" ? 2 : 1);

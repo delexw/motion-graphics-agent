@@ -18,7 +18,7 @@ import { DependencyCleanupError } from "../runtime/process-tree";
 import { addAbortListener } from "node:events";
 import { writePreviewPlan, previewPlanArtifact } from "./preview-plan";
 import {
-  AutomaticPreviewPlanSchema,
+  SavedAutomaticPreviewPlanSchema,
   runAutomaticPreviewWorkflow,
   validateAutomaticPreviewPlan,
 } from "./subworkflows/automatic-preview/workflow";
@@ -288,13 +288,6 @@ export class Workflow {
     }
     this.update(run);
   }
-  setDynamicModelEffort(run: Run, enabled: boolean) {
-    const request = { ...run.request, dynamicModelEffort: enabled };
-    // Changing a future call policy does not create a workflow state transition.
-    this.store.save({ ...run, request });
-    run.request = request;
-    return run;
-  }
   private update(run: Run) {
     for (const job of run.jobs) {
       const production = job.outputType === "page" ? job.pageProduction : job.production;
@@ -519,6 +512,7 @@ export class Workflow {
                     workspace,
                     signal: controller.signal,
                     previousDirections: run.candidates,
+                    round: run.directionRound || 0,
                     onEvent: this.providerEvent(run, undefined, "Explicit-style preview planning"),
                   }),
                 controller.signal,
@@ -762,7 +756,11 @@ export class Workflow {
             .optional(),
           dimensions: z.record(z.string(), z.number()),
         });
-        const ranked = await checkpoint(
+        const ranked = await checkpoint<
+          Awaited<ReturnType<typeof rankOptions>> & {
+            policyRevision: typeof combinationProposalPolicyRevision;
+          }
+        >(
           "selection",
           z.object({
             policyRevision: z.literal(combinationProposalPolicyRevision),
@@ -800,7 +798,7 @@ export class Workflow {
       if (run.request.outputType !== "page") {
         const plan = await checkpoint(
           "preview-plan",
-          AutomaticPreviewPlanSchema,
+          SavedAutomaticPreviewPlanSchema,
           () =>
             this.agents.run(
               () =>
@@ -808,6 +806,7 @@ export class Workflow {
                   request: preparedRequest,
                   brief: run.brief!,
                   candidates: selectedCandidates,
+                  styles: this.catalog.styles,
                   workspace,
                   signal: controller.signal,
                   onEvent: this.providerEvent(run, undefined, "Shared preview planning"),

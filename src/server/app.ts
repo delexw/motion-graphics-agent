@@ -1,4 +1,5 @@
 import { modelEffortPurpose } from "./jev/strategies/model-effort";
+import { sceneBackgroundPurpose } from "../shared/agents/scene-background";
 import { registerCompactDownloadRoutes } from "./rendering/compact-download-routes";
 import { registerProjectReuseRoutes } from "./project-reuse/routes";
 import { projectName } from "../shared/project-name";
@@ -33,6 +34,7 @@ import { userHome } from "./runtime/platform";
 import { registerRoomRoutes } from "./room/routes";
 import { registerKitevaMcpRoutes } from "./mcp/routes";
 import { startIdeaThroughBackend } from "./mcp/client";
+import { findIdeaDraftKey, IdeaDraftSourceSchema } from "../shared/room";
 import { registerMusicAnalysisRoutes } from "./audio/music-analysis-routes";
 import { registerSpeechRoutes } from "./audio/routes";
 import { speechConfigurationProblem, activeSpeech } from "../shared/speech";
@@ -66,6 +68,7 @@ import {
   agentMode,
   appRoot,
   dataRoot,
+  desktopBackend,
   models,
   port as backendPort,
   webPort,
@@ -127,8 +130,7 @@ export async function createApp(options: { store?: Store; frontendRoot?: string 
       !new Set([
         `http://127.0.0.1:${backendPort}`,
         `http://localhost:${backendPort}`,
-        `http://127.0.0.1:${webPort}`,
-        `http://localhost:${webPort}`,
+        ...(!desktopBackend ? [`http://127.0.0.1:${webPort}`, `http://localhost:${webPort}`] : []),
       ]).has(origin)
     ) {
       throw new CodedError("ACCESS_DENIED", "Foreign origin rejected", 403);
@@ -140,7 +142,7 @@ export async function createApp(options: { store?: Store; frontendRoot?: string 
   registerKitevaMcpRoutes(app, {
     store,
     catalog,
-    webUrl: `http://127.0.0.1:${webPort}`,
+    webUrl: `http://127.0.0.1:${desktopBackend ? backendPort : webPort}`,
     start: startIdeaThroughBackend,
   });
   app.get("/api/setup", async () => {
@@ -301,6 +303,13 @@ export async function createApp(options: { store?: Store; frontendRoot?: string 
       ],
       models: [
         {
+          function: sceneBackgroundPurpose,
+          claude: jevModel,
+          codex: jevModel,
+          deepseek: jevModel,
+          gemini: jevModel,
+        },
+        {
           function: modelEffortPurpose,
           claude: jevModel,
           codex: jevModel,
@@ -424,6 +433,9 @@ export async function createApp(options: { store?: Store; frontendRoot?: string 
   registerProjectReuseRoutes(app, store, catalog);
   app.post("/api/runs", async (req, reply) => {
     const request = RequestSchema.parse(req.body);
+    const { sourceDraft } = z
+      .object({ sourceDraft: IdeaDraftSourceSchema.optional() })
+      .parse(req.body);
     await assertWindowsRenderReady();
     if (request.outputType === "video") {
       const problem = speechConfigurationProblem(request);
@@ -438,7 +450,15 @@ export async function createApp(options: { store?: Store; frontendRoot?: string 
     if (request.selectedStyleIds?.length) manualDirection(request, catalog.styles);
     validateBriefSections(request, (id) => store.getAsset(id));
     await validateProjectAssetLimits(request.assetIds, (id) => store.getAsset(id));
-    const sourceDraftId = store.room().drafts.new?.id;
+    const room = store.room();
+    const draftKey = sourceDraft ? findIdeaDraftKey(room.drafts, sourceDraft.draftId) : "new";
+    if (!draftKey || (sourceDraft && room.revision !== sourceDraft.revision))
+      throw new CodedError(
+        "INVALID_REQUEST",
+        "The selected draft changed. Read it again before starting.",
+        409,
+      );
+    const sourceDraftId = room.drafts[draftKey]?.id;
     store.assertAssetOwner(
       request.assetIds,
       sourceDraftId ? { kind: "draft", id: sourceDraftId } : undefined,
@@ -451,7 +471,7 @@ export async function createApp(options: { store?: Store; frontendRoot?: string 
         409,
       );
     pendingStarts.add(startKey);
-    const draftBeforeCheck = JSON.stringify(store.room().drafts.new);
+    const draftBeforeCheck = JSON.stringify(room.drafts[draftKey]);
     const controller = new AbortController();
     const disconnect = () => {
       if (!reply.raw.writableEnded) controller.abort(Error("Project start disconnected"));
@@ -485,7 +505,7 @@ export async function createApp(options: { store?: Store; frontendRoot?: string 
       check.model = review.model;
       check.status = review.conflicts.length ? "conflict" : "compatible";
       controller.signal.throwIfAborted();
-      if (JSON.stringify(store.room().drafts.new) !== draftBeforeCheck)
+      if (JSON.stringify(store.room().drafts[draftKey]) !== draftBeforeCheck)
         throw new CodedError(
           "INVALID_REQUEST",
           "Your draft changed during the check. Review the current brief and create again.",
@@ -501,7 +521,7 @@ export async function createApp(options: { store?: Store; frontendRoot?: string 
         jobs: [],
       };
       await writeProjectRequest(path.join(dataRoot, "runs", run.id), request);
-      store.saveProjectWithAssets(run, sourceDraftId);
+      store.saveProjectWithAssets(run, sourceDraftId, draftBeforeCheck);
       check.runId = run.id;
       cache.set(run.id, run);
       void workflow.prepare(run);
@@ -566,14 +586,6 @@ export async function createApp(options: { store?: Store; frontendRoot?: string 
       return workflow.answerAssetQuestion(run, req.params.questionId, req.body);
     },
   );
-  app.patch<{ Params: { id: string } }>("/api/runs/:id/model-effort", async (req) => {
-    const run = getRun(req.params.id);
-    const { dynamicModelEffort } = z
-      .object({ dynamicModelEffort: z.boolean() })
-      .strict()
-      .parse(req.body);
-    return workflow.setDynamicModelEffort(run, dynamicModelEffort);
-  });
   app.post<{ Params: { id: string } }>("/api/runs/:id/cancel", async (req) => {
     const run = getRun(req.params.id);
     const body = z.object({ jobId: z.string().optional() }).parse(req.body || {});

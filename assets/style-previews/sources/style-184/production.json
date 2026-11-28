@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Satellite Briefing",
+  "displayDescription": "Two dated overhead plates register on a landmark, wipe from T0 to T1 and trace where one spark became six linked sites.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview — no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Plates are illustrative procedural SVG terrain, not real or licensed satellite imagery; coordinates and dates are demonstrative.",
+    "Registration offset is an authored affine (translate + rotate) approximation, not real reprojection.",
+    "STYLE.json lists no preview_recipes and no BACKGROUND_REVIEW.json was supplied, so the preview demonstrates the core characteristic action only.",
+    "Blender not used per user instruction; SVG + local gsap.min.js only."
+  ]
+}

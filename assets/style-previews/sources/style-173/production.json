@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "Microscope Slide",
+  "displayDescription": "Dark-field microscope scan: focus pulls from debris to an idea network, then a registered x2000 inset shows one junction with scale.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "STYLE.json lists no tech.preview_recipes and no BACKGROUND_REVIEW.json was supplied, so the preview shows the core characteristic action (scan, focus shift, magnified structure with scale), not a named recipe.",
+    "Synthetic illustrative specimen: optical depth of field is approximated with Canvas 2D blur per focus plane; no real microscopy, lens aberration or illumination physics.",
+    "The x2000 inset re-renders the same seeded sample coordinates at 5x scale with added procedural detail (vesicles, membrane granules); that detail is invented for illustration.",
+    "Blender not used, per user instruction.",
+    "creative_pool.select_project_technologies failed (host PROJECT_DEPENDENCIES.json missing); GSAP is loaded from the supplied local gsap.min.js."
+  ]
+}

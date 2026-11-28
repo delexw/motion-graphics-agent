@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>An idea becomes a connected system — Agent Simulation Diagram</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #F3F6F8; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; background: #F3F6F8; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: 0 0; }
+  canvas { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; }
+  .t { position: absolute; color: #142536; font-family: Menlo, "SF Mono", Consolas, monospace; font-size: 15px; line-height: 1.2; white-space: nowrap; }
+  #title { left: 80px; top: 46px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 700; font-size: 32px; letter-spacing: -0.2px; }
+  .active { color: #005885; }
+  .muted { color: #4E5E6B; }
+  .num { width: 80px; text-align: center; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <div id="stage">
+    <canvas id="cv" width="1280" height="720"></canvas>
+    <div class="t" id="title">An idea becomes a connected system</div>
+
+    <div class="t" id="legend" style="left:80px; top:640px;">
+      <span style="display:inline-block; width:22px;"></span>idea<span style="display:inline-block; width:58px;"></span>builder
+    </div>
+
+    <div class="t" id="ruleHead" style="left:900px; top:132px;">RULE</div>
+    <div class="t active" id="rule1" style="left:900px; top:158px;">builder seeks nearest idea</div>
+    <div class="t active" id="rule2" style="left:900px; top:180px;">link if d &lt; r</div>
+
+    <div class="t" id="distHead" style="left:900px; top:232px;">RESULTING DISTRIBUTION</div>
+    <div class="t muted" id="counters" style="left:900px; top:258px;">links 0 · systems 0</div>
+
+    <div class="t num" id="c0" style="left:920px; top:500px;">×23</div>
+    <div class="t num" id="c1" style="left:1020px; top:500px;">×0</div>
+    <div class="t num" id="c2" style="left:1120px; top:500px;">×0</div>
+    <div class="t num" id="x0" style="left:920px; top:578px;">1</div>
+    <div class="t num" id="x1" style="left:1020px; top:578px;">2–3</div>
+    <div class="t num" id="x2" style="left:1120px; top:578px;">4+</div>
+    <div class="t muted" id="axis" style="left:900px; top:610px;">agents by system size</div>
+  </div>
+</div>
+<script src="gsap.min.js"></script>
+<script src="sim.js"></script>
+<script>
+(function () {
+  var W = 1280, H = 720;
+  var C = { bg: '#F3F6F8', field: '#FBFCFD', grid: '#DFE6EA', ink: '#142536', idea: '#005885',
+            builder: '#D9622B', link: '#6F8190', hull: '#B9D5DE', ring: '#005885' };
+  var SIM = AgentSim.bake(7);
+  var F = SIM.FIELD, R = SIM.R, N = SIM.agents.length;
+  var BAR = { x0: 930, base: 566, w: 60, gap: 100, unit: 11 };
+
+  // stage scaling to the root box
+  var root = document.getElementById('root'), stage = document.getElementById('stage');
+  function fit() { var s = Math.min(root.clientWidth / W, root.clientHeight / H) || 1; stage.style.transform = 'scale(' + s + ')'; }
+  fit(); window.addEventListener('resize', fit);
+
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+
+  // cached static grid texture (stationary)
+  var gridCv = document.createElement('canvas'); gridCv.width = W; gridCv.height = H;
+  (function () {
+    var g = gridCv.getContext('2d');
+    g.fillStyle = C.field; g.fillRect(F.x, F.y, F.w, F.h);
+    g.strokeStyle = C.grid; g.lineWidth = 1; g.beginPath();
+    for (var x = F.x + 40; x < F.x + F.w; x += 40) { g.moveTo(x + 0.5, F.y); g.lineTo(x + 0.5, F.y + F.h); }
+    for (var y = F.y + 40; y < F.y + F.h; y += 40) { g.moveTo(F.x, y + 0.5); g.lineTo(F.x + F.w, y + 0.5); }
+    g.stroke();
+  })();
+
+  // The rule-inset agent: the idea that receives the first link in the baked run.
+  var focusIdea = (function () {
+    for (var s = 0; s < SIM.steps.length; s++) if (SIM.steps[s].links.length) return SIM.steps[s].links[0].i;
+    return 0;
+  })();
+
+  // GSAP-owned state (single owner per property)
+  var st = { field: 0, pop: 0, ring: 0, sim: 0, hold: 0 };
+  var txt = ['ruleHead', 'rule1', 'rule2', 'distHead', 'counters', 'c0', 'c1', 'c2', 'x0', 'x1', 'x2', 'axis', 'legend']
+    .map(function (id) { return document.getElementById(id); });
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+
+  function drawIdea(x, y, r, a) { ctx.globalAlpha = a; ctx.fillStyle = C.idea; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
+  function drawBuilder(x, y, k, a) {
+    ctx.globalAlpha = a; ctx.fillStyle = C.builder; ctx.beginPath();
+    ctx.moveTo(x, y - 10 * k); ctx.lineTo(x + 9 * k, y + 7 * k); ctx.lineTo(x - 9 * k, y + 7 * k); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+  }
+
+  function render() {
+    var f = st.sim * SIM.STEPS, k0 = Math.floor(f), k1 = Math.min(k0 + 1, SIM.STEPS), u = f - k0;
+    if (k0 >= SIM.STEPS) { k0 = SIM.STEPS; k1 = SIM.STEPS; u = 0; }
+    var A = SIM.steps[k0], B = SIM.steps[k1];
+    var pos = A.pos.map(function (p, i) { return { x: lerp(p.x, B.pos[i].x, u), y: lerp(p.y, B.pos[i].y, u) }; });
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+
+    // field reveal (left to right wipe of cached grid, then frame)
+    var fw = F.w * st.field;
+    if (fw > 0) {
+      ctx.drawImage(gridCv, F.x, F.y, fw, F.h, F.x, F.y, fw, F.h);
+      ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(F.x, F.y); ctx.lineTo(F.x + fw, F.y); ctx.moveTo(F.x, F.y + F.h); ctx.lineTo(F.x + fw, F.y + F.h);
+      ctx.moveTo(F.x, F.y); ctx.lineTo(F.x, F.y + F.h);
+      if (st.field >= 1) { ctx.moveTo(F.x + F.w, F.y); ctx.lineTo(F.x + F.w, F.y + F.h); }
+      ctx.stroke();
+    }
+
+    ctx.save(); ctx.beginPath(); ctx.rect(F.x + 1, F.y + 1, F.w - 2, F.h - 2); ctx.clip();
+
+    // system hulls: soft halo behind every agent that belongs to a system (size > 1), from the same run
+    var hullA = A, hullB = B;
+    for (var pass = 0; pass < 2; pass++) {
+      var S = pass ? hullB : hullA, w = pass ? u : 1 - u;
+      if (w <= 0.001) continue;
+      ctx.globalAlpha = 0.55 * w; ctx.fillStyle = C.hull; ctx.beginPath();
+      for (var i = 0; i < N; i++) {
+        if (S.size[S.comp[i]] > 1) { ctx.moveTo(pos[i].x + 30, pos[i].y); ctx.arc(pos[i].x, pos[i].y, 30, 0, Math.PI * 2); }
+      }
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // links grow from builder to idea over 4 steps after they form
+    ctx.strokeStyle = C.link; ctx.lineWidth = 2;
+    B.links.forEach(function (l) {
+      var age = clamp((f - l.born) / 4);
+      if (age <= 0) return;
+      var pb = pos[l.b], pi = pos[l.i];
+      ctx.beginPath(); ctx.moveTo(pb.x, pb.y); ctx.lineTo(lerp(pb.x, pi.x, age), lerp(pb.y, pi.y, age)); ctx.stroke();
+    });
+
+    // rule inset: radius r around the focus idea, shown before and during the first link
+    if (st.ring > 0) {
+      var fp = pos[focusIdea];
+      ctx.globalAlpha = st.ring; ctx.strokeStyle = C.ring; ctx.lineWidth = 1.5; ctx.setLineDash([5, 5]);
+      ctx.beginPath(); ctx.arc(fp.x, fp.y, R * (0.6 + 0.4 * st.ring), 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(fp.x, fp.y); ctx.lineTo(fp.x + R, fp.y); ctx.stroke();
+      ctx.fillStyle = C.ring; ctx.font = '14px Menlo, monospace'; ctx.fillText('r', fp.x + R * 0.45, fp.y - 6);
+      ctx.globalAlpha = 1;
+    }
+
+    // agents: staggered appearance of the starting population
+    for (var j = 0; j < N; j++) {
+      var a = clamp((st.pop - (j / N) * 0.7) / 0.3);
+      var k = 0.6 + 0.4 * a;
+      if (a <= 0) continue;
+      if (SIM.agents[j].kind === 'idea') drawIdea(pos[j].x, pos[j].y, 9 * k, a); else drawBuilder(pos[j].x, pos[j].y, k, a);
+    }
+    ctx.restore();
+
+    // legend glyphs
+    drawIdea(90, 650, 8, 1); drawBuilder(182, 651, 1, 1);
+
+    // distribution bars derived from the same baked steps
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(900, BAR.base + 0.5); ctx.lineTo(1210, BAR.base + 0.5); ctx.stroke();
+    var bins = A.bins.map(function (v, i) { return lerp(v, B.bins[i], u); });
+    for (var b = 0; b < 3; b++) {
+      var h = bins[b] * BAR.unit * st.field, x = BAR.x0 + b * BAR.gap;
+      ctx.fillStyle = b === 0 ? C.hull : C.idea;
+      ctx.fillRect(x, BAR.base - h, BAR.w, h);
+      var lab = txt[5 + b];
+      lab.style.top = (BAR.base - h - 26) + 'px';
+      lab.textContent = '×' + Math.round(bins[b]);
+    }
+    var S2 = u < 0.5 ? A : B;
+    var visibleLinks = S2.links.filter(function (l) { return f - l.born > 0; }).length;
+    txt[4].textContent = 'links ' + visibleLinks + ' · systems ' + S2.systems;
+  }
+
+  var tl = gsap.timeline({ paused: true, onUpdate: render });
+  tl.to(st, { field: 1, duration: 0.4, ease: 'power2.inOut' }, 0)
+    .to(st, { pop: 1, duration: 0.45, ease: 'none' }, 0.12)
+    .fromTo(txt, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'power2.inOut', stagger: 0.015 }, 0.25)
+    .to(st, { ring: 1, duration: 0.25, ease: 'back.out(1.2)' }, 0.6)
+    .to(st, { sim: 1, duration: 1.45, ease: 'power1.inOut' }, 0.85)
+    .to(st, { ring: 0, duration: 0.3, ease: 'sine.inOut' }, 1.75)
+    .to(st, { hold: 1, duration: 0.7, ease: 'none' }, 2.3);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  window.addEventListener('hf-seek', function (e) {
+    var t = e && e.detail && typeof e.detail.time === 'number' ? e.detail.time : null;
+    if (t !== null) tl.seek(t, false);
+    render();
+  });
+  tl.seek(0, false);
+  render();
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

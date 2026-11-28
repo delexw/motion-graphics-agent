@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Rebuilt Screencast",
+  "displayDescription": "A guide points to Connect all, steps out of the way, and the board's idea links to every part.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, sound effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Simulated Idea Board interface built from SVG vector layers; it is not footage of a real application.",
+    "STYLE.json has no tech.preview_recipes and no BACKGROUND_REVIEW.json was supplied, so the primary Motion Graphic behaviour is demonstrated rather than a specific reviewed recipe.",
+    "Flat vector UI with a drop shadow; no physical depth, lighting or material simulation is involved or implied.",
+    "Blender was not used, per the user instruction."
+  ]
+}

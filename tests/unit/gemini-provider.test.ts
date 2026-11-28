@@ -16,6 +16,7 @@ import { supportedModelEfforts } from "../../src/server/agents/model-effort-leve
 import { geminiEvents, parseAgyStreamEvent } from "../../src/server/agents/gemini/events";
 import { geminiToolAllowed, geminiToolDenial } from "../../src/server/agents/gemini/policy";
 import {
+  prepareAgyCliConfiguration,
   resolveAgyBinary,
   resolveGeminiTransport,
 } from "../../src/server/agents/gemini/configuration";
@@ -24,6 +25,7 @@ import { activityItems } from "../../src/shared/activity-model";
 import { projectActivityEvent } from "../../src/shared/project-activity";
 import { RequestSchema, type AgentProgressEvent, type Run } from "../../src/shared/contracts";
 import { ModelCapacityError } from "../../src/server/agents/capacity-error";
+import { deferred } from "../fixtures/deferred";
 
 const bridgeFixture = vi.hoisted(() => ({
   scriptPath: "",
@@ -34,6 +36,7 @@ vi.mock("../../src/server/agents/gemini/configuration", async (importOriginal) =
     await importOriginal<typeof import("../../src/server/agents/gemini/configuration")>();
   return {
     ...original,
+    prepareAgyCliConfiguration: vi.fn(original.prepareAgyCliConfiguration),
     prepareGeminiConfiguration: async (
       options: Parameters<typeof original.prepareGeminiConfiguration>[0],
       effort?: Parameters<typeof original.prepareGeminiConfiguration>[1],
@@ -636,6 +639,83 @@ if (!isResume) {
   expect(gov.activity[1].costLow).toBeCloseTo(0.0015, 10);
 });
 
+it("starts the Gemini CLI timeout after the queue and skips a cancelled turn", async () => {
+  const firstStarted = deferred();
+  const timeout = vi.spyOn(AbortSignal, "timeout");
+  const executionTimeoutMs = 65_000;
+  const sharedDatabase = path.join(tempDir, "conversation.lock");
+  const release = path.join(tempDir, "release-first");
+  const fakeAgy = await writeFakeAgy(`
+const fs = require("node:fs");
+const database = ${JSON.stringify(sharedDatabase)};
+const lock = fs.openSync(database, "wx");
+fs.closeSync(lock);
+console.log(JSON.stringify({ event: "init", conversation_id: "fixture-conversation" }));
+const finish = () => {
+  fs.unlinkSync(database);
+  console.log(JSON.stringify({
+    event: "result",
+    result: { status: "SUCCESS", response: '{"ok":true}' },
+  }));
+};
+if (require("node:path").basename(process.cwd()) === "first") {
+  const timer = setInterval(() => {
+    if (!fs.existsSync(${JSON.stringify(release)})) return;
+    clearInterval(timer);
+    finish();
+  }, 10);
+} else {
+  finish();
+}
+`);
+  vi.stubEnv("VIDEO_GEMINI_TRANSPORT", "cli");
+  vi.stubEnv("VIDEO_GEMINI_AGY_BIN", fakeAgy);
+  const first = geminiAgent.run({
+    ...baseOptions(),
+    workspace: path.join(tempDir, "first"),
+    onEvent: (event) => {
+      if (event.type === "session") firstStarted.resolve();
+    },
+  });
+  const turns = [first];
+  try {
+    await Promise.race([
+      firstStarted.promise,
+      first.then(() => {
+        throw Error("First CLI turn ended before the overlap could be tested");
+      }),
+    ]);
+    const second = geminiAgent.run({
+      ...baseOptions(),
+      workspace: path.join(tempDir, "second"),
+      executionTimeoutMs,
+    });
+    turns.push(second);
+    const controller = new AbortController();
+    const cancelled = geminiAgent.run({
+      ...baseOptions(),
+      workspace: path.join(tempDir, "cancelled"),
+      signal: controller.signal,
+      executionTimeoutMs,
+    });
+    const rejected = expect(cancelled).rejects.toThrow("Cancel queued CLI turn");
+    controller.abort(Error("Cancel queued CLI turn"));
+    await rejected;
+    expect(prepareAgyCliConfiguration).toHaveBeenCalledTimes(1);
+    expect(timeout).not.toHaveBeenCalledWith(executionTimeoutMs);
+    await writeFile(release, "");
+    await expect(Promise.all(turns)).resolves.toEqual([
+      { result: { ok: true }, sessionId: "fixture-conversation" },
+      { result: { ok: true }, sessionId: "fixture-conversation" },
+    ]);
+    expect(prepareAgyCliConfiguration).toHaveBeenCalledTimes(2);
+    expect(timeout.mock.calls.filter(([ms]) => ms === executionTimeoutMs)).toHaveLength(1);
+  } finally {
+    await writeFile(release, "");
+    await Promise.allSettled(turns);
+  }
+});
+
 it("fails immediately when no Gemini API key is set and agy CLI is missing", async () => {
   vi.stubEnv("GEMINI_API_KEY", "");
   vi.stubEnv("GOOGLE_API_KEY", "");
@@ -645,6 +725,74 @@ it("fails immediately when no Gemini API key is set and agy CLI is missing", asy
 
   await expect(geminiAgent.run(baseOptions())).rejects.toThrow(/not found or not executable/);
 });
+
+const emptyConversationId =
+  "failed to start conversation: backend returned an empty conversation id";
+
+it("recovers an empty new conversation ID with a fresh CLI start in the same turn", async () => {
+  const marker = path.join(tempDir, "failed-start");
+  const fakeAgy = await writeFakeAgy(`
+const fs = require("node:fs");
+const marker = ${JSON.stringify(marker)};
+if (!fs.existsSync(marker)) {
+  fs.writeFileSync(marker, "");
+  console.log(JSON.stringify({ event: "error", message: ${JSON.stringify(emptyConversationId)} }));
+  process.exitCode = 1;
+} else {
+  console.log(JSON.stringify({ event: "init", conversation_id: "recovered-conversation" }));
+  console.log(JSON.stringify({
+    event: "result",
+    result: { status: "SUCCESS", response: '{"ok":true}' },
+  }));
+}
+`);
+  vi.stubEnv("VIDEO_GEMINI_TRANSPORT", "cli");
+  vi.stubEnv("VIDEO_GEMINI_AGY_BIN", fakeAgy);
+  const onEvent = vi.fn();
+
+  await expect(geminiAgent.run({ ...baseOptions(), onEvent })).resolves.toEqual({
+    result: { ok: true },
+    sessionId: "recovered-conversation",
+  });
+  expect(prepareAgyCliConfiguration).toHaveBeenCalledTimes(2);
+  expect(onEvent.mock.calls.map(([event]) => event.type)).toEqual(["retry", "session"]);
+  expect(onEvent).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "retry",
+      data: expect.objectContaining({ reason: "gemini_conversation_start", retry: 1 }),
+    }),
+  );
+});
+
+it.each(["resumed", "opened", "cancelled"] as const)(
+  "does not start a replacement conversation when the turn is %s",
+  async (state) => {
+    const fakeAgy = await writeFakeAgy(`
+if (${JSON.stringify(state)} === "opened")
+  console.log(JSON.stringify({ event: "init", conversation_id: "opened-conversation" }));
+console.error(${JSON.stringify(emptyConversationId)});
+process.exitCode = 1;
+`);
+    vi.stubEnv("VIDEO_GEMINI_TRANSPORT", "cli");
+    vi.stubEnv("VIDEO_GEMINI_AGY_BIN", fakeAgy);
+    const controller = new AbortController();
+    const onEvent = vi.fn((event) => {
+      if (state === "cancelled" && event.type === "retry") controller.abort();
+    });
+    await expect(
+      geminiAgent.run({
+        ...baseOptions(),
+        sessionId: state === "resumed" ? "saved-conversation" : undefined,
+        signal: controller.signal,
+        onEvent,
+      }),
+    ).rejects.toThrow(state === "cancelled" ? /aborted/i : emptyConversationId);
+    expect(prepareAgyCliConfiguration).toHaveBeenCalledOnce();
+    expect(onEvent.mock.calls.filter(([event]) => event.type === "retry")).toHaveLength(
+      state === "cancelled" ? 1 : 0,
+    );
+  },
+);
 
 it("scopes SDK bridge credentials strictly and never places API keys in stdin payload", async () => {
   vi.stubEnv("ANTHROPIC_API_KEY", "synthetic-anthropic-secret");

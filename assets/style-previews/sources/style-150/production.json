@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "Caption-Led News",
+  "displayDescription": "A headline about an idea becoming a system hands its highlighted term to a matching network node, then a key-fact bar settles.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "No preview recipes were listed in STYLE.json and no BACKGROUND_REVIEW.json was supplied, so the preview shows the style's main action: reveal the key fact, link one term to its evidence, then hold.",
+    "The evidence pane is an original vector network diagram drawn as an example, not real data or footage.",
+    "Blender was not used. The scene is flat editorial vector art, built in SVG and animated with the local GSAP file. No depth, lighting or material effects were needed.",
+    "Text widths are measured once from the locally installed Georgia/Helvetica fonts to size the highlight and leader start. A different fallback font could change those sizes slightly.",
+    "The technology record could not be written because this preview workspace has no project dependency manifest. SVG is native and GSAP is the supplied local gsap.min.js."
+  ]
+}

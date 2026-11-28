@@ -36,11 +36,11 @@ describe("catalog and production contracts", () => {
   });
   it("loads every style with separate rendering, motion and export roles", async () => {
     const c = await loadCatalog();
-    expect(c.styles).toHaveLength(143);
+    expect(c.styles).toHaveLength(199);
     expect(c.motions).toHaveLength(55);
     for (const s of c.styles) {
       expect(s.audio_direction.prompt).toBeTruthy();
-      expect(s.executable_prompt_template).toContain("{{render_pipeline}}");
+      expect(s.tech.framework_selection, s.id).toMatchObject({ source: "project.renderer" });
       expect(s.tech.style_renderer.recommended_stack_refs).not.toContain("HyperFrames");
       expect(s.tech.motion_engine.recommended_stack_refs).not.toContain("Remotion");
       expect(illustrativeSvg(s, 1)).toContain(s.palette.tokens.background);

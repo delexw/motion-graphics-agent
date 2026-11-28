@@ -17,3 +17,9 @@ export function beforeMangaReferenceStudy<
     tech: { ...style.tech, implementation: baseline.implementation },
   };
 }
+
+/** The production prompt was replaced after these metadata reviews. */
+export function withoutStylePrompt<T extends { executable_prompt_template: string }>(style: T) {
+  const { executable_prompt_template: _prompt, ...metadata } = style;
+  return metadata;
+}

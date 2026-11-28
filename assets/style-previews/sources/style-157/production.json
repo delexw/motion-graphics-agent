@@ -1,0 +1,26 @@
+{
+  "characters": [],
+  "displayTitle": "Scan-Lit Documentary",
+  "displayDescription": "A radar sweep finds an idea on pass 1 and a connected system on pass 2, then links the two findings.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG (inline vector layers, mask, clipPath, stroke-dashoffset)"
+  ],
+  "motionEngine": [
+    "GSAP (single paused timeline at window.__timelines.video)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative reconstruction: radar returns and evidence points are seeded procedural vectors, not measured data or real footage.",
+    "The radar sweep is a flat 2D SVG approximation of an instrument display. It has no physical phosphor decay; the afterglow is approximated with stepped-opacity wedge slices.",
+    "STYLE.json contains no tech.preview_recipes and there is no BACKGROUND_REVIEW.json, so no optional recipe or source-frame evidence was applied. The preview demonstrates the primary characteristic action (two successive radar passes, then their relationship).",
+    "Blender was not used, per instruction. GSAP is loaded from the project-local gsap.min.js."
+  ]
+}

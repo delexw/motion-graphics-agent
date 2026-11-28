@@ -1,3 +1,4 @@
+import { formatStyleGuide, parseStyleGuide } from "./agents/schemas/combined-style-guide";
 import { motionGraphicTechnologyPool, projectRenderTechnologyPool } from "./technology-pool";
 
 export { TechnologyReviewSchema } from "./agents/schemas/technology-review";
@@ -9,12 +10,20 @@ export function technologyReviewedPrompt(
   implementation: string,
   rationale: string,
 ) {
+  const guide = parseStyleGuide(template);
+  if (!guide) throw Error("Technology review requires a complete style guide");
   const marker = "\nReviewed technology choice:";
-  const source = template.split(marker)[0];
+  const source = guide.sections["Implementation tools"].split(marker)[0];
   const updated = previousImplementation
     ? source.replace(previousImplementation, implementation)
     : source;
-  return `${updated}${marker} ${implementation} ${rationale}`;
+  return formatStyleGuide(
+    {
+      ...guide.sections,
+      "Implementation tools": `${updated}${marker} ${implementation} ${rationale}`,
+    },
+    guide.summary,
+  );
 }
 
 export function validateTechnologyReview(input: unknown, expectedStyleIds: string[]) {

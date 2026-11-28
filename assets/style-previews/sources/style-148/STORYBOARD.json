@@ -1,0 +1,52 @@
+{
+  "version": 3,
+  "title": "Brick Miniature — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Empty grid to piers",
+      "startSeconds": 0,
+      "endSeconds": 1.1,
+      "purpose": "Establish the empty green stud grid at a tabletop macro angle, then drop three 2x2 piers onto stud columns; the yellow idea brick seats last on the left pier.",
+      "visuals": ["28x8 green baseplate with instanced studs", "white 2x2 pier bricks", "yellow idea brick", "white title card top-left"],
+      "assets": [],
+      "beats": [
+        {"startSeconds": 0, "endSeconds": 0.2, "development": "Empty stud pattern visible; camera begins a slow push-in; title card starts fading up.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 0.2, "endSeconds": 0.86, "development": "White pier bricks drop vertically course by course onto three 2x2 footprints at x = -10, 0, 10.", "captions": ["An idea becomes a connected system"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 0.86, "endSeconds": 1.1, "development": "Yellow idea brick falls onto the left pier and seats with a squash.", "captions": ["An idea becomes a connected system"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-2",
+      "title": "Bridge snaps on",
+      "startSeconds": 1.1,
+      "endSeconds": 2.6,
+      "purpose": "Demonstrate the characteristic action in three stages: incoming along the X axis, alignment over an outlined footprint, seat onto the studs.",
+      "visuals": ["three 2x8 active-blue lower deck bricks", "two 2x10 upper bricks straddling the lower seams", "pale yellow footprint outlines"],
+      "assets": [],
+      "beats": [
+        {"startSeconds": 1.1, "endSeconds": 1.74, "development": "Lower deck bricks slide in from the right along X at hover height; footprint outlines appear on the pier tops (alignment).", "captions": ["An idea becomes a connected system"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 1.74, "endSeconds": 2.0, "development": "Lower deck bricks seat straight down onto the piers, staggered, each with a small squash.", "captions": ["An idea becomes a connected system"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 2.0, "endSeconds": 2.6, "development": "Upper course slides in, aligns over outlines spanning the lower seams, and seats to interlock the bridge; the pill label appears in the card.", "captions": ["An idea becomes a connected system", "1 idea · 3 piers · 1 bridge"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-3",
+      "title": "Settled system",
+      "startSeconds": 2.6,
+      "endSeconds": 3,
+      "purpose": "Hold the completed connected bridge with the card fully legible.",
+      "visuals": ["completed bridge on the stud grid", "title card with pill"],
+      "assets": [],
+      "beats": [
+        {"startSeconds": 2.6, "endSeconds": 3, "development": "Everything settled; reading hold for title and pill.", "captions": ["An idea becomes a connected system", "1 idea · 3 piers · 1 bridge"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.4}
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["Piers build quickly so the main bridge action has room for its three readable stages.", "All motion settles by 2.6 s, before the 2.7 s requirement."],
+    "justifiedHolds": ["2.6–3.0 s final hold so the title and pill can be read on the settled bridge."]
+  },
+  "notes": ["Silent preview.", "No reviewed preview recipes are listed in STYLE.json; the preview demonstrates the style's characteristic action (empty stud grid, approach along one axis, snap an interlocking bridge)."]
+}

@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "title": "One-Bit Dither — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "The idea grows from density",
+      "startSeconds": 0,
+      "endSeconds": 1.0,
+      "purpose": "Grow an ordered-dither density pattern into a readable light-bulb shape on a dark one-bit field.",
+      "visuals": ["Dark ink field on fixed 320x180 grid", "Radial dithered glow expanding from the bulb centre", "Solid bulb glass and dark base bands resolve", "AN IDEA bitmap title on solid ink backing"],
+      "assets": [],
+      "beats": [
+        {"startSeconds": 0, "endSeconds": 0.2, "development": "Solid ink field; first sparse threshold dots appear at the bulb centre.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 0.2, "endSeconds": 1.0, "development": "Title AN IDEA appears with its backing; density threshold rises so the glow spreads and the bulb shape locks to solid paper with dark base bands.", "captions": ["AN IDEA"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.8}
+      ]
+    },
+    {
+      "id": "scene-2",
+      "title": "Threshold boundary switches the system",
+      "startSeconds": 1.0,
+      "endSeconds": 1.9,
+      "purpose": "Move a threshold boundary rightward so the second region switches from ink to paper and the network draws as it passes.",
+      "visuals": ["Connector line leaves the bulb toward the panel", "Dithered transition band travels left to right", "Nodes, halos and links appear as the boundary crosses them"],
+      "assets": [],
+      "beats": [
+        {"startSeconds": 1.0, "endSeconds": 1.85, "development": "Connector extends to the panel edge; the boundary sweeps across, switching the region and revealing nodes and links of the connected system.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 1.85, "endSeconds": 1.9, "development": "Caption block appears on solid paper backing as the sweep completes.", "captions": ["BECOMES A", "CONNECTED SYSTEM"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-3",
+      "title": "Hold on the system",
+      "startSeconds": 1.9,
+      "endSeconds": 3,
+      "purpose": "Settled two-value frame for reading the full message.",
+      "visuals": ["Bulb on dark field linked to the network on the switched light panel", "Full caption readable"],
+      "assets": [],
+      "beats": [
+        {"startSeconds": 1.9, "endSeconds": 3, "development": "Static hold; the pattern reads as idea + connected system.", "captions": ["AN IDEA", "BECOMES A", "CONNECTED SYSTEM"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 1.1}
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["Two clear threshold actions (growth 0.1–1.05s, boundary sweep 1.0–1.9s) with no dead time; composition settled by 1.9s."],
+    "justifiedHolds": ["1.9–3.0s reading hold for the four-word caption and the settled shape, as the style asks to hold where the pattern reads as a shape."]
+  },
+  "notes": ["Silent preview.", "Renderer: Canvas 2D one-bit buffer (8x8 Bayer threshold, 4x nearest-neighbour); motion owner: one paused GSAP timeline at window.__timelines.video, redrawn on every seek and hf-seek.", "No reviewed preview recipes were listed; the catalogue characteristic action is demonstrated."]
+}

@@ -1,0 +1,29 @@
+{
+  "characters": [],
+  "displayTitle": "Silent Reel",
+  "displayDescription": "A lamplighter plugs in a lamp string, an intertitle names the idea, and the whole night street lights up.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview — no music, sound effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Procedural Canvas 2D approximation of projected nitrate film: the grain and vignette are a cached, stationary texture. Flicker, scratches and dust are seeded per exposure pair and kept subtle. There is no real film scan or optical printing.",
+    "Undercranked exposure is simulated by sampling eased poses at 12 steps per second on the 30 fps timeline.",
+    "Tinted stock is approximated with flat colour gradients from the approved palette roles. The light glow is a 2D radial gradient, not physical light transport.",
+    "No reviewed preview recipes or background review were supplied, so the preview demonstrates the catalogue's characteristic action.",
+    "The project technology selection could not be recorded because the project's dependency registry file is missing. The preview uses only native Canvas 2D and the supplied local gsap.min.js, with nothing installed.",
+    "Blender was not used, as instructed."
+  ]
+}

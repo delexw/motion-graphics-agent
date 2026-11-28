@@ -11,6 +11,8 @@
 | React Bits / Animate UI registry content | Upstream reads when a new registry client requests content; cached within that client                                                             | [Component capabilities](../src/server/agents/capabilities/README.md)                 |
 | npm dependencies and SDKs                | `install.sh` refreshes Claude/Codex and the compatible DeepSeek SDK/runtime pair; other packages use lockfile install/update; no runtime hot swap | `package.json`, `package-lock.json` and [dependency security](dependency-security.md) |
 
+Electron is a locked runtime dependency. Run `npm run electron:setup` after installing or upgrading the package to download its matching platform binary. The desktop launcher uses the existing production build and starts a dedicated instance of the same managed backend. The desktop and browser share installed tools, models and project data. The generation backend holds a cross-process lease on the shared project database through shutdown so a second backend cannot recover or run the same jobs. Launching Electron does not install packages, build the UI or start a Vite server.
+
 Restarting an MCP connection discovers its tools; it does not itself upgrade the
 server or prove model readiness. Keep executable/package versions, source revisions,
 model weights and copied project artifacts distinct.

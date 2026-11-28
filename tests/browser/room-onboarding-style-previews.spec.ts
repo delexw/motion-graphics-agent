@@ -29,11 +29,10 @@ test("keeps preview directions and effort settings through draft creation and sa
 import React,{useState}from'react';import{createRoot}from'react-dom/client';
 import{RoomOnboarding}from'/src/client/room/room-onboarding.tsx';
 import{emptyRoomDraft}from'/src/client/room/onboarding.ts';
-import{SavedProjectEffortSelect}from'/src/client/components/project-effort-select.tsx';
 import{ConfigProvider}from'antd';
 import{roomTheme,roomCssVariables}from'/src/client/theme.ts';
 import'/src/client/style.css';import'/src/client/room/room.css';
-function App(){const[created,setCreated]=useState(null);const[draft,setDraft]=useState({...emptyRoomDraft(),step:7,stepLayout:'separate-video',request:{instructions:${JSON.stringify(instructions)},duration:180,urls:[],selectedStyleIds:['style-056','style-098','style-093'],candidateCount:2}});return React.createElement(React.Fragment,null,React.createElement(RoomOnboarding,{draft,onChange:setDraft,materials:[],styles:${JSON.stringify(styles)},examples:[],onCreated:setCreated,onUpload:async()=>[]}),React.createElement('output',{id:'state'},JSON.stringify(draft)),React.createElement('output',{id:'created'},JSON.stringify(created)),created && React.createElement('div',{id:'saved-project-effort'},React.createElement(SavedProjectEffortSelect,{run:created,onUpdated:setCreated})));}
+function App(){const[created,setCreated]=useState(null);const[draft,setDraft]=useState({...emptyRoomDraft(),step:7,stepLayout:'separate-video',request:{instructions:${JSON.stringify(instructions)},duration:180,urls:[],selectedStyleIds:['style-056','style-098','style-093'],candidateCount:2}});return React.createElement(React.Fragment,null,React.createElement(RoomOnboarding,{draft,onChange:setDraft,materials:[],styles:${JSON.stringify(styles)},examples:[],onCreated:setCreated,onUpload:async()=>[]}),React.createElement('output',{id:'state'},JSON.stringify(draft)),React.createElement('output',{id:'created'},JSON.stringify(created)));}
 createRoot(document.getElementById('root')).render(React.createElement(ConfigProvider,{theme:roomTheme},React.createElement('div',{className:'room-utility',style:{...roomCssVariables,background:'var(--room-surface)'}},React.createElement(App))));</script>`,
             );
             res.setHeader("Content-Type", "text/html");
@@ -47,7 +46,6 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
     await server.listen();
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(String(error)));
-    const savedEffort: boolean[] = [];
     await page.route("**/*", (route) => {
       if (route.request().url().endsWith("/api/runs") && route.request().method() === "POST") {
         return route.fulfill({
@@ -60,27 +58,6 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
             jobs: [],
             candidates: [],
           }),
-        });
-      } else if (
-        route.request().url().endsWith("/api/runs/test-run/model-effort") &&
-        route.request().method() === "PATCH"
-      ) {
-        const { dynamicModelEffort } = JSON.parse(route.request().postData()!);
-        savedEffort.push(dynamicModelEffort);
-        return route.fulfill({
-          status: dynamicModelEffort ? 200 : 503,
-          contentType: "application/json",
-          body: JSON.stringify(
-            dynamicModelEffort
-              ? {
-                  id: "test-run",
-                  request: { dynamicModelEffort },
-                  phase: "queued",
-                  jobs: [],
-                  candidates: [],
-                }
-              : { error: "Fixture save failed" },
-          ),
         });
       } else if (
         route.request().url().startsWith(server.resolvedUrls!.local[0]) ||
@@ -285,22 +262,6 @@ createRoot(document.getElementById('root')).render(React.createElement(ConfigPro
     expect(submitted.instructions).toBe(instructions);
     expect(submitted.candidateCount).toBe(0);
     expect(submitted.dynamicModelEffort).toBe(false);
-    const savedSelect = `#saved-project-effort ${effortSelect}`;
-    expect(await selectValue(savedSelect)).toBe("No");
-    await setEffort(savedSelect, "Yes");
-    await page.waitForFunction(
-      (selector) =>
-        document.querySelector(selector)?.closest(".ant-select")?.textContent?.trim() === "Yes",
-      savedSelect,
-      {},
-    );
-    await setEffort(savedSelect, "No");
-    await page
-      .locator("#saved-project-effort .ant-alert-error")
-      .first()
-      .waitFor({ state: "attached" });
-    expect(await selectValue(savedSelect)).toBe("Yes");
-    expect(savedEffort).toEqual([true, false]);
     expect(errors).toEqual([]);
   } finally {
     await server.close();

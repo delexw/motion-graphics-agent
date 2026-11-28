@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pen Plotter — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #2E343B; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; }
+  #root svg { display: block; width: 100%; height: 100%; }
+  .mono { font-family: "Courier New", Menlo, Monaco, monospace; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <g id="reg" fill="none" stroke="#242831" stroke-width="1"><circle r="9"/><path d="M-16 0H16M0-16V16"/></g>
+  </defs>
+  <!-- stationary plotter bed and registered sheet -->
+  <rect width="1280" height="720" fill="#2E343B"/>
+  <g stroke="#3A4149" stroke-width="1">
+    <path d="M0 24H1280M0 696H1280"/>
+  </g>
+  <rect x="148" y="70" width="1000" height="600" fill="#1C2126"/>
+  <rect id="sheet" x="140" y="60" width="1000" height="600" fill="#F2F2EE"/>
+  <use href="#reg" x="172" y="92"/><use href="#reg" x="1108" y="92"/>
+  <use href="#reg" x="172" y="628"/><use href="#reg" x="1108" y="628"/>
+  <text class="mono" x="204" y="132" font-size="28" fill="#242831">An idea becomes a connected system</text>
+  <text class="mono" x="204" y="604" font-size="14" fill="#242831">PLOT 07 · 0.3 MM DRY PEN · SHEET REGISTERED</text>
+  <text id="status" class="mono" x="812" y="604" font-size="14" fill="#242831">○ PEN UP · HOMING</text>
+
+  <!-- ink layer: every path is revealed only by dash offset while the pen is down -->
+  <g id="ink" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></g>
+
+  <!-- moving plotter gantry (bridge spans the bed) + carriage + pen -->
+  <g id="gantry">
+    <rect x="-26" y="0" width="52" height="720" fill="#1C2126" opacity="0.9"/>
+    <rect x="-26" y="0" width="4" height="720" fill="#454D57"/>
+    <rect x="22" y="0" width="4" height="720" fill="#454D57"/>
+    <rect x="-30" y="0" width="60" height="22" fill="#11151A"/>
+    <rect x="-30" y="698" width="60" height="22" fill="#11151A"/>
+    <g id="carriage">
+      <ellipse id="penShadow" cx="0" cy="2" rx="4" ry="2" fill="#000" opacity="0.25"/>
+      <g id="pen">
+        <rect x="-18" y="-74" width="36" height="30" rx="4" fill="#3A4149" stroke="#5B636D" stroke-width="1"/>
+        <rect x="-10" y="-62" width="20" height="44" rx="3" fill="#242831"/>
+        <path id="penTip" d="M0 0-8-18h16Z" fill="#242831"/>
+        <rect id="penBand" x="-10" y="-30" width="20" height="5" fill="#242831"/>
+      </g>
+      <circle id="upMark" r="5" fill="none" stroke="#8C939B" stroke-width="1.2" opacity="0"/>
+    </g>
+  </g>
+</svg>
+</div>
+<script src="gsap.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var NS = "http://www.w3.org/2000/svg";
+  var INK = "#242831", RED = "#9F352D";
+  var ink = document.getElementById("ink");
+  var gantry = document.getElementById("gantry");
+  var carriage = document.getElementById("carriage");
+  var pen = document.getElementById("pen");
+  var penShadow = document.getElementById("penShadow");
+  var penTip = document.getElementById("penTip");
+  var penBand = document.getElementById("penBand");
+  var upMark = document.getElementById("upMark");
+  var statusEl = document.getElementById("status");
+
+  // ---- subject geometry (from the approved illustration) ----
+  var BULB = "M380 190c-62 0-108 46-108 106 0 40 22 64 40 86 12 14 18 28 18 44h100c0-16 6-30 18-44 18-22 40-46 40-86 0-60-46-106-108-106z";
+  var N = { A:[640,230], B:[760,170], C:[820,300], D:[700,400], E:[900,420], F:[960,250], G:[1020,380] };
+  function ring(p, r) { // spoke out, full loop, spoke back: one continuous pen-down stroke
+    var x = p[0], y = p[1];
+    return " L" + (x + r) + " " + y + " A" + r + " " + r + " 0 1 1 " + (x - r) + " " + y +
+           " A" + r + " " + r + " 0 1 1 " + (x + r) + " " + y + " L" + x + " " + y;
+  }
+  function edge(a, b, withRing) {
+    var d = "M" + N[a][0] + " " + N[a][1] + " L" + N[b][0] + " " + N[b][1];
+    return withRing ? d + ring(N[b], 12) : d;
+  }
+
+  // Route: physically traceable order. "draw" = pen down; "travel" = pen lifted, no ink.
+  var route = [
+    { draw: BULB, scale: 1, label: "CONTOUR 01" },
+    { travel: true },
+    { draw: BULB, scale: 0.84, label: "CONTOUR 02" },
+    { travel: true },
+    { draw: BULB, scale: 0.68, label: "CONTOUR 03" },
+    { travel: true },
+    { draw: "M336 446H424L418 460H342L352 474H408", scale: 1, label: "BASE" },
+    { travel: true },
+    { draw: "M356 340l12-36 12 30 12-30 12 36", scale: 1, label: "FILAMENT" },
+    { travel: true, long: true },
+    // one continuous Euler trail B→A→C→D→E→F→C→B→F, ringing each node on first visit
+    { draw: "M760 170" + ring(N.B, 12) + " L640 230", label: "LINK 01", ringOnly: true },
+    { draw: "M640 230" + ring(N.A, 12), label: "LINK 01" },
+    { draw: edge("A", "C", true), label: "LINK 02" },
+    { draw: edge("C", "D", true), label: "LINK 03" },
+    { draw: edge("D", "E", true), label: "LINK 04" },
+    { draw: edge("E", "F", true), label: "LINK 05" },
+    { draw: edge("F", "C", false), label: "LINK 06" },
+    { draw: edge("C", "B", false), label: "LINK 07" },
+    { draw: edge("B", "F", false), label: "LINK 08" },
+    { travel: true, penSwap: true },
+    { draw: edge("F", "G", true), label: "LINK 09", color: RED }
+  ];
+
+  // Build ink paths and measure lengths (deterministic, done once before the timeline).
+  var segs = [];
+  route.forEach(function (r) {
+    if (!r.draw) return;
+    var p = document.createElementNS(NS, "path");
+    p.setAttribute("d", r.draw);
+    p.setAttribute("stroke", r.color || INK);
+    if (r.scale && r.scale !== 1) {
+      p.setAttribute("transform", "translate(380 310) scale(" + r.scale + ") translate(-380 -310)");
+      p.setAttribute("stroke-width", (2 / r.scale).toFixed(3));
+    }
+    ink.appendChild(p);
+    var L = p.getTotalLength();
+    p.style.strokeDasharray = L + " " + (L + 2);
+    p.style.strokeDashoffset = L;
+    r.el = p; r.len = L * (r.scale || 1);
+    r.rawLen = L;
+    var s = r.scale || 1;
+    var samples = [], STEPS = Math.max(24, Math.ceil(L / 4));
+    for (var i = 0; i <= STEPS; i++) {
+      var pt = p.getPointAtLength(L * i / STEPS);
+      samples.push([380 + s * (pt.x - 380), 310 + s * (pt.y - 310)]);
+    }
+    r.samples = samples;
+  });
+
+  // ---- schedule by path length ----
+  var HOME = [1080, 560];
+  var T0 = 0.12, T_END = 2.5;
+  var LIFT = 0.05, PAUSE = 0.04, DROP = 0.05, SWAP = 0.12;
+  var travelSpeed = 2400; // px/s while lifted
+  // resolve travel endpoints
+  for (var i = 0; i < route.length; i++) {
+    var r = route[i];
+    if (r.travel) {
+      var prev = route[i - 1], next = route[i + 1];
+      r.from = prev.samples[prev.samples.length - 1];
+      r.to = next.samples[0];
+      var dist = Math.hypot(r.to[0] - r.from[0], r.to[1] - r.from[1]);
+      r.move = Math.max(0.07, dist / travelSpeed);
+      r.dur = LIFT + PAUSE + r.move + DROP + (r.penSwap ? SWAP : 0);
+    }
+  }
+  var travelTotal = 0, inkTotal = 0;
+  route.forEach(function (r) { if (r.travel) travelTotal += r.dur; else inkTotal += r.len; });
+  var homeMove = 0.0; // pen starts lowering at first contour start point (homed off-sheet before t=0 is not shown)
+  var drawSpeed = inkTotal / (T_END - T0 - travelTotal);
+  var t = T0;
+  route.forEach(function (r) {
+    r.start = t;
+    if (!r.travel) r.dur = r.len / drawSpeed;
+    r.end = t + r.dur; t = r.end;
+  });
+  var START_PT = route[0].samples[0];
+
+  function lerp(a, b, k) { return a + (b - a) * k; }
+  function ease(k) { return 0.5 - 0.5 * Math.cos(Math.PI * k); }
+  function clamp01(k) { return k < 0 ? 0 : k > 1 ? 1 : k; }
+  function sampleAt(r, k) {
+    var n = r.samples.length - 1, f = k * n, i = Math.floor(f);
+    if (i >= n) return r.samples[n];
+    var a = r.samples[i], b = r.samples[i + 1], u = f - i;
+    return [lerp(a[0], b[0], u), lerp(a[1], b[1], u)];
+  }
+
+  var lastStatus = null, lastColor = null, lastTip = null;
+  function setStatus(txt, color) {
+    if (txt !== lastStatus) { statusEl.textContent = txt; lastStatus = txt; }
+    if (color !== lastColor) { statusEl.setAttribute("fill", color); lastColor = color; }
+  }
+  function setTip(color) {
+    if (color === lastTip) return; lastTip = color;
+    penTip.setAttribute("fill", color); penBand.setAttribute("fill", color);
+  }
+
+  // Pure function of absolute composition time.
+  function render(time) {
+    var pos = START_PT, lift = 1, tip = INK, status = "○ PEN UP · HOMING", sColor = "#242831";
+    // ink: each path's dash offset derives only from time
+    for (var i = 0; i < route.length; i++) {
+      var r = route[i];
+      if (r.travel) continue;
+      var k = clamp01((time - r.start) / r.dur);
+      r.el.style.strokeDashoffset = r.rawLen * (1 - k);
+    }
+    if (time < T0) {
+      lift = 1 - ease(clamp01(time / T0));
+      pos = START_PT;
+    } else if (time >= T_END) {
+      var last = route[route.length - 1];
+      pos = last.samples[last.samples.length - 1];
+      tip = RED;
+      lift = ease(clamp01((time - T_END) / 0.12));
+      status = lift < 0.5 ? "● PEN DOWN: LINK 09" : "○ PEN UP · 9 LINKS PLOTTED";
+      sColor = RED;
+    } else {
+      var swapped = false;
+      for (var j = 0; j < route.length; j++) {
+        var s = route[j];
+        if (s.penSwap && time >= s.start + LIFT + PAUSE + s.move) swapped = true;
+        if (time < s.start || time >= s.end) continue;
+        var lt = time - s.start;
+        if (s.travel) {
+          var mv = s.dur - LIFT - DROP - (s.penSwap ? SWAP : 0);
+          if (lt < LIFT) { lift = ease(lt / LIFT); pos = s.from; }
+          else if (lt < LIFT + PAUSE) { lift = 1; pos = s.from; }
+          else if (lt < LIFT + PAUSE + s.move) {
+            var m = ease((lt - LIFT - PAUSE) / s.move);
+            pos = [lerp(s.from[0], s.to[0], m), lerp(s.from[1], s.to[1], m)]; lift = 1;
+          } else if (lt < s.dur - DROP) { lift = 1; pos = s.to; }
+          else { lift = 1 - ease((lt - (s.dur - DROP)) / DROP); pos = s.to; }
+          status = s.penSwap ? (swapped ? "○ PEN UP · RED PEN LOADED" : "○ PEN UP · SWAP PEN") : "○ PEN UP · TRAVEL";
+          sColor = "#242831";
+        } else {
+          pos = sampleAt(s, lt / s.dur); lift = 0;
+          status = "● PEN DOWN: " + s.label;
+          sColor = s.color || "#242831";
+        }
+        break;
+      }
+      tip = swapped ? RED : INK;
+    }
+    gantry.setAttribute("transform", "translate(" + pos[0].toFixed(2) + " 0)");
+    carriage.setAttribute("transform", "translate(0 " + pos[1].toFixed(2) + ")");
+    pen.setAttribute("transform", "translate(0 " + (-12 * lift).toFixed(2) + ")");
+    penShadow.setAttribute("rx", (4 + 5 * lift).toFixed(2));
+    penShadow.setAttribute("opacity", (0.28 - 0.16 * lift).toFixed(3));
+    upMark.setAttribute("opacity", (lift * 0.9).toFixed(3));
+    setTip(tip);
+    setStatus(status, sColor);
+  }
+
+  var state = { t: 0 };
+  var tl = gsap.timeline({ paused: true });
+  tl.to(state, { t: 3, duration: 3, ease: "none", onUpdate: function () { render(state.t); } }, 0);
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  window.addEventListener("hf-seek", function () { render(tl.time()); });
+  render(0);
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

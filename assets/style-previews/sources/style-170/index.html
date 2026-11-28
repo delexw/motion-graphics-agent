@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Terrain Map Explainer — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #0F2A3D; }
+  #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #0F2A3D;
+    font-family: "Avenir Next", "Gill Sans", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  #stage { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: 0 0; }
+  #waves, #gl, #overlay { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; }
+  .card { position: absolute; left: 780px; width: 440px; background: #EEF3EF; border-radius: 12px; box-shadow: 0 10px 30px rgba(5,18,28,.35); }
+  #title-card { top: 80px; height: 170px; }
+  #title-card h1 { margin: 0; position: absolute; left: 30px; top: 30px; font-size: 32px; line-height: 40px; font-weight: 700; color: #142536; letter-spacing: -0.2px; }
+  #title-card p { margin: 0; position: absolute; left: 30px; top: 124px; font-size: 15px; color: #3A5568; }
+  #section-card { top: 290px; height: 320px; }
+</style>
+<script src="./gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+ <div id="stage">
+  <!-- stationary sea texture -->
+  <svg id="waves" viewBox="0 0 1280 720" aria-hidden="true">
+    <defs><pattern id="w" width="40" height="16" patternUnits="userSpaceOnUse"><path d="M0 8q10-6 20 0t20 0" fill="none" stroke="#2B5470"/></pattern></defs>
+    <rect width="1280" height="720" fill="url(#w)" opacity=".55"/>
+  </svg>
+  <canvas id="gl" width="1280" height="720"></canvas>
+
+  <!-- map annotations projected from the same 3D coordinates every frame -->
+  <svg id="overlay" viewBox="0 0 1280 720" font-family="Avenir Next, Gill Sans, Helvetica Neue, Helvetica, Arial, sans-serif">
+    <g id="routes" fill="none" stroke="#F2A541" stroke-width="4" stroke-dasharray="10 7" stroke-linecap="round"></g>
+    <path id="section-line" fill="none" stroke="#142536" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/>
+    <g id="nodes"></g>
+    <g id="map-labels" font-size="15" font-weight="700" fill="#142536" stroke="#F4F6EE" stroke-width="4" paint-order="stroke" stroke-linejoin="round"></g>
+    <g id="section-tag" opacity="0">
+      <rect id="section-tag-bg" x="0" y="0" width="150" height="24" rx="12" fill="#142536"/>
+      <text id="section-tag-text" x="75" y="16.5" font-size="12" font-weight="700" letter-spacing="1" fill="#FFFFFF" text-anchor="middle">SECTION LINE</text>
+    </g>
+    <!-- locator -->
+    <g id="locator" opacity="0">
+      <circle id="loc-ring" r="28" fill="none" stroke="#005885" stroke-width="3"/>
+      <g id="loc-pin">
+        <path d="M0 0c-12-16-18-24-18-34a18 18 0 0 1 36 0c0 10-6 18-18 34z" fill="#005885" stroke="#FFFFFF" stroke-width="2.5"/>
+        <circle cx="0" cy="-34" r="6" fill="#FFFFFF"/>
+      </g>
+    </g>
+    <!-- leader from map section end to the section card -->
+    <path id="leader" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="3 5" opacity="0"/>
+
+    <!-- orientation: north stays screen-up through the whole tilt (camera only pitches) -->
+    <g transform="translate(70 34)">
+      <text x="0" y="12" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">N</text>
+      <path d="M0 18l11 36-11-9-11 9z" fill="#FFFFFF"/>
+    </g>
+    <!-- scale + elevation legend (stable size) -->
+    <g transform="translate(60 668)">
+      <text x="0" y="-10" font-size="13" fill="#B9D5DE">0</text>
+      <text id="scale-label" x="160" y="-10" font-size="13" fill="#B9D5DE" text-anchor="end">2 km</text>
+      <rect id="scale-a" x="0" y="0" width="80" height="8" fill="#FFFFFF"/>
+      <rect id="scale-b" x="80" y="0" width="80" height="8" fill="none" stroke="#FFFFFF"/>
+    </g>
+    <g id="legend" transform="translate(262 652)" font-size="13" fill="#B9D5DE">
+      <text x="0" y="-4">Elevation (m)</text>
+      <rect x="0" y="6" width="44" height="10" fill="#6E9B7E"/>
+      <rect x="44" y="6" width="44" height="10" fill="#9DBB86"/>
+      <rect x="88" y="6" width="44" height="10" fill="#CBD394"/>
+      <rect x="132" y="6" width="44" height="10" fill="#F1EBC8"/>
+      <text x="0" y="32">0</text><text x="44" y="32">150</text><text x="88" y="32">320</text><text x="132" y="32">500+</text>
+    </g>
+  </svg>
+
+  <div id="title-card" class="card"><h1>An idea becomes<br>a connected system</h1><p>Peak = the idea · routes = its connections</p></div>
+
+  <div id="section-card" class="card">
+    <svg id="section-svg" width="440" height="320" viewBox="780 290 440 320" font-family="Avenir Next, Gill Sans, Helvetica Neue, Helvetica, Arial, sans-serif">
+      <defs>
+        <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4DFA8"/><stop offset="0.45" stop-color="#CBD394"/><stop offset="1" stop-color="#6E9B7E"/></linearGradient>
+        <clipPath id="profile-clip"><rect id="profile-clip-rect" x="800" y="330" width="0" height="260"/></clipPath>
+      </defs>
+      <g data-reveal-after="section-card" id="sec-labels" opacity="0">
+        <text x="810" y="326" font-size="13" letter-spacing="2" font-weight="700" fill="#3A5568">SECTION A – IDEA – C</text>
+        <text id="ve-label" x="1190" y="326" font-size="12" fill="#3A5568" text-anchor="end">Vertical ×4.1</text>
+        <text x="810" y="594" font-size="12" fill="#3A5568">0 km</text>
+        <text id="len-label" x="1190" y="594" font-size="12" fill="#3A5568" text-anchor="end">8.1 km</text>
+      </g>
+      <line x1="810" y1="568" x2="1190" y2="568" stroke="#142536" stroke-width="2"/>
+      <g clip-path="url(#profile-clip)">
+        <path id="profile" fill="url(#pg)" stroke="#142536" stroke-width="1.5" stroke-linejoin="round"/>
+        <g id="profile-ticks" stroke="#005885" stroke-width="1.5" stroke-dasharray="3 3"></g>
+      </g>
+      <g id="profile-labels" opacity="0" font-size="14" font-weight="700" fill="#142536" text-anchor="middle"></g>
+    </svg>
+  </div>
+ </div>
+</div>
+
+<script type="module">
+import { technology as THREE } from "./technology-three_js-hRuXqO/index.js";
+
+/* ---------- shared terrain data (single source for map, 3D slice and section card) ---------- */
+const PX_PER_KM = 80;               // top-down map scale (2 km = 160 px scale bar)
+const VE3D = 1.2;                   // 3D relief exaggeration (world units per normalised km)
+const SEA = 0.08;
+const HILLS = [
+  { n: "IDEA", x: 0.2,  z: -0.6, a: 1.06, s: 1.0,  k: 0.14, ph: 0.6 },
+  { n: "A",    x: -3.2, z: 1.8,  a: 0.62, s: 0.66, k: 0.12, ph: 2.1 },
+  { n: "C",    x: 3.3,  z: 1.9,  a: 0.74, s: 0.70, k: 0.12, ph: 4.0 },
+  { n: "D",    x: 3.5,  z: -2.6, a: 0.52, s: 0.50, k: 0.10, ph: 1.3 },
+];
+function elev(x, z) {               // normalised elevation, 1.0 = 1000 m
+  let h = 0;
+  for (const H of HILLS) {
+    const dx = x - H.x, dz = z - H.z, th = Math.atan2(dz, dx);
+    const w = 1 + H.k * Math.sin(3 * th + H.ph) + 0.06 * Math.sin(5 * th + 2 * H.ph);
+    h += H.a * Math.exp(-((dx * dx + dz * dz) / (w * w)) / (2 * H.s * H.s));
+  }
+  return h - SEA;
+}
+const P = Object.fromEntries(HILLS.map(H => [H.n, { x: H.x, z: H.z }]));
+
+/* section polyline A -> IDEA -> C, sampled by horizontal distance */
+const SEC = [P.A, P.IDEA, P.C];
+const segLen = [Math.hypot(P.IDEA.x - P.A.x, P.IDEA.z - P.A.z), Math.hypot(P.C.x - P.IDEA.x, P.C.z - P.IDEA.z)];
+const SEC_LEN = segLen[0] + segLen[1];
+const NS = 240;
+const secPts = [];
+for (let i = 0; i <= NS; i++) {
+  const s = (i / NS) * SEC_LEN;
+  let a, b, f;
+  if (s <= segLen[0]) { a = P.A; b = P.IDEA; f = s / segLen[0]; } else { a = P.IDEA; b = P.C; f = (s - segLen[0]) / segLen[1]; }
+  const x = a.x + (b.x - a.x) * f, z = a.z + (b.z - a.z) * f;
+  secPts.push({ s, x, z, e: Math.max(elev(x, z), 0) });
+}
+
+/* ---------- Three.js scene ---------- */
+const canvas = document.getElementById("gl");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(1280, 720, false);
+renderer.setClearColor(0x000000, 0);
+const scene = new THREE.Scene();
+const FOV = 24;
+const camera = new THREE.PerspectiveCamera(FOV, 1280 / 720, 0.5, 200);
+camera.up.set(0, 0, -1);            // north (-z) is screen-up
+const TARGET_X = (640 - 390) / PX_PER_KM; // map centre sits at x=390 px, cards on the right
+const DIST0 = 4.5 / Math.tan((FOV / 2) * Math.PI / 180); // 9 km visible height at sea level
+
+// terrain heightfield
+const W = 13, D = 10, SX = 325, SZ = 250;
+const geo = new THREE.PlaneGeometry(W, D, SX, SZ);
+geo.rotateX(-Math.PI / 2);
+geo.translate(0.6, 0, 0);
+const pos = geo.attributes.position;
+const aElev = new Float32Array(pos.count), aGrad = new Float32Array(pos.count * 2);
+for (let i = 0; i < pos.count; i++) {
+  const x = pos.getX(i), z = pos.getZ(i), e = elev(x, z), h = 0.01;
+  aElev[i] = e;
+  aGrad[i * 2] = (elev(x + h, z) - elev(x - h, z)) / (2 * h);
+  aGrad[i * 2 + 1] = (elev(x, z + h) - elev(x, z - h)) / (2 * h);
+}
+geo.setAttribute("aElev", new THREE.BufferAttribute(aElev, 1));
+geo.setAttribute("aGrad", new THREE.BufferAttribute(aGrad, 2));
+const terrainMat = new THREE.ShaderMaterial({
+  transparent: true,
+  uniforms: { uRise: { value: 0.35 }, uVE: { value: VE3D } },
+  vertexShader: `
+    attribute float aElev; attribute vec2 aGrad;
+    uniform float uRise; uniform float uVE;
+    varying float vE; varying vec3 vN;
+    void main(){
+      vE = aElev * uRise;
+      vec3 p = position; p.y = max(vE, 0.0) * uVE;
+      vN = normalize(vec3(-aGrad.x * uVE * uRise, 1.0, -aGrad.y * uVE * uRise));
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+    }`,
+  fragmentShader: `
+    varying float vE; varying vec3 vN;
+    vec3 hex(float r,float g,float b){ return vec3(r,g,b)/255.0; }
+    float iso(float e, float t, float fw){ return 1.0 - smoothstep(0.0, fw * 1.3, abs(e - t)); }
+    void main(){
+      float fw = max(fwidth(vE), 1e-4);
+      float a = smoothstep(-fw, fw, vE);
+      if (a <= 0.001) discard;
+      vec3 c = hex(110.,155.,126.);                       // #6E9B7E
+      c = mix(c, hex(157.,187.,134.), step(0.15, vE));    // #9DBB86
+      c = mix(c, hex(203.,211.,148.), step(0.32, vE));    // #CBD394
+      c = mix(c, hex(241.,235.,200.), step(0.50, vE));    // #F1EBC8
+      vec3 L = normalize(vec3(-1.0, 1.6, -1.0));
+      float shade = 0.80 + 0.30 * max(dot(normalize(vN), L), 0.0);
+      c *= shade;
+      float line = max(max(iso(vE, 0.15, fw), iso(vE, 0.32, fw)), iso(vE, 0.50, fw));
+      line = max(line, iso(vE, 0.012, fw) * 0.9);
+      c = mix(c, hex(20.,37.,54.), line * 0.4);
+      gl_FragColor = vec4(c, a);
+    }`,
+});
+const terrain = new THREE.Mesh(geo, terrainMat);
+scene.add(terrain);
+
+// 3D section slice: the vertical cut along A–IDEA–C, built from the same samples
+const wallPos = [], wallT = [], wallIdx = [];
+secPts.forEach((p, i) => {
+  wallPos.push(p.x, 0, p.z, p.x, p.e * VE3D, p.z);
+  wallT.push(0, Math.min(p.e / 0.9, 1));
+  if (i < NS) { const k = i * 2; wallIdx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
+});
+const wallGeo = new THREE.BufferGeometry();
+wallGeo.setAttribute("position", new THREE.Float32BufferAttribute(wallPos, 3));
+wallGeo.setAttribute("aT", new THREE.Float32BufferAttribute(wallT, 1));
+wallGeo.setIndex(wallIdx);
+const wallMat = new THREE.ShaderMaterial({
+  transparent: true, side: THREE.DoubleSide, depthWrite: false,
+  uniforms: { uOpacity: { value: 0 } },
+  vertexShader: `attribute float aT; varying float vT; void main(){ vT = aT; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+  fragmentShader: `uniform float uOpacity; varying float vT;
+    void main(){ vec3 lo = vec3(110.,155.,126.)/255.; vec3 hi = vec3(228.,223.,168.)/255.;
+      gl_FragColor = vec4(mix(lo, hi, clamp(vT,0.,1.)), uOpacity); }`,
+});
+const wallGroup = new THREE.Group();
+const wall = new THREE.Mesh(wallGeo, wallMat);
+wallGroup.add(wall);
+const topLine = new THREE.Line(
+  new THREE.BufferGeometry().setFromPoints(secPts.map(p => new THREE.Vector3(p.x, p.e * VE3D + 0.003, p.z))),
+  new THREE.LineBasicMaterial({ color: 0x142536, transparent: true, opacity: 0 })
+);
+const baseLine = new THREE.Line(
+  new THREE.BufferGeometry().setFromPoints(secPts.map(p => new THREE.Vector3(p.x, 0, p.z))),
+  new THREE.LineBasicMaterial({ color: 0x142536, transparent: true, opacity: 0 })
+);
+wallGroup.add(topLine, baseLine);
+wallGroup.renderOrder = 2;
+scene.add(wallGroup);
+
+/* ---------- projection helpers ---------- */
+const v3 = new THREE.Vector3();
+function surfY(x, z, rise) { return Math.max(elev(x, z) * rise, 0) * VE3D + 0.02; }
+function project(x, y, z) {
+  v3.set(x, y, z).project(camera);
+  return [(v3.x * 0.5 + 0.5) * 1280, (-v3.y * 0.5 + 0.5) * 720];
+}
+function polyD(pts) { return pts.length ? "M" + pts.map(p => p[0].toFixed(1) + " " + p[1].toFixed(1)).join("L") : ""; }
+function partial(pts, f) {          // first fraction f of a polyline (by index)
+  if (f <= 0) return [];
+  if (f >= 1) return pts;
+  const t = f * (pts.length - 1), i = Math.floor(t), r = t - i;
+  const out = pts.slice(0, i + 1);
+  const a = pts[i], b = pts[i + 1];
+  out.push([a[0] + (b[0] - a[0]) * r, a[1] + (b[1] - a[1]) * r]);
+  return out;
+}
+
+/* routes (geographic connections), draped on the terrain */
+function lineXZ(a, b, n = 60) { return Array.from({ length: n + 1 }, (_, i) => ({ x: a.x + (b.x - a.x) * i / n, z: a.z + (b.z - a.z) * i / n })); }
+function quadXZ(a, c, b, n = 80) { return Array.from({ length: n + 1 }, (_, i) => { const t = i / n, u = 1 - t; return { x: u*u*a.x + 2*u*t*c.x + t*t*b.x, z: u*u*a.z + 2*u*t*c.z + t*t*b.z }; }); }
+const ROUTES = [
+  lineXZ(P.IDEA, P.A), lineXZ(P.IDEA, P.C), lineXZ(P.IDEA, P.D), quadXZ(P.A, { x: 0.1, z: 4.4 }, P.C),
+];
+const svgNS = "http://www.w3.org/2000/svg";
+const routeEls = ROUTES.map(() => { const p = document.createElementNS(svgNS, "path"); document.getElementById("routes").appendChild(p); return p; });
+const nodeEls = ["A", "C", "D"].map(() => {
+  const c = document.createElementNS(svgNS, "circle");
+  c.setAttribute("r", "7"); c.setAttribute("fill", "#F2A541"); c.setAttribute("stroke", "#0F2A3D"); c.setAttribute("stroke-width", "2");
+  document.getElementById("nodes").appendChild(c); return c;
+});
+const LABELS = [
+  { n: "IDEA", dx: 30, dy: -22, anchor: "start" },
+  { n: "A", dx: -14, dy: -16, anchor: "end" },
+  { n: "C", dx: 14, dy: -16, anchor: "start" },
+  { n: "D", dx: 14, dy: -12, anchor: "start" },
+];
+const labelEls = LABELS.map(L => { const t = document.createElementNS(svgNS, "text"); t.textContent = L.n; t.setAttribute("text-anchor", L.anchor); document.getElementById("map-labels").appendChild(t); return t; });
+
+/* ---------- section card: same samples, linear distance axis ---------- */
+const PX0 = 810, PX1 = 1190, BASE = 568, PLOT_H = 190;       // 190 px = 1000 m
+const pxPerKmH = (PX1 - PX0) / SEC_LEN, VE_CARD = PLOT_H / pxPerKmH;
+document.getElementById("ve-label").textContent = "Vertical ×" + VE_CARD.toFixed(1);
+document.getElementById("len-label").textContent = SEC_LEN.toFixed(1) + " km";
+const cx = s => PX0 + s * pxPerKmH, cy = e => BASE - e * PLOT_H;
+document.getElementById("profile").setAttribute("d",
+  `M${PX0} ${BASE}` + secPts.map(p => `L${cx(p.s).toFixed(1)} ${cy(p.e).toFixed(1)}`).join("") + `L${PX1} ${BASE}Z`);
+const marks = [{ n: "A", s: 0 }, { n: "IDEA", s: segLen[0] }, { n: "C", s: SEC_LEN }];
+// label each marker at the true profile point (A and C are the section ends; peaks are nearby)
+const ticks = document.getElementById("profile-ticks"), plab = document.getElementById("profile-labels");
+marks.forEach(m => {
+  const e = Math.max(elev(m.n === "A" ? P.A.x : m.n === "C" ? P.C.x : P.IDEA.x, m.n === "A" ? P.A.z : m.n === "C" ? P.C.z : P.IDEA.z), 0);
+  const x = cx(m.s), y = cy(e);
+  const l = document.createElementNS(svgNS, "line");
+  l.setAttribute("x1", x); l.setAttribute("x2", x); l.setAttribute("y1", y); l.setAttribute("y2", BASE); ticks.appendChild(l);
+  const c = document.createElementNS(svgNS, "circle");
+  c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 4.5); c.setAttribute("fill", "#005885"); c.setAttribute("stroke", "#FFFFFF"); c.setAttribute("stroke-width", 1.5);
+  plab.appendChild(c);
+  const t = document.createElementNS(svgNS, "text");
+  t.setAttribute("x", Math.min(Math.max(x, PX0 + 14), PX1 - 14)); t.setAttribute("y", y - 12);
+  t.textContent = m.n === "IDEA" ? `IDEA · ${Math.round(e * 1000)} m` : m.n;
+  plab.appendChild(t);
+});
+
+/* ---------- DOM refs ---------- */
+const $ = id => document.getElementById(id);
+const el = {
+  title: $("title-card"), card: $("section-card"), secLabels: $("sec-labels"), profLabels: $("profile-labels"),
+  clip: $("profile-clip-rect"), secLine: $("section-line"), tag: $("section-tag"), tagBg: $("section-tag-bg"),
+  loc: $("locator"), ring: $("loc-ring"), pin: $("loc-pin"), leader: $("leader"),
+};
+
+/* ---------- state owned by one GSAP timeline; draw() is the only writer to scene/DOM ---------- */
+const S = { title: 0, rise: 0.35, pin: 0, ring: 0, idea: 0, cut: 0, tag: 0, tilt: 0, lift: 0, wall: 0,
+  card: 0, profile: 0, cardLabels: 0, leader: 0, routes: 0, nodes: 0 };
+
+function draw() {
+  // camera: pitch only, so north stays screen-up
+  const pitch = S.tilt * 52 * Math.PI / 180;
+  const dist = DIST0 - S.tilt * 3.2;
+  const ty = S.tilt * 0.35;
+  camera.position.set(TARGET_X, ty + dist * Math.cos(pitch), dist * Math.sin(pitch));
+  camera.lookAt(TARGET_X, ty, 0);
+  camera.updateMatrixWorld(); camera.updateProjectionMatrix();
+
+  terrainMat.uniforms.uRise.value = S.rise;
+  wallGroup.position.y = S.lift * 1.35;
+  wallGroup.scale.y = Math.max(S.wall, 0.0001);
+  wallGroup.visible = S.wall > 0.001;
+  wallMat.uniforms.uOpacity.value = 0.94 * S.wall;
+  topLine.material.opacity = S.wall; baseLine.material.opacity = 0.6 * S.wall;
+  renderer.render(scene, camera);
+
+  // title card
+  el.title.style.opacity = S.title;
+  el.title.style.transform = `translateX(${(1 - S.title) * 24}px)`;
+
+  // locator
+  const [ix, iy] = project(P.IDEA.x, surfY(P.IDEA.x, P.IDEA.z, S.rise), P.IDEA.z);
+  el.loc.setAttribute("opacity", Math.min(S.pin * 3, 1));
+  el.loc.setAttribute("transform", `translate(${ix.toFixed(1)} ${iy.toFixed(1)})`);
+  el.pin.setAttribute("transform", `translate(0 ${((1 - S.pin) * -46).toFixed(1)})`);
+  el.ring.setAttribute("r", (6 + 22 * S.ring).toFixed(2));
+  el.ring.setAttribute("opacity", S.ring);
+
+  // section line on the map (draped trace of the cut)
+  const secScreen = secPts.map(p => project(p.x, surfY(p.x, p.z, S.rise), p.z));
+  el.secLine.setAttribute("d", polyD(secScreen));
+  el.secLine.setAttribute("stroke-dasharray", `${S.cut} 2`);
+  el.secLine.setAttribute("opacity", S.cut > 0 ? 1 : 0);
+  // section tag beside the A–IDEA leg
+  const tp = secScreen[Math.round(NS * 0.2)];
+  el.tag.setAttribute("opacity", S.tag);
+  el.tag.setAttribute("transform", `translate(${(tp[0] - 172).toFixed(1)} ${(tp[1] - 30).toFixed(1)})`);
+
+  // routes (restored last)
+  ROUTES.forEach((r, i) => {
+    const f = Math.min(Math.max(S.routes * 1.6 - i * 0.2, 0), 1);
+    routeEls[i].setAttribute("d", polyD(partial(r.map(p => project(p.x, surfY(p.x, p.z, S.rise), p.z)), f)));
+  });
+  ["A", "C", "D"].forEach((n, i) => {
+    const [x, y] = project(P[n].x, surfY(P[n].x, P[n].z, S.rise), P[n].z);
+    nodeEls[i].setAttribute("cx", x.toFixed(1)); nodeEls[i].setAttribute("cy", y.toFixed(1));
+    nodeEls[i].setAttribute("opacity", n === "D" ? S.nodes : Math.max(S.nodes, S.tag));
+  });
+  LABELS.forEach((L, i) => {
+    const p = P[L.n];
+    const [x, y] = project(p.x, surfY(p.x, p.z, S.rise), p.z);
+    labelEls[i].setAttribute("x", (x + L.dx).toFixed(1)); labelEls[i].setAttribute("y", (y + L.dy).toFixed(1));
+    const o = L.n === "IDEA" ? S.idea : L.n === "D" ? S.nodes : Math.max(S.tag, S.nodes);
+    labelEls[i].setAttribute("opacity", o);
+  });
+
+  // section card: container opens, then its labels
+  el.card.style.opacity = Math.min(S.card * 2, 1);
+  el.card.style.clipPath = `inset(0 0 ${((1 - S.card) * 100).toFixed(2)}% 0 round 12px)`;
+  el.clip.setAttribute("width", (S.profile * 400).toFixed(1));
+  el.secLabels.setAttribute("opacity", S.cardLabels);
+  el.profLabels.setAttribute("opacity", S.cardLabels);
+
+  // leader from the section end (C) on the map to the card
+  const [lx, ly] = project(P.C.x, surfY(P.C.x, P.C.z, S.rise), P.C.z);
+  el.leader.setAttribute("d", `M${(lx + 12).toFixed(1)} ${ly.toFixed(1)}H780`);
+  el.leader.setAttribute("opacity", S.leader);
+}
+
+const tl = gsap.timeline({ paused: true, onUpdate: draw, defaults: { ease: "power2.inOut" } });
+// 1 — reference location: map settles, locator lands on the IDEA peak
+tl.to(S, { title: 1, duration: 0.4, ease: "power2.out" }, 0)
+  .to(S, { rise: 1, duration: 0.6, ease: "power2.out" }, 0)
+  .to(S, { pin: 1, duration: 0.42, ease: "back.out(1.6)" }, 0.22)
+  .to(S, { ring: 1, duration: 0.35, ease: "power2.out" }, 0.5)
+  .to(S, { idea: 1, duration: 0.25, ease: "none" }, 0.55)
+// 2 — linked section: trace the line, tilt into relief, lift the slice, open the card
+  .to(S, { cut: 1, duration: 0.35, ease: "power1.inOut" }, 0.78)
+  .to(S, { tag: 1, duration: 0.2, ease: "none" }, 0.9)
+  .to(S, { tilt: 1, duration: 0.6 }, 0.95)
+  .to(S, { wall: 1, duration: 0.35, ease: "power2.out" }, 1.05)
+  .to(S, { lift: 1, duration: 0.45, ease: "power2.out" }, 1.1)
+  .to(S, { card: 1, duration: 0.33, ease: "power2.out" }, 1.0)
+  .to(S, { profile: 1, duration: 0.4, ease: "power1.inOut" }, 1.25)
+  .to(S, { cardLabels: 1, duration: 0.18, ease: "none" }, 1.35)
+  .to(S, { leader: 1, duration: 0.2, ease: "none" }, 1.4)
+// 3 — focus returns to the map: slice settles back into its line, routes restored
+  .to(S, { tilt: 0, duration: 0.55 }, 1.68)
+  .to(S, { lift: 0, duration: 0.42, ease: "power2.in" }, 1.68)
+  .to(S, { wall: 0, duration: 0.3, ease: "power1.in" }, 1.88)
+  .to(S, { routes: 1, duration: 0.55, ease: "power1.inOut" }, 1.98)
+  .to(S, { nodes: 1, duration: 0.25, ease: "none" }, 2.3)
+  .to({}, { duration: 0.01 }, 2.99);
+
+window.__timelines = window.__timelines || {};
+window.__timelines.video = tl;
+tl.seek(0, false);
+draw();
+window.addEventListener("hf-seek", e => {
+  const t = e && e.detail && typeof e.detail.time === "number" ? e.detail.time : null;
+  if (t !== null) tl.seek(t, false);
+  draw();
+});
+
+// fit 1280x720 stage to the root size
+function fit() {
+  const r = document.getElementById("root").getBoundingClientRect();
+  const s = Math.min(r.width / 1280, r.height / 720) || 1;
+  document.getElementById("stage").style.transform = `scale(${s})`;
+}
+fit(); window.addEventListener("resize", fit);
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

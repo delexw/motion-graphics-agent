@@ -38,7 +38,9 @@ it("publishes the original backstage manga style with separate renderer, motion 
   expect(style.tech.implementation).toContain("delivery settings");
   expect(style.executable_prompt_template).toContain("reading holds");
   expect(style.tech.implementation).toContain("dialogue");
-  for (const guidance of [style.tech.implementation, style.executable_prompt_template]) {
+  expect(style.executable_prompt_template).toContain("independent cue-based schedule");
+  {
+    const guidance = style.tech.implementation;
     expect(guidance).toContain("independent cue-based schedule");
     expect(guidance).toContain("idle/frozen, travel, work, react and settle");
     expect(guidance).toContain("camera crew use a slower smooth tracking move");

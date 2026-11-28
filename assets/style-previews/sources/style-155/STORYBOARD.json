@@ -1,0 +1,71 @@
+{
+  "version": 3,
+  "title": "Crayon Drawing Book — an idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Shade the flat mask",
+      "startSeconds": 0,
+      "endSeconds": 1.56,
+      "purpose": "Build the lightbulb idea in wax on a loose page using three uneven crayon passes",
+      "visuals": [
+        "Overhead open book on a dark teal desk; title page on the left, loose cream leaf over the right page",
+        "Pass 1 (0.10-0.72s): light-pressure yellow diagonal hatching fills the bulb's fractured circular mask, grey base after",
+        "Pass 2 (0.74-1.16s): heavier ochre cross-hatching shades the lower-left of the mask",
+        "Pass 3 (1.13-1.51s): charcoal wax outline traced around the rim, then red rays"
+      ],
+      "assets": [],
+      "beats": [
+        { "startSeconds": 0, "endSeconds": 0.74, "development": "Title is readable; the first light wax pass lays the flat yellow mask with paper tooth showing through", "captions": ["An idea becomes", "a connected system"], "audio": { "music": "", "effects": [], "subtitles": [] }, "readingHoldSeconds": 0 },
+        { "startSeconds": 0.74, "endSeconds": 1.13, "development": "Second, heavier pass adds ochre shadow in a cross direction", "captions": [], "audio": { "music": "", "effects": [], "subtitles": [] }, "readingHoldSeconds": 0 },
+        { "startSeconds": 1.13, "endSeconds": 1.56, "development": "Third pass outlines the bulb and draws red rays; the silhouette is complete", "captions": [], "audio": { "music": "", "effects": [], "subtitles": [] }, "readingHoldSeconds": 0 }
+      ]
+    },
+    {
+      "id": "scene-2",
+      "title": "One page movement",
+      "startSeconds": 1.56,
+      "endSeconds": 2.26,
+      "purpose": "Reveal the hand-built connected system by turning the leaf about the fixed gutter",
+      "visuals": [
+        "The leaf lifts and turns right-to-left on the gutter with foreshortening, a slightly lifting outer edge and a cast shadow",
+        "Its verso lands on the left page carrying the finished bulb and 'one bright idea…'; the right page reveals the wax network and '…turns the page into a web'"
+      ],
+      "assets": [],
+      "beats": [
+        { "startSeconds": 1.56, "endSeconds": 2.26, "development": "Page turn reveals the network of blue nodes, red hub and red wax links", "captions": [], "audio": { "music": "", "effects": [], "subtitles": [] }, "readingHoldSeconds": 0 }
+      ]
+    },
+    {
+      "id": "scene-3",
+      "title": "Connected and held",
+      "startSeconds": 2.26,
+      "endSeconds": 3,
+      "purpose": "Connect the idea to the system and hold the flat spread for reading",
+      "visuals": [
+        "A red wax stroke draws from the bulb across the gutter to the first network node (no arrowhead)",
+        "Full spread held flat and still from 2.56s"
+      ],
+      "assets": [],
+      "beats": [
+        { "startSeconds": 2.26, "endSeconds": 2.56, "development": "Connector stroke links the bulb to the network", "captions": [], "audio": { "music": "", "effects": [], "subtitles": [] }, "readingHoldSeconds": 0 },
+        { "startSeconds": 2.56, "endSeconds": 3, "development": "Settled reading hold of title, both captions and the finished drawing", "captions": ["An idea becomes", "a connected system", "one bright idea…", "…turns the page into a web"], "audio": { "music": "", "effects": [], "subtitles": [] }, "readingHoldSeconds": 0.44 }
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": [
+      "Three shading passes take about 1.4s with uneven, weighted stroke timing; the page turn is a single 0.7s eased movement; the connector stroke is quick.",
+      "The title stays readable the whole time because the leaf's verso carries the same title in the same position."
+    ],
+    "justifiedHolds": [
+      "2.56-3.0s: a flat, still hold so all four lines of copy and the settled wax silhouette can be read."
+    ]
+  },
+  "notes": [
+    "Silent preview: no music, effects, narration or subtitles.",
+    "Demonstrated characteristic action: shade a flat mask in three passes, then reveal the hand-built subject with one page movement. STYLE.json has no preview_recipes entry and no BACKGROUND_REVIEW.json was supplied, so this action is what the preview covers.",
+    "Background: a dark teal desk chosen for the scene, with warm coarse paper pages. The swatch colours are used as roles: ink #242831, accent #9F352D, paper/edge tan #E4CEAA. Bulb yellow/ochre, grey and node blue come from the supplied illustration."
+  ]
+}

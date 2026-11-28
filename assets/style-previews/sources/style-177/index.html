@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Archive Newsreel — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #0E1216; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; }
+  #plate { display: block; width: 100%; height: 100%; }
+</style>
+<script src="gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="plate" width="1280" height="720" aria-label="Archive newsreel: date card, an idea lighting a network of five stations, evidence caption"></canvas>
+</div>
+<script>
+(function () {
+  "use strict";
+  var W = 1280, H = 720;
+  var cvs = document.getElementById("plate");
+  var ctx = cvs.getContext("2d");
+
+  // Cool silver-gelatin stock built around the catalogue roles
+  // (foreground #142536, active #005885, secondary #B9D5DE, highlight #EDF1F3).
+  var C = {
+    leader: "#0E1216",
+    sprocket: "#B9C3C8",
+    plateHi: "#AEB8BD",
+    plateLo: "#3A4248",
+    panel: "#142536",
+    panelLine: "#EDF1F3",
+    ink: "#142536",
+    screen: "#6F787D",
+    paper: "#EDF1F3",
+    secondary: "#B9D5DE",
+    active: "#005885",
+    activeGlow: "#B9D5DE"
+  };
+
+  // ---------- seeded, cached static textures (stationary grain & wear) ----------
+  function rng(seed) { var s = seed >>> 0; return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+
+  function makeGrain(seed) {
+    var c = document.createElement("canvas"); c.width = W; c.height = H;
+    var g = c.getContext("2d"); var img = g.createImageData(W, H); var r = rng(seed);
+    for (var i = 0; i < img.data.length; i += 4) {
+      var v = r(); var dark = v < 0.5;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = dark ? 12 : 238;
+      img.data[i + 3] = Math.floor(Math.abs(v - 0.5) * 2 * 34);
+    }
+    g.putImageData(img, 0, 0);
+    // a few seeded dust specks and hairline scratches, kept off text zones
+    var rr = rng(seed + 99);
+    g.strokeStyle = "rgba(237,241,243,0.30)"; g.lineWidth = 1;
+    [[322, 196, 322, 560], [955, 210, 958, 520]].forEach(function (l) { g.beginPath(); g.moveTo(l[0], l[1]); g.lineTo(l[2], l[3]); g.stroke(); });
+    for (var k = 0; k < 26; k++) {
+      var x = 150 + rr() * 980, y = 200 + rr() * 360;
+      g.fillStyle = rr() < 0.5 ? "rgba(14,18,22,0.45)" : "rgba(237,241,243,0.35)";
+      g.beginPath(); g.arc(x, y, 0.8 + rr() * 1.8, 0, Math.PI * 2); g.fill();
+    }
+    return c;
+  }
+  var grain = makeGrain(177);
+
+  function makeVignettePlate() {
+    var c = document.createElement("canvas"); c.width = W; c.height = H; var g = c.getContext("2d");
+    g.fillStyle = C.leader; g.fillRect(0, 0, W, H);
+    // perforated film edges
+    g.fillStyle = C.sprocket;
+    for (var y = 14; y < H; y += 48) { rr(g, 50, y, 20, 22, 4); g.fill(); rr(g, 1210, y, 20, 22, 4); g.fill(); }
+    // projected plate with vignette
+    var grad = g.createRadialGradient(640, 345, 120, 640, 345, 720);
+    grad.addColorStop(0, C.plateHi); grad.addColorStop(0.55, "#8C969B"); grad.addColorStop(1, C.plateLo);
+    g.fillStyle = grad; rr(g, 130, 36, 1020, 648, 26); g.fill();
+    return c;
+  }
+  function rr(g, x, y, w, h, r) {
+    g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+  }
+  var basePlate = makeVignettePlate();
+
+  // ---------- scene geometry ----------
+  var BULB = { x: 640, y: 300 };
+  var ST = [
+    { x: 380, y: 280 }, { x: 900, y: 280 }, { x: 420, y: 470 }, { x: 860, y: 470 }, { x: 640, y: 470 }
+  ];
+  // links: from, to, start fraction, end fraction of the shared network progress
+  var LINKS = [
+    { a: BULB, b: ST[0], s: 0.00, e: 0.30, lights: 0 },
+    { a: BULB, b: ST[1], s: 0.06, e: 0.36, lights: 1 },
+    { a: BULB, b: ST[2], s: 0.16, e: 0.48, lights: 2 },
+    { a: BULB, b: ST[3], s: 0.22, e: 0.54, lights: 3 },
+    { a: ST[0], b: ST[2], s: 0.46, e: 0.70 },
+    { a: ST[1], b: ST[3], s: 0.52, e: 0.76 },
+    { a: ST[2], b: ST[4], s: 0.68, e: 0.88, lights: 4 },
+    { a: ST[4], b: ST[3], s: 0.80, e: 1.00 }
+  ];
+  function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+  function ease(v) { return v * v * (3 - 2 * v); }
+
+  // ---------- animated state (owned exclusively by the GSAP timeline) ----------
+  var S = { shot: 0, cardIn: 0, splice: 0, spark: 0, net: 0, caption: 0 };
+
+  function drawCardShot() {
+    // date / context intertitle: full dark card on the plate
+    ctx.fillStyle = C.panel; ctx.fillRect(170, 150, 940, 380);
+    ctx.strokeStyle = C.panelLine; ctx.lineWidth = 2; ctx.strokeRect(186, 166, 908, 348);
+    ctx.lineWidth = 1; ctx.strokeRect(194, 174, 892, 332);
+    ctx.globalAlpha = S.cardIn;
+    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = C.secondary;
+    ctx.font = "20px Didot, 'Bodoni 72', Georgia, serif";
+    spaced("— REEL III · THE FIRST LINK —", 640, 270, 8);
+    ctx.fillStyle = C.paper;
+    ctx.font = "44px Didot, 'Bodoni 72', Georgia, serif";
+    spaced("AN IDEA BECOMES", 640, 352, 4);
+    spaced("A CONNECTED SYSTEM", 640, 412, 4);
+    ctx.fillStyle = C.secondary; ctx.fillRect(560, 446, 160, 2);
+    ctx.globalAlpha = 1;
+  }
+
+  function spaced(text, cx, y, track) {
+    var widths = [], total = 0;
+    for (var i = 0; i < text.length; i++) { var w = ctx.measureText(text[i]).width; widths.push(w); total += w + (i < text.length - 1 ? track : 0); }
+    var x = cx - total / 2; ctx.textAlign = "left";
+    for (var j = 0; j < text.length; j++) { ctx.fillText(text[j], x, y); x += widths[j] + track; }
+    ctx.textAlign = "center";
+  }
+
+  function drawStation(p, lit) {
+    ctx.beginPath(); ctx.arc(p.x, p.y, 18, 0, Math.PI * 2);
+    ctx.fillStyle = C.ink; ctx.fill();
+    ctx.lineWidth = 4; ctx.strokeStyle = lit > 0 ? mix("#8F999E", C.paper, lit) : "#8F999E"; ctx.stroke();
+    if (lit > 0) {
+      ctx.globalAlpha = 0.55 * lit; ctx.beginPath(); ctx.arc(p.x, p.y, 18 + 10 * lit, 0, Math.PI * 2);
+      ctx.lineWidth = 2; ctx.strokeStyle = C.activeGlow; ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    ctx.beginPath(); ctx.arc(p.x, p.y, 3 + 3 * lit, 0, Math.PI * 2);
+    ctx.fillStyle = lit > 0 ? mix("#8F999E", C.paper, lit) : "#5A6368"; ctx.fill();
+  }
+  function hex(h) { return [parseInt(h.substr(1, 2), 16), parseInt(h.substr(3, 2), 16), parseInt(h.substr(5, 2), 16)]; }
+  function mix(a, b, t) { var A = hex(a), B = hex(b); return "rgb(" + A.map(function (v, i) { return Math.round(v + (B[i] - v) * t); }).join(",") + ")"; }
+
+  function drawActionShot() {
+    // framed screen inside the plate
+    ctx.fillStyle = C.screen; rr(ctx, 230, 190, 820, 370, 18); ctx.fill();
+    ctx.lineWidth = 10; ctx.strokeStyle = C.ink; ctx.stroke();
+
+    // small reel slate in the corner of the frame
+    ctx.fillStyle = C.ink; ctx.fillRect(250, 206, 150, 30);
+    ctx.fillStyle = C.paper; ctx.font = "15px Didot, Georgia, serif"; ctx.textAlign = "left";
+    ctx.fillText("REEL III", 262, 226);
+
+    // links draw outward from the idea
+    var lit = [0, 0, 0, 0, 0];
+    LINKS.forEach(function (L) {
+      var p = ease(clamp01((S.net - L.s) / (L.e - L.s)));
+      if (p <= 0) return;
+      var x = L.a.x + (L.b.x - L.a.x) * p, y = L.a.y + (L.b.y - L.a.y) * p;
+      ctx.lineCap = "round";
+      ctx.lineWidth = 4; ctx.strokeStyle = C.ink;
+      ctx.beginPath(); ctx.moveTo(L.a.x, L.a.y); ctx.lineTo(x, y); ctx.stroke();
+      if (p < 1) { // active travelling pulse in the accent role
+        ctx.lineWidth = 3; ctx.strokeStyle = C.activeGlow;
+        ctx.beginPath(); ctx.moveTo(L.a.x + (L.b.x - L.a.x) * Math.max(0, p - 0.18), L.a.y + (L.b.y - L.a.y) * Math.max(0, p - 0.18)); ctx.lineTo(x, y); ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fillStyle = C.active; ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = C.paper; ctx.stroke();
+      }
+      if (L.lights !== undefined) lit[L.lights] = clamp01((S.net - L.e) / 0.08 + (p >= 1 ? 0.01 : 0));
+    });
+
+    // the idea: a bulb that sparks
+    var sp = S.spark;
+    ctx.lineCap = "butt";
+    if (sp > 0) {
+      ctx.strokeStyle = C.paper; ctx.lineWidth = 4; ctx.globalAlpha = clamp01(sp * 1.4);
+      var rays = [[0, -1], [-0.72, -0.72], [0.72, -0.72], [-1, 0], [1, 0]];
+      rays.forEach(function (d) {
+        var r0 = 48, r1 = 48 + 18 * ease(clamp01(sp));
+        ctx.beginPath(); ctx.moveTo(BULB.x + d[0] * r0, BULB.y + d[1] * r0); ctx.lineTo(BULB.x + d[0] * r1, BULB.y + d[1] * r1); ctx.stroke();
+      });
+      ctx.globalAlpha = 1;
+      var glow = ctx.createRadialGradient(BULB.x, BULB.y, 20, BULB.x, BULB.y, 110);
+      glow.addColorStop(0, "rgba(237,241,243," + (0.45 * sp) + ")"); glow.addColorStop(1, "rgba(237,241,243,0)");
+      ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(BULB.x, BULB.y, 110, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.beginPath(); ctx.arc(BULB.x, BULB.y, 36, 0, Math.PI * 2);
+    ctx.fillStyle = mix("#4A5358", C.paper, sp); ctx.fill();
+    ctx.lineWidth = 5; ctx.strokeStyle = C.ink; ctx.stroke();
+    ctx.fillStyle = C.ink; ctx.fillRect(626, 334, 28, 20);
+    ctx.fillStyle = "#5A6368"; ctx.fillRect(630, 340, 20, 2); ctx.fillRect(630, 346, 20, 2);
+
+    ST.forEach(function (p, i) { drawStation(p, lit[i]); });
+  }
+
+  function drawCaption() {
+    if (S.caption <= 0) return;
+    // evidence caption cut in as one solid bar with its text (grouped reveal)
+    var a = S.caption;
+    ctx.globalAlpha = a;
+    ctx.fillStyle = C.panel; ctx.fillRect(290, 590, 700, 66);
+    ctx.strokeStyle = C.secondary; ctx.lineWidth = 1; ctx.strokeRect(298, 598, 684, 50);
+    ctx.fillStyle = C.paper; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    ctx.font = "italic 27px Georgia, 'Times New Roman', serif";
+    ctx.fillText("One spark lit — five stations now on the line.", 640, 633);
+    ctx.globalAlpha = 1;
+  }
+
+  function render() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.drawImage(basePlate, 0, 0);
+    if (S.shot < 1) drawCardShot(); else drawActionShot();
+    // stationary grain & wear across the plate, clipped away from text panels
+    ctx.save();
+    ctx.beginPath(); rr(ctx, 130, 36, 1020, 648, 26);
+    if (S.shot < 1) { ctx.rect(1110, 150, -940, 380); }
+    else {
+      ctx.rect(400, 206, -150, 30);
+      if (S.caption > 0) ctx.rect(990, 590, -700, 66);
+    }
+    ctx.clip("evenodd");
+    ctx.drawImage(grain, 0, 0);
+    ctx.restore();
+    drawCaption();
+    // splice flash at the cut (brief, low-amplitude)
+    if (S.splice > 0) { ctx.fillStyle = "rgba(237,241,243," + (0.35 * S.splice) + ")"; ctx.beginPath(); rr(ctx, 130, 36, 1020, 648, 26); ctx.fill(); }
+  }
+
+  // ---------- single paused, seekable GSAP timeline ----------
+  var tl = gsap.timeline({ paused: true, onUpdate: render });
+  tl.set(S, { shot: 0, cardIn: 0, splice: 0, spark: 0, net: 0, caption: 0 }, 0)
+    .to(S, { cardIn: 1, duration: 0.25, ease: "power1.out" }, 0)        // date/context card resolves, then holds
+    .set(S, { shot: 1 }, 0.9)                                              // hard cut to the framed action
+    .to(S, { splice: 1, duration: 0.01, ease: "none" }, 0.9)
+    .to(S, { splice: 0, duration: 0.1, ease: "none" }, 0.91)
+    .to(S, { spark: 1, duration: 0.3, ease: "back.out(1.6)" }, 0.95)       // the idea sparks
+    .to(S, { net: 1, duration: 1.05, ease: "power1.inOut" }, 1.15)         // links reach five stations
+    .to(S, { caption: 1, duration: 0.12, ease: "none" }, 2.25)             // evidence caption cuts in
+    .set({}, {}, 3);                                                       // hold to the end
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+
+  function seekTo(t) { tl.seek(Math.max(0, Math.min(3, t)), false); render(); }
+  window.addEventListener("hf-seek", function (e) {
+    var t = e && e.detail && typeof e.detail.time === "number" ? e.detail.time : tl.time();
+    seekTo(t);
+  });
+  tl.seek(0, false);
+  render();
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

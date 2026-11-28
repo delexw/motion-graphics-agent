@@ -1,3 +1,4 @@
+import { combinedStyleGuideFixture } from "../fixtures/combined-style-guide";
 import {
   requestedStyleScopeGuidance,
   selectedStyleWeightingGuidance,
@@ -7,10 +8,14 @@ import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
 vi.mock("../../src/server/agents/providers", () => ({ agentTurn: vi.fn() }));
+vi.mock("../../src/server/jev/strategies/scene-background", () => ({
+  selectSceneBackground: vi.fn(),
+}));
 vi.mock("../../src/server/jev/strategies/style-combination", () => ({ rankOptions: vi.fn() }));
 vi.mock("../../src/server/jev/client", () => ({ jevClient: vi.fn() }));
 vi.mock("../../src/server/catalog/style-summaries", () => ({ prepareStyleSummaries: vi.fn() }));
 import { agentTurn } from "../../src/server/agents/providers";
+import { selectSceneBackground } from "../../src/server/jev/strategies/scene-background";
 import { rankOptions } from "../../src/server/jev/strategies/style-combination";
 import { jevClient } from "../../src/server/jev/client";
 import { prepareStyleSummaries } from "../../src/server/catalog/style-summaries";
@@ -32,6 +37,7 @@ it.each([
 ] as const)(
   "$provider $outputType Settings-selected styles bypass style JEV and preserve previews on retry/regeneration",
   async ({ provider, outputType }) => {
+    vi.mocked(selectSceneBackground).mockResolvedValue("both");
     const catalog = await loadCatalog();
     const store = new Store(":memory:");
     const instructions = `Explain a product. Act 1: Vintage Rubber Hose Animation (style-140); continue Rubber Hose animation. Act 3: Manga Production Theatre (style-136), with manga scenery. No Mosaic, no style-034.`;
@@ -55,6 +61,10 @@ it.each([
         JSON.parse(await readFile(path.resolve(input.workspace, "PROJECT_REQUEST.json"), "utf8")),
       ).toEqual({ request: originalRequest });
       if (input.textOnly) return { value: { subject: "Product story" } };
+      expect(input.prompt.includes("Assign layered environments and clean backgrounds")).toBe(
+        outputType === "video",
+      );
+      expect(input.prompt).not.toContain("JEV");
       input.onEvent({
         type: "tool",
         message: "Read",
@@ -66,6 +76,7 @@ it.each([
           directions: [
             {
               displayTitle: "Opening Fold",
+              combinedStyleGuide: combinedStyleGuideFixture,
               displayDescription: "A folded reveal",
               sceneRoles: [
                 "60% emphasis for the source journey; 40% for result clarity; Act 1 only; retain Act 3 for the ending",
@@ -74,6 +85,7 @@ it.each([
             },
             {
               displayTitle: "Quiet Reveal",
+              combinedStyleGuide: combinedStyleGuideFixture,
               displayDescription: "A readable reveal",
               sceneRoles: ["Act 1 only; retain Act 3 for the ending"],
               rationale: "Reveal the same product through negative space",
@@ -89,6 +101,16 @@ it.each([
     try {
       await workflow.prepare(run);
       expect(run.phase, run.error).toBe("ready");
+      if (outputType === "video")
+        expect(selectSceneBackground).toHaveBeenCalledWith(
+          expect.objectContaining({
+            previewCandidateIds: run.candidates.map(({ id }) => id),
+          }),
+        );
+      else expect(selectSceneBackground).not.toHaveBeenCalled();
+      expect(
+        run.candidates.map(({ sceneBackgroundTreatment }) => sceneBackgroundTreatment),
+      ).toEqual(Array(2).fill(outputType === "video" ? "both" : undefined));
       expect(run.jobs.map((job) => job.kind)).toEqual(["preview", "preview"]);
       expect(run.winnerId).toBeUndefined();
       const sharedPlan = JSON.parse(
@@ -180,7 +202,7 @@ it.each([
         expect(prompt).not.toContain("COMBINATION PREVIEW:");
         expect(prompt).toContain("creative_pool.read_pool_entry");
         expect(prompt).toContain(originalRequest.instructions);
-        expect(prompt).not.toContain(catalog.styles[0].executable_prompt_template.split("{{")[0]);
+        expect(prompt).not.toContain("Replace all double-brace placeholders with task inputs");
       }
       const original = structuredClone(run.candidates);
       await workflow.prepare(run);

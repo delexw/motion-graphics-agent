@@ -3,7 +3,7 @@ import { CodedError } from "../../src/shared/errors";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { afterEach, expect, it, vi } from "vitest";
+import { expect, it, onTestFinished, vi } from "vitest";
 import Fastify from "fastify";
 import { Store } from "../../src/server/jobs/store";
 import { loadCatalog } from "../../src/server/catalog/catalog";
@@ -12,6 +12,7 @@ import {
   IdeaSettingsSchema,
   ideaRequest,
   kitevaIdeaDefaults,
+  kitevaPageIdeaDefaults,
   ideaToolGuidance,
 } from "../../src/server/mcp/contract";
 import { RoomPatchSchema } from "../../src/shared/room";
@@ -21,13 +22,13 @@ import { roomDraftRequest, roomSubmission } from "../../src/client/room/onboardi
 import { registerKitevaMcpRoutes } from "../../src/server/mcp/routes";
 import { kitevaMcpPath } from "../../src/shared/kiteva-mcp";
 import { DEFAULT_WEB_PORT } from "../../src/shared/local-ports";
-
-const cleanup: (() => Promise<unknown> | void)[] = [];
-afterEach(async () => {
-  for (const close of cleanup.splice(0).reverse()) await close();
-});
+import { styleGuideSectionNames } from "../../src/shared/agents/schemas/combined-style-guide";
 
 async function connect() {
+  const cleanup: (() => Promise<unknown> | void)[] = [];
+  onTestFinished(async () => {
+    for (const close of cleanup.reverse()) await close();
+  });
   const store = new Store(":memory:");
   cleanup.push(() => store.close());
   const start = vi.fn(async () => ({ id: "new-project", phase: "queued" }));
@@ -50,26 +51,68 @@ async function connect() {
 
 it("saves the requested defaults at Review without starting a build", async () => {
   const { store, client, start } = await connect();
+  const idea = [
+    "Show how a city prepares for spring. Open before sunrise as the first produce truck pulls into the market.",
+    "Follow two neighbours through the market as the view widens from crates of seedlings to the square filling with people. End on the first shoots growing outside their building.",
+  ].join("\n\n");
   const result = await client.callTool({
     name: "create_idea",
-    arguments: { idea: "Explain how a city prepares for spring." },
+    arguments: { idea },
   });
   expect(result.isError).not.toBe(true);
   expect(result.structuredContent).toMatchObject({
     kind: "created",
     started: false,
     id: "draft:new",
-    request: kitevaIdeaDefaults,
+    request: { ...kitevaIdeaDefaults, renderer: "hyperframes" },
   });
   expect(store.room().drafts.new).toMatchObject({
     step: 8,
-    request: { instructions: "Explain how a city prepares for spring.", ...kitevaIdeaDefaults },
+    request: { instructions: idea, ...kitevaIdeaDefaults },
   });
   expect(start).not.toHaveBeenCalled();
   expect(store.allRuns()).toEqual([]);
   expect(roomSubmission(roomDraftRequest(store.room().drafts.new))).toMatchObject(
     kitevaIdeaDefaults,
   );
+});
+
+it("advertises the Music picker styles and saves a style with custom music instructions", async () => {
+  const { store, client, start } = await connect();
+  const options = await client.callTool({ name: "get_idea_options" });
+  expect(options.isError).not.toBe(true);
+  const groups = (
+    options.structuredContent as { musicStyleGroups: { name: string; styles: string[] }[] }
+  ).musicStyleGroups;
+  expect(groups).toHaveLength(10);
+  expect(groups.flatMap(({ styles }) => styles)).toHaveLength(50);
+  expect(groups).toContainEqual({
+    name: "Pop",
+    styles: ["J-pop", "K-pop", "City Pop", "Indie Pop", "Synthpop"],
+  });
+  expect(groups.find(({ name }) => name === "Brazilian and Latin")?.styles).toContain("Bossa Nova");
+
+  const instructions = "Use brushed drums, no vocals, and leave the ending quiet.";
+  const created = await client.callTool({
+    name: "create_idea",
+    arguments: {
+      idea: "A quiet train journey at dusk.",
+      settings: {
+        requirements: {
+          main: {},
+          images: {},
+          urls: {},
+          music: { style: "City Pop", instructions },
+        },
+      },
+    },
+  });
+  expect(created.isError).not.toBe(true);
+  expect(roomDraftRequest(store.room().drafts.new).requirements?.music).toMatchObject({
+    style: "City Pop",
+    instructions,
+  });
+  expect(start).not.toHaveBeenCalled();
 });
 
 it("preserves an explicit opt-in of dynamic effort through MCP and the draft", async () => {
@@ -97,11 +140,15 @@ it("uses one settings contract for server instructions, tool descriptions and ru
   expect(create.inputSchema.properties?.idea).toMatchObject({
     description: ideaToolGuidance.idea,
   });
+  expect(ideaToolGuidance.idea).toContain("in as much detail as possible");
+  expect(ideaToolGuidance.idea).toContain("11 style guide sections as a checklist");
+  expect(ideaToolGuidance.idea).toContain(styleGuideSectionNames.join(", "));
   expect(client.getInstructions()).toContain(ideaToolGuidance.idea);
   expect(client.getInstructions()).toContain(ideaToolGuidance.settings);
-  const schema = create.inputSchema.properties?.settings as {
-    properties: Record<string, { description?: string; default?: unknown }>;
+  const settingsSchema = create.inputSchema.properties?.settings as {
+    anyOf: { properties: Record<string, { description?: string; default?: unknown }> }[];
   };
+  const schema = settingsSchema.anyOf.find(({ properties }) => "renderer" in properties)!;
   for (const field of Object.values(schema.properties))
     expect(field.description?.length).toBeGreaterThan(10);
   for (const [field, value] of Object.entries(kitevaIdeaDefaults)) {
@@ -123,9 +170,7 @@ it("lists every supported optional setting so agents ask the user before omittin
     settingsSchema: { properties: Record<string, unknown> };
   };
   expect(optionalSettings.map((setting) => setting.name).sort()).toEqual(
-    Object.keys(settingsSchema.properties)
-      .filter((name) => name !== "viewport")
-      .sort(),
+    Object.keys(settingsSchema.properties).sort(),
   );
   for (const setting of optionalSettings) expect(setting.description.length).toBeGreaterThan(10);
   for (const [field, value] of Object.entries(kitevaIdeaDefaults))
@@ -134,12 +179,56 @@ it("lists every supported optional setting so agents ask the user before omittin
   expect(ideaToolGuidance.settings).not.toContain("Omitted fields use the advertised defaults");
 });
 
+it("advertises HTML page settings without video controls", async () => {
+  const { client, start } = await connect();
+  const options = await client.callTool({
+    name: "get_idea_options",
+    arguments: { outputType: "page" },
+  });
+  expect(options.isError).not.toBe(true);
+  expect(options.structuredContent).toMatchObject({
+    kind: "options",
+    outputType: "page",
+    defaults: kitevaPageIdeaDefaults,
+    musicStyleGroups: [],
+    settingsSchema: {
+      required: expect.arrayContaining(["outputType"]),
+      properties: {
+        outputType: { const: "page" },
+        viewport: { enum: ["desktop", "mobile"], default: "desktop" },
+      },
+    },
+  });
+  const { optionalSettings, settingsSchema } = options.structuredContent as {
+    optionalSettings: { name: string }[];
+    settingsSchema: { properties: Record<string, unknown> };
+  };
+  expect(optionalSettings.map(({ name }) => name)).toContain("viewport");
+  for (const field of ["duration", "renderer", "resolution", "subtitles", "languageTracks"])
+    expect(settingsSchema.properties).not.toHaveProperty(field);
+  expect(start).not.toHaveBeenCalled();
+});
+
+it("rejects video settings on an HTML page without saving a draft", async () => {
+  const { client, store, start } = await connect();
+  const result = await client.callTool({
+    name: "create_idea",
+    arguments: {
+      idea: "An interactive lesson about folding a paper bus.",
+      settings: { outputType: "page", duration: 30 },
+    },
+  });
+  expect(result.isError).toBe(true);
+  expect(store.room().drafts.new).toBeUndefined();
+  expect(start).not.toHaveBeenCalled();
+});
+
 it("preserves explicit choices and uses the selected provider's actual default model", () => {
   const settings = IdeaSettingsSchema.parse({
     provider: "codex",
     resolution: "1080p",
     frameRate: 30,
-    renderer: "hyperframes",
+    renderer: "multiplane",
     preference: "context",
     candidateCount: 2,
     duration: 120,
@@ -224,8 +313,8 @@ it("rejects unknown settings and applies canonical cross-field validation", asyn
   }
 });
 
-it("never replaces an existing new idea or alters other drafts", async () => {
-  const { store, client } = await connect();
+it("saves and starts a separate idea without replacing existing drafts", async () => {
+  const { store, client, start } = await httpApp();
   store.patchRoom(
     RoomPatchSchema.parse({
       client: "browser",
@@ -241,8 +330,24 @@ it("never replaces an existing new idea or alters other drafts", async () => {
     name: "create_idea",
     arguments: { idea: "Another new idea" },
   });
-  expect(result.isError).toBe(true);
-  expect(store.room()).toEqual(before);
+  expect(result.isError).not.toBe(true);
+  const { draftId, revision } = result.structuredContent as { draftId: string; revision: number };
+  expect(draftId).not.toBe(before.drafts.new.id);
+  const read = await client.callTool({ name: "read_idea", arguments: { id: draftId } });
+  expect(read.structuredContent).toMatchObject({
+    kind: "idea",
+    draftId,
+    revision,
+    request: { instructions: "Another new idea" },
+  });
+  expect(start).not.toHaveBeenCalled();
+  const started = await client.callTool({ name: "start_idea", arguments: { draftId, revision } });
+  expect(started.structuredContent).toMatchObject({ kind: "started", draftId });
+  expect(start).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ instructions: "Another new idea" }),
+    { draftId, revision },
+  );
+  expect(store.room().drafts).toEqual(before.drafts);
 });
 
 it("does not overwrite a draft created by another client between read and save", async () => {
@@ -262,7 +367,8 @@ it("does not overwrite a draft created by another client between read and save",
     name: "create_idea",
     arguments: { idea: "A different new idea" },
   });
-  expect(result.isError).toBe(true);
+  expect(result.isError).not.toBe(true);
+  expect(result.structuredContent).toMatchObject({ id: expect.stringMatching(/^draft:idea:/) });
   expect(store.room().drafts.new.request.instructions).toBe("A concurrently saved idea");
 });
 
@@ -332,12 +438,16 @@ it("rejects a stale submission and only calls the build API on explicit start", 
   expect(start).not.toHaveBeenCalled();
   const read = await client.callTool({ name: "read_idea", arguments: { id: "draft:new" } });
   expect(read.structuredContent).toMatchObject({ kind: "idea", revision: store.room().revision });
+  const sourceDraft = { draftId: store.room().drafts.new.id, revision: store.room().revision };
   const result = await client.callTool({
     name: "start_idea",
     arguments: { revision: store.room().revision },
   });
   expect(result.structuredContent).toMatchObject({ kind: "started", id: "new-project" });
-  expect(start).toHaveBeenCalledExactlyOnceWith(expect.objectContaining(kitevaIdeaDefaults));
+  expect(start).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining(kitevaIdeaDefaults),
+    sourceDraft,
+  );
   expect(store.room().drafts.new).toBeUndefined();
 });
 
@@ -376,6 +486,10 @@ it("preserves edits made while the previous draft is being submitted", async () 
 });
 
 async function httpApp() {
+  const cleanup: (() => Promise<unknown> | void)[] = [];
+  onTestFinished(async () => {
+    for (const close of cleanup.reverse()) await close();
+  });
   const store = new Store(":memory:");
   const app = Fastify();
   const start = vi.fn(async () => ({ id: "http-project", phase: "queued" }));
@@ -385,16 +499,66 @@ async function httpApp() {
     webUrl: `http://127.0.0.1:${DEFAULT_WEB_PORT}`,
     start,
   });
-  const address = await app.listen({ port: 0, host: "127.0.0.1" });
   cleanup.push(
     () => store.close(),
     () => app.close(),
   );
+  const address = await app.listen({ port: 0, host: "127.0.0.1" });
   const client = new Client({ name: "http-test", version: "1" });
   await client.connect(new StreamableHTTPClientTransport(new URL(kitevaMcpPath, address)));
   cleanup.push(() => client.close());
   return { store, app, client, start, address };
 }
+
+it("saves and starts an HTML page through the existing MCP tools over HTTP", async () => {
+  const { client, store, start } = await httpApp();
+  const video = await client.callTool({
+    name: "create_idea",
+    arguments: { idea: "A springtime city story" },
+  });
+  expect(video.isError).not.toBe(true);
+  const idea = "An interactive lesson about folding a paper bus.";
+  const settings = {
+    outputType: "page",
+    viewport: "mobile",
+    provider: "codex",
+    candidateCount: 0,
+    selectedStyleIds: ["style-048"],
+  };
+  const created = await client.callTool({
+    name: "create_idea",
+    arguments: { idea, settings },
+  });
+  expect(created.isError).not.toBe(true);
+  const data = created.structuredContent as { draftId: string; id: string; revision: number };
+  expect(created.structuredContent).toMatchObject({
+    kind: "created",
+    request: { instructions: idea, ...settings, mainModel: defaultProviderModels.codex },
+    started: false,
+  });
+  expect(data.id).not.toBe("draft:new");
+  const saved = store.room().drafts[data.id.slice("draft:".length)];
+  expect(roomSubmission(roomDraftRequest(saved))).toMatchObject(settings);
+  expect(start).not.toHaveBeenCalled();
+
+  const read = await client.callTool({ name: "read_idea", arguments: { id: data.id } });
+  expect(read.structuredContent).toMatchObject({
+    kind: "idea",
+    request: { instructions: idea, ...settings },
+    revision: data.revision,
+  });
+  const started = await client.callTool({
+    name: "start_idea",
+    arguments: { draftId: data.draftId, revision: data.revision },
+  });
+  expect(started.structuredContent).toMatchObject({ kind: "started", projectId: "http-project" });
+  expect(start).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ instructions: idea, ...settings }),
+    { draftId: data.draftId, revision: data.revision },
+  );
+  expect(store.room().drafts.new.request.outputType).toBe("video");
+  expect(store.room().drafts[data.id.slice("draft:".length)]).toBeUndefined();
+});
 
 it("serves the full MCP protocol over the application's URL without a local launcher", async () => {
   const { client, store, start } = await httpApp();
@@ -570,8 +734,10 @@ it("guides agents to confirm primary narration/subtitle languages without enabli
   );
   expect(create.description).toContain("ask the user to confirm");
   expect(create.description).toContain("does not enable either function");
-  const input = create.inputSchema.properties?.settings as {
-    properties: Record<string, { description?: string }>;
-  };
-  expect(input.properties.languageTracks.description).toContain("default to false");
+  const options = await client.callTool({ name: "get_idea_options" });
+  expect(options.structuredContent).toMatchObject({
+    settingsSchema: {
+      properties: { languageTracks: { description: expect.stringContaining("default to false") } },
+    },
+  });
 });

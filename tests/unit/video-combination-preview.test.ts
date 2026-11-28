@@ -67,6 +67,7 @@ it("requires all combination styles to appear within the same three-second previ
         feedback: phase === "repair" ? "Fix a clipped label without restyling" : undefined,
       });
       expect(staged).toContain("STAGESHOW SCENE OWNERSHIP");
+      expect(staged).not.toContain("### Scene backgrounds");
       expect(staged).toContain("contribute motion only");
       expect(staged).toContain(
         "explicit user UI appearance instructions override Stageshow defaults",

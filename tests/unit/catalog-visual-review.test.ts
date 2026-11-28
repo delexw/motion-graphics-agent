@@ -1,4 +1,7 @@
-import { beforeMangaReferenceStudy } from "../fixtures/manga-reference-baseline";
+import {
+  beforeMangaReferenceStudy,
+  withoutStylePrompt,
+} from "../fixtures/manga-reference-baseline";
 import { describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
 import chroma from "chroma-js";
@@ -43,7 +46,7 @@ describe("Visual gallery additions", () => {
       delete style.tech.stack_overrides.openscreen;
       expect(
         createHash("sha256")
-          .update(JSON.stringify(beforeMangaReferenceStudy(style)))
+          .update(JSON.stringify(withoutStylePrompt(beforeMangaReferenceStudy(style))))
           .digest("hex"),
         id,
       ).toBe(expected);
@@ -61,7 +64,7 @@ describe("Visual gallery additions", () => {
       expect(
         chroma.contrast(style.palette.tokens.foreground, style.palette.tokens.background),
       ).toBeGreaterThanOrEqual(4.5);
-      expect(style.executable_prompt_template).toContain("STORYBOARD.json");
+      expect(style.executable_prompt_template).toContain("## Characteristic actions");
     }
   });
   it("distinguishes the added media from their closest existing treatments", async () => {

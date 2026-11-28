@@ -6,7 +6,15 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Added
 
+- MCP can save and build interactive HTML pages. Set `settings.outputType` to `page` when creating the draft. The page settings cover desktop and mobile preview sizes.
+
 - Gemini 4 Neon and Carbon are available in project settings and MCP as beta authoring models. The provider supports the Antigravity CLI login and a configured Gemini API. Governance records usage and available cost estimates.
+
+- Added 56 Motion Graphic styles and rewrote all 199 style guides in 11 sections. The guides cover the medium, motion, framing, sound and visual checks. Style details and authoring prompts show an overview before section 1. Search for 2.5D Pixel Art to find the style and its preview. The new styles have individual example palettes, including a two-colour palette for One-Bit Dither.
+
+- The Music picker offers 50 searchable styles, including J-pop and City Pop. Choosing a style adds it to the existing editable music prompt. MCP exposes the same catalogue through `get_idea_options`.
+
+- Launch the built Kiteva interface on macOS and Windows with `npm run electron:prod`. Closing the window hides it to the menu bar or tray. The Electron app runs with production dependencies and owns its local service and shares the browser's project store. Only one backend can use that store at a time. Quitting Kiteva stops the desktop service.
 
 - Remote MCP clients can send a local file over a short-lived, single-use upload link and attach it with `confirm_upload`. Kiteva applies the same validation and attachment rules as the web app.
 
@@ -25,7 +33,17 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Changed
 
+- Full-video plans describe how the story progresses and break each scene into timed shots. Preview and full-video plans use the background decision recorded for that direction or version, and authoring reuses the decision on retry.
+
 - Activity uses file-specific labels for more provider operations, including creating and finding project files.
+
+- Previews and full videos use the 11-section guide as their main build prompt. Kiteva inserts the effective idea settings before authoring and links to the original idea, assets and storyboard.
+
+- Updated Multiplane to 0.3.16. Waiting on an exited render now ends even if the operating system reused its process ID. The shot contract now covers frame timing for stepped effects and hard cuts within a scene.
+
+- New MCP ideas use HyperFrames by default, matching the web app.
+
+- MCP can save a separate idea while the New idea box is occupied. The Assistant dropdown lists saved drafts from any client. Use the trash icon to remove the selected draft. Starting uses that idea's draft ID, and attachment management works with blank idea text.
 
 - Claude and Codex use their native SDK routes. Video reviews use smaller frames and fall back to medium effort when the task and provider leave it unset.
 - The three DeepSeek Harness packages update together to `0.2.2-rc.5`. Dependabot groups future updates to these packages, including release candidates.
@@ -41,6 +59,8 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 - Generation settings use shared info tips for video language, build route and adjustive effort.
 
 ### Fixed
+
+- Kiteva queues Gemini CLI turns that use the same conversation database. It retries an empty conversation ID before a new turn starts.
 
 - Cancelling website sign-in stops waiting for browser controls while the owned browser shuts down.
 
@@ -96,6 +116,8 @@ This is a source release. Native Windows support remains experimental.
 - Use compatible npm dependency ranges, separate daily compatible updates from majors, and monitor Python requirements and GitHub Actions. Keep security alerts enabled.
 
 ### Fixed
+
+- Bundle project-local Three.js using the catalogue type. Sharp and the Remotion renderer remain Node-only.
 
 - DeepSeek tool results now preserve success/failure and original call IDs rather than leaving completed actions marked stopped.
 - Resumed DeepSeek refinements set the current working directory and grant that exact authoring workspace while retaining read-only stage restrictions.
@@ -282,6 +304,40 @@ Kiteva uses the [MIT License](LICENSE). Third-party components retain their own 
 ## Daily update archive
 
 README recent updates show the three most recent dated entries, regardless of gaps between dates. Move entries beyond those three here when updating the READMEs. Historical English and Simplified Chinese entries are preserved below; the versioned release notes above remain unchanged.
+
+### 2026-11-24
+
+**English**
+
+- **Pixel art tools:** JEV can choose LPC characters, PixelFX environment effects, or both alongside the project's primary authoring tool. LPC generates credits for eligible CC0 and CC BY parts, including parts used under CC BY 3.0 via OGA-BY. Installation prepares both sources, and startup checks installed copies.
+- **Model calls:** Claude and Codex use their native SDK routes without the Caveman proxy. Video reviews use smaller frames and default to medium effort when no task or provider setting supplies one.
+- **Dependency updates:** The three DeepSeek Harness packages move to `0.2.2-rc.5` together. Dependabot groups future updates to these packages, including release candidates.
+- **Room:** Onboarding counts and question badges use Ant Design's current tag style.
+- **Tests and CI:** Browser tests run in Playwright with a fresh browser context per test. GitHub Actions runs separate unit, integration and browser suites. Installer tests use local fixtures.
+
+**简体中文**
+
+- **像素美术工具：**JEV 可在项目的主要创作工具之外选择 LPC 角色、PixelFX 环境特效，或同时使用两者。LPC 自动为符合条件的 CC0 和 CC BY 部件生成署名，其中包括经 OGA-BY 按 CC BY 3.0 使用的部件。安装时准备两个资源，启动时检查已安装的版本。
+- **模型调用：**Claude 和 Codex 改用原生 SDK 连接，移除 Caveman 代理。视频审查使用更小的帧；任务和提供方均未设置推理强度时，默认使用中等强度。
+- **依赖更新：**三个 DeepSeek Harness 软件包一并升级到 `0.2.2-rc.5`。Dependabot 将这些软件包后续的更新归为一组，包括候选版本。
+- **创作室：**引导页的计数和问题标记使用 Ant Design 当前的标签样式。
+- **测试与 CI：**浏览器测试改用 Playwright，每个测试使用独立的浏览器上下文。GitHub Actions 分别运行单元、集成和浏览器测试，安装器测试使用本地夹具。
+
+### 2026-11-22
+
+**English**
+
+- **Adjustive effort:** This per-project Yes/No setting defaults to No. Yes lets JEV choose effort for each supported model call. No uses the configured task or model default. MCP can set it when creating a draft.
+- **Governance:** Project timing appears at the top, and usage rows show reasoning effort. JEV dashboards show decisions and scores first, with expandable rationale, inputs and comparisons. Saved combination comparisons show primary and supporting style names where available.
+- **Generation settings:** Video language, build route and adjustive effort have info tips beside their labels.
+- **Bevy authoring:** Kiteva can select Bevy for shots. Setup and startup prepare the managed runtime and refresh compatible community guides through the bundled-skill registry.
+
+**简体中文**
+
+- **自适应推理强度：**每个项目可选择「是」或「否」，默认「否」。「是」允许 JEV 为每次受支持的模型调用选择推理强度；「否」使用任务或模型的默认设置。通过 MCP 创建草稿时也可以设置。
+- **治理页面：**项目时间显示在顶部，用量明细显示推理强度。JEV 仪表板先显示决策和分数，可展开查看理由、输入和比较结果。已保存的组合比较会在有记录时显示主样式和辅助样式名称。
+- **生成设置：**视频语言、制作方式和自适应推理强度的说明移至标签旁的信息图标。
+- **Bevy 创作：**Kiteva 可选择 Bevy 制作镜头。安装和启动时会准备受管理的运行环境，并通过内置技能列表更新兼容的社区指南。
 
 ### 2026-11-19
 

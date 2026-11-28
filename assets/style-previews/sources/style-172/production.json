@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Connect Idea",
+  "displayDescription": "One tap lights an idea and snaps six loose nodes into a connected system.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview — no music, sound effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "STYLE.json contains no tech.preview_recipes, so the core One-Action Microgames structure (cue → single tap → result state) is what this preview shows.",
+    "No BACKGROUND_REVIEW.json or reference contact sheets were supplied; the indigo arena comes from ILLUSTRATION.png under the scene-dependent background policy.",
+    "Flat vector illustration; the fingertip and glow are stylised approximations, not physical simulation.",
+    "Blender was not used. GSAP is loaded from the local gsap.min.js; no packages were installed."
+  ]
+}

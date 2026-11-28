@@ -1,3 +1,4 @@
+import { combinedStyleGuideFixture } from "../fixtures/combined-style-guide";
 vi.mock("../../src/server/jev/strategies/visual-authoring", () => ({
   selectAuthoringResources: async () => ({
     source: "jev",
@@ -69,6 +70,9 @@ it.each([
             previewBeat: "A planned insight appears",
             directions: directions.map((direction) => ({
               id: direction.id,
+              ...(direction.supportingStyleIds.length
+                ? { combinedStyleGuide: combinedStyleGuideFixture }
+                : {}),
               displayTitle: "Clear Insight",
               displayDescription: "A readable transformation",
               sceneRoles: ["Reveal the source, transform it, and hold the readable result"],

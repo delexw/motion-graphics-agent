@@ -184,7 +184,7 @@ export function technologyEnvironment(
       }
     }
     const hostOnly =
-      /Node.js only/.test(definition.runtime) || definition.kind === "npm_cli_framework";
+      definition.kind === "npm_node_library" || definition.kind === "npm_cli_framework";
     const technique =
       definition.kind === "rendering_technique" || definition.kind === "bundled_library_component";
     return {

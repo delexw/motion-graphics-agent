@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Circuit Trace Board — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #07241C; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; }
+  #root svg { display: block; width: 100%; height: 100%; }
+  text { font-family: Menlo, "SF Mono", Monaco, Consolas, "Liberation Mono", monospace; }
+</style>
+<script src="gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg id="board" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <pattern id="via-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="20" cy="20" r="2.4" fill="#1C5E48"/>
+    </pattern>
+    <filter id="halo" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <filter id="padglow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+    <radialGradient id="plate" cx="40%" cy="35%" r="75%">
+      <stop offset="0" stop-color="#E9CF8C"/>
+      <stop offset="1" stop-color="#B98C3C"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Stationary substrate: solder mask, board edge and via grid -->
+  <rect width="1280" height="720" fill="#07241C"/>
+  <rect x="30" y="30" width="1220" height="660" rx="24" fill="#0E3D2F"/>
+  <rect x="30" y="30" width="1220" height="660" rx="24" fill="url(#via-grid)"/>
+  <rect x="38" y="38" width="1204" height="644" rx="18" fill="none" stroke="#1F5A46" stroke-width="2"/>
+  <!-- mounting holes -->
+  <g fill="#07241C" stroke="#B98C3C" stroke-width="5">
+    <circle cx="70" cy="650" r="11"/><circle cx="1210" cy="650" r="11"/><circle cx="1210" cy="70" r="11"/>
+  </g>
+
+  <!-- Unpowered copper traces (base layer) -->
+  <g id="copper" fill="none" stroke="#9A5E2E" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"></g>
+  <!-- Energised halo + bright core (dash-revealed) -->
+  <g id="halos" fill="none" stroke="#FFB45A" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" filter="url(#halo)" opacity="0.6"></g>
+  <g id="lit" fill="none" stroke="#F2A456" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"></g>
+  <g id="cores" fill="none" stroke="#FFF0C8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></g>
+
+  <!-- Travelling pulses (below pads so each one ends inside its pad) -->
+  <g id="pulses"></g>
+
+  <!-- C1 sketch footprint (silkscreen) -->
+  <rect x="300" y="470" width="150" height="90" rx="6" fill="#0A2A20" stroke="#E8F0EA" stroke-width="2" stroke-dasharray="6 5"/>
+  <text x="318" y="520" font-size="14" fill="#A9C8B9">C1 SKETCH</text>
+
+  <!-- Pads and junction -->
+  <g id="pads"></g>
+
+  <!-- Silkscreen labels beside pads -->
+  <g fill="#EAF2EC" font-size="17">
+    <text x="120" y="426">P0 IDEA</text>
+    <text x="462" y="318">J1 BRANCH</text>
+    <text x="932" y="206">① U1 PEOPLE</text>
+    <text x="1088" y="366">② U2 TOOLS</text>
+    <text x="1088" y="566">③ U3 FLOW</text>
+  </g>
+
+  <!-- Title block (static, on clean solder mask) -->
+  <g fill="#EAF2EC">
+    <text x="64" y="90" font-size="26" font-weight="700">AN IDEA BECOMES A CONNECTED SYSTEM</text>
+    <text x="64" y="122" font-size="15" fill="#A9C8B9">REV 1.0 · SIGNAL PATH: IDEA → J1 → U1 · U2 · U3</text>
+    <text x="64" y="656" font-size="13" fill="#8DB3A2">PADS LIGHT IN ORDER OF ARRIVAL · BRANCH DELAY = TRACE LENGTH</text>
+  </g>
+</svg>
+</div>
+<script>
+(function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, parent) {
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  function $(id) { return document.getElementById(id); }
+
+  // Copper centrelines (polylines, pad centre to pad centre).
+  var J1 = [570, 360];
+  var routes = [
+    { id: 'trunk', pts: [[166, 360], J1] },
+    { id: 'u1', pts: [J1, [730, 200], [880, 200]] },
+    { id: 'u2', pts: [J1, [660, 360], [760, 460], [860, 460], [960, 360], [1036, 360]] },
+    { id: 'u3', pts: [J1, [570, 480], [650, 560], [1036, 560]] }
+  ];
+  routes.forEach(function (r) {
+    r.segs = [];
+    r.len = 0;
+    for (var i = 1; i < r.pts.length; i++) {
+      var a = r.pts[i - 1], b = r.pts[i];
+      var l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      r.segs.push({ a: a, b: b, len: l });
+      r.len += l;
+    }
+    r.d = 'M' + r.pts.map(function (p) { return p[0] + ' ' + p[1]; }).join('L');
+  });
+
+  // Build layers.
+  var layers = { copper: $('copper'), halos: $('halos'), lit: $('lit'), cores: $('cores') };
+  routes.forEach(function (r) {
+    el('path', { d: r.d }, layers.copper);
+    ['halos', 'lit', 'cores'].forEach(function (k) {
+      r[k] = el('path', { d: r.d, 'stroke-dasharray': (r.len + 2) + ' ' + (r.len + 2), 'stroke-dashoffset': r.len + 2 }, layers[k]);
+    });
+    var g = el('g', { opacity: 0 }, $('pulses'));
+    el('circle', { r: 22, fill: '#FFD98A', filter: 'url(#halo)' }, g);
+    el('circle', { r: 8, fill: '#FFF8E4' }, g);
+    r.pulse = g;
+  });
+
+  // Pads: square plated pads for P0/U*, round ring for J1.
+  function makePad(id, x, y, kind) {
+    var g = el('g', { id: id, transform: 'translate(' + x + ' ' + y + ')' }, $('pads'));
+    var p = { g: g, x: x, y: y };
+    p.glow = el('circle', { r: 46, fill: '#FFD27A', filter: 'url(#padglow)', opacity: 0 }, g);
+    p.ring = el('circle', { r: kind === 'junction' ? 28 : 38, fill: 'none', stroke: '#FFE7B0', 'stroke-width': 3, opacity: 0 }, g);
+    if (kind === 'junction') {
+      el('circle', { r: 26, fill: '#A9843C' }, g);
+      p.face = el('circle', { r: 26, fill: '#FFE3A0', opacity: 0 }, g);
+      el('circle', { r: 11, fill: '#0C3326' }, g);
+    } else {
+      el('rect', { x: -34, y: -34, width: 68, height: 68, rx: 8, fill: '#8E6E35' }, g);
+      el('rect', { x: -24, y: -24, width: 48, height: 48, rx: 4, fill: 'url(#plate)', opacity: 0.55 }, g);
+      p.face = el('rect', { x: -34, y: -34, width: 68, height: 68, rx: 8, fill: '#FFE6A8', opacity: 0 }, g);
+      p.inner = el('rect', { x: -24, y: -24, width: 48, height: 48, rx: 4, fill: '#FFF4D6', opacity: 0 }, g);
+      el('circle', { r: 9, fill: '#0C3326' }, g);
+    }
+    return p;
+  }
+  var pads = {
+    p0: makePad('pad-p0', 166, 360, 'pad'),
+    j1: makePad('pad-j1', 570, 360, 'junction'),
+    u1: makePad('pad-u1', 880, 200, 'pad'),
+    u2: makePad('pad-u2', 1036, 360, 'pad'),
+    u3: makePad('pad-u3', 1036, 560, 'pad')
+  };
+
+  // One paused, seekable timeline. Every animated property has a single owner here.
+  var tl = gsap.timeline({ paused: true });
+  var SPEED = 560; // px per second along copper centreline
+
+  function lightPad(p, t) {
+    tl.fromTo(p.face, { attr: { opacity: 0 } }, { attr: { opacity: 1 }, duration: 0.12, ease: 'power2.inOut', immediateRender: false }, t);
+    if (p.inner) tl.fromTo(p.inner, { attr: { opacity: 0 } }, { attr: { opacity: 0.85 }, duration: 0.18, ease: 'power2.inOut', immediateRender: false }, t + 0.04);
+    tl.fromTo(p.glow, { attr: { opacity: 0, r: 30 } }, { attr: { opacity: 0.95, r: 58 }, duration: 0.16, ease: 'power2.inOut', immediateRender: false }, t)
+      .fromTo(p.glow, { attr: { opacity: 0.95, r: 58 } }, { attr: { opacity: 0.7, r: 48 }, duration: 0.22, ease: 'sine.inOut', immediateRender: false }, t + 0.16);
+    var r0 = +p.ring.getAttribute('r');
+    tl.fromTo(p.ring, { attr: { r: r0, opacity: 0.9 } }, { attr: { r: r0 + 34, opacity: 0 }, duration: 0.36, ease: 'power2.inOut', immediateRender: false }, t);
+  }
+
+  function runRoute(r, t0) {
+    var dur = r.len / SPEED;
+    ['halos', 'lit', 'cores'].forEach(function (k) {
+      tl.fromTo(r[k], { attr: { 'stroke-dashoffset': r.len + 2 } }, { attr: { 'stroke-dashoffset': 0 }, duration: dur, ease: 'none', immediateRender: false }, t0);
+    });
+    var p0 = r.pts[0];
+    tl.set(r.pulse, { attr: { transform: 'translate(' + p0[0] + ' ' + p0[1] + ')' } }, 0);
+    tl.fromTo(r.pulse, { attr: { opacity: 0 } }, { attr: { opacity: 1 }, duration: 0.06, ease: 'none', immediateRender: false }, t0);
+    var t = t0;
+    r.segs.forEach(function (s) {
+      var d = s.len / SPEED;
+      tl.fromTo(r.pulse,
+        { attr: { transform: 'translate(' + s.a[0] + ' ' + s.a[1] + ')' } },
+        { attr: { transform: 'translate(' + s.b[0] + ' ' + s.b[1] + ')' }, duration: d, ease: 'none', immediateRender: false }, t);
+      t += d;
+    });
+    // Pulse sinks into the destination pad / junction at arrival.
+    tl.fromTo(r.pulse, { attr: { opacity: 1 } }, { attr: { opacity: 0 }, duration: 0.08, ease: 'none', immediateRender: false }, t);
+    return t; // arrival time
+  }
+
+  // Source pulse at P0, travel trunk to J1, branch; delays derived from trace length.
+  var SOURCE = 0.05;
+  lightPad(pads.p0, SOURCE);
+  var trunkStart = 0.25;
+  var tJ1 = runRoute(routes[0], trunkStart);
+  lightPad(pads.j1, tJ1);
+  var arrivals = {};
+  ['u1', 'u2', 'u3'].forEach(function (id, i) {
+    arrivals[id] = runRoute(routes[i + 1], tJ1);
+    lightPad(pads[id], arrivals[id]);
+  });
+  tl.set({}, {}, 3); // pad timeline to full duration
+
+  window.__circuitTiming = { junction: tJ1, arrivals: arrivals };
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  tl.seek(0);
+
+  window.addEventListener('hf-seek', function (e) {
+    var t = e && e.detail && typeof e.detail.time === 'number' ? e.detail.time : null;
+    if (t !== null) tl.seek(t, false);
+  });
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

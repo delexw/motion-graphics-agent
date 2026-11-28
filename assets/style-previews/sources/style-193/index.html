@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Replay Telestrator — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #0C1821; overflow: hidden; }
+  #root { width: 100%; height: 100%; position: relative; }
+  #root svg { width: 100%; height: 100%; display: block; }
+  text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 700; }
+</style>
+<script src="gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
+      <path d="M80 0H0V80" fill="none" stroke="#1C3242" stroke-width="2"/>
+    </pattern>
+    <radialGradient id="vig" cx=".5" cy=".45" r=".75">
+      <stop offset=".55" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".6"/>
+    </radialGradient>
+    <radialGradient id="bloom" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#8FD3F0" stop-opacity=".55"/>
+      <stop offset=".45" stop-color="#2F8FC0" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#005885" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="pulseGlow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity=".9"/>
+      <stop offset="1" stop-color="#8FD3F0" stop-opacity="0"/>
+    </radialGradient>
+    <mask id="inferredMask" maskUnits="userSpaceOnUse" x="0" y="0" width="1280" height="720">
+      <path id="inferredMaskPath" d="M720 250C770 226 830 300 866 330" fill="none" stroke="#fff" stroke-width="20" stroke-linecap="round"/>
+    </mask>
+  </defs>
+
+  <!-- ===== SOURCE "FOOTAGE": stable network image ===== -->
+  <g id="footage">
+    <rect width="1280" height="720" fill="#0C1821"/>
+    <rect width="1280" height="720" fill="url(#grid)"/>
+    <!-- base edges (dim) -->
+    <g id="baseEdges" fill="none" stroke="#2C465A" stroke-width="4" stroke-linecap="round">
+      <path d="M200 470L380 330"/><path d="M380 330L560 420"/><path d="M560 420L720 250"/>
+      <path d="M720 250L900 340"/><path d="M900 340L1060 220"/><path d="M380 330L470 180"/>
+      <path d="M470 180L720 250"/><path d="M560 420L760 500"/><path d="M760 500L900 340"/>
+      <path d="M900 340L1080 440"/>
+    </g>
+    <!-- lit trail of the observed signal -->
+    <path id="trail" d="M200 470L380 330L560 420L720 250L900 340" fill="none" stroke="#6FB6D8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- consequence: system edges light up -->
+    <g id="sysEdges" fill="none" stroke="#6FB6D8" stroke-width="5" stroke-linecap="round">
+      <path class="sys" d="M900 340L1060 220"/>
+      <path class="sys" d="M900 340L1080 440"/>
+      <path class="sys" d="M900 340L760 500"/>
+      <path class="sys" d="M720 250L470 180"/>
+      <path class="sys" d="M760 500L560 420"/>
+    </g>
+    <circle id="sysBloom" cx="900" cy="340" r="150" fill="url(#bloom)" opacity="0"/>
+    <!-- nodes -->
+    <g id="nodes" fill="#3E5A6E" stroke="#6F8C9E" stroke-width="3">
+      <circle id="n380" cx="380" cy="330" r="16"/>
+      <circle id="n470" cx="470" cy="180" r="16"/>
+      <circle id="n560" cx="560" cy="420" r="16"/>
+      <circle id="n720" cx="720" cy="250" r="16"/>
+      <circle id="n760" cx="760" cy="500" r="16"/>
+      <circle id="n1060" cx="1060" cy="220" r="16"/>
+      <circle id="n1080" cx="1080" cy="440" r="16"/>
+    </g>
+    <circle id="sysNode" cx="900" cy="340" r="26" fill="#3E5A6E" stroke="#9FB6C4" stroke-width="4"/>
+    <circle id="ideaNode" cx="200" cy="470" r="20" fill="#F5F7F8"/>
+    <!-- the moving signal (the observed action) -->
+    <g id="pulse">
+      <circle r="34" fill="url(#pulseGlow)"/>
+      <circle r="10" fill="#FFFFFF"/>
+    </g>
+    <rect width="1280" height="720" fill="url(#vig)"/>
+  </g>
+
+  <!-- freeze-frame dim (footage paused) -->
+  <rect id="freezeDim" x="0" y="0" width="1280" height="600" fill="#06101A" opacity="0"/>
+  <rect id="freezeFlash" x="6" y="6" width="1268" height="588" fill="none" stroke="#F5F7F8" stroke-width="6" opacity="0"/>
+
+  <!-- ===== TELESTRATOR ANNOTATIONS ===== -->
+  <g id="marks" fill="none" stroke="#FFE14D" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse id="ideaRing" cx="200" cy="470" rx="46" ry="40"/>
+    <path id="routeObserved" d="M236 446C300 400 330 350 380 330S520 400 560 420S680 270 720 250"/>
+    <g id="decisionRing" transform="translate(720 250)"><circle r="40" stroke-dasharray="14 10"/></g>
+    <g id="rejectX" stroke="#FF5A4E" stroke-width="7">
+      <path id="x1" d="M405 238L445 278"/>
+      <path id="x2" d="M445 238L405 278"/>
+    </g>
+    <path id="routeInferred" d="M720 250C770 226 830 300 866 330" stroke-dasharray="16 14" mask="url(#inferredMask)"/>
+    <path id="routeHead" data-arrowhead-for="routeInferred" d="M-14 -13L14 0L-14 13Z" fill="#FFE14D" stroke="none" transform="translate(872 335) rotate(40)"/>
+    <circle id="sysRing" cx="900" cy="340" r="54"/>
+  </g>
+
+  <!-- anchored labels (kept off contact points) -->
+  <g id="labels">
+    <g id="lblIdea"><rect x="146" y="520" width="92" height="36" rx="4" fill="#0C1821" fill-opacity=".85"/><text x="192" y="546" font-size="22" fill="#FFE14D" text-anchor="middle" letter-spacing="1">IDEA</text></g>
+    <g id="lblNext"><rect x="768" y="196" width="104" height="30" rx="4" fill="#0C1821" fill-opacity=".85"/><text x="820" y="218" font-size="17" fill="#FFE14D" text-anchor="middle" letter-spacing="1">NEXT ▸</text></g>
+    <g id="lblSystem"><rect x="840" y="412" width="124" height="36" rx="4" fill="#0C1821" fill-opacity=".85"/><text x="902" y="438" font-size="22" fill="#FFE14D" text-anchor="middle" letter-spacing="1">SYSTEM</text></g>
+  </g>
+
+  <!-- replay chrome -->
+  <g id="chrome">
+    <rect x="48" y="40" width="150" height="44" fill="#E8372C"/>
+    <text x="123" y="71" font-size="24" fill="#FFFFFF" text-anchor="middle" letter-spacing="3">REPLAY</text>
+    <rect x="198" y="40" width="140" height="44" fill="#F5F7F8"/>
+    <text id="tcPlay" x="268" y="71" font-size="22" fill="#0C1821" text-anchor="middle">▶ 00:11</text>
+    <text id="tcPause" x="268" y="71" font-size="22" fill="#0C1821" text-anchor="middle" opacity="0">❚❚ 00:12</text>
+    <text id="tcResume" x="268" y="71" font-size="22" fill="#0C1821" text-anchor="middle" opacity="0">▶ 00:12</text>
+  </g>
+
+  <!-- caption -->
+  <g id="caption">
+    <rect x="0" y="600" width="1280" height="120" fill="#0C1821" fill-opacity=".96"/>
+    <rect x="0" y="600" width="12" height="120" fill="#FFE14D"/>
+    <text id="captionText" data-reveal-after="caption" x="48" y="674" font-size="40" fill="#F5F7F8">An idea becomes a connected system</text>
+  </g>
+</svg>
+</div>
+
+<script>
+(function () {
+  // Observed signal path (keypoints in source-frame coordinates; crop = identity).
+  var PTS = [[200,470],[380,330],[560,420],[720,250],[900,340]];
+  var seg = [], total = 0;
+  for (var i = 1; i < PTS.length; i++) {
+    var dx = PTS[i][0]-PTS[i-1][0], dy = PTS[i][1]-PTS[i-1][1];
+    var L = Math.sqrt(dx*dx+dy*dy); seg.push(L); total += L;
+  }
+  var decisionLen = seg[0]+seg[1]+seg[2]; // distance to the decision node (720,250)
+  function pointAt(d) {
+    d = Math.max(0, Math.min(total, d));
+    for (var i = 0; i < seg.length; i++) {
+      if (d <= seg[i] || i === seg.length-1) {
+        var t = seg[i] ? Math.min(1, d/seg[i]) : 0;
+        return [PTS[i][0]+(PTS[i+1][0]-PTS[i][0])*t, PTS[i][1]+(PTS[i+1][1]-PTS[i][1])*t];
+      }
+      d -= seg[i];
+    }
+  }
+
+  var pulse = document.getElementById('pulse');
+  var trail = document.getElementById('trail');
+  trail.setAttribute('stroke-dasharray', total + ' ' + total);
+  var sig = { d: 0 };
+  function renderSignal() {
+    var p = pointAt(sig.d);
+    pulse.setAttribute('transform', 'translate(' + p[0].toFixed(2) + ' ' + p[1].toFixed(2) + ')');
+    trail.setAttribute('stroke-dashoffset', (total - sig.d).toFixed(2));
+  }
+  renderSignal();
+
+  function prepDraw(el) {
+    var L = el.getTotalLength();
+    el.style.strokeDasharray = L + ' ' + L;
+    el.style.strokeDashoffset = L;
+    return L;
+  }
+  ['ideaRing','routeObserved','sysRing','x1','x2'].forEach(function (id) { prepDraw(document.getElementById(id)); });
+  var maskPath = document.getElementById('inferredMaskPath');
+  prepDraw(maskPath);
+  document.querySelectorAll('#sysEdges .sys').forEach(prepDraw);
+
+  var q = function (s) { return document.querySelector(s); };
+  gsap.set(['#lblIdea','#lblNext','#lblSystem','#routeHead','#captionText'], { opacity: 0 });
+  gsap.set('#decisionRing circle', { opacity: 0, scale: 0.55, rotation: -60, transformOrigin: '50% 50%' });
+  gsap.set('#caption', { y: 120 });
+  gsap.set('#chrome', { x: -320 });
+  gsap.set('#sysNode', { svgOrigin: '900 340' });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: 'power2.inOut' } });
+
+  // 0.00–1.00  PLAY: the source action runs once — the idea's signal travels to the decision node.
+  tl.to('#chrome', { x: 0, duration: 0.28, ease: 'power3.out' }, 0)
+    .to('#caption', { y: 0, duration: 0.32, ease: 'power3.out' }, 0.04)
+    .to('#captionText', { opacity: 1, duration: 0.18, ease: 'none' }, 0.36)
+    .to(sig, { d: decisionLen, duration: 0.86, ease: 'sine.inOut', onUpdate: renderSignal }, 0.12);
+
+  // 1.00  FREEZE at the decision.
+  tl.set('#tcPlay', { opacity: 0 }, 1.0)
+    .set('#tcPause', { opacity: 1 }, 1.0)
+    .to('#freezeFlash', { opacity: 0.9, duration: 0.05, ease: 'none' }, 1.0)
+    .to('#freezeFlash', { opacity: 0, duration: 0.2, ease: 'power1.out' }, 1.05)
+    .to('#freezeDim', { opacity: 0.38, duration: 0.12, ease: 'power1.out' }, 1.0);
+
+  // 1.04–2.05  TELESTRATE: circle the origin, trace the observed path, mark the decision, strike the rejected branch, sketch the inferred next move.
+  tl.to('#ideaRing', { strokeDashoffset: 0, duration: 0.24, ease: 'power1.inOut' }, 1.04)
+    .to('#lblIdea', { opacity: 1, duration: 0.12, ease: 'none' }, 1.2)
+    .to('#routeObserved', { strokeDashoffset: 0, duration: 0.42, ease: 'power1.inOut' }, 1.22)
+    .to('#decisionRing circle', { opacity: 1, scale: 1, rotation: 0, duration: 0.2, ease: 'back.out(1.6)' }, 1.6)
+    .to('#x1', { strokeDashoffset: 0, duration: 0.08, ease: 'none' }, 1.66)
+    .to('#x2', { strokeDashoffset: 0, duration: 0.08, ease: 'none' }, 1.75)
+    .to(maskPath, { strokeDashoffset: 0, duration: 0.22, ease: 'power1.inOut' }, 1.8)
+    .set('#routeHead', { opacity: 1 }, 2.02)
+    .to('#lblNext', { opacity: 1, duration: 0.12, ease: 'none' }, 1.9);
+
+  // 2.05  RELEASE: playback resumes and the signal follows the sketched route to the consequence.
+  tl.set('#tcPause', { opacity: 0 }, 2.05)
+    .set('#tcResume', { opacity: 1 }, 2.05)
+    .to('#freezeDim', { opacity: 0, duration: 0.14, ease: 'power1.out' }, 2.05)
+    .to(sig, { d: total, duration: 0.32, ease: 'power2.in', onUpdate: renderSignal }, 2.05)
+    .to('#pulse', { opacity: 0, duration: 0.1, ease: 'none' }, 2.37)
+    .to('#sysNode', { scale: 1.35, fill: '#2F8FC0', stroke: '#E6F4FB', duration: 0.22, ease: 'back.out(2)' }, 2.36)
+    .to('#sysBloom', { opacity: 1, duration: 0.24, ease: 'power2.out' }, 2.36)
+    .to('#sysEdges .sys', { strokeDashoffset: 0, duration: 0.2, stagger: 0.03, ease: 'power2.out' }, 2.36)
+    .to('#nodes circle', { fill: '#4D7A94', stroke: '#9FD0E8', duration: 0.24, ease: 'power1.out' }, 2.4)
+    .to('#sysRing', { strokeDashoffset: 0, duration: 0.22, ease: 'power1.inOut' }, 2.4)
+    .to('#lblSystem', { opacity: 1, duration: 0.12, ease: 'none' }, 2.52);
+
+  // 2.65–3.00  settled reading hold.
+  tl.to({}, { duration: 0.01 }, 2.99);
+
+  tl.seek(0);
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  window.addEventListener('hf-seek', function (e) {
+    var t = e && e.detail && typeof e.detail.time === 'number' ? e.detail.time : null;
+    if (t !== null) { tl.seek(t, false); }
+    renderSignal();
+  });
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

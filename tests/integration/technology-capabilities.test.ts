@@ -22,14 +22,14 @@ async function folder() {
   folders.push(result);
   return result;
 }
-async function fixture(source = "export const version = 'fixture';") {
+async function fixture(source = "export const version = 'fixture';", packageName = "gsap") {
   const root = await folder();
-  const pkg = path.join(root, "node_modules/gsap");
+  const pkg = path.join(root, "node_modules", packageName);
   await mkdir(pkg, { recursive: true });
   await writeFile(path.join(root, "package.json"), "{}");
   await writeFile(
     path.join(pkg, "package.json"),
-    JSON.stringify({ name: "gsap", version: "1.0.0", type: "module", main: "index.js" }),
+    JSON.stringify({ name: packageName, version: "1.0.0", type: "module", main: "index.js" }),
   );
   await writeFile(path.join(pkg, "index.js"), source);
   return { root, pkg };
@@ -71,6 +71,8 @@ it("reports exact browser entry points and keeps host-only packages out of brows
     status: "unavailable",
   });
   expect(await env.inspect("sharp")).not.toHaveProperty("entry");
+  expect(await env.inspect("remotion_renderer")).toMatchObject({ category: "host_tool" });
+  expect(await env.inspect("remotion_renderer")).not.toHaveProperty("entry");
   await expect(prepareTechnology("sharp", await folder(), signal())).rejects.toThrow(
     "browser packages only",
   );
@@ -97,6 +99,20 @@ it("bundles only the model-chosen package into an isolated project-local module 
     JSON.parse(await readFile(path.join(workspace, first.directory, "technology.json"), "utf8")),
   ).toMatchObject({ id: "gsap", version: "1.0.0" });
   expect(await readFile(path.join(workspace, "shot.html"), "utf8")).toBe("original");
+});
+it("prepares Three.js from the project runtime as a browser library", async () => {
+  const { root } = await fixture("export class Scene {}", "three");
+  const workspace = await folder();
+
+  const bundle = await prepareTechnology("three_js", workspace, signal(), root);
+
+  expect(await technologyEnvironment(root).inspect("three_js")).toMatchObject({
+    category: "browser_library",
+    entry: "three",
+    status: "available",
+  });
+  expect(bundle.packages).toEqual(["three"]);
+  expect(await readFile(path.join(workspace, bundle.modulePath), "utf8")).toContain("Scene");
 });
 it("rejects missing packages, remote imports and Node-only code without leaving broken output", async () => {
   const workspace = await folder();

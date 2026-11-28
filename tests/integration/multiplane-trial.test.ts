@@ -293,6 +293,9 @@ it("tells the agent the Multiplane shot contract with the exact output settings"
     "pipeline to Multiplane",
     "Fully reset and redraw animated canvas overlays",
     "render those animated marks on a cleared Canvas 2D overlay",
+    "instant state changes within a scene such as a caption swap",
+    "SHOT.sampleContext?.frameTime ?? t",
+    "Keep continuous motion and fades on t",
     "Never relax determinism checks",
   ])
     expect(contract).toContain(text);

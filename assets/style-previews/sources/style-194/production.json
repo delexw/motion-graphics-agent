@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Type Cuts",
+  "displayDescription": "An idea becomes a system across three full-screen type cuts, landing on a stable reading frame with a connected-node network.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP (local gsap.min.js, single paused timeline window.__timelines.video)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative flat vector scene; no physical material, lighting or depth is simulated (none defines this style).",
+    "STYLE.json lists no preview_recipes and no BACKGROUND_REVIEW.json was supplied, so the preview demonstrates the catalogue's core characteristic action.",
+    "Typography uses locally available Helvetica Neue/Arial system fonts.",
+    "Blender not used per user instruction."
+  ]
+}

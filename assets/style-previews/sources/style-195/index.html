@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tilt-Shift Miniature — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #6E9E57; }
+  #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #6E9E57; }
+  #scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #card {
+    position: absolute; left: 3.125%; top: 5.556%;
+    width: 430px; box-sizing: border-box; padding: 22px 24px 20px;
+    background: #FFFFFF; border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(20, 37, 54, 0.22);
+    font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #142536; opacity: 0;
+  }
+  #card .kicker { margin: 0 0 10px; font-size: 14px; letter-spacing: 4px; font-weight: 600; color: #2F5A22; }
+  #card .title { margin: 0; font-size: 30px; line-height: 34px; font-weight: 700; color: #142536; }
+  #card .bar { margin-top: 14px; height: 4px; width: 100%; background: #B9D5DE; border-radius: 2px; overflow: hidden; }
+  #card .bar i { display: block; height: 100%; width: 100%; background: #005885; transform-origin: 0 50%; transform: scaleX(0); }
+</style>
+<script src="./gsap.min.js"></script>
+<script src="./vendor/three.bundle.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="scene" width="1280" height="720"></canvas>
+  <div id="card">
+    <p class="kicker">MINIATURE TOWN · 1:500</p>
+    <p class="title">An idea becomes<br>a connected system</p>
+    <div class="bar"><i id="bar"></i></div>
+  </div>
+</div>
+<script>
+(function () {
+  "use strict";
+  var W = 1280, H = 720;
+
+  // ---------- deterministic helpers ----------
+  var seed = 195;
+  function rand() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+
+  // ---------- renderer / camera (fixed high viewpoint) ----------
+  var canvas = document.getElementById("scene");
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false, preserveDrawingBuffer: true, powerPreference: "high-performance" });
+  renderer.setPixelRatio(1);
+  renderer.setSize(W, H, false);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color("#6E9E57");
+  var NEAR = 1, FAR = 140;
+  var camera = new THREE.PerspectiveCamera(34, W / H, NEAR, FAR);
+  camera.position.set(0, 20, 22);
+  camera.lookAt(0, 0, 0);
+  camera.updateMatrixWorld(true);
+  var camForward = new THREE.Vector3(); camera.getWorldDirection(camForward);
+  function viewDepth(x, y, z) { return new THREE.Vector3(x, y, z).sub(camera.position).dot(camForward); }
+
+  // ---------- lights ----------
+  scene.add(new THREE.HemisphereLight("#F4F8FF", "#4C6B3A", 1.35));
+  var sun = new THREE.DirectionalLight("#FFF3DC", 2.4);
+  sun.position.set(-14, 26, 12);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.left = -30; sun.shadow.camera.right = 30;
+  sun.shadow.camera.top = 30; sun.shadow.camera.bottom = -30;
+  sun.shadow.camera.near = 1; sun.shadow.camera.far = 80;
+  sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.02;
+  scene.add(sun);
+
+  function mat(c, opts) { return new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.82, metalness: 0 }, opts || {})); }
+  function add(mesh, cast, recv) { mesh.castShadow = !!cast; mesh.receiveShadow = recv !== false; scene.add(mesh); return mesh; }
+
+  // ---------- ground and streets ----------
+  var ground = add(new THREE.Mesh(new THREE.PlaneGeometry(110, 90), mat("#7BAA60")), false, true);
+  ground.rotation.x = -Math.PI / 2; ground.position.z = -14;
+
+  var roadMat = mat("#D9D3C3", { roughness: 0.95 });
+  var kerbMat = mat("#EDE8DC");
+  var dashMat = mat("#FFFFFF", { roughness: 0.6 });
+  var ROAD_Z = [6, 0, -6];          // near route, main street, far route
+  ROAD_Z.forEach(function (z) {
+    add(new THREE.Mesh(new THREE.BoxGeometry(110, 0.06, 1.7), roadMat), false, true).position.set(0, 0.03, z);
+    [-1, 1].forEach(function (s) { add(new THREE.Mesh(new THREE.BoxGeometry(110, 0.12, 0.22), kerbMat), false, true).position.set(0, 0.06, z + s * 0.96); });
+    for (var x = -54; x < 54; x += 1.3) add(new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.07, 0.07), dashMat), false, true).position.set(x, 0.065, z);
+  });
+  [0, -15, 15].forEach(function (x) {
+    add(new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.062, 90), roadMat), false, true).position.set(x, 0.031, -14);
+  });
+  // hub plaza
+  var plaza = add(new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.1, 0.1, 48), mat("#CFC8B6")), false, true);
+  plaza.position.set(0, 0.07, 0);
+
+  // ---------- houses ----------
+  var HOUSE_COLORS = ["#E86A4A", "#F2F0EA", "#4A8FD0", "#F2C14E", "#D9534F", "#8FC1E3"];
+  var roofMat = mat("#5B4A44");
+  function house(x, z, color, w, d, h, rot) {
+    var g = new THREE.Group();
+    var body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color));
+    body.position.y = h / 2; body.castShadow = true; body.receiveShadow = true; g.add(body);
+    var rr = d * 0.64;
+    var roofGeo = new THREE.CylinderGeometry(rr, rr, w * 1.04, 3);
+    roofGeo.rotateZ(Math.PI / 2); roofGeo.rotateX(Math.PI / 6); roofGeo.scale(1, 0.55, 1);
+    var roof = new THREE.Mesh(roofGeo, roofMat);
+    roof.position.y = h + 0.275 * rr; roof.castShadow = true; roof.receiveShadow = true; g.add(roof);
+    var win = mat("#28435A", { roughness: 0.3 });
+    for (var i = -1; i <= 1; i += 2) {
+      var wdw = new THREE.Mesh(new THREE.BoxGeometry(w * 0.18, h * 0.26, 0.04), win);
+      wdw.position.set(i * w * 0.24, h * 0.55, d / 2 + 0.02); g.add(wdw);
+    }
+    g.position.set(x, 0, z); g.rotation.y = rot || 0; scene.add(g);
+    return { x: x, z: z, top: h + 0.825 * rr };
+  }
+  // linked houses: [x, z] chosen beside the routes
+  var nearHouses = [house(-6.2, 4.1, "#E86A4A", 1.7, 1.2, 0.9), house(-11, 8.2, "#F2F0EA", 1.6, 1.2, 0.85), house(4.6, 8.1, "#F2C14E", 1.8, 1.2, 0.9)];
+  var farHouses = [house(6.4, -4.0, "#4A8FD0", 1.8, 1.3, 1.0), house(10.6, -8.1, "#D9534F", 1.7, 1.3, 1.0), house(-7.2, -8.2, "#8FC1E3", 1.8, 1.3, 1.0)];
+  // filler houses for a coherent full-size town (scale clues outside the clear strip)
+  for (var bz = -30; bz <= 14; bz += 3.2) {
+    for (var bx = -34; bx <= 34; bx += 3.4) {
+      var nearRoad = ROAD_Z.some(function (z) { return Math.abs(bz - z) < 1.6; }) || [0, -15, 15].some(function (x) { return Math.abs(bx - x) < 1.6; });
+      if (nearRoad || (Math.abs(bx) < 3.4 && Math.abs(bz) < 3.4)) continue;
+      var taken = nearHouses.concat(farHouses).some(function (h) { return Math.abs(h.x - bx) < 2.6 && Math.abs(h.z - bz) < 2.2; });
+      if (taken || rand() < 0.35) continue;
+      var jx = bx + (rand() - 0.5) * 0.8, jz = bz + (rand() - 0.5) * 0.5;
+      house(jx, jz, HOUSE_COLORS[Math.floor(rand() * HOUSE_COLORS.length)], 1.3 + rand() * 0.7, 1.0 + rand() * 0.3, 0.7 + rand() * 0.5, rand() < 0.3 ? Math.PI / 2 : 0);
+    }
+  }
+
+  // ---------- trees (instanced) ----------
+  var treeCount = 0, trees = [];
+  for (var i = 0; i < 520; i++) {
+    var tx = (rand() - 0.5) * 90, tz = 16 - rand() * 62;
+    var onRoad = ROAD_Z.some(function (z) { return Math.abs(tz - z) < 1.4; }) || [0, -15, 15].some(function (x) { return Math.abs(tx - x) < 1.4; });
+    if (onRoad || Math.hypot(tx, tz) < 3) continue;
+    trees.push([tx, tz, 0.35 + rand() * 0.3]);
+  }
+  var crownGeo = new THREE.IcosahedronGeometry(1, 1);
+  var trunkGeo = new THREE.CylinderGeometry(0.06, 0.08, 1, 6);
+  var crowns = new THREE.InstancedMesh(crownGeo, mat("#3F6B3A"), trees.length);
+  var trunks = new THREE.InstancedMesh(trunkGeo, mat("#6B4F3A"), trees.length);
+  var m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3();
+  var crownCols = [new THREE.Color("#3F6B3A"), new THREE.Color("#4F8144"), new THREE.Color("#36603A")];
+  trees.forEach(function (t, k) {
+    m4.compose(v.set(t[0], 0.35 + t[2] * 1.1, t[1]), q.identity(), sc.set(t[2], t[2] * 1.15, t[2])); crowns.setMatrixAt(k, m4);
+    crowns.setColorAt(k, crownCols[k % 3]);
+    m4.compose(v.set(t[0], 0.25, t[1]), q.identity(), sc.set(1, 0.5, 1)); trunks.setMatrixAt(k, m4);
+  });
+  crowns.castShadow = trunks.castShadow = true; crowns.receiveShadow = true;
+  scene.add(crowns); scene.add(trunks);
+
+  // ---------- parked cars / lamps / people: fixed-scale clues ----------
+  var parkCols = ["#E8E2D4", "#B9D5DE", "#C94F3D", "#2E3A46"];
+  for (var p = 0; p < 34; p++) {
+    var pz = ROAD_Z[p % 3] + (p % 2 ? 0.62 : -0.62);
+    var px = -30 + (p * 1.93 % 60);
+    if (Math.abs(px) < 4) continue;
+    add(new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.26, 0.3), mat(parkCols[p % 4], { roughness: 0.5 })), true).position.set(px, 0.2, pz);
+  }
+  var lampMat = mat("#2E3A46");
+  for (var lx = -26; lx <= 26; lx += 4.4) {
+    ROAD_Z.forEach(function (z) { add(new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.9, 5), lampMat), true).position.set(lx + 0.7, 0.45, z - 1.05); });
+  }
+  var peopleCols = ["#142536", "#C94F3D", "#005885", "#F2C14E"];
+  for (var pp = 0; pp < 40; pp++) {
+    var ppz = ROAD_Z[pp % 3] + (pp % 2 ? 1.12 : -1.12), ppx = -24 + (pp * 3.7 % 48);
+    add(new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.16, 2, 6), mat(peopleCols[pp % 4])), true).position.set(ppx, 0.17, ppz);
+  }
+
+  // ---------- the idea hub ----------
+  var hubCore = add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 32, 16), new THREE.MeshStandardMaterial({ color: "#FFF4C8", emissive: "#FFC94A", emissiveIntensity: 0.6, roughness: 0.4 })), true);
+  hubCore.position.set(0, 0.62, 0);
+  var hubPost = add(new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 0.3, 16), mat("#C88A12")), true);
+  hubPost.position.set(0, 0.25, 0);
+  // radial glow (canvas texture, generated once)
+  var gc = document.createElement("canvas"); gc.width = gc.height = 256;
+  var gx = gc.getContext("2d"), grd = gx.createRadialGradient(128, 128, 0, 128, 128, 128);
+  grd.addColorStop(0, "rgba(255,241,191,1)"); grd.addColorStop(0.4, "rgba(255,201,74,0.6)"); grd.addColorStop(1, "rgba(255,201,74,0)");
+  gx.fillStyle = grd; gx.fillRect(0, 0, 256, 256);
+  var glowTex = new THREE.CanvasTexture(gc); glowTex.colorSpace = THREE.SRGBColorSpace;
+  var glow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  glow.rotation.x = -Math.PI / 2; glow.position.set(0, 0.14, 0); scene.add(glow);
+  var ring = new THREE.Mesh(new THREE.RingGeometry(0.92, 1.0, 64), new THREE.MeshBasicMaterial({ color: "#FFB21F", transparent: true, depthWrite: false }));
+  ring.rotation.x = -Math.PI / 2; ring.position.set(0, 0.15, 0); scene.add(ring);
+
+  // ---------- connection arcs (drawn via drawRange) ----------
+  var TUBE_SEG = 64, RAD_SEG = 6;
+  var linkMat = new THREE.MeshStandardMaterial({ color: "#FFB21F", emissive: "#FF9A00", emissiveIntensity: 0.55, roughness: 0.5 });
+  var nodeMat = new THREE.MeshStandardMaterial({ color: "#FFF4C8", emissive: "#FFB21F", emissiveIntensity: 0.7 });
+  function makeLink(h) {
+    var a = new THREE.Vector3(0, 0.75, 0), b = new THREE.Vector3(h.x, h.top + 0.15, h.z);
+    var mid = a.clone().lerp(b, 0.5); mid.y += 1.4 + a.distanceTo(b) * 0.12;
+    var curve = new THREE.QuadraticBezierCurve3(a, mid, b);
+    var geo = new THREE.TubeGeometry(curve, TUBE_SEG, 0.075, RAD_SEG, false);
+    var mesh = add(new THREE.Mesh(geo, linkMat), true, false);
+    geo.setDrawRange(0, 0);
+    var node = add(new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 10), nodeMat), true, false);
+    node.position.copy(b); node.scale.setScalar(0.001);
+    return { geo: geo, node: node };
+  }
+  var links = nearHouses.concat(farHouses).map(makeLink);
+
+  // ---------- moving subjects ----------
+  function vehicle(bodyCol, cabCol, len) {
+    var g = new THREE.Group();
+    var body = new THREE.Mesh(new THREE.BoxGeometry(len, 0.42, 0.56), mat(bodyCol, { roughness: 0.45 }));
+    body.position.y = 0.36; body.castShadow = body.receiveShadow = true; g.add(body);
+    var cab = new THREE.Mesh(new THREE.BoxGeometry(len * 0.34, 0.3, 0.5), mat(cabCol, { roughness: 0.3 }));
+    cab.position.set(-len * 0.24, 0.68, 0); cab.castShadow = true; g.add(cab);
+    var stripe = new THREE.Mesh(new THREE.BoxGeometry(len * 0.62, 0.07, 0.565), mat("#FFFFFF", { roughness: 0.4 }));
+    stripe.position.set(len * 0.12, 0.42, 0); g.add(stripe);
+    var wheels = [];
+    var wg = new THREE.CylinderGeometry(0.11, 0.11, 0.08, 14), wm = mat("#1B2430");
+    [[-0.3, -0.29], [-0.3, 0.29], [0.3, -0.29], [0.3, 0.29]].forEach(function (w) {
+      var wheel = new THREE.Mesh(wg, wm); wheel.rotation.x = Math.PI / 2; wheel.position.set(w[0] * len, 0.11, w[1]); g.add(wheel); wheels.push(wheel);
+    });
+    scene.add(g);
+    return { g: g, wheels: wheels };
+  }
+  var van = vehicle("#005885", "#B9D5DE", 1.15);     // subject A: foreground route (active accent)
+  var truck = vehicle("#E8E2D4", "#142536", 1.45);   // subject B: far route
+  var VAN_Z = 6.42, TRUCK_Z = -6.42;
+  van.g.position.set(-12, 0, VAN_Z);
+  truck.g.position.set(15, 0, TRUCK_Z); truck.g.rotation.y = Math.PI;
+
+  // ---------- tilt-shift depth-of-field pass ----------
+  var rt = new THREE.WebGLRenderTarget(W, H, { samples: 4, type: THREE.HalfFloatType });
+  rt.depthTexture = new THREE.DepthTexture(W, H);
+  rt.depthTexture.type = THREE.UnsignedIntType;
+  var dof = new THREE.ShaderMaterial({
+    uniforms: {
+      tColor: { value: rt.texture }, tDepth: { value: rt.depthTexture },
+      uRes: { value: new THREE.Vector2(W, H) }, uNear: { value: NEAR }, uFar: { value: FAR },
+      uFocus: { value: 25 }, uBand: { value: 0.9 }, uRange: { value: 5.5 }, uMaxBlur: { value: 13.0 }
+    },
+    vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
+    fragmentShader: [
+      "uniform sampler2D tColor; uniform sampler2D tDepth; uniform vec2 uRes;",
+      "uniform float uNear; uniform float uFar; uniform float uFocus; uniform float uBand; uniform float uRange; uniform float uMaxBlur;",
+      "varying vec2 vUv;",
+      "float depthAt(vec2 uv){ float d = texture2D(tDepth, uv).x; return (uNear * uFar) / (uFar - d * (uFar - uNear)); }",
+      "float cocOf(float z){ return smoothstep(0.0, 1.0, clamp((abs(z - uFocus) - uBand) / uRange, 0.0, 1.0)) * uMaxBlur; }",
+      "void main(){",
+      "  float z0 = depthAt(vUv); float c0 = cocOf(z0);",
+      "  vec3 acc = texture2D(tColor, vUv).rgb; float wsum = 1.0;",
+      "  if (c0 > 0.5) {",
+      "    for (int i = 0; i < 56; i++) {",
+      "      float fi = float(i);",
+      "      float r = sqrt((fi + 0.5) / 56.0) * c0;",
+      "      float a = fi * 2.39996323;",
+      "      vec2 uv = vUv + vec2(cos(a), sin(a)) * r / uRes;",
+      "      float zs = depthAt(uv); float cs = cocOf(zs);",
+      "      float w = max(step(z0 - 0.6, zs), smoothstep(r * 0.55, r, cs));",
+      "      acc += texture2D(tColor, uv).rgb * w; wsum += w;",
+      "    }",
+      "  }",
+      "  vec3 col = acc / wsum;",
+      "  float l = dot(col, vec3(0.2126, 0.7152, 0.0722));",
+      "  col = mix(vec3(l), col, 1.12);",
+      "  col = (col - 0.18) * 1.04 + 0.18;",
+      "  vec2 q = vUv - 0.5; col *= 1.0 - dot(q, q) * 0.22;",
+      "  gl_FragColor = vec4(max(col, 0.0), 1.0);",
+      "  #include <colorspace_fragment>",
+      "}"
+    ].join("\n"),
+    depthTest: false, depthWrite: false
+  });
+  var quadScene = new THREE.Scene();
+  var quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  quadScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), dof));
+
+  // ---------- keyframed focus distances tied to the two routes ----------
+  var D_NEAR = viewDepth(0, 0.35, VAN_Z);
+  var D_FAR = viewDepth(0, 0.35, TRUCK_Z);
+
+  // ---------- state owned exclusively by the GSAP timeline ----------
+  var S = { focus: D_NEAR, vanX: -12, truckX: 15, hub: 0.25, ring: 0, ring2: 0 };
+  links.forEach(function (_, k) { S["l" + k] = 0; S["n" + k] = 0; });
+
+  function draw() {
+    van.g.position.x = S.vanX;
+    truck.g.position.x = S.truckX;
+    van.wheels.forEach(function (w) { w.rotation.y = -(S.vanX + 12) / 0.11; });
+    truck.wheels.forEach(function (w) { w.rotation.y = (15 - S.truckX) / 0.11; });
+    hubCore.material.emissiveIntensity = 0.35 + S.hub * 0.9;
+    glow.scale.setScalar(2.4 + S.hub * 2.6);
+    glow.material.opacity = 0.35 + S.hub * 0.6;
+    // two expanding pulses: ring (idea lights up) then ring2 (system complete)
+    var rp = S.ring2 > 0 ? S.ring2 : S.ring;
+    ring.scale.setScalar(1.0 + rp * 1.6);
+    ring.material.opacity = (1 - rp) * 0.85;
+    links.forEach(function (L, k) {
+      var segs = Math.round(S["l" + k] * TUBE_SEG);
+      L.geo.setDrawRange(0, segs * RAD_SEG * 6);
+      L.node.scale.setScalar(Math.max(0.001, S["n" + k]));
+    });
+    dof.uniforms.uFocus.value = S.focus;
+    renderer.setRenderTarget(rt);
+    renderer.render(scene, camera);
+    renderer.setRenderTarget(null);
+    renderer.render(quadScene, quadCam);
+  }
+
+  // ---------- one paused, seekable GSAP timeline ----------
+  var tl = gsap.timeline({ paused: true, onUpdate: draw, defaults: { overwrite: false } });
+  // card overlay (stable, outside the focus band)
+  tl.fromTo("#card", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 0);
+  tl.fromTo("#bar", { scaleX: 0 }, { scaleX: 1, duration: 2.2, ease: "sine.inOut" }, 0.15);
+  // the idea lights up
+  tl.fromTo(S, { hub: 0.25 }, { hub: 1, duration: 0.5, ease: "power2.out" }, 0.05);
+  tl.fromTo(S, { ring: 0 }, { ring: 1, duration: 0.8, ease: "power1.out" }, 0.1);
+  // subject A — van on the foreground route, in focus first
+  tl.fromTo(S, { vanX: -12 }, { vanX: -4.2, duration: 1.15, ease: "power2.out" }, 0);
+  // near links grow from the hub
+  [0, 1, 2].forEach(function (k, i) {
+    tl.fromTo(S, { ["l" + k]: 0 }, { ["l" + k]: 1, duration: 0.55, ease: "power2.inOut" }, 0.25 + i * 0.16);
+    tl.fromTo(S, { ["n" + k]: 0 }, { ["n" + k]: 1, duration: 0.22, ease: "back.out(2)" }, 0.8 + i * 0.16);
+  });
+  // subject B — truck on the far route becomes meaningful
+  tl.fromTo(S, { truckX: 15 }, { truckX: 7.6, duration: 1.55, ease: "power2.inOut" }, 0.7);
+  // focus pull: keyframed world distance from near route to far route
+  tl.fromTo(S, { focus: D_NEAR }, { focus: D_FAR, duration: 1.0, ease: "sine.inOut" }, 1.05);
+  // far links grow as focus arrives
+  [3, 4, 5].forEach(function (k, i) {
+    tl.fromTo(S, { ["l" + k]: 0 }, { ["l" + k]: 1, duration: 0.55, ease: "power2.inOut" }, 1.45 + i * 0.14);
+    tl.fromTo(S, { ["n" + k]: 0 }, { ["n" + k]: 1, duration: 0.22, ease: "back.out(2)" }, 2.0 + i * 0.14);
+  });
+  // second pulse when the system completes
+  tl.fromTo(S, { ring2: 0 }, { ring2: 1, duration: 0.5, ease: "power1.out", immediateRender: false }, 2.1);
+  tl.set({}, {}, 3.0);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  window.addEventListener("hf-seek", draw);
+  tl.seek(0, false);
+  draw();
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

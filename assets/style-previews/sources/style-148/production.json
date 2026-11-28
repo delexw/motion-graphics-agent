@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Brick Bridge",
+  "displayDescription": "Plastic bricks snap onto an empty stud grid: three piers, then an interlocking two-course bridge — an idea becomes a connected system.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Three.js 0.187.0 (WebGLRenderer, InstancedMesh studs, MeshPhysicalMaterial clearcoat, PCF soft shadows)"
+  ],
+  "motionEngine": [
+    "GSAP 3.15.1 — one paused timeline at window.__timelines.video"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Blender was not used (explicit user instruction); the brick scene is a procedural Three.js approximation rendered in the browser.",
+    "Bricks are bevel-free boxes with cylindrical studs; real moulded edge radii, underside tubes and logo-embossed studs are omitted.",
+    "Plastic reflection uses a procedurally generated studio environment (PMREM of simple emissive panels), not a measured HDR.",
+    "Seating is an animated drop with a small squash; no physical clutch-force simulation."
+  ]
+}

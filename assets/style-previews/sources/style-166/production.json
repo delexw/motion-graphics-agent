@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "Lit Sprite",
+  "displayDescription": "A pixel sprite walks a moonlit 3D street, passes behind a pillar, stops under a warm lamp and its idea lights a connected wall network.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Three.js 0.187.0 (WebGLRenderer, bundled locally to three.bundle.js with esbuild)"
+  ],
+  "motionEngine": [
+    "GSAP 3.15.1 paused timeline at window.__timelines.video"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative procedural scene: the sprite is an original 12x18 pixel atlas on a nearest-filtered plane; sprite shading under the beam shadow and lamp is an analytic tint keyed to the actor's world position, not true shadow-map lighting on the sprite.",
+    "Moonlight shadow of the overhead beam uses a Three.js PCF shadow map; the lamp cone and floor pool are additive approximations of volumetric light.",
+    "No tech.preview_recipes are listed in STYLE.json and no BACKGROUND_REVIEW.json was supplied, so the preview demonstrates the catalogue's characteristic action rather than a reviewed recipe.",
+    "Blender was not used per user instruction; all visuals are Three.js/WebGL.",
+    "Silent preview."
+  ]
+}

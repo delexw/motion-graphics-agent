@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { MotionPatternSchema } from "../../src/shared/contracts";
 import { technologyPool } from "../../src/shared/technology-pool";
 import { loadCatalog } from "../../src/server/catalog/catalog";
+import { parseStyleGuide } from "../../src/shared/agents/schemas/combined-style-guide";
 import { catalogRoot } from "../../src/server/runtime/config";
 import {
   validateExamplePalette,
@@ -118,7 +119,7 @@ const forbiddenSourceText = [
 describe("Terminal Lyric Duotone Anime catalog entry", () => {
   it("adds a complete authored style-138 with separate renderer, motion and pipeline roles", async () => {
     const catalog = await loadCatalog();
-    expect(catalog.styles).toHaveLength(143);
+    expect(catalog.styles).toHaveLength(199);
     const style = catalog.styles.find((s) => s.id === "style-138")!;
     expect(style.name_en).toBe("Terminal Lyric Duotone Anime");
     expect(style.provenance).toBe("authored");
@@ -147,8 +148,10 @@ describe("Terminal Lyric Duotone Anime catalog entry", () => {
       .filter((tool) => tool.production_roles.includes("render_pipeline"))
       .map((tool) => tool.name);
     expect(pipeline).toEqual(["HyperFrames", "Remotion"]);
-    expect(style.executable_prompt_template).toContain("{{render_pipeline}}");
-    expect(style.executable_prompt_template).toContain(style.visual_cues);
+    expect(
+      parseStyleGuide(style.executable_prompt_template)?.sections["Implementation tools"],
+    ).toContain("deterministic glyph schedules");
+    expect(style.executable_prompt_template).toContain("## Visual identity");
     expect(
       style.suggested_combinations!.suggestions.map((s) => s.supporting_styles[0].style_id),
     ).toEqual(["style-066", "style-098", "style-067"]);

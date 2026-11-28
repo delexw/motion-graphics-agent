@@ -85,6 +85,17 @@ export const RoomPatchSchema = z.object({
   force: z.array(z.string()).max(200).default([]),
 });
 export type RoomState = z.infer<typeof RoomStateSchema>;
+export const IdeaDraftSourceSchema = z.object({
+  draftId: z.string().uuid(),
+  revision: z.number().int().min(0),
+});
+export type IdeaDraftSource = z.infer<typeof IdeaDraftSourceSchema>;
+export const additionalIdeaDraftKey = (draftId: string) => `idea:${draftId}`;
+export function findIdeaDraftKey(drafts: RoomState["drafts"], draftId: string) {
+  if (drafts.new?.id === draftId) return "new";
+  const key = additionalIdeaDraftKey(draftId);
+  return drafts[key]?.id === draftId ? key : undefined;
+}
 export type RoomWindowState = z.infer<typeof RoomWindowSchema>;
 export type RoomDraft = z.infer<typeof RoomDraftSchema>;
 export type RoomProjectView = z.infer<typeof RoomProjectViewSchema>;

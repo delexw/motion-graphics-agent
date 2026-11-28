@@ -17,7 +17,8 @@ it("puts the reference drawing lessons on Manga, preserving the theatre's indepe
   expect(manga.name_en).toBe("Manga");
   expect(manga.visual_cues).toContain("animals, creatures, monsters, objects, machines");
   expect(manga.visual_cues).toContain("human faces, eyes and hands are optional");
-  for (const guidance of [manga.tech.implementation, manga.executable_prompt_template]) {
+  {
+    const guidance = manga.tech.implementation;
     for (const lesson of [
       "Manga is a visual storytelling language",
       "do not default to a person",

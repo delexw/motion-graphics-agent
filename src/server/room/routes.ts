@@ -10,7 +10,7 @@ import { RoomPatchSchema, RoomStateSchema } from "../../shared/room";
 import { roomWallpaperExtensions } from "../../shared/room-appearance";
 import { CodedError } from "../../shared/errors";
 import { briefSectionFileAccept } from "../../shared/brief-sections";
-import { appRoot, webPort } from "../runtime/config";
+import { desktopBackend, roomLibraryRoot, webPort } from "../runtime/config";
 import type { Store } from "../jobs/store";
 import type { Asset } from "../../shared/contracts";
 
@@ -63,7 +63,7 @@ async function verifyWallpaper(buffer: Buffer) {
 export async function registerRoomRoutes(
   app: FastifyInstance,
   store: Store,
-  libraryFolder = path.join(appRoot, "user-data", "room", "library"),
+  libraryFolder = roomLibraryRoot,
 ) {
   app.addHook("onRequest", async (req) => {
     if (!req.url.startsWith("/api/room")) return;
@@ -72,7 +72,7 @@ export async function registerRoomRoutes(
     const origin = req.headers.origin;
     if (origin && origin !== `http://${req.headers.host}`) {
       const allowed = new Set([`http://127.0.0.1:${webPort}`, `http://localhost:${webPort}`]);
-      if (!allowed.has(origin))
+      if (desktopBackend || !allowed.has(origin))
         throw new CodedError("ACCESS_DENIED", "Foreign origin rejected", 403);
     }
   });

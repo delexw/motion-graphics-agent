@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Briefing Board",
+  "displayDescription": "One clearance guide sweeps three ways to connect an idea at equal speed and holds on the feasible hub-and-ring system.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP 3.15.1 (local gsap.min.js)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative schematic: hop counts and the r = 2 hops guide are authored example values, not measured data.",
+    "No Blender used; flat frontal SVG board per the style (no depth/lighting needed).",
+    "STYLE.json lists no preview_recipes and no BACKGROUND_REVIEW.json was supplied; the characteristic clearance-guide action is demonstrated instead.",
+    "Technology selection tool failed (missing PROJECT_DEPENDENCIES.json); GSAP is the supplied local gsap.min.js, SVG is browser-native."
+  ]
+}

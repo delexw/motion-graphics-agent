@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Silent Film Projection — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #06080c; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; background: #06080c; }
+  #film { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+</style>
+<script src="gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="film" width="1280" height="720" aria-label="Silent film reel: a lamplighter plugs a string of lamps into a street pole; intertitle reads An idea becomes a connected system; the whole street lights up."></canvas>
+</div>
+<script>
+(function () {
+  "use strict";
+  var W = 1280, H = 720, FPS = 30;
+  var C = {
+    edge: "#06080c",          // dark film edge outside the acting area
+    sky0: "#3b5d78",          // projector hotspot (tinted night stock)
+    sky1: "#294359",          // secondary
+    sky2: "#111722",          // background
+    house: "#16202d",
+    street: "#0e141d",
+    ink: "#080b10",           // silhouette
+    cream: "#F5F4E8",         // foreground
+    active: "#76E1CB",        // active change
+    card: "#0a0d13"
+  };
+  // Gate (projected frame)
+  var G = { x: 56, y: 34, w: 1168, h: 600, r: 30 };
+
+  // ---------- seeded PRNG ----------
+  function mulberry(seed) {
+    return function () {
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function hash(n) { return mulberry(n * 7919 + 17)(); }
+
+  var canvas = document.getElementById("film");
+  var ctx = canvas.getContext("2d");
+
+  function mk(w, h) { var c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
+  function gatePath(c) {
+    c.beginPath();
+    if (c.roundRect) c.roundRect(G.x, G.y, G.w, G.h, G.r); else c.rect(G.x, G.y, G.w, G.h);
+  }
+
+  // ---------- geometry ----------
+  var POLE_L = { x: 170, top: 262 };
+  var POLE_R = { x: 1010, top: 262 };
+  var SOCKET = { x: 1000, y: 318 };      // junction box on right pole
+  var GROUND = 530;
+  var MAN_X = 900;                        // feet centre
+  var BULBS = 7;
+  var HOUSES = [
+    { x: 92, w: 170, h: 200, roof: 60, wins: [[120, 380], [200, 380], [120, 440]] },
+    { x: 280, w: 150, h: 160, roof: 46, wins: [[305, 410], [375, 410]] },
+    { x: 450, w: 210, h: 230, roof: 70, wins: [[480, 350], [560, 350], [480, 420], [600, 420]] },
+    { x: 690, w: 150, h: 180, roof: 52, wins: [[715, 395], [785, 395]] },
+    { x: 1070, w: 150, h: 210, roof: 64, wins: [[1095, 372], [1160, 372], [1128, 440]] }
+  ];
+
+  // ---------- cached static layers ----------
+  var bg = mk(W, H);
+  (function () {
+    var c = bg.getContext("2d");
+    c.fillStyle = C.edge; c.fillRect(0, 0, W, H);
+    c.save(); gatePath(c); c.clip();
+    var g = c.createRadialGradient(560, 250, 40, 600, 330, 720);
+    g.addColorStop(0, C.sky0); g.addColorStop(0.5, C.sky1); g.addColorStop(1, C.sky2);
+    c.fillStyle = g; c.fillRect(G.x, G.y, G.w, G.h);
+    // moon
+    c.fillStyle = "rgba(245,244,232,0.55)";
+    c.beginPath(); c.arc(330, 120, 22, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "rgba(41,67,89,0.9)";
+    c.beginPath(); c.arc(340, 114, 20, 0, Math.PI * 2); c.fill();
+    // houses
+    HOUSES.forEach(function (hs) {
+      var top = GROUND - hs.h;
+      c.fillStyle = C.house;
+      c.beginPath();
+      c.moveTo(hs.x, GROUND); c.lineTo(hs.x, top); c.lineTo(hs.x + hs.w / 2, top - hs.roof);
+      c.lineTo(hs.x + hs.w, top); c.lineTo(hs.x + hs.w, GROUND); c.closePath(); c.fill();
+      c.fillRect(hs.x + hs.w * 0.7, top - hs.roof * 0.8, 16, hs.roof * 0.6);
+      hs.wins.forEach(function (w) { c.fillStyle = "#0b1119"; c.fillRect(w[0], w[1], 34, 42); });
+    });
+    // street
+    c.fillStyle = C.street; c.fillRect(G.x, GROUND, G.w, G.y + G.h - GROUND);
+    c.fillStyle = "rgba(118,225,203,0.05)"; c.fillRect(G.x, GROUND, G.w, 3);
+    // poles
+    c.fillStyle = C.ink;
+    c.fillRect(POLE_L.x - 7, POLE_L.top, 14, GROUND - POLE_L.top + 6);
+    c.fillRect(POLE_R.x - 7, POLE_R.top, 14, GROUND - POLE_R.top + 6);
+    c.fillRect(POLE_L.x - 20, POLE_L.top - 6, 40, 8);
+    c.fillRect(POLE_R.x - 20, POLE_R.top - 6, 40, 8);
+    // junction box
+    c.fillRect(SOCKET.x - 4, SOCKET.y - 22, 26, 44);
+    c.restore();
+  })();
+
+  // vignette + stationary grain (optical wear, separate from action layers)
+  var wear = mk(W, H);
+  (function () {
+    var c = wear.getContext("2d");
+    c.save(); gatePath(c); c.clip();
+    var v = c.createRadialGradient(620, 330, 260, 640, 340, 760);
+    v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.62)");
+    c.fillStyle = v; c.fillRect(0, 0, W, H);
+    var img = c.getImageData(0, 0, W, H), d = img.data, r = mulberry(188);
+    for (var i = 0; i < d.length; i += 4) {
+      var n = r();
+      if (n > 0.985) { d[i] = d[i] + 60; d[i + 1] = d[i + 1] + 60; d[i + 2] = d[i + 2] + 60; d[i + 3] = Math.max(d[i + 3], 26); }
+      else if (n < 0.02) { d[i + 3] = Math.max(d[i + 3], 40); }
+    }
+    c.putImageData(img, 0, 0);
+    c.restore();
+    // gate edge rim
+    c.lineWidth = 3; c.strokeStyle = "rgba(0,0,0,0.85)"; gatePath(c); c.stroke();
+  })();
+
+  // ---------- helpers ----------
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+  // two-bone IK: returns elbow given shoulder, hand, lengths, bend sign
+  function elbow(sx, sy, hx, hy, l1, l2, bend) {
+    var dx = hx - sx, dy = hy - sy, d = Math.min(Math.hypot(dx, dy), l1 + l2 - 0.01);
+    var a = Math.atan2(dy, dx);
+    var cosA = clamp((l1 * l1 + d * d - l2 * l2) / (2 * l1 * d), -1, 1);
+    var ang = a + bend * Math.acos(cosA);
+    return [sx + Math.cos(ang) * l1, sy + Math.sin(ang) * l1];
+  }
+  function limb(c, pts, w) {
+    c.lineWidth = w; c.lineCap = "round"; c.lineJoin = "round";
+    c.beginPath(); c.moveTo(pts[0], pts[1]);
+    for (var i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i + 1]);
+    c.stroke();
+  }
+
+  // Lamp string: catenary-ish quadratic from left pole to the plug end
+  function stringPoint(px, py, ex, ey, t, sag) {
+    var x = lerp(px, ex, t), y = lerp(py, ey, t) + sag * 4 * t * (1 - t);
+    return [x, y];
+  }
+
+  // ---------- figure ----------
+  function drawMan(c, S) {
+    var lean = (-S.antic * 0.10 + S.reach * 0.10 - S.react * 0.06);
+    var fx = MAN_X - S.react * 26;        // steps back on the consequence
+    var hipX = fx, hipY = GROUND - 92;
+    var shX = hipX + Math.sin(lean) * 108, shY = hipY - Math.cos(lean) * 108;
+    c.fillStyle = C.ink; c.strokeStyle = C.ink;
+    // legs (stance widens on reaction)
+    var spread = 18 + S.reach * 10 + S.react * 8;
+    limb(c, [hipX - 6, hipY, hipX - spread, GROUND], 22);
+    limb(c, [hipX + 6, hipY, hipX + spread + 6, GROUND], 22);
+    c.fillRect(hipX - spread - 16, GROUND - 8, 28, 9);
+    c.fillRect(hipX + spread - 4, GROUND - 8, 30, 9);
+    // coat body
+    c.beginPath();
+    c.moveTo(shX - 30, shY + 4); c.lineTo(shX + 30, shY + 4);
+    c.lineTo(hipX + 40, hipY + 26); c.lineTo(hipX - 40, hipY + 26); c.closePath(); c.fill();
+    // head + top hat, looks toward the plug
+    var hx = shX + 6 + S.reach * 6, hy = shY - 30 - S.react * 2;
+    var tilt = lerp(0.25, -0.12, S.reach) - S.react * 0.1;
+    c.save(); c.translate(hx, hy); c.rotate(tilt);
+    c.beginPath(); c.arc(0, 0, 21, 0, Math.PI * 2); c.fill();
+    c.fillRect(-26, -20, 52, 6); c.fillRect(-16, -50, 32, 32);
+    c.beginPath(); c.moveTo(16, -2); c.lineTo(27, 4); c.lineTo(15, 9); c.fill(); // nose
+    c.restore();
+    // plug hand (right arm): low -> pulled back -> socket
+    var low = [shX + 44, shY + 96], back = [shX - 6, shY + 70], sock = [SOCKET.x - 10, SOCKET.y];
+    var hX = lerp(lerp(low[0], back[0], S.antic), sock[0], S.reach);
+    var hY = lerp(lerp(low[1], back[1], S.antic), sock[1], S.reach);
+    if (S.react > 0) { hX = lerp(sock[0], shX + 70, S.react); hY = lerp(sock[1], shY - 56, S.react); }
+    var rs = [shX + 18, shY + 8];
+    var re = elbow(rs[0], rs[1], hX, hY, 58, 56, 1);
+    limb(c, [rs[0], rs[1], re[0], re[1], hX, hY], 15);
+    c.beginPath(); c.arc(hX, hY, 9, 0, Math.PI * 2); c.fill();
+    // free arm: balances, then opens wide on the reaction
+    var ls = [shX - 18, shY + 8];
+    var fh = [lerp(shX - 40, shX - 70, S.antic * (1 - S.reach)) - S.reach * 20, shY + 96 - S.reach * 30];
+    if (S.react > 0) { fh = [lerp(fh[0], shX - 96, S.react), lerp(fh[1], shY - 50, S.react)]; }
+    var le = elbow(ls[0], ls[1], fh[0], fh[1], 58, 56, -1);
+    limb(c, [ls[0], ls[1], le[0], le[1], fh[0], fh[1]], 15);
+    c.beginPath(); c.arc(fh[0], fh[1], 9, 0, Math.PI * 2); c.fill();
+    return { hand: [hX, hY], plugged: S.reach >= 0.999 || S.react > 0 };
+  }
+
+  // ---------- scene ----------
+  function drawScene(c, S, frame) {
+    c.drawImage(bg, 0, 0);
+    c.save(); gatePath(c); c.clip();
+    // lit windows (consequence across the street)
+    HOUSES.forEach(function (hs, hi) {
+      hs.wins.forEach(function (w, wi) {
+        var k = hi * 3 + wi, thr = (k % 7) / 7;
+        var a = clamp((S.win - thr * 0.7) / 0.3, 0, 1);
+        if (a <= 0) return;
+        c.fillStyle = "rgba(118,225,203," + (0.14 * a) + ")";
+        c.fillRect(w[0] - 10, w[1] - 10, 54, 62);
+        c.fillStyle = "rgba(245,244,232," + (0.82 * a) + ")";
+        c.fillRect(w[0], w[1], 34, 42);
+        c.fillStyle = C.house; c.fillRect(w[0] + 15, w[1], 4, 42); c.fillRect(w[0], w[1] + 19, 34, 4);
+      });
+    });
+    var man = drawMan(c, S);
+    // plug end follows the hand; once plugged it sits in the box
+    var ex = man.hand[0], ey = man.hand[1];
+    if (S.react > 0) { ex = SOCKET.x - 10; ey = SOCKET.y; }
+    var px = POLE_L.x, py = POLE_L.top + 4;
+    var sag = lerp(150, 70, clamp(S.reach + S.react, 0, 1));
+    // wire
+    c.strokeStyle = C.ink; c.lineWidth = 3;
+    c.beginPath();
+    for (var i = 0; i <= 40; i++) { var p = stringPoint(px, py, ex, ey, i / 40, sag); if (i) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); }
+    c.stroke();
+    // plug body in the hand / box
+    c.fillStyle = C.ink; c.fillRect(ex - 6, ey - 7, 16, 14);
+    // bulbs: unlit silhouettes, then light in a cascade from the plug back to the left pole
+    for (var b = 0; b < BULBS; b++) {
+      var t = (b + 1) / (BULBS + 1);
+      var q = stringPoint(px, py, ex, ey, t, sag);
+      var order = BULBS - 1 - b;              // nearest to the plug lights first
+      var lit = clamp(S.lit - order, 0, 1);
+      c.fillStyle = C.ink; c.fillRect(q[0] - 4, q[1], 8, 8);
+      if (lit > 0) {
+        var gl = c.createRadialGradient(q[0], q[1] + 16, 2, q[0], q[1] + 16, 44);
+        gl.addColorStop(0, "rgba(118,225,203," + (0.42 * lit) + ")");
+        gl.addColorStop(1, "rgba(118,225,203,0)");
+        c.fillStyle = gl; c.beginPath(); c.arc(q[0], q[1] + 16, 44, 0, Math.PI * 2); c.fill();
+      }
+      c.fillStyle = lit > 0 ? "rgba(245,244,232," + (0.35 + 0.65 * lit) + ")" : "#1c2a3a";
+      c.beginPath(); c.arc(q[0], q[1] + 16, 9, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = C.ink; c.lineWidth = 2; c.stroke();
+    }
+    // contact spark
+    if (S.spark > 0) {
+      c.strokeStyle = "rgba(245,244,232," + S.spark + ")"; c.lineWidth = 3;
+      var r0 = 10, r1 = 10 + 26 * S.spark;
+      for (var s = 0; s < 6; s++) {
+        var a2 = s * Math.PI / 3 + 0.4;
+        c.beginPath(); c.moveTo(SOCKET.x + Math.cos(a2) * r0, SOCKET.y + Math.sin(a2) * r0);
+        c.lineTo(SOCKET.x + Math.cos(a2) * r1, SOCKET.y + Math.sin(a2) * r1); c.stroke();
+      }
+      c.fillStyle = "rgba(118,225,203," + (0.5 * S.spark) + ")";
+      c.beginPath(); c.arc(SOCKET.x, SOCKET.y, 16, 0, Math.PI * 2); c.fill();
+    }
+    // overall street glow on the consequence (subtle exposure lift)
+    if (S.lit > 0) {
+      c.fillStyle = "rgba(118,225,203," + (0.05 * clamp(S.lit / BULBS, 0, 1)) + ")";
+      c.fillRect(G.x, G.y, G.w, G.h);
+    }
+    c.restore();
+  }
+
+  // ---------- intertitle card ----------
+  function diamond(c, x, y, s) { c.beginPath(); c.moveTo(x, y - s); c.lineTo(x + s, y); c.lineTo(x, y + s); c.lineTo(x - s, y); c.closePath(); c.fill(); }
+  function drawCard(c) {
+    c.fillStyle = C.edge; c.fillRect(0, 0, W, H);
+    c.save(); gatePath(c); c.clip();
+    c.fillStyle = C.card; c.fillRect(G.x, G.y, G.w, G.h);
+    c.strokeStyle = C.cream; c.lineWidth = 3; c.strokeRect(150, 92, 980, 484);
+    c.lineWidth = 1; c.strokeRect(168, 110, 944, 448);
+    c.fillStyle = C.cream;
+    diamond(c, 168, 110, 8); diamond(c, 1112, 110, 8); diamond(c, 168, 558, 8); diamond(c, 1112, 558, 8);
+    c.fillStyle = C.active; diamond(c, 640, 190, 9);
+    c.strokeStyle = C.cream; c.beginPath(); c.moveTo(560, 190); c.lineTo(620, 190); c.moveTo(660, 190); c.lineTo(720, 190); c.stroke();
+    c.fillStyle = C.cream; c.textAlign = "center"; c.textBaseline = "alphabetic";
+    c.font = "68px Georgia, 'Times New Roman', serif";
+    c.fillText("An idea becomes", 640, 316);
+    c.fillText("a connected system.", 640, 404);
+    c.strokeStyle = "rgba(245,244,232,0.6)"; c.beginPath(); c.moveTo(590, 476); c.lineTo(690, 476); c.stroke();
+    c.restore();
+  }
+
+  // ---------- optical wear (separate from action) ----------
+  function drawWear(c, frame, onCard) {
+    c.drawImage(wear, 0, 0);
+    c.save(); gatePath(c); c.clip();
+    // discrete per-exposure flicker, kept subtle
+    var f = (hash(frame >> 1) - 0.5) * 0.05;
+    c.fillStyle = f > 0 ? "rgba(255,255,255," + f + ")" : "rgba(0,0,0," + (-f) + ")";
+    c.fillRect(G.x, G.y, G.w, G.h);
+    // one or two seeded scratches; on the card kept outside the lettering area
+    var r = mulberry(1000 + (frame >> 1));
+    var n = r() > 0.4 ? 2 : 1;
+    c.strokeStyle = "rgba(245,244,232,0.16)"; c.lineWidth = 1;
+    for (var i = 0; i < n; i++) {
+      var x = onCard ? (r() > 0.5 ? 80 + r() * 50 : 1150 + r() * 50) : 80 + r() * 1120;
+      var dx = (r() - 0.5) * 6;
+      c.beginPath(); c.moveTo(x, G.y); c.lineTo(x + dx, G.y + G.h); c.stroke();
+    }
+    // a dust fleck every few exposures, in the outer margin
+    if (r() > 0.6) {
+      c.fillStyle = "rgba(0,0,0,0.5)";
+      c.beginPath(); c.arc(G.x + 30 + r() * 60, G.y + 40 + r() * 500, 2 + r() * 3, 0, Math.PI * 2); c.fill();
+    }
+    c.restore();
+    // reel label
+    c.fillStyle = "#9aa7b6"; c.font = "15px Georgia, serif"; c.textAlign = "center";
+    if ("letterSpacing" in c) c.letterSpacing = "6px";
+    c.fillText("REEL ONE", 640, 672);
+    if ("letterSpacing" in c) c.letterSpacing = "0px";
+  }
+
+  // ---------- timeline (single owner of all animated state) ----------
+  var S = { antic: 0, reach: 0, spark: 0, card: 0, lit: 0, win: 0, react: 0 };
+  // undercranked exposure feel: eased motion sampled at 12 exposures per second
+  function stepped(name, dur) {
+    var e = gsap.parseEase(name), n = Math.max(1, Math.round(dur * 12));
+    return function (p) { return p >= 1 ? 1 : e(Math.floor(p * n) / n); };
+  }
+  var tl = gsap.timeline({ paused: true, onUpdate: render });
+  tl.set(S, { antic: 0, reach: 0, spark: 0, card: 0, lit: 0, win: 0, react: 0 }, 0);
+  // Act 1 — the physical choice: weigh the plug, wind back, thrust it into the box
+  tl.to(S, { antic: 1, duration: 0.33, ease: stepped("power2.out", 0.33) }, 0.08);
+  tl.to(S, { reach: 1, duration: 0.33, ease: stepped("power3.in", 0.33) }, 0.44);
+  tl.to(S, { spark: 1, duration: 0.06, ease: "none" }, 0.77);
+  // Cut to the intertitle (hard cut, reading hold)
+  tl.set(S, { card: 1, spark: 0 }, 0.9);
+  // Cut back on the immediate consequence
+  tl.set(S, { card: 0 }, 1.9);
+  tl.to(S, { lit: BULBS, duration: 0.5, ease: stepped("none", 0.5) }, 1.93);
+  tl.to(S, { react: 1, duration: 0.42, ease: stepped("back.out(1.4)", 0.42) }, 2.0);
+  tl.to(S, { win: 1, duration: 0.4, ease: stepped("power1.out", 0.4) }, 2.15);
+  tl.to({}, { duration: 0.01 }, 2.99);
+
+  function render() {
+    var t = tl.time();
+    var frame = Math.round(t * FPS);
+    if (S.card >= 1) drawCard(ctx); else drawScene(ctx, S, frame);
+    drawWear(ctx, frame, S.card >= 1);
+  }
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  window.addEventListener("hf-seek", function (e) {
+    var tm = e && e.detail && typeof e.detail.time === "number" ? e.detail.time : null;
+    if (tm !== null) tl.seek(Math.max(0, Math.min(3, tm)), false);
+    render();
+  });
+  tl.seek(0, false);
+  render();
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

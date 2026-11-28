@@ -1,0 +1,92 @@
+{
+  "version": 3,
+  "title": "White Architectural Model — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Unlit white model",
+      "startSeconds": 0,
+      "endSeconds": 0.75,
+      "purpose": "Show the plain white model before any projection: a plinth with a tall idea tower and six blocks.",
+      "visuals": ["Three.js white plinth with grid, idea tower and six blocks rising from their footprints", "Dark slate studio background, soft key-light shadows", "Headline copy fades in on the left"],
+      "assets": ["three.bundle.js", "gsap.min.js"],
+      "beats": [
+        {
+          "startSeconds": 0,
+          "endSeconds": 0.75,
+          "development": "Footprints extrude to full height (tower first, then blocks one after another); kicker, two-line headline and blue rule fade in.",
+          "captions": ["STUDY 01 · PROJECTION ON WHITE MODEL", "An idea becomes", "a connected system"],
+          "audio": { "music": "", "effects": [], "subtitles": [] },
+          "readingHoldSeconds": 0
+        }
+      ]
+    },
+    {
+      "id": "scene-2",
+      "title": "Projector on — idea lit",
+      "startSeconds": 0.75,
+      "endSeconds": 1.0,
+      "purpose": "Turn the projector on and pick out the idea first.",
+      "visuals": ["Room light dims", "Faint overhead beam appears", "Tower roof turns deep blue #005885", "IDEA marker appears above the roof"],
+      "assets": [],
+      "beats": [
+        {
+          "startSeconds": 0.75,
+          "endSeconds": 1.0,
+          "development": "Projection starts at the tower roof; a pale #B9D5DE sweep edge forms around it and the IDEA marker fades in.",
+          "captions": ["IDEA"],
+          "audio": { "music": "", "effects": [], "subtitles": [] },
+          "readingHoldSeconds": 0
+        }
+      ]
+    },
+    {
+      "id": "scene-3",
+      "title": "Projection sweep",
+      "startSeconds": 1.0,
+      "endSeconds": 2.2,
+      "purpose": "Show the idea becoming a connected system as projected colour sweeps across the model's top faces.",
+      "visuals": ["Circular projection sweep spreading from the idea tower", "Blue links and node outlines land on the ground and on block roofs, lined up with the plan", "Wall faces stay white", "CONNECTED SYSTEM label and its frame appear on the front of the plinth"],
+      "assets": [],
+      "beats": [
+        {
+          "startSeconds": 1.0,
+          "endSeconds": 2.2,
+          "development": "The sweep edge moves outward and reveals the links, each block's node outline and finally the flat CONNECTED SYSTEM label at the front edge.",
+          "captions": ["CONNECTED SYSTEM"],
+          "audio": { "music": "", "effects": [], "subtitles": [] },
+          "readingHoldSeconds": 0
+        }
+      ]
+    },
+    {
+      "id": "scene-4",
+      "title": "Hold on the explained region",
+      "startSeconds": 2.2,
+      "endSeconds": 3,
+      "purpose": "Hold the finished projection so the label, its frame and the network can be read.",
+      "visuals": ["Sweep edge fades out", "Beam settles lower", "Slow camera push-in ends at 2.6 s; still frame from then on"],
+      "assets": [],
+      "beats": [
+        {
+          "startSeconds": 2.2,
+          "endSeconds": 3,
+          "development": "Everything stays still: blue network on the white model, CONNECTED SYSTEM label inside its frame, headline readable.",
+          "captions": ["CONNECTED SYSTEM", "An idea becomes", "a connected system"],
+          "audio": { "music": "", "effects": [], "subtitles": [] },
+          "readingHoldSeconds": 0.7
+        }
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["Model build, projector start and sweep run back to back with no dead time; the sweep takes 1.2 s so the link order can be followed outward from the idea."],
+    "justifiedHolds": ["2.3–3.0 s: still reading hold on the projected label and headline once the sweep edge has faded."]
+  },
+  "notes": [
+    "Silent preview: no music, effects or narration.",
+    "No reviewed preview recipes were supplied (STYLE.json has no tech.preview_recipes; the task lists none) and there is no BACKGROUND_REVIEW.json, so this preview shows the style's main action: unlit model, projected label sweep, hold at the label boundary.",
+    "Projection is simulated in a shader: the plan-aligned decal is mixed into the white surfaces that face upward. It is not a physically accurate projector-light simulation."
+  ]
+}

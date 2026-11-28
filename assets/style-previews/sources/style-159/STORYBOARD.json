@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "title": "Silhouette Double Exposure — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Outer form",
+      "startSeconds": 0,
+      "endSeconds": 0.5,
+      "purpose": "Establish the locked head silhouette against a cool fog horizon and bring in the copy outside the silhouette.",
+      "visuals": ["Head outline draws on", "Silhouette fills with deep navy value", "Copy fades up on the calm left plate"],
+      "assets": ["index.html"],
+      "beats": [
+        {"startSeconds": 0, "endSeconds": 0.5, "development": "Outline strokes in and the dark outer value fills the matte; eyebrow and headline rise in.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-2",
+      "title": "Interior exposure",
+      "startSeconds": 0.5,
+      "endSeconds": 2,
+      "purpose": "Reveal the interior night-city scene through the stable contour with its own independent pan while the network grows.",
+      "visuals": ["Feathered bottom-up wipe inside the matte", "Interior skyline, stars and network pan left and settle down while the outline stays locked", "Network edges and nodes connect from the glowing idea node"],
+      "assets": ["index.html"],
+      "beats": [
+        {"startSeconds": 0.5, "endSeconds": 1.4, "development": "Interior scene wipes up through the silhouette while panning independently.", "captions": ["THE INNER VIEW", "An idea becomes a connected system"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.9},
+        {"startSeconds": 1.4, "endSeconds": 2, "development": "Network finishes connecting as the interior pan decelerates toward registration.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-3",
+      "title": "Alignment hold",
+      "startSeconds": 2,
+      "endSeconds": 3,
+      "purpose": "Align the interior horizon with the exterior horizon and connect to a fixed outside landmark, then hold.",
+      "visuals": ["Interior horizon brightens on the exterior horizon line", "Dashed connector draws to the landmark on the horizon", "Landmark node pops and the frame holds"],
+      "assets": ["index.html"],
+      "beats": [
+        {"startSeconds": 2, "endSeconds": 2.65, "development": "Horizons register; connector reaches the outside landmark, which appears only on arrival.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 2.65, "endSeconds": 3, "development": "Settled hold on the alignment.", "captions": ["THE INNER VIEW", "An idea becomes a connected system"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.35}
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["Outer form is established before the interior reveal; one continuous interior move; all motion settled by 2.65 s."],
+    "justifiedHolds": ["2.65–3.0 s hold on the horizon alignment, as the style requires a pause on the join."]
+  },
+  "notes": ["Silent preview.", "Canvas 2D renderer with a destination-in alpha matte; GSAP single paused timeline owns every animated property.", "No preview recipes supplied; demonstrates the catalogue characteristic action."]
+}

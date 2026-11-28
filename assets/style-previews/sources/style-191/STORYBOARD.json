@@ -1,0 +1,51 @@
+{
+  "version": 3,
+  "title": "An Idea Becomes a Connected System",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "The idea",
+      "startSeconds": 0,
+      "endSeconds": 0.9,
+      "purpose": "Set up the opening shape: a whole white paper idea bulb with the title, and the red cut line.",
+      "visuals": ["Navy desk with stationary floor plane", "White cut-paper circle with blue paper base", "AN IDEA title", "Red slash drawn across the circle"],
+      "assets": ["index.html"],
+      "beats": [
+        {"startSeconds": 0, "endSeconds": 0.55, "development": "Paper bulb drops into place; AN then IDEA hard-cut on.", "captions": ["AN IDEA"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 0.55, "endSeconds": 0.9, "development": "Red slash draws from top-right to bottom-left through the circle.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-2",
+      "title": "The cut",
+      "startSeconds": 0.9,
+      "endSeconds": 1.72,
+      "purpose": "One graphic cut reveals the network silhouette hidden inside the idea.",
+      "visuals": ["Lower paper half slides away along the slash", "Blue paper and network revealed", "Red core node pops", "Connections draw across the white half", "Subtitle wipe"],
+      "assets": ["index.html"],
+      "beats": [
+        {"startSeconds": 0.9, "endSeconds": 1.28, "development": "The cut paper half slides off along the slash, exposing the hidden network.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 1.28, "endSeconds": 1.72, "development": "Core lights red, edges spread to a new node; 'becomes a connected' wipes in.", "captions": ["becomes a connected"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-3",
+      "title": "System",
+      "startSeconds": 1.72,
+      "endSeconds": 3,
+      "purpose": "Land the title and hold it.",
+      "visuals": ["Red SYSTEM slab slides in", "FILE 01 line steps on", "Settled hold"],
+      "assets": ["index.html"],
+      "beats": [
+        {"startSeconds": 1.72, "endSeconds": 2.34, "development": "SYSTEM slab slaps in from the right; case-file line steps on.", "captions": ["SYSTEM", "FILE 01 / THE NETWORK INSIDE"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 2.34, "endSeconds": 3, "development": "Full title and revealed network hold still.", "captions": ["AN IDEA", "becomes a connected", "SYSTEM", "FILE 01 / THE NETWORK INSIDE"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.66}
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["Hard-cut word entrances and a single 0.38 s cut keep the move brisk; all motion settles by 2.34 s."],
+    "justifiedHolds": ["2.34–3.0 s final title hold for reading, as the style requires one short hold."]
+  },
+  "notes": ["Silent preview.", "Renderer SVG, motion owner one paused GSAP timeline at window.__timelines.video.", "No preview recipes supplied; core characteristic action demonstrated."]
+}

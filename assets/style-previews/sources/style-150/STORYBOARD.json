@@ -1,0 +1,71 @@
+{
+  "version": 3,
+  "title": "Caption-Led News — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Lead, evidence hand-off and key fact",
+      "startSeconds": 0,
+      "endSeconds": 3,
+      "purpose": "Read the headline first, then hand the selected term 'connected' to its matching hub node in the evidence pane and hold both with the key fact.",
+      "visuals": [
+        "Night-ink newsroom background #0B0F14, stationary",
+        "Kicker chip 'THE BRIEFING'",
+        "Serif headline in four phrase lines on the left, kept stable",
+        "Evidence pane (500x420) with an original network chart detail and corner brackets",
+        "Editorial blue #0A6FAA term highlight and cyan #5FC0F5 leader, hub and links",
+        "Key-fact lower bar"
+      ],
+      "assets": ["index.html", "gsap.min.js"],
+      "beats": [
+        {
+          "startSeconds": 0,
+          "endSeconds": 0.9,
+          "development": "Kicker slides in; headline lines 'An idea / becomes a / connected / system.' rise out of their masks in reading order.",
+          "captions": ["THE BRIEFING", "An idea", "becomes a", "connected", "system."],
+          "audio": {"music": "", "effects": [], "subtitles": []},
+          "readingHoldSeconds": 0.3
+        },
+        {
+          "startSeconds": 0.9,
+          "endSeconds": 1.66,
+          "development": "Evidence pane opens out from a centre slot; network links draw and nodes pop in; brackets and the figure caption appear after the pane is fully open; 'connected' gets the editorial-blue highlight.",
+          "captions": ["FIG. 1 · DETAIL: ONE NODE, FIVE LINKS"],
+          "audio": {"music": "", "effects": [], "subtitles": []},
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 1.66,
+          "endSeconds": 2.32,
+          "development": "Leader draws from the highlighted term through the gap between text and pane to the hub; on arrival the hub, ring and its five links light up; the key-fact bar wipes in and its copy appears once the bar is complete.",
+          "captions": ["KEY FACT", "Every new link traces back to the first idea."],
+          "audio": {"music": "", "effects": [], "subtitles": []},
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 2.32,
+          "endSeconds": 3,
+          "development": "Held result: term, leader, lit hub and key fact all stay still together.",
+          "captions": ["Every new link traces back to the first idea."],
+          "audio": {"music": "", "effects": [], "subtitles": []},
+          "readingHoldSeconds": 0.68
+        }
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": [
+      "The headline is fully readable by 0.9 s, before the evidence pane opens, as the style requires.",
+      "The key-fact copy appears at 2.32 s, so its hold is short (0.68 s) for a 3-second preview. In a full film it would need a longer hold."
+    ],
+    "justifiedHolds": [
+      "2.32–3.00 s shared hold of the linked term and its evidence, which the style requires."
+    ]
+  },
+  "notes": [
+    "Silent preview.",
+    "One paused GSAP timeline at window.__timelines.video controls every animated property. State depends only on timeline time.",
+    "No preview recipes were supplied, so the preview shows the style's main action."
+  ]
+}

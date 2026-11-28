@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "Ink Street",
+  "displayDescription": "A pen line pass builds a street, a transparent red wash opens over the landmark tower and dotted links connect the idea to the block.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "No reviewed preview recipes were supplied (STYLE.json has no tech.preview_recipes; task lists an empty recipe set) and no BACKGROUND_REVIEW.json exists, so the preview demonstrates the base characteristic action: dark line pass, then a local wash over one landmark.",
+    "Watercolour is a procedural Canvas 2D approximation: seeded irregular masks, multiply blending, pooled pigment, granulation specks and a darker drying edge; no physical pigment flow or paper absorption is simulated.",
+    "Pen contours are seeded wobbling polylines with pressure-varied width and construction overshoot, not scanned ink.",
+    "Paper grain is a cached seeded noise texture on a stationary plane; background is a cool grey paper chosen for an overcast street, per the scene-dependent palette policy.",
+    "Blender was not used, per user instruction."
+  ]
+}

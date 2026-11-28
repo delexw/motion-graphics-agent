@@ -1,0 +1,77 @@
+{
+  "version": 3,
+  "title": "Crayon Miniature World — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Idea to system on a crayon tabletop",
+      "startSeconds": 0,
+      "endSeconds": 3,
+      "purpose": "Show the Crayon Miniature World characteristic action: establish the closest wax-textured form, truck the miniature-height camera to a second richly marked form, and bring a third form into view by parallax while the idea connects into a system.",
+      "visuals": [
+        "Orange wax-crayon sphere (the idea) with drawn latitude/longitude marks, UV-mapped so marks stick as it rotates",
+        "Blue wax-crayon cylinder (the system) with vertical strokes and a pale blue capped top",
+        "Purple wax-crayon miniature house entering the right foreground by camera parallax",
+        "Green leaf-shaped tabletop receiving soft shadow-map shadows and time-keyed contact-shadow blobs",
+        "Red wax connector tube drawn from sphere to cylinder; red nodes and cream links appear on the cylinder",
+        "Stationary pale blue-to-mint crayon sky backdrop",
+        "Clean white caption sign top-left: 'An idea becomes' / 'a connected system'"
+      ],
+      "assets": [
+        "index.html",
+        "technology-three_js-YjlxEc/index.js",
+        "gsap.min.js"
+      ],
+      "beats": [
+        {
+          "startSeconds": 0,
+          "endSeconds": 0.55,
+          "development": "Close, low camera on the idea sphere; it settles onto the table and its contact shadow tightens and darkens. Caption sign fades in as one unit.",
+          "captions": ["An idea becomes", "a connected system"],
+          "audio": { "music": "", "effects": [], "subtitles": [] },
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 0.55,
+          "endSeconds": 1.8,
+          "development": "Camera trucks right and back at miniature height; the blue cylinder arrives while the red wax connector draws from the sphere toward it. Sphere keeps rotating so its marks visibly stay attached.",
+          "captions": ["An idea becomes", "a connected system"],
+          "audio": { "music": "", "effects": [], "subtitles": [] },
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 1.8,
+          "endSeconds": 2.5,
+          "development": "Connector reaches the cylinder; five red nodes pop on in sequence and cream links draw between them. The purple house completes its parallax entry in the right foreground as the camera eases to rest.",
+          "captions": ["An idea becomes", "a connected system"],
+          "audio": { "music": "", "effects": [], "subtitles": [] },
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 2.5,
+          "endSeconds": 3,
+          "development": "Settled hold: all three forms, shadows, the connected system and the caption are static and readable.",
+          "captions": ["An idea becomes", "a connected system"],
+          "audio": { "music": "", "effects": [], "subtitles": [] },
+          "readingHoldSeconds": 0.5
+        }
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": [
+      "Caption sign is fully legible from 0.43 s and stays static through 3.0 s (about 2.5 s of reading time).",
+      "All motion ends by 2.45 s, leaving a settled frame before 2.7 s."
+    ],
+    "justifiedHolds": [
+      "2.5–3.0 s settled hold so the connected system, contact shadows and caption can be read."
+    ]
+  },
+  "notes": [
+    "Silent preview: no music, effects, narration or subtitles.",
+    "STYLE.json lists no preview_recipes and no BACKGROUND_REVIEW.json was supplied; the preview demonstrates the catalogue characteristic action directly.",
+    "Rendered with Three.js (WebGL) driven by one paused GSAP timeline; no Blender used.",
+    "Wax crayon texture is a procedural seeded Canvas 2D painting mapped to UVs with a matching bump map, an approximation of physical crayon on paper; no depth-of-field blur on the foreground house."
+  ]
+}

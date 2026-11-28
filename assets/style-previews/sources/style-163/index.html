@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Quiz Show Graphics — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #0E0930; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; }
+  #stage { display: block; width: 100%; height: 100%; }
+  text { font-family: "Arial Black", "Arial Bold", Impact, "Helvetica Neue", Arial, sans-serif; font-weight: 900; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg id="stage" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx=".5" cy=".3" r=".9">
+      <stop offset="0" stop-color="#2C1F78"/><stop offset="1" stop-color="#0E0930"/>
+    </radialGradient>
+    <linearGradient id="cone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".03"/><stop offset="1" stop-color="#ffffff" stop-opacity=".12"/>
+    </linearGradient>
+    <linearGradient id="coneLit" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#BFF3FF" stop-opacity=".10"/><stop offset="1" stop-color="#E9FBFF" stop-opacity=".42"/>
+    </linearGradient>
+    <radialGradient id="floorLit" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#2FD3FF" stop-opacity=".55"/><stop offset=".7" stop-color="#2FD3FF" stop-opacity=".18"/><stop offset="1" stop-color="#2FD3FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity=".9"/><stop offset=".45" stop-color="#7FE6FF" stop-opacity=".45"/><stop offset="1" stop-color="#2FD3FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="sparkGlow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#FFE9A8" stop-opacity="1"/><stop offset=".5" stop-color="#FFC83D" stop-opacity=".6"/><stop offset="1" stop-color="#FFC83D" stop-opacity="0"/>
+    </radialGradient>
+    <path id="bulbShape" d="M640 205C590 205 560 242 560 285C560 318 580 336 594 354C603 366 606 380 606 392H674C674 380 677 366 686 354C700 336 720 318 720 285C720 242 690 205 640 205ZM610 402H670V418H610ZM616 426H664L654 444H626Z"/>
+    <g id="xmark"><path d="M-14-6L14 6M-14 6L14-6" stroke="#FFC83D" stroke-width="5" stroke-linecap="round" fill="none"/></g>
+  </defs>
+
+  <!-- Stationary backdrop -->
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <path d="M560 0H720L860 520H420Z" fill="url(#cone)"/>
+
+  <!-- Spotlight brightening (scene object) -->
+  <path id="coneLit" d="M552 0H728L880 520H400Z" fill="url(#coneLit)" style="opacity:0"/>
+
+  <!-- Stage floor + fixed stage marks -->
+  <ellipse cx="640" cy="572" rx="470" ry="62" fill="#1B1350" stroke="#4B3BC4" stroke-width="2"/>
+  <ellipse id="floorLit" cx="640" cy="572" rx="470" ry="62" fill="url(#floorLit)" style="opacity:0"/>
+  <ellipse id="floorRing" cx="640" cy="572" rx="470" ry="62" fill="none" stroke="#2FD3FF" stroke-width="3" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+  <g fill="#FFC83D">
+    <circle cx="230" cy="584" r="4"/><circle cx="330" cy="608" r="4"/><circle cx="450" cy="624" r="4"/>
+    <circle cx="830" cy="624" r="4"/><circle cx="950" cy="608" r="4"/><circle cx="1050" cy="584" r="4"/>
+  </g>
+  <use href="#xmark" x="420" y="586"/><use href="#xmark" x="860" y="586"/>
+  <path d="M560 468H720L738 572H542Z" fill="#120C3C" stroke="#2FD3FF" stroke-width="3"/>
+
+  <!-- Connected system: spokes, perimeter links, nodes -->
+  <g fill="none" stroke="#2FD3FF" stroke-width="5" stroke-linecap="round">
+    <line class="spoke" x1="505.4" y1="370.5" x2="447.7" y2="400.7" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+    <line class="spoke" x1="507.8" y1="225.0" x2="472.4" y2="204.9" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+    <line class="spoke" x1="640" y1="148" x2="640" y2="112" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+    <line class="spoke" x1="772.2" y1="225.0" x2="807.6" y2="204.9" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+    <line class="spoke" x1="774.6" y1="370.5" x2="832.3" y2="400.7" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+  </g>
+  <g fill="none" stroke="#2FD3FF" stroke-opacity=".7" stroke-width="3" stroke-linecap="round">
+    <line class="link" x1="432.3" y1="390.1" x2="452.7" y2="214.9" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+    <line class="link" x1="472.5" y1="185.3" x2="622.5" y2="101.7" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+    <line class="link" x1="657.5" y1="101.7" x2="807.5" y2="185.3" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+    <line class="link" x1="827.3" y1="214.9" x2="847.7" y2="390.1" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+  </g>
+  <g class="node" transform="translate(430 410)" style="opacity:0"><circle r="20" fill="#0A0626" stroke="#2FD3FF" stroke-width="5"/><circle r="8" fill="#FFFFFF"/></g>
+  <g class="node" transform="translate(455 195)" style="opacity:0"><circle r="20" fill="#0A0626" stroke="#2FD3FF" stroke-width="5"/><circle r="8" fill="#FFFFFF"/></g>
+  <g class="node" transform="translate(640 92)" style="opacity:0"><circle r="20" fill="#0A0626" stroke="#2FD3FF" stroke-width="5"/><circle r="8" fill="#FFFFFF"/></g>
+  <g class="node" transform="translate(825 195)" style="opacity:0"><circle r="20" fill="#0A0626" stroke="#2FD3FF" stroke-width="5"/><circle r="8" fill="#FFFFFF"/></g>
+  <g class="node" transform="translate(850 410)" style="opacity:0"><circle r="20" fill="#0A0626" stroke="#2FD3FF" stroke-width="5"/><circle r="8" fill="#FFFFFF"/></g>
+
+  <!-- Performer: the idea bulb -->
+  <g id="performer">
+    <circle id="bulbGlow" cx="640" cy="300" r="170" fill="url(#glow)" style="opacity:0"/>
+    <circle id="ringOuter" cx="640" cy="300" r="140" fill="none" stroke="#2FD3FF" stroke-width="3" style="opacity:.18"/>
+    <circle id="ringInner" cx="640" cy="300" r="120" fill="none" stroke="#2FD3FF" stroke-width="6" style="opacity:.25"/>
+    <circle id="countArc" cx="640" cy="300" r="140" fill="none" stroke="#FF5C7A" stroke-width="8" stroke-linecap="round"
+            transform="rotate(-90 640 300)" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+    <use href="#bulbShape" fill="#3A2F86"/>
+    <use id="bulbLit" href="#bulbShape" fill="#FFFFFF" style="opacity:0"/>
+  </g>
+
+  <!-- Accent passed from challenge card to performer -->
+  <g id="spark" style="opacity:0">
+    <circle id="sparkHalo" cx="430" cy="104" r="34" fill="url(#sparkGlow)"/>
+    <circle id="sparkCore" cx="430" cy="104" r="11" fill="#FFF4CF"/>
+  </g>
+
+  <!-- Challenge card (text grouped with its container) -->
+  <g id="card" transform="translate(-440 0)">
+    <rect x="60" y="56" width="360" height="96" rx="14" fill="#FFC83D"/>
+    <text fill="#160F3A"><tspan x="84" y="92" font-size="16" letter-spacing="3">ROUND 3 · CHALLENGE</tspan><tspan x="84" y="132" font-size="28">CONNECT THE IDEA</tspan></text>
+  </g>
+
+  <!-- Countdown chip (distinct coral role) -->
+  <g id="timer" style="opacity:0">
+    <rect x="60" y="166" width="150" height="48" rx="12" fill="#FF5C7A"/>
+    <text x="80" y="197" font-size="15" letter-spacing="3" fill="#2A0712">TIME</text>
+    <text class="tnum" x="188" y="202" font-size="30" text-anchor="end" fill="#2A0712" style="opacity:1">3</text>
+    <text class="tnum" x="188" y="202" font-size="30" text-anchor="end" fill="#2A0712" style="opacity:0">2</text>
+    <text class="tnum" x="188" y="202" font-size="30" text-anchor="end" fill="#2A0712" style="opacity:0">1</text>
+  </g>
+
+  <!-- Score display (text grouped with its container) -->
+  <g id="score">
+    <rect id="scoreBox" x="900" y="56" width="320" height="130" rx="14" fill="#0A0626" stroke="#2FD3FF" stroke-width="3"/>
+    <text x="924" y="90" font-size="15" letter-spacing="3" fill="#2FD3FF">SYSTEM SCORE</text>
+    <path d="M932 140H1060" stroke="#2FD3FF" stroke-opacity=".5" stroke-width="2"/>
+    <g fill="#0A0626" stroke="#2FD3FF" stroke-width="3">
+      <circle cx="932" cy="140" r="8"/><circle cx="964" cy="140" r="8"/><circle cx="996" cy="140" r="8"/><circle cx="1028" cy="140" r="8"/><circle cx="1060" cy="140" r="8"/>
+    </g>
+    <g fill="#2FD3FF">
+      <circle class="sdot" cx="932" cy="140" r="10" style="opacity:0"/><circle class="sdot" cx="964" cy="140" r="10" style="opacity:0"/>
+      <circle class="sdot" cx="996" cy="140" r="10" style="opacity:0"/><circle class="sdot" cx="1028" cy="140" r="10" style="opacity:0"/>
+      <circle class="sdot" cx="1060" cy="140" r="10" style="opacity:0"/>
+    </g>
+    <text class="snum" x="1196" y="160" font-size="60" text-anchor="end" fill="#FFFFFF" style="opacity:1">0/5</text>
+    <text class="snum" x="1196" y="160" font-size="60" text-anchor="end" fill="#FFFFFF" style="opacity:0">1/5</text>
+    <text class="snum" x="1196" y="160" font-size="60" text-anchor="end" fill="#FFFFFF" style="opacity:0">2/5</text>
+    <text class="snum" x="1196" y="160" font-size="60" text-anchor="end" fill="#FFFFFF" style="opacity:0">3/5</text>
+    <text class="snum" x="1196" y="160" font-size="60" text-anchor="end" fill="#FFFFFF" style="opacity:0">4/5</text>
+    <text class="snum" x="1196" y="160" font-size="60" text-anchor="end" fill="#FFFFFF" style="opacity:0">5/5</text>
+  </g>
+
+  <!-- Caption on a solid plate -->
+  <g id="caption" style="opacity:0">
+    <rect x="330" y="642" width="620" height="44" rx="10" fill="#0A0626" stroke="#2FD3FF" stroke-opacity=".6" stroke-width="2"/>
+    <text x="640" y="671" text-anchor="middle" font-size="20" letter-spacing="2" fill="#FFFFFF">AN IDEA BECOMES A CONNECTED SYSTEM</text>
+  </g>
+</svg>
+</div>
+<script src="gsap.min.js"></script>
+<script>
+(function () {
+  var q = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  var tl = gsap.timeline({ paused: true, defaults: { ease: "power2.out" } });
+
+  // STAGE 1 — challenge cue (0.00–0.40)
+  tl.to("#card", { x: 0, duration: 0.36, ease: "back.out(1.2)" }, 0.04);
+
+  // STAGE 2 — countdown (0.40–1.02): coral chip pops after card settles, arc drains
+  tl.to("#timer", { opacity: 1, duration: 0.12 }, 0.42);
+  tl.set("#countArc", { attr: { "stroke-dashoffset": 0 } }, 0.42);
+  tl.to("#countArc", { attr: { "stroke-dashoffset": 1 }, duration: 0.6, ease: "none" }, 0.44);
+  var tn = q(".tnum");
+  tl.set(tn[0], { opacity: 0 }, 0.64); tl.set(tn[1], { opacity: 1 }, 0.64);
+  tl.set(tn[1], { opacity: 0 }, 0.84); tl.set(tn[2], { opacity: 1 }, 0.84);
+  tl.to("#timer", { opacity: 0.35, duration: 0.15 }, 1.04);
+
+  // STAGE 3 — accent passes from challenge card to performer (1.00–1.30)
+  tl.set("#spark", { opacity: 1 }, 1.0);
+  tl.to(["#sparkHalo", "#sparkCore"], { attr: { cx: 640 }, duration: 0.3, ease: "power1.in" }, 1.0);
+  tl.to(["#sparkHalo", "#sparkCore"], { attr: { cy: 300 }, duration: 0.3, ease: "power2.in" }, 1.0);
+  tl.to("#spark", { opacity: 0, duration: 0.08 }, 1.3);
+
+  // Performer reaction: bulb lights, spotlight + floor brighten (1.28–1.62)
+  tl.to("#bulbLit", { opacity: 1, duration: 0.14 }, 1.28);
+  tl.to("#bulbGlow", { opacity: 1, duration: 0.22 }, 1.28);
+  tl.to(["#ringInner"], { opacity: 1, duration: 0.18 }, 1.28);
+  tl.to(["#ringOuter"], { opacity: 0.45, duration: 0.18 }, 1.28);
+  tl.fromTo("#performer", { scale: 1 }, { scale: 1.08, svgOrigin: "640 300", duration: 0.12, ease: "power2.out", immediateRender: false }, 1.28);
+  tl.to("#performer", { scale: 1, svgOrigin: "640 300", duration: 0.22, ease: "power2.inOut" }, 1.40);
+  tl.to("#coneLit", { opacity: 1, duration: 0.3 }, 1.3);
+  tl.to("#floorLit", { opacity: 1, duration: 0.34 }, 1.32);
+  tl.to("#floorRing", { attr: { "stroke-dashoffset": 0 }, duration: 0.5, ease: "power1.inOut" }, 1.32);
+
+  // STAGE 4 — system connects; each connection registers one score point (1.50–2.08)
+  var spokes = q(".spoke"), nodes = q(".node"), sdots = q(".sdot"), snum = q(".snum");
+  for (var i = 0; i < 5; i++) {
+    var t = 1.5 + i * 0.12;
+    tl.to(spokes[i], { attr: { "stroke-dashoffset": 0 }, duration: 0.1, ease: "power1.out" }, t);
+    tl.fromTo(nodes[i], { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, transformOrigin: "50% 50%", duration: 0.14, ease: "back.out(1.2)", immediateRender: false }, t + 0.08);
+    tl.to(sdots[i], { opacity: 1, duration: 0.06 }, t + 0.12);
+    tl.set(snum[i], { opacity: 0 }, t + 0.12);
+    tl.set(snum[i + 1], { opacity: 1 }, t + 0.12);
+  }
+  tl.to(q(".link"), { attr: { "stroke-dashoffset": 0 }, duration: 0.24, stagger: 0.04, ease: "power1.inOut" }, 2.0);
+
+  // STAGE 5 — score punch-in and held result (2.08–3.00)
+  tl.fromTo("#score", { scale: 1 }, { scale: 1.08, svgOrigin: "1060 121", duration: 0.12, ease: "power2.out", immediateRender: false }, 2.1);
+  tl.to("#score", { scale: 1, svgOrigin: "1060 121", duration: 0.24, ease: "power2.inOut" }, 2.22);
+  tl.to("#scoreBox", { attr: { "stroke-width": 6 }, duration: 0.12 }, 2.1);
+  tl.to("#scoreBox", { attr: { "stroke-width": 3 }, duration: 0.24 }, 2.22);
+  tl.to("#caption", { opacity: 1, duration: 0.2 }, 1.98);
+
+  tl.set({}, {}, 3.0);
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  tl.seek(0);
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

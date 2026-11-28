@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Midcentury Ink Cartoon — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #24504B; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; }
+  #cv { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; display: block; }
+  .cap {
+    position: absolute; left: 70px; margin: 0;
+    font-family: Futura, "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 44px; font-weight: 700; letter-spacing: 2px; line-height: 52px; white-space: nowrap;
+  }
+  #l1 { top: 588px; color: #F4F1EA; }
+  #l2 { top: 644px; color: #FFD96A; clip-path: inset(0 100% 0 0); }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <div id="stage">
+    <canvas id="cv" width="1280" height="720"></canvas>
+    <p class="cap" id="l1">AN IDEA BECOMES</p>
+    <p class="cap" id="l2">A CONNECTED SYSTEM</p>
+  </div>
+</div>
+<script src="gsap.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  // Approved scene palette (from the subject illustration)
+  var C = {
+    sky: "#86B5AD", ink: "#1B2A2E", paper: "#F4F1EA", teal: "#5D8F89",
+    ochre: "#E8B04A", red: "#D9472B", bulb: "#FFD96A", ground: "#24504B", unlit: "#DCD6C8"
+  };
+  var W = 1280, H = 720, GROUND = 560;
+  var cv = document.getElementById("cv");
+  var ctx = cv.getContext("2d");
+
+  // ---- Cached static texture: stationary halftone dot grain (seeded grid, no randomness)
+  var grain = document.createElement("canvas");
+  grain.width = W; grain.height = GROUND;
+  (function () {
+    var g = grain.getContext("2d");
+    g.fillStyle = C.sky; g.fillRect(0, 0, W, GROUND);
+    g.fillStyle = "rgba(27,42,46,0.16)";
+    for (var y = 12; y < GROUND; y += 24) for (var x = 12; x < W; x += 24) {
+      g.beginPath(); g.arc(x, y, 2, 0, Math.PI * 2); g.fill();
+    }
+  })();
+
+  // ---- Animated state: GSAP is the single owner of every value here
+  var S = {
+    pose: 0,      // held cel index (0 hold, 1 anticipation, 2 stretch, 3 key)
+    camX: 0,      // lateral follow of the set (0..1)
+    lit: 0,       // bulb light (0/1 held)
+    sparks: 0,    // spark cel count (stepped)
+    line: 0,      // dotted lead line progress
+    card: 0,      // card reveal scale
+    edges: 0,     // network edges drawn (0..9)
+    nodes: 0,     // nodes popped (0..6, stepped)
+    hub: 0        // red hub fill (0/1)
+  };
+
+  // ---- Reusable cels: each pose is a complete drawing table (no in-betweens)
+  // coordinates are in the character's local frame, feet at (430, 560)
+  var POSES = [
+    { // 0: holding the unlit idea at the chest, head down, thinking
+      bodyDy: 0, lean: 0, head: [424, 352], eye: [438, 350], smile: 0,
+      armR: [[454, 410], [494, 440], [486, 424]], bulb: [486, 390, 0.78],
+      armL: [[394, 420], [360, 486]], legs: [[400, 560, 410, 470], [452, 560, 444, 470]]
+    },
+    { // 1: anticipation — squash down, idea pulled in low
+      bodyDy: 12, lean: -3, head: [420, 366], eye: [432, 366], smile: 0,
+      armR: [[452, 422], [488, 466], [474, 458]], bulb: [474, 426, 0.74],
+      armL: [[392, 432], [352, 470]], legs: [[398, 560, 416, 482], [454, 560, 440, 482]]
+    },
+    { // 2: stretch — fling upward, overshoot
+      bodyDy: -10, lean: 4, head: [436, 338], eye: [452, 330], smile: 1,
+      armR: [[456, 398], [500, 336], [522, 310]], bulb: [546, 236, 1.06],
+      armL: [[396, 408], [340, 470]], legs: [[402, 560, 412, 460], [450, 560, 446, 460]]
+    },
+    { // 3: key silhouette — the idea held aloft (matches the illustration)
+      bodyDy: 0, lean: 2, head: [430, 350], eye: [446, 344], smile: 1,
+      armR: [[454, 410], [490, 360], [516, 326]], bulb: [540, 258, 1.0],
+      armL: [[394, 420], [350, 488]], legs: [[400, 560, 412, 470], [452, 560, 444, 470]]
+    }
+  ];
+
+  var NODES = [[850, 200], [990, 160], [1120, 240], [1070, 390], [950, 450], [900, 330]];
+  var EDGES = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], [5, 3], [1, 5], [0, 5]];
+
+  function star(x, y, s, rot) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(s, s);
+    ctx.beginPath();
+    ctx.moveTo(0, -20); ctx.lineTo(5, -5); ctx.lineTo(20, 0); ctx.lineTo(5, 5);
+    ctx.lineTo(0, 20); ctx.lineTo(-5, 5); ctx.lineTo(-20, 0); ctx.lineTo(-5, -5); ctx.closePath();
+    ctx.fillStyle = C.ochre; ctx.fill(); ctx.restore();
+  }
+
+  function roundRect(x, y, w, h, r) {
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function inkLine(pts, w) {
+    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+    for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.lineWidth = w; ctx.strokeStyle = C.ink; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke();
+  }
+
+  function drawCharacter(p, lit) {
+    var dy = p.bodyDy;
+    // legs (deepest ink)
+    p.legs.forEach(function (l) { inkLine([[l[0], l[1]], [l[2], l[3] + dy]], 8); });
+    // back arm
+    inkLine([[p.armL[0][0], p.armL[0][1] + dy], [p.armL[1][0], p.armL[1][1] + dy]], 8);
+    // torso trapezoid, solid ink silhouette
+    ctx.save(); ctx.translate(428, 480 + dy); ctx.rotate(p.lean * Math.PI / 180); ctx.translate(-428, -480);
+    ctx.beginPath(); ctx.moveTo(384, 480); ctx.lineTo(400, 390); ctx.lineTo(460, 390); ctx.lineTo(472, 480); ctx.closePath();
+    ctx.fillStyle = C.ink; ctx.fill(); ctx.restore();
+    // head
+    var hx = p.head[0], hy = p.head[1];
+    ctx.beginPath(); ctx.arc(hx, hy, 40, 0, Math.PI * 2);
+    ctx.fillStyle = C.paper; ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = C.ink; ctx.stroke();
+    ctx.beginPath(); ctx.arc(p.eye[0], p.eye[1], 5, 0, Math.PI * 2); ctx.fillStyle = C.ink; ctx.fill();
+    ctx.beginPath();
+    if (p.smile) { ctx.moveTo(hx + 10, hy + 18); ctx.quadraticCurveTo(hx + 22, hy + 24, hx + 32, hy + 12); }
+    else { ctx.moveTo(hx + 6, hy + 22); ctx.lineTo(hx + 22, hy + 22); }
+    ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
+    // bulb (the idea)
+    var b = p.bulb, r = 36 * b[2];
+    if (lit) {
+      ctx.save(); ctx.strokeStyle = C.ochre; ctx.lineWidth = 6; ctx.lineCap = "round";
+      for (var k = 0; k < 8; k++) {
+        var a = k * Math.PI / 4 + 0.2;
+        ctx.beginPath();
+        ctx.moveTo(b[0] + Math.cos(a) * (r + 12), b[1] + Math.sin(a) * (r + 12));
+        ctx.lineTo(b[0] + Math.cos(a) * (r + 30), b[1] + Math.sin(a) * (r + 30));
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    ctx.beginPath(); ctx.arc(b[0], b[1], r, 0, Math.PI * 2);
+    ctx.fillStyle = lit ? C.bulb : C.unlit; ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = C.ink; ctx.stroke();
+    ctx.fillStyle = C.ink; ctx.fillRect(b[0] - 12 * b[2], b[1] + r - 4, 24 * b[2], 16 * b[2]);
+    // front arm over torso, hand under the bulb
+    var a0 = p.armR[0], a1 = p.armR[1], a2 = p.armR[2];
+    inkLine([[a0[0], a0[1] + dy], [a1[0], a1[1]], [a2[0], a2[1]]], 8);
+    ctx.beginPath(); ctx.arc(a2[0], a2[1], 10, 0, Math.PI * 2);
+    ctx.fillStyle = C.paper; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
+  }
+
+  function drawNode(i, s) {
+    var n = NODES[i];
+    ctx.save(); ctx.translate(n[0], n[1]); ctx.scale(s, s);
+    if (i === 5) {
+      ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2);
+      ctx.fillStyle = S.hub >= 1 ? C.red : C.paper; ctx.fill();
+      ctx.lineWidth = 5; ctx.strokeStyle = C.ink; ctx.stroke();
+      if (S.hub < 1) { ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.fillStyle = C.teal; ctx.fill(); }
+    } else {
+      ctx.beginPath(); ctx.arc(0, 0, 24, 0, Math.PI * 2);
+      ctx.fillStyle = C.paper; ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = C.ink; ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fillStyle = C.teal; ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function draw() {
+    var pose = POSES[Math.max(0, Math.min(3, Math.round(S.pose)))];
+    var lit = S.lit >= 0.5;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    // stationary grain + sky
+    ctx.drawImage(grain, 0, 0);
+
+    // far flat shapes: half-speed parallax of the lateral follow
+    var far = -36 * S.camX, near = -72 * S.camX;
+    ctx.save(); ctx.translate(far, 0);
+    ctx.beginPath(); ctx.moveTo(70, 150); ctx.quadraticCurveTo(300, 30, 540, 150);
+    ctx.quadraticCurveTo(380, 115, 230, 235); ctx.closePath(); ctx.fillStyle = C.ochre; ctx.fill();
+    ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.arc(660, 120, 54, 0, Math.PI * 2); ctx.fillStyle = C.red; ctx.fill();
+    ctx.restore();
+
+    // near set: character, lead line, card
+    ctx.save(); ctx.translate(near, 0);
+
+    // sparks (stepped count, fixed positions)
+    var SP = [[600, 200, 1, 0], [486, 190, 1, 0.35], [200, 420, 1, 0], [640, 300, 0.7, 0.2]];
+    for (var s = 0; s < Math.min(SP.length, Math.floor(S.sparks)); s++) star(SP[s][0], SP[s][1], SP[s][2], SP[s][3]);
+
+    // dotted lead line from bulb to the card edge, then into the first node
+    if (S.line > 0) {
+      var bx = 576, by = 262, ex = 850, ey = 200;
+      var t = S.line;
+      ctx.save(); ctx.setLineDash([4, 14]); ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.strokeStyle = C.ink;
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + (ex - bx) * t, by + (ey - by) * t); ctx.stroke(); ctx.restore();
+    }
+
+    // card: grows from the line's landing point; contents wait until it is complete
+    if (S.card > 0) {
+      ctx.save(); ctx.translate(770, 300); ctx.scale(S.card, S.card); ctx.translate(-770, -300);
+      ctx.beginPath(); roundRect(770, 90, 440, 420, 44);
+      ctx.fillStyle = C.paper; ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = C.ink; ctx.stroke();
+      ctx.restore();
+    }
+    if (S.card >= 1) {
+      // inner part of the lead line, drawn above the card fill
+      ctx.save(); ctx.setLineDash([4, 14]); ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.strokeStyle = C.ink;
+      ctx.beginPath(); ctx.moveTo(770, 218); ctx.lineTo(850, 200); ctx.stroke(); ctx.restore();
+      // edges draw one after another
+      ctx.lineWidth = 5; ctx.strokeStyle = C.ink; ctx.lineCap = "round";
+      for (var e = 0; e < EDGES.length; e++) {
+        var f = Math.max(0, Math.min(1, S.edges - e));
+        if (f <= 0) break;
+        var A = NODES[EDGES[e][0]], B = NODES[EDGES[e][1]];
+        ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(A[0] + (B[0] - A[0]) * f, A[1] + (B[1] - A[1]) * f); ctx.stroke();
+      }
+      var shown = Math.floor(S.nodes);
+      for (var n = 0; n < Math.min(6, shown); n++) drawNode(n, 1);
+    }
+
+    drawCharacter(pose, lit);
+    ctx.restore();
+
+    // ground band (text lives here, out of the pose plane)
+    ctx.fillStyle = C.ground; ctx.fillRect(0, GROUND, W, H - GROUND);
+    ctx.fillStyle = C.ink; ctx.fillRect(0, GROUND - 3, W, 6);
+  }
+
+  // ---- One paused, seekable GSAP timeline owns all motion
+  var tl = gsap.timeline({ paused: true, onUpdate: draw });
+  // held cels: hold, then swift change into the key silhouette
+  tl.set(S, { pose: 0 }, 0)
+    .set(S, { pose: 1 }, 0.70)
+    .set(S, { pose: 2 }, 0.87)
+    .set(S, { pose: 3 }, 0.97)
+    .set(S, { lit: 1 }, 0.87)
+    .to(S, { sparks: 4, duration: 0.33, ease: "steps(4)" }, 0.90)
+    // single lateral follow of the set, toward the gesture
+    .to(S, { camX: 1, duration: 0.6, ease: "power2.inOut" }, 0.85)
+    // the idea throws a line; the system frame opens; links connect
+    .to(S, { line: 0.708, duration: 0.25, ease: "power2.inOut" }, 1.05)
+    .to(S, { card: 1, duration: 0.3, ease: "back.out(1.2)" }, 1.25)
+    .to(S, { nodes: 6.001, duration: 0.6, ease: "steps(6)" }, 1.56)
+    .to(S, { edges: EDGES.length, duration: 0.7, ease: "none" }, 1.62)
+    .set(S, { hub: 1 }, 2.30)
+    .fromTo("#l2", { clipPath: "inset(0% 100% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.35, ease: "power2.inOut" }, 1.75)
+    .to({}, { duration: 0.001 }, 2.999);
+  tl.duration(); // fully built
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  function redraw() { draw(); }
+  window.addEventListener("hf-seek", redraw);
+  document.addEventListener("hf-seek", redraw);
+  tl.seek(0, false);
+  draw();
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

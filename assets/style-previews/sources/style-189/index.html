@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Visual Sketchnote — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #F3F4F1; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; }
+  #stage { display: block; width: 100%; height: 100%; }
+  #measure { position: absolute; width: 0; height: 0; overflow: hidden; }
+</style>
+<script src="gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="stage" width="1280" height="720" aria-label="Sketchnote: an idea becomes a connected system"></canvas>
+  <svg id="measure" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+</div>
+<script>
+(function () {
+  "use strict";
+  var W = 1280, H = 720;
+  var INK = "#242831", ACCENT = "#9F352D", HILITE = "#E4CEAA", PAPER = "#F3F4F1", DOT = "#C6CAD1", WHITE = "#FFFFFF";
+  var FONT = "'Marker Felt','Bradley Hand','Comic Sans MS',cursive";
+  var canvas = document.getElementById("stage");
+  var ctx = canvas.getContext("2d");
+  var measureSvg = document.getElementById("measure");
+
+  // ---------- seeded helpers (no Math.random) ----------
+  function hash(n) { var x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+  function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+
+  // ---------- static paper texture (cached once) ----------
+  var paper = document.createElement("canvas");
+  paper.width = W; paper.height = H;
+  (function buildPaper() {
+    var p = paper.getContext("2d");
+    p.fillStyle = PAPER; p.fillRect(0, 0, W, H);
+    // seeded fibre grain
+    for (var i = 0; i < 2600; i++) {
+      var x = hash(i * 3.1) * W, y = hash(i * 7.7 + 2) * H;
+      p.fillStyle = "rgba(36,40,49," + (0.015 + hash(i * 1.9) * 0.025).toFixed(3) + ")";
+      p.fillRect(x, y, 1 + hash(i) * 1.5, 1);
+    }
+    // dot-grid page
+    p.fillStyle = DOT;
+    for (var gx = 12; gx < W; gx += 24) for (var gy = 12; gy < H; gy += 24) {
+      p.beginPath(); p.arc(gx, gy, 1.3, 0, Math.PI * 2); p.fill();
+    }
+  })();
+
+  // ---------- stroke definitions (same page grid as ILLUSTRATION.svg) ----------
+  function mk(d) {
+    var el = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    el.setAttribute("d", d); measureSvg.appendChild(el);
+    var len = el.getTotalLength();
+    return { d: d, path: new Path2D(d), len: len, el: el };
+  }
+  var S = {
+    bulb: mk("M250 330c-50 0-80 38-80 78 0 30 20 48 32 64v22h96v-22c12-16 32-34 32-64 0-40-30-78-80-78z"),
+    base1: mk("M214 514h72"), base2: mk("M224 532h52"),
+    filament: mk("M232 472l6-48 12 18 12-18 6 48"),
+    ray1: mk("M250 300v-26"), ray2: mk("M192 318l-16-18"), ray3: mk("M308 318l16-18"),
+    arrow1: mk("M340 420q110-40 220-6"),
+    triA: mk("M640 330L600 470"), triB: mk("M600 470L750 450"), triC: mk("M750 450L640 330"),
+    arrow2: mk("M790 430q60-30 110-10"),
+    sp1: mk("M1040 410L960 320"), sp2: mk("M1040 410L1130 320"), sp3: mk("M1040 410L960 510"), sp4: mk("M1040 410L1140 500"),
+    rim1: mk("M960 320L1130 320"), rim2: mk("M1130 320L1140 500"), rim3: mk("M1140 500L960 510"),
+    hilite: mk("M86 148q220-10 470 2")
+  };
+  // arrowhead tangent at shaft end
+  function endTangent(s) {
+    var a = s.el.getPointAtLength(s.len), b = s.el.getPointAtLength(Math.max(0, s.len - 6));
+    return { x: a.x, y: a.y, ang: Math.atan2(a.y - b.y, a.x - b.x) };
+  }
+  var head1 = endTangent(S.arrow1), head2 = endTangent(S.arrow2);
+
+  // ---------- animated state: GSAP is the single owner of every value ----------
+  var st = {
+    t1: 0, hl: 0, t2: 0,
+    bulb: 0, bulbFill: 0, base: 0, fil: 0, rays: 0, n1: 0, l1: 0,
+    a1: 0, h1: 0,
+    tri: 0, tn1: 0, tn2: 0, tn3: 0, n2: 0, l2: 0,
+    a2: 0, h2: 0,
+    hub: 0, spokes: 0, rim: 0, sn1: 0, sn2: 0, sn3: 0, sn4: 0, n3: 0, l3: 0
+  };
+
+  // ---------- drawing primitives ----------
+  function drawStroke(s, p, color, width, seed) {
+    if (p <= 0) return;
+    ctx.save();
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    var L = s.len + 1;
+    ctx.setLineDash([L, L]); ctx.lineDashOffset = L * (1 - clamp01(p));
+    ctx.stroke(s.path);
+    // second, lighter pass offset by a seeded hand-wobble for a felt-pen double line
+    ctx.globalAlpha = 0.28;
+    ctx.translate((hash(seed) - 0.5) * 2.4, (hash(seed + 9) - 0.5) * 2.4);
+    ctx.lineWidth = width * 0.55;
+    ctx.stroke(s.path);
+    ctx.restore();
+  }
+  function drawHead(h, p, color) { // only drawn after the shaft is complete (p from 0 after shaft end)
+    if (p <= 0) return;
+    ctx.save();
+    ctx.translate(h.x, h.y); ctx.rotate(h.ang);
+    var k = clamp01(p);
+    ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(-14 * k, -10 * k); ctx.lineTo(1, 0); ctx.lineTo(-14 * k, 10 * k);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function drawNode(x, y, r, p, fill, stroke, seed) {
+    if (p <= 0) return;
+    var k = clamp01(p);
+    var a0 = -Math.PI / 2 + hash(seed) * 1.2;
+    ctx.save();
+    if (k >= 0.6) { // fill appears once the outline loop is mostly closed
+      ctx.globalAlpha = clamp01((k - 0.6) / 0.4);
+      ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    ctx.strokeStyle = stroke; ctx.lineWidth = 4; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.arc(x, y, r, a0, a0 + Math.PI * 2.08 * k); ctx.stroke();
+    ctx.restore();
+  }
+  function writeText(txt, x, y, size, color, p) { // handwriting wipe; text is complete & static at p=1
+    if (p <= 0) return;
+    ctx.save();
+    ctx.font = size + "px " + FONT;
+    var w = ctx.measureText(txt).width;
+    ctx.beginPath(); ctx.rect(x - 6, y - size * 1.1, (w + 12) * clamp01(p), size * 1.5); ctx.clip();
+    ctx.fillStyle = color; ctx.textBaseline = "alphabetic"; ctx.fillText(txt, x, y);
+    ctx.restore();
+  }
+  function stepLabel(num, label, cx, p) { // badge circle first, then its words
+    if (p <= 0) return;
+    var ring = clamp01(p / 0.45), txt = clamp01((p - 0.45) / 0.55);
+    ctx.save();
+    ctx.strokeStyle = ACCENT; ctx.lineWidth = 3; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.arc(cx, 600, 20, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ring); ctx.stroke();
+    ctx.restore();
+    if (ring >= 1) {
+      ctx.save(); ctx.font = "30px " + FONT; ctx.fillStyle = ACCENT; ctx.textAlign = "center";
+      ctx.fillText(num, cx, 611); ctx.restore();
+    }
+    writeText(label, cx + 32, 610, 30, INK, txt);
+  }
+
+  // ---------- frame renderer: pure function of state ----------
+  function render() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(paper, 0, 0);
+
+    // heading
+    drawStroke(S.hilite, st.hl, HILITE, 34, 1);
+    writeText("An idea becomes", 92, 96, 42, INK, st.t1);
+    writeText("a connected system", 92, 162, 54, INK, st.t2);
+
+    // 1 — lead icon: the spark (light bulb)
+    if (st.bulbFill > 0) {
+      ctx.save(); ctx.globalAlpha = st.bulbFill; ctx.fillStyle = WHITE; ctx.fill(S.bulb.path); ctx.restore();
+    }
+    drawStroke(S.bulb, st.bulb, INK, 5, 2);
+    drawStroke(S.base1, clamp01(st.base * 2), INK, 5, 3);
+    drawStroke(S.base2, clamp01(st.base * 2 - 1), INK, 5, 4);
+    drawStroke(S.filament, st.fil, ACCENT, 5, 5);
+    drawStroke(S.ray1, clamp01(st.rays * 3), ACCENT, 5, 6);
+    drawStroke(S.ray2, clamp01(st.rays * 3 - 1), ACCENT, 5, 7);
+    drawStroke(S.ray3, clamp01(st.rays * 3 - 2), ACCENT, 5, 8);
+    stepLabel("1", "spark", 196, st.l1);
+
+    // single connector → second fact
+    drawStroke(S.arrow1, st.a1, ACCENT, 5, 10);
+    drawHead(head1, st.h1, ACCENT);
+
+    // 2 — first links (triangle)
+    drawStroke(S.triA, clamp01(st.tri * 3), INK, 5, 11);
+    drawStroke(S.triB, clamp01(st.tri * 3 - 1), INK, 5, 12);
+    drawStroke(S.triC, clamp01(st.tri * 3 - 2), INK, 5, 13);
+    drawNode(640, 330, 20, st.tn1, WHITE, INK, 14);
+    drawNode(600, 470, 20, st.tn2, WHITE, INK, 15);
+    drawNode(750, 450, 20, st.tn3, WHITE, INK, 16);
+    stepLabel("2", "first links", 590, st.l2);
+
+    // connector → system
+    drawStroke(S.arrow2, st.a2, ACCENT, 5, 20);
+    drawHead(head2, st.h2, ACCENT);
+
+    // 3 — a system (hub + spokes + rim)
+    var sp = [S.sp1, S.sp2, S.sp3, S.sp4];
+    for (var i = 0; i < 4; i++) drawStroke(sp[i], clamp01(st.spokes * 4 - i), INK, 5, 21 + i);
+    var rim = [S.rim1, S.rim2, S.rim3];
+    for (var j = 0; j < 3; j++) drawStroke(rim[j], clamp01(st.rim * 3 - j), INK, 5, 26 + j);
+    drawNode(960, 320, 20, st.sn1, WHITE, INK, 30);
+    drawNode(1130, 320, 20, st.sn2, WHITE, INK, 31);
+    drawNode(960, 510, 20, st.sn3, WHITE, INK, 32);
+    drawNode(1140, 500, 20, st.sn4, WHITE, INK, 33);
+    drawNode(1040, 410, 30, st.hub, ACCENT, INK, 34);
+    stepLabel("3", "a system!", 960, st.l3);
+  }
+
+  // ---------- one paused, seekable GSAP timeline ----------
+  var tl = gsap.timeline({ paused: true, onUpdate: render, defaults: { ease: "power2.inOut" } });
+  // heading (standalone, quick)
+  tl.to(st, { t1: 1, duration: 0.38, ease: "none" }, 0.00)
+    .to(st, { hl: 1, duration: 0.32, ease: "power2.out" }, 0.18)
+    .to(st, { t2: 1, duration: 0.42, ease: "none" }, 0.24)
+  // lead icon: outline, fill, base, filament, rays
+    .to(st, { bulb: 1, duration: 0.5 }, 0.34)
+    .to(st, { bulbFill: 1, duration: 0.14, ease: "none" }, 0.80)
+    .to(st, { base: 1, duration: 0.16, ease: "none" }, 0.78)
+    .to(st, { fil: 1, duration: 0.18, ease: "power2.out" }, 0.86)
+    .to(st, { rays: 1, duration: 0.18, ease: "none" }, 0.98)
+    .to(st, { l1: 1, duration: 0.26, ease: "none" }, 1.02)
+  // one connector: shaft, then its head
+    .to(st, { a1: 1, duration: 0.26, ease: "power2.in" }, 1.12)
+    .to(st, { h1: 1, duration: 0.06, ease: "none" }, 1.38)
+  // second fact
+    .to(st, { tri: 1, duration: 0.3, ease: "none" }, 1.40)
+    .to(st, { tn1: 1, duration: 0.16, ease: "power2.out" }, 1.42)
+    .to(st, { tn2: 1, duration: 0.16, ease: "power2.out" }, 1.52)
+    .to(st, { tn3: 1, duration: 0.16, ease: "power2.out" }, 1.62)
+    .to(st, { l2: 1, duration: 0.28, ease: "none" }, 1.66)
+  // connector → system
+    .to(st, { a2: 1, duration: 0.2, ease: "power2.in" }, 1.80)
+    .to(st, { h2: 1, duration: 0.06, ease: "none" }, 2.00)
+  // system resolves the reading path
+    .to(st, { hub: 1, duration: 0.18, ease: "power2.out" }, 2.00)
+    .to(st, { spokes: 1, duration: 0.22, ease: "none" }, 2.06)
+    .to(st, { rim: 1, duration: 0.2, ease: "none" }, 2.18)
+    .to(st, { sn1: 1, duration: 0.14, ease: "power2.out" }, 2.12)
+    .to(st, { sn2: 1, duration: 0.14, ease: "power2.out" }, 2.18)
+    .to(st, { sn3: 1, duration: 0.14, ease: "power2.out" }, 2.24)
+    .to(st, { sn4: 1, duration: 0.14, ease: "power2.out" }, 2.30)
+    .to(st, { l3: 1, duration: 0.24, ease: "none" }, 2.30)
+  // settled reading hold until the end
+    .to({}, { duration: 0.46 }, 2.54);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+
+  function seekTo(t) { tl.seek(Math.max(0, Math.min(3, Number(t) || 0)), false); render(); }
+  window.addEventListener("hf-seek", function (e) {
+    var d = e && e.detail; var t = (d && typeof d === "object") ? (d.time != null ? d.time : d.t) : d;
+    seekTo(t);
+  });
+  render();
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

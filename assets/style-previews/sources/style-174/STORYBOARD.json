@@ -1,0 +1,14 @@
+{"version":3,"title":"Midcentury Ink Cartoon — An idea becomes a connected system","durationSeconds":3,
+"scenes":[{"id":"scene-1","title":"The idea goes up and connects","startSeconds":0,"endSeconds":3,
+"purpose":"One economical cel gesture (raising a lit idea) followed by a single lateral set shift, which opens a connected-system card.",
+"visuals":["Stationary halftone dot grain on a flat teal sky","Flat ochre swoosh and red sun shifting at half parallax","Ink stick figure drawn as four held cels","Paper card holding a six-node network","Dark green ground band with fixed caption"],
+"assets":[],
+"beats":[
+{"startSeconds":0,"endSeconds":0.7,"development":"Held thinking pose: figure cradles an unlit bulb at chest, head down. Line 1 of the caption is readable.","captions":["AN IDEA BECOMES"],"audio":{"music":"","effects":[],"subtitles":[]},"readingHoldSeconds":0.7},
+{"startSeconds":0.7,"endSeconds":1.05,"development":"Fast change into the key silhouette: anticipation cel (0.70s), stretch cel with the bulb lit (0.87s), then the key arm-up cel (0.97s). Sparks pop in steps and the set starts its single sideways follow to the right.","captions":[],"audio":{"music":"","effects":[],"subtitles":[]},"readingHoldSeconds":0},
+{"startSeconds":1.05,"endSeconds":1.56,"development":"A dotted lead line draws from the bulb, then the paper card grows from where the line lands.","captions":[],"audio":{"music":"","effects":[],"subtitles":[]},"readingHoldSeconds":0},
+{"startSeconds":1.56,"endSeconds":2.35,"development":"Nodes pop in steps and links draw one after another inside the finished card; line 2 of the caption wipes in; the hub node turns red at 2.30s.","captions":["A CONNECTED SYSTEM"],"audio":{"music":"","effects":[],"subtitles":[]},"readingHoldSeconds":0},
+{"startSeconds":2.35,"endSeconds":3,"development":"Settled hold on the key pose with the finished system and the full caption.","captions":["AN IDEA BECOMES","A CONNECTED SYSTEM"],"audio":{"music":"","effects":[],"subtitles":[]},"readingHoldSeconds":0.65}
+]}],
+"pacingAudit":{"findings":["Long opening hold, then a swift three-cel change into the key silhouette, as the style asks.","The only camera move is one lateral follow from 0.85s to 1.45s."],"justifiedHolds":["0–0.7s opening pose hold sets up the gesture and gives line 1 time to read.","2.35–3s final hold lets the full caption and the finished system read."]},
+"notes":["Silent preview.","STYLE.json lists no preview recipes and no BACKGROUND_REVIEW.json was supplied, so this preview shows the catalogue's main characteristic action.","Palette uses the approved illustration colours; background is scene-dependent."]}

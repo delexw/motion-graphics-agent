@@ -76,32 +76,39 @@ links and [local gallery](docs/showcase.html) remain available for local viewing
 The three most recent dated entries are listed here, regardless of gaps between dates. See the [changelog](CHANGELOG.md#daily-update-archive) for older entries and [release history](CHANGELOG.md).
 
 <details>
+<summary>2026-11-28</summary>
+
+- **HTML pages through MCP.** Pass `settings.outputType: "page"` to `create_idea` to save an interactive page draft. Start it with `start_idea`. See the [MCP page guide](docs/agent-mcp.md#build-an-html-page).
+- **Video planning.** Full-video plans describe how the story moves from one section to the next and break each scene into timed shots. The preview or full build reuses its recorded background decision when it retries.
+- **Gemini CLI.** Kiteva queues CLI turns that share a conversation database and retries startup if Antigravity returns an empty conversation ID.
+
+</details>
+
+<details>
+<summary>2026-11-26</summary>
+
+- **Motion Graphics:** Added 56 styles and replaced every style prompt with an 11-section guide. Open “Style guide” in any Motion Graphic’s details to read its summary and all 11 sections. Project settings supply the exact delivery, audio and subtitle requirements. The library includes 2.5D Pixel Art, with flat pixel sprites in a lit 3D scene. The 56 new styles use example swatches from their own previews. Kiteva builds previews and full videos from the 11-section guide and inserts the exact settings before authoring. The new guides cover materials, colour, lettering, motion, framing, sound, implementation and review checks.
+
+- **Music styles:** Search 50 grouped styles and add them to your editable music prompt. MCP lists the same choices through `get_idea_options`.
+
+- **Three.js:** The browser bundler now accepts project-local Three.js. Node-only packages stay out of browser bundles.
+
+- **Desktop launcher:** Run `npm run electron:prod` to open the built Kiteva UI in an Electron window with a macOS menu bar or Windows tray icon.
+
+- **Multiplane:** Updated the trial renderer to 0.3.16. Waiting on an exited render now ends even if the operating system reused its process ID. Kiteva’s shot guidance explains how to keep instant caption changes and stepped effects crisp under motion blur.
+
+- **MCP renderer:** New ideas use HyperFrames by default. You can still choose Multiplane.
+
+- **MCP drafts:** Save another idea while New idea is occupied. Open saved drafts in the Assistant’s conversation dropdown and remove the selected draft with the trash icon. MCP starts the selected draft by ID. Files can be detached while the idea text is blank.
+
+</details>
+
+<details>
 <summary>2026-11-25</summary>
 
 - **Remote MCP uploads:** Request a scoped link with `request_upload`, send the file to Kiteva, then attach it with `confirm_upload`. The one-use link expires after five minutes. Kiteva applies the web app's attachment rules when it confirms the file. See the [MCP upload guide](docs/agent-mcp.md#import-and-attach-files).
 - **Gemini authoring (beta):** Select Gemini 4 Neon or Carbon in project settings or through MCP. Kiteva uses the Antigravity CLI login or the configured Gemini API. Governance records Gemini usage and shows cost estimates when rates are available. [Setup and limits](src/server/agents/gemini/README.md)
 - **Website sign-in:** Cancelling a sign-in hands browser shutdown to the process that owns it, so the cancelled request can return without waiting on the closing browser.
-
-</details>
-
-<details>
-<summary>2026-11-24</summary>
-
-- **Pixel art tools:** JEV can choose LPC characters, PixelFX environment effects, or both alongside the project's primary authoring tool. LPC generates credits for eligible CC0 and CC BY parts, including parts used under CC BY 3.0 via OGA-BY. Installation prepares both sources, and startup checks installed copies.
-- **Model calls:** Claude and Codex use their native SDK routes without the Caveman proxy. Video reviews use smaller frames and default to medium effort when no task or provider setting supplies one.
-- **Dependency updates:** The three DeepSeek Harness packages move to `0.2.2-rc.5` together. Dependabot groups future updates to these packages, including release candidates.
-- **Room:** Onboarding counts and question badges use Ant Design's current tag style.
-- **Tests and CI:** Browser tests run in Playwright with a fresh browser context per test. GitHub Actions runs separate unit, integration and browser suites. Installer tests use local fixtures.
-
-</details>
-
-<details>
-<summary>2026-11-22</summary>
-
-- **Adjustive effort:** This per-project Yes/No setting defaults to No. Yes lets JEV choose effort for each supported model call. No uses the configured task or model default. MCP can set it when creating a draft.
-- **Governance:** Project timing appears at the top, and usage rows show reasoning effort. JEV dashboards show decisions and scores first, with expandable rationale, inputs and comparisons. Saved combination comparisons show primary and supporting style names where available.
-- **Generation settings:** Video language, build route and adjustive effort have info tips beside their labels.
-- **Bevy authoring:** Kiteva can select Bevy for shots. Setup and startup prepare the managed runtime and refresh compatible community guides through the bundled-skill registry.
 
 </details>
 
@@ -182,7 +189,7 @@ And it has nothing to do with the UI-component tool called [Storybook](https://s
 
 |                                   |                                                                                                                                                                                      |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Motion Graphics                   | **140** (`assets/catalog/video-style-catalog.json`)                                                                                                                                  |
+| Motion Graphics                   | **199** (`assets/catalog/video-style-catalog.json`)                                                                                                                                  |
 | Motions                           | **46** (`assets/catalog/motion-pattern-catalog.json`)                                                                                                                                |
 | Technology pool entries           | **92** recommendations across visual construction, motion, rendering and supporting tools                                                                                            |
 | Startup-installed authoring skill | **3** ([Anatomy](https://github.com/wheresryan22/anatomy), [img2threejs](https://github.com/img2threejs/img2threejs), [Stageshow](docs/stageshow.md))                                |
@@ -229,6 +236,8 @@ cd motion-graphics-agent
 # Edit the created .env.local: add TYPESAFE_API_KEY and provider keys if needed.
 npm start                       # open http://127.0.0.1:18417
 ```
+
+On macOS and Windows, run `npm run electron:setup` once after installing dependencies, then run `npm run electron:prod` after building Kiteva to open the desktop window and tray icon. It uses `dist/client` and can run after `npm ci --omit=dev`. Electron starts and owns a Kiteva service on the configured local port. Desktop and browser use the same projects, drafts and uploads. Stop a service started with `npm start` before launching Electron. Closing the window hides it to the menu bar or tray. Choose **Open Kiteva** to reopen the same window. Choose **Quit Kiteva** to stop the service owned by Electron. Logs are in `.data/desktop/`.
 
 For a smaller installation, use `./install.sh --minimal` to skip speech and Audio Studio, or
 `./install.sh --speech pocket` to install only Pocket TTS narration. `--audio-no-weights` defers Audio

@@ -1,0 +1,30 @@
+{
+  "characters": [],
+  "displayTitle": "Neon Tubes",
+  "displayDescription": "Glass neon tubes light one run at a time, from a source node through an idea bulb to the next node, reflected on a glossy floor.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Three.js 0.187.0 (WebGL: swept TubeGeometry glass + emissive gas shaders, light-receiving wall and floor shaders, mirrored floor reflection, UnrealBloom)"
+  ],
+  "motionEngine": [
+    "GSAP 3.15.1 (local gsap.min.js, one paused timeline)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "STYLE.json lists no preview recipes and no BACKGROUND_REVIEW.json was supplied, so the preview demonstrates the catalogue's main characteristic action: connected tube runs light one contiguous section at a time, pause at each junction, and show their reflected shape on the floor.",
+    "Glass and gas are approximated with custom shaders (a Fresnel-edged clear sleeve around an emissive core), not physical refraction. The floor reflection is a mirrored copy of the sign under a semi-opaque glossy floor, not ray-traced. Light on the wall and floor comes from sampled points along each lit tube.",
+    "The second caption, 'SECTION 2 OF 2 LIT', is derived from the approved 'SECTION 1 OF 2 LIT' to mark the second run lighting up.",
+    "The headline and captions are crisp HTML text over the dark wall rather than bent tube lettering, so the approved copy stays readable.",
+    "Blender was not used, as instructed. Three.js and GSAP were copied from the existing local packages into the project runtime folder. Nothing was downloaded.",
+    "The bundled Three.js library contains Math.random and performance.now in internal utilities (object IDs and clocks). The scene never uses them; every visual value comes from the GSAP timeline time.",
+    "The technology-selection tool failed because a host-side PROJECT_DEPENDENCIES.json file is missing, so the dependency record may be incomplete. The runtime folder's package.json lists three and gsap."
+  ]
+}

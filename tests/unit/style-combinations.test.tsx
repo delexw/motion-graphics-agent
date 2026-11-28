@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { renderToStaticMarkup } from "react-dom/server";
 import {
   requestedStyleScopeGuidance,
   suggestedCombinationGuidance,
   validateCombinationReview,
 } from "../../src/shared/style-combinations";
-import { SuggestedCombinations } from "../../src/client/style-combinations";
 import { loadCatalog } from "../../src/server/catalog/catalog";
 import { pageStyleContext } from "../../src/server/domains/page/prompts";
 
@@ -28,7 +26,7 @@ const review = { styles: [{ style_id: "style-001", suggested_combinations: combi
 describe("style combination recommendations", () => {
   it("includes combination guidance for every catalog style", async () => {
     const catalog = await loadCatalog();
-    expect(catalog.styles).toHaveLength(143);
+    expect(catalog.styles).toHaveLength(199);
     for (const style of catalog.styles) {
       expect(style.suggested_combinations?.selection_guidance).toBeTruthy();
       expect(style.suggested_combinations?.suggestions.length).toBeLessThanOrEqual(3);
@@ -101,71 +99,11 @@ describe("style combination recommendations", () => {
       ).styles,
     ).toHaveLength(1);
   });
-  it("renders recommendations as named styles and readable guidance for both outputs", async () => {
+  it("passes compatibility guidance to page planning", async () => {
     const catalog = await loadCatalog();
     const style = { ...catalog.styles[0], suggested_combinations: combinations };
-    const html = renderToStaticMarkup(
-      <SuggestedCombinations style={style} styles={catalog.styles} onSelect={() => {}} />,
-    );
-    expect(html).toContain("Suggested combinations");
-    expect(html).toContain(catalog.styles[1].name_en);
-    expect(html).toContain(`${style.name_en} + ${catalog.styles[1].name_en}`);
-    expect(html).toContain("ant-collapse");
-    expect(html).toContain('aria-expanded="false"');
-    expect(html).not.toContain("Preserve the primary palette.");
-    expect(html).not.toContain("Video:");
-    expect(html).not.toContain("HTML:");
-    expect(html).not.toContain("supporting_styles");
     expect(pageStyleContext(style).suggested_combinations).toEqual(combinations);
-    expect(
-      renderToStaticMarkup(
-        <SuggestedCombinations
-          style={{ ...style, suggested_combinations: undefined }}
-          styles={catalog.styles}
-          onSelect={() => {}}
-        />,
-      ),
-    ).toBe("");
   });
-  it("shows primary and supporting posters before viewport activation", async () => {
-    const catalog = await loadCatalog();
-    const style = { ...catalog.styles[0], suggested_combinations: combinations };
-    const examples = [style, catalog.styles[1]].map((item) => ({
-      styleId: item.id,
-      catalogHash: catalog.hash,
-      thumbnail: "preview.svg",
-      video: "preview.mp4",
-      status: "ready" as const,
-      generatedAt: "2026-01-01T00:00:00Z",
-    }));
-    const html = renderToStaticMarkup(
-      <SuggestedCombinations
-        style={style}
-        styles={catalog.styles}
-        examples={examples}
-        onSelect={() => {}}
-      />,
-    );
-    expect(html).not.toContain("<video");
-    expect(html.match(/<img/g)).toHaveLength(2);
-    for (const item of [style, catalog.styles[1]]) {
-      expect(html).toContain(`/api/examples/${item.id}?version=`);
-      expect(html).toContain(`data-style-id="${item.id}"`);
-    }
-    expect(html).toContain("Individual Motion Graphic previews");
-    expect(html.indexOf("combination-preview-grid")).toBeLessThan(
-      html.indexOf("combination-accordion"),
-    );
-  });
-});
-
-it("identifies application-authored recommendations without claiming a model review", async () => {
-  const style = (await loadCatalog()).styles.find((entry) => entry.id === "style-136")!;
-  const html = renderToStaticMarkup(
-    <SuggestedCombinations style={style} styles={[]} onSelect={() => {}} />,
-  );
-  expect(html).toContain("Application-authored compatibility guidance");
-  expect(html).not.toContain("analyzed by Claude");
 });
 
 it("keeps the generated-combination quota in automatic-route guidance only", () => {

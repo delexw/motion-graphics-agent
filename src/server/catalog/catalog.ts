@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import { z } from "zod";
 import { StyleSchema, MotionPatternSchema } from "../../shared/contracts.js";
+import { parseStyleGuide } from "../../shared/agents/schemas/combined-style-guide.js";
 import { catalogRoot } from "../runtime/config.js";
 import { validateCombinationReview } from "../../shared/style-combinations";
 import { validateCatalogVariants } from "../../shared/catalog-variants";
@@ -51,6 +52,8 @@ export async function loadCatalog() {
     styles.styles.map((style) => style.id),
   );
   for (const style of styles.styles) {
+    if (!parseStyleGuide(style.executable_prompt_template))
+      throw Error(`Expected a style summary and 11 guide sections for ${style.id}`);
     const candidates = z
       .array(z.object({ motion_id: z.string(), usage_guidance: z.string() }).passthrough())
       .parse(style.motion_references.candidates);

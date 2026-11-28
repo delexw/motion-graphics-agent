@@ -1,0 +1,29 @@
+{
+  "characters": [],
+  "displayTitle": "Crayon Book",
+  "displayDescription": "A lightbulb is shaded in three wax passes, then one page turn on the gutter reveals the connected wax network.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP (local gsap.min.js, one paused timeline at window.__timelines.video)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, sound effects, narration or subtitles.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "The crayon wax is simulated: seeded, bristled Canvas 2D hatching clipped to jittered masks, with a cached procedural paper-tooth texture erasing it. No scanned crayon or real paper is used.",
+    "The page turn is a 2D projection drawn in strips (foreshortening, a slight lift of the outer edge, gradient shading and a cast shadow) bound to a fixed gutter. It is not a 3D or physically simulated paper bend, and the leaf doesn't curl.",
+    "The finished bulb on the turned leaf's verso is drawn as a clean copy in the mirrored position, not as real wax bleeding through the paper.",
+    "Blender was not used, as instructed. GSAP is loaded from the project-local gsap.min.js; no packages were installed.",
+    "The project dependency record could not be written: the selection tool failed because PROJECT_DEPENDENCIES.json is missing from this preview folder.",
+    "Lettering uses local system fonts (Chalkboard SE, with Comic Sans MS, Marker Felt and sans-serif as fallbacks)."
+  ]
+}

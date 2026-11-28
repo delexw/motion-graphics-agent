@@ -1,0 +1,51 @@
+{
+  "version": 3,
+  "title": "Circuit Trace Board — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Source pulse and trunk",
+      "startSeconds": 0,
+      "endSeconds": 0.97,
+      "purpose": "The idea starts as a pulse at pad P0 and travels the trunk trace to junction J1.",
+      "visuals": ["Green solder-mask board with via grid", "Dull copper traces", "P0 pad lights with an expanding ring", "Bright pulse and lit copper fill the P0→J1 centreline"],
+      "assets": ["index.html"],
+      "beats": [
+        {"startSeconds": 0, "endSeconds": 0.25, "development": "P0 IDEA pad lights; ring pulse marks the source.", "captions": ["AN IDEA BECOMES A CONNECTED SYSTEM", "REV 1.0 · SIGNAL PATH: IDEA → J1 → U1 · U2 · U3"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 0.25, "endSeconds": 0.97, "development": "Pulse travels the trunk at constant speed and sinks into J1.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-2",
+      "title": "Branch at J1",
+      "startSeconds": 0.97,
+      "endSeconds": 2.08,
+      "purpose": "J1 lights and three pulses branch; each destination pad lights at its arrival, ordered by trace length.",
+      "visuals": ["J1 BRANCH ring pulse", "Three pulses on the U1, U2 and U3 routes", "U1 lights at 1.64 s, U2 at 1.95 s, U3 at 2.08 s"],
+      "assets": ["index.html"],
+      "beats": [
+        {"startSeconds": 0.97, "endSeconds": 1.64, "development": "J1 lights; pulses split; the shortest route reaches ① U1 PEOPLE.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 1.64, "endSeconds": 1.95, "development": "The jogged route reaches ② U2 TOOLS.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 1.95, "endSeconds": 2.08, "development": "The longest route reaches ③ U3 FLOW.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-3",
+      "title": "Connected system hold",
+      "startSeconds": 2.08,
+      "endSeconds": 3,
+      "purpose": "All pads glow steadily; the whole board is settled and readable.",
+      "visuals": ["Arrival rings fade by 2.44 s", "All traces lit, all pads glowing"],
+      "assets": ["index.html"],
+      "beats": [
+        {"startSeconds": 2.08, "endSeconds": 3, "development": "Rings settle; the connected system holds for reading.", "captions": ["PADS LIGHT IN ORDER OF ARRIVAL · BRANCH DELAY = TRACE LENGTH"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.56}
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["Constant-speed travel makes each arrival time follow trace length; arrivals are spaced 0.31 s and 0.13 s apart, brisk but readable."],
+    "justifiedHolds": ["2.44–3.00 s settled hold so the full board and labels can be read."]
+  },
+  "notes": ["Silent preview.", "No preview recipe is listed in STYLE.json; the core characteristic action is shown.", "Renderer: SVG; motion owner: one paused GSAP timeline."]
+}

@@ -1,12 +1,13 @@
 import { registerProjectReuseTool } from "./project-reuse";
 import { SettingsConflictError } from "../../shared/request-settings-review";
 import { errorCode } from "../../shared/errors";
+import { musicStyleGroups } from "../../shared/music-styles";
 import { assetLimits } from "../../shared/asset-limits";
 import { briefSectionFileAccept } from "../../shared/brief-sections";
 import { AssetSourceSchema, AssetTargetSchema, importMcpAsset } from "./assets";
-import type { Asset } from "../../shared/contracts";
+import { RequestSchema, type Asset, type CreativeRequest } from "../../shared/contracts";
 import type { AssetOwner } from "../../shared/asset-owner";
-import { toggleRoomAsset } from "../../shared/brief-attachments";
+import { toggleSavedDraftAttachment } from "../../shared/brief-attachments";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { randomUUID } from "node:crypto";
 import MiniSearch from "minisearch";
@@ -19,8 +20,13 @@ import type {
   KitevaMcpToolResponse,
 } from "../../shared/kiteva-mcp";
 import { projectName } from "../../shared/project-name";
-import { RoomPatchSchema, hasRoomDraftContent } from "../../shared/room";
-import { VideoRequestSchema } from "../../shared/domains/video";
+import {
+  additionalIdeaDraftKey,
+  findIdeaDraftKey,
+  RoomPatchSchema,
+  hasRoomDraftContent,
+  type IdeaDraftSource,
+} from "../../shared/room";
 import { validateBriefSections } from "../requests/brief-sections";
 import type { McpUploads } from "./uploads";
 import {
@@ -28,10 +34,14 @@ import {
   ideaRequest,
   confirmedLanguageSettings,
   ideaToolGuidance,
+  CreateIdeaSettingsSchema,
   IdeaSettingsSchema,
+  PageIdeaSettingsSchema,
   kitevaIdeaDefaults,
+  kitevaPageIdeaDefaults,
   kitevaMcpInstructions,
   optionalIdeaSettings,
+  optionalPageIdeaSettings,
 } from "./contract";
 
 export type KitevaMcpDependencies = {
@@ -39,7 +49,10 @@ export type KitevaMcpDependencies = {
   catalog: Pick<Catalog, "styles">;
   webUrl: string;
   assetDirectory?: string;
-  start: (request: z.infer<typeof VideoRequestSchema>) => Promise<{ id: string; phase: string }>;
+  start: (
+    request: CreativeRequest,
+    sourceDraft?: IdeaDraftSource,
+  ) => Promise<{ id: string; phase: string }>;
 };
 
 function search<T extends { id: string }>(
@@ -69,6 +82,7 @@ export function createKitevaMcpTools(
   );
   async function run(
     action: () => KitevaMcpResult | Promise<KitevaMcpResult>,
+    draftId?: string,
   ): Promise<KitevaMcpToolResponse> {
     try {
       const result = await action();
@@ -85,7 +99,7 @@ export function createKitevaMcpTools(
               kind: "settings_conflict",
               message,
               details: error.details,
-              draftId: room.drafts.new?.id,
+              draftId: draftId ?? room.drafts.new?.id,
               revision: room.revision,
             }
           : errorCode(error) === "SETTINGS_CHECK_UNAVAILABLE"
@@ -215,8 +229,8 @@ export function createKitevaMcpTools(
               asset.owner?.id !== draftId
             )
               throw Error("Asset is not in this draft or its available pool");
-            const request = toggleRoomAsset(
-              VideoRequestSchema.parse(draft.request),
+            const request = toggleSavedDraftAttachment(
+              draft.request,
               { ...asset, originalName: asset.originalName || asset.name },
               ids.map((id) => {
                 const a = store.getAsset(id)!;
@@ -369,18 +383,32 @@ export function createKitevaMcpTools(
   server.registerTool(
     "get_idea_options",
     {
-      description: `Read valid dedicated video settings and MCP creation defaults before authoring an idea. ${ideaToolGuidance.settings}`,
-      inputSchema: {},
+      description:
+        "Read the settings and defaults for a video or HTML page before saving an idea. Video options include the Music picker.",
+      inputSchema: {
+        outputType: z.enum(["video", "page"]).default("video").describe("The intended output."),
+      },
       annotations: { readOnlyHint: true },
     },
-    () =>
+    ({ outputType }) =>
       run(() => ({
         kind: "options",
-        defaults: kitevaIdeaDefaults,
+        outputType,
         modelChoices: ideaModelChoices,
-        languageDefaults: { generateNarration: false, showSubtitles: false },
-        optionalSettings: optionalIdeaSettings,
-        settingsSchema: z.toJSONSchema(IdeaSettingsSchema),
+        ...(outputType === "page"
+          ? {
+              defaults: kitevaPageIdeaDefaults,
+              musicStyleGroups: [],
+              optionalSettings: optionalPageIdeaSettings,
+              settingsSchema: z.toJSONSchema(PageIdeaSettingsSchema),
+            }
+          : {
+              defaults: kitevaIdeaDefaults,
+              musicStyleGroups,
+              languageDefaults: { generateNarration: false, showSubtitles: false },
+              optionalSettings: optionalIdeaSettings,
+              settingsSchema: z.toJSONSchema(IdeaSettingsSchema),
+            }),
         uploadLimits: assetLimits,
         supportedExtensions: Object.values(briefSectionFileAccept).join(",").split(","),
       })),
@@ -412,18 +440,17 @@ export function createKitevaMcpTools(
   server.registerTool(
     "create_idea",
     {
-      description: `${ideaToolGuidance.creation} ${ideaToolGuidance.idea} ${ideaToolGuidance.settings} Creation defaults: ${JSON.stringify(kitevaIdeaDefaults)}.`,
+      description: `${ideaToolGuidance.creation} ${ideaToolGuidance.idea} ${ideaToolGuidance.settings} Video defaults: ${JSON.stringify(kitevaIdeaDefaults)}. HTML page defaults: ${JSON.stringify(kitevaPageIdeaDefaults)}.`,
       inputSchema: {
         idea: z.string().trim().min(8).max(24000).describe(ideaToolGuidance.idea),
-        settings: IdeaSettingsSchema.describe(ideaToolGuidance.settings),
+        settings: CreateIdeaSettingsSchema.describe(ideaToolGuidance.settings),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
     },
     ({ idea, settings }) =>
       run(() => {
         const request = ideaRequest(idea, settings);
-        const draftId = store.room().drafts.new?.id || randomUUID();
-        store.assertAssetOwner(request.assetIds, { kind: "draft", id: draftId });
+        const room = store.room();
         const assets = request.assetIds.map((id) => {
           const asset = store.getAsset(id);
           if (!asset)
@@ -445,33 +472,42 @@ export function createKitevaMcpTools(
           throw Error(
             "Unknown Motion Graphic ID; use search_styles to find an existing selection.",
           );
-        const room = store.room();
-        const previous = room.drafts.new;
-        if (hasRoomDraftContent(previous))
-          throw Error(
-            "The Assistant already has a New idea draft. Review or remove it in Kiteva before creating another; it was not overwritten.",
+        const save = (key: string, draftId: string, revision: number) => {
+          store.assertAssetOwner(request.assetIds, { kind: "draft", id: draftId });
+          return store.patchRoom(
+            RoomPatchSchema.parse({
+              client: clientId,
+              baseRevision: revision,
+              drafts: {
+                [key]: { id: draftId, step: 8, stepLayout: "separate-video", request, assets },
+              },
+            }),
           );
-        const result = store.patchRoom(
-          RoomPatchSchema.parse({
-            client: clientId,
-            baseRevision: room.revision,
-            drafts: {
-              new: { id: draftId, step: 8, stepLayout: "separate-video", request, assets },
-            },
-          }),
+        };
+        const separateId = randomUUID();
+        let key = hasRoomDraftContent(room.drafts.new) ? additionalIdeaDraftKey(separateId) : "new";
+        let result = save(
+          key,
+          key === "new" ? (room.drafts.new?.id ?? separateId) : separateId,
+          room.revision,
         );
+        if (result.conflicts.length && key === "new") {
+          key = additionalIdeaDraftKey(separateId);
+          result = save(key, separateId, result.state.revision);
+        }
         if (result.conflicts.length)
           throw Error(
             "The draft changed concurrently; it was not overwritten. Read the current draft before continuing.",
           );
         return {
           kind: "created",
-          id: "draft:new",
+          id: `draft:${key}`,
           request,
           languageSettings: confirmedLanguageSettings({ ...request }),
           url: new URL("/", webUrl).href,
           started: false,
-          draftId,
+          draftId: result.state.drafts[key].id!,
+          revision: result.state.revision,
         };
       }),
   );
@@ -492,7 +528,7 @@ export function createKitevaMcpTools(
           .int()
           .min(0)
           .describe(
-            "Current room revision from read_idea(draft:new). Rejects a stale draft so newly edited instructions are never silently submitted.",
+            "Current room revision from create_idea or read_idea for this draft. Rejects a stale draft so newly edited instructions are never silently submitted.",
           ),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
@@ -501,23 +537,25 @@ export function createKitevaMcpTools(
       run(async () => {
         const room = store.room();
         if (room.revision !== revision)
-          throw Error("The room changed. Read draft:new again before starting.");
-        if (!room.drafts.new) throw Error("No New idea draft to start");
-        if (draftId && room.drafts.new.id !== draftId)
-          throw Error("Draft ID does not match the current New idea");
-        const sourceDraftId = room.drafts.new.id;
-        const request = VideoRequestSchema.parse(room.drafts.new.request);
+          throw Error("The room changed. Read the selected draft again before starting.");
+        const key = draftId ? findIdeaDraftKey(room.drafts, draftId) : "new";
+        if (!key || !room.drafts[key]) throw Error("Draft ID does not match a saved new idea");
+        const sourceDraftId = room.drafts[key].id;
+        const request = RequestSchema.parse(room.drafts[key].request);
         store.assertAssetOwner(
           request.assetIds,
           sourceDraftId ? { kind: "draft", id: sourceDraftId } : undefined,
         );
-        const project = await start(request);
+        const project = await start(
+          request,
+          sourceDraftId ? { draftId: sourceDraftId, revision } : undefined,
+        );
         if (sourceDraftId) store.transferDraftAssets(sourceDraftId, project.id, request.assetIds);
         store.patchRoom(
           RoomPatchSchema.parse({
             client: clientId,
             baseRevision: revision,
-            drafts: { new: null },
+            drafts: { [key]: null },
           }),
         );
         return {
@@ -528,7 +566,7 @@ export function createKitevaMcpTools(
           draftId: sourceDraftId,
           url: new URL(`/projects/${project.id}`, webUrl).href,
         };
-      }),
+      }, draftId),
   );
   return server;
 }

@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Marker on Paper — an idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #FCFCFA; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; }
+  #stage { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+</style>
+<script src="gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="stage" width="1280" height="720" aria-label="Marker drawing: an idea becomes a connected system"></canvas>
+</div>
+<script>
+(function () {
+  "use strict";
+  var W = 1280, H = 720;
+  var canvas = document.getElementById("stage");
+  var ctx = canvas.getContext("2d");
+
+  // Approved scene colours (from ILLUSTRATION.svg reference)
+  var C = {
+    paper: "#FCFCFA", rule: "#CFE0EA", margin: "#E8A7A0",
+    ink: "#242831", active: "#9F352D", band: "#FFC93C",
+    node: "#3FB6B0", hub: "#F2785C", note: "#E4F3F2"
+  };
+  var FONT = '"Marker Felt", "Chalkboard SE", "Comic Sans MS", "Segoe Print", cursive';
+
+  // ---------- seeded randomness (deterministic) ----------
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) >>> 0;
+      var t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // ---------- static paper (cached, stationary) ----------
+  var paper = document.createElement("canvas");
+  paper.width = W; paper.height = H;
+  (function buildPaper() {
+    var p = paper.getContext("2d");
+    p.fillStyle = C.paper; p.fillRect(0, 0, W, H);
+    var img = p.getImageData(0, 0, W, H), d = img.data, r = rng(171);
+    for (var i = 0; i < d.length; i += 4) {
+      var n = (r() - 0.5) * 9;
+      d[i] += n; d[i + 1] += n; d[i + 2] += n * 1.1;
+    }
+    p.putImageData(img, 0, 0);
+    // fibres
+    var rf = rng(9);
+    p.strokeStyle = "rgba(120,110,90,0.05)"; p.lineWidth = 1;
+    for (var f = 0; f < 260; f++) {
+      var x = rf() * W, y = rf() * H, a = rf() * Math.PI, l = 4 + rf() * 10;
+      p.beginPath(); p.moveTo(x, y); p.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); p.stroke();
+    }
+    p.strokeStyle = C.rule; p.lineWidth = 1;
+    for (var y2 = 35.5; y2 < H; y2 += 36) { p.beginPath(); p.moveTo(0, y2); p.lineTo(W, y2); p.stroke(); }
+    p.strokeStyle = C.margin; p.lineWidth = 2;
+    p.beginPath(); p.moveTo(110, 0); p.lineTo(110, H); p.stroke();
+  })();
+
+  // ---------- marker stroke geometry ----------
+  function resample(pts, step) {
+    var out = [pts[0]];
+    for (var i = 1; i < pts.length; i++) {
+      var a = pts[i - 1], b = pts[i];
+      var dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy), n = Math.max(1, Math.ceil(L / step));
+      for (var k = 1; k <= n; k++) out.push([a[0] + dx * k / n, a[1] + dy * k / n]);
+    }
+    return out;
+  }
+  function wobble(pts, seed, amp) {
+    var r = rng(seed), ph1 = r() * 6.28, ph2 = r() * 6.28, f1 = 0.02 + r() * 0.02, f2 = 0.06 + r() * 0.04;
+    var acc = 0;
+    return pts.map(function (p, i) {
+      if (i > 0) acc += Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]);
+      var j = Math.sin(acc * f1 + ph1) * amp + Math.sin(acc * f2 + ph2) * amp * 0.4;
+      var q = pts[Math.min(i + 1, pts.length - 1)], o = pts[Math.max(i - 1, 0)];
+      var tx = q[0] - o[0], ty = q[1] - o[1], tl = Math.hypot(tx, ty) || 1;
+      return [p[0] - ty / tl * j, p[1] + tx / tl * j];
+    });
+  }
+  function makeStroke(pts, opt) {
+    var s = wobble(resample(pts, 3), opt.seed, opt.wob == null ? 2.2 : opt.wob);
+    var len = [0];
+    for (var i = 1; i < s.length; i++) len.push(len[i - 1] + Math.hypot(s[i][0] - s[i - 1][0], s[i][1] - s[i - 1][1]));
+    return { pts: s, len: len, total: len[len.length - 1], w: opt.w, color: opt.color, alpha: opt.alpha, seed: opt.seed, chisel: !!opt.chisel };
+  }
+  function circlePts(cx, cy, r, seed, turns) {
+    var rr = rng(seed), a0 = rr() * 6.28, pts = [], n = 80;
+    for (var i = 0; i <= n * turns; i++) {
+      var a = a0 + (i / n) * Math.PI * 2;
+      var rad = r * (1 + 0.035 * Math.sin(a * 2 + seed) + 0.02 * (i / (n * turns)));
+      pts.push([cx + Math.cos(a) * rad, cy + Math.sin(a) * rad * 0.97]);
+    }
+    return pts;
+  }
+
+  // per-stroke offscreen layer: opaque within one stroke, translucent between strokes
+  var layer = document.createElement("canvas"); layer.width = W; layer.height = H;
+  var lctx = layer.getContext("2d");
+
+  function drawStroke(st, prog) {
+    if (prog <= 0) return;
+    var end = st.total * Math.min(1, prog);
+    var r = rng(st.seed * 31 + 7);
+    lctx.clearRect(0, 0, W, H);
+    lctx.lineCap = "round"; lctx.lineJoin = "round";
+    lctx.strokeStyle = st.color;
+    for (var i = 1; i < st.pts.length && st.len[i - 1] < end; i++) {
+      var u = st.len[i] / st.total;
+      // pressure: ramps in on landing, eases off on lift, slight drift along the stroke
+      var press = Math.min(1, 0.55 + st.len[i] / 26) * (0.9 + 0.1 * Math.sin(u * 9 + st.seed));
+      if (prog >= 1) press *= Math.min(1, 0.7 + (st.total - st.len[i]) / 40);
+      lctx.lineWidth = st.w * press;
+      lctx.beginPath(); lctx.moveTo(st.pts[i - 1][0], st.pts[i - 1][1]); lctx.lineTo(st.pts[i][0], st.pts[i][1]); lctx.stroke();
+    }
+    // dry streaks inside broad strokes (fibre tip texture)
+    if (st.w >= 14) {
+      lctx.globalCompositeOperation = "destination-out";
+      lctx.lineWidth = 1.4;
+      for (var k = 0; k < 4; k++) {
+        var off = (r() - 0.5) * st.w * 0.7;
+        lctx.strokeStyle = "rgba(0,0,0," + (0.18 + r() * 0.18) + ")";
+        lctx.beginPath();
+        for (var j = 1; j < st.pts.length && st.len[j] < end; j += 2) {
+          var a = st.pts[j - 1], b = st.pts[j], tx = b[0] - a[0], ty = b[1] - a[1], tl = Math.hypot(tx, ty) || 1;
+          var x = b[0] - ty / tl * off, y = b[1] + tx / tl * off;
+          if (j === 1) lctx.moveTo(x, y); else lctx.lineTo(x, y);
+        }
+        lctx.stroke();
+      }
+      lctx.globalCompositeOperation = "source-over";
+    }
+    ctx.save();
+    ctx.globalAlpha = st.alpha;
+    ctx.globalCompositeOperation = "multiply"; // ink overlap darkens value
+    ctx.drawImage(layer, 0, 0);
+    ctx.restore();
+  }
+
+  function writeText(txt, x, y, size, color, prog, alpha, align) {
+    if (prog <= 0) return;
+    ctx.save();
+    ctx.font = size + "px " + FONT;
+    ctx.textBaseline = "alphabetic";
+    ctx.textAlign = align || "left";
+    var w = ctx.measureText(txt).width;
+    var x0 = align === "center" ? x - w / 2 : x;
+    ctx.beginPath();
+    ctx.rect(x0 - 6, y - size * 1.2, (w + 12) * Math.min(1, prog), size * 1.7);
+    ctx.clip();
+    ctx.globalAlpha = alpha == null ? 1 : alpha;
+    ctx.fillStyle = color;
+    ctx.fillText(txt, x, y);
+    ctx.restore();
+  }
+
+  // ---------- scene strokes ----------
+  var hub = [520, 390];
+  var nodes = { people: [300, 290], tools: [770, 280], data: [330, 570], flow: [800, 545] };
+  var S = {
+    band: makeStroke([[136, 98], [460, 92], [800, 90]], { w: 54, color: C.band, alpha: 0.55, seed: 3, wob: 1.6 }),
+    hubFill: makeStroke(circlePts(hub[0], hub[1], 40, 11, 1.0).concat(circlePts(hub[0], hub[1], 18, 12, 1.0)), { w: 46, color: C.hub, alpha: 0.42, seed: 12, wob: 0.8 }),
+    hubRing: makeStroke(circlePts(hub[0], hub[1], 70, 13, 1.06), { w: 7, color: C.active, alpha: 0.82, seed: 13, wob: 1.2 }),
+    links: [
+      makeStroke([hub, nodes.people], { w: 8, color: C.ink, alpha: 0.82, seed: 21 }),
+      makeStroke([hub, nodes.tools], { w: 8, color: C.ink, alpha: 0.82, seed: 22 }),
+      makeStroke([hub, nodes.data], { w: 8, color: C.ink, alpha: 0.82, seed: 23 }),
+      makeStroke([hub, nodes.flow], { w: 8, color: C.ink, alpha: 0.82, seed: 24 })
+    ],
+    cross: [
+      makeStroke([nodes.people, nodes.data], { w: 8, color: C.ink, alpha: 0.82, seed: 25 }),
+      makeStroke([nodes.tools, nodes.flow], { w: 8, color: C.ink, alpha: 0.82, seed: 26 })
+    ],
+    rings: ["people", "tools", "data", "flow"].map(function (k, i) {
+      return makeStroke(circlePts(nodes[k][0], nodes[k][1], 44, 40 + i, 1.08), { w: 18, color: C.node, alpha: 0.55, seed: 40 + i, wob: 1.0 });
+    }),
+    // inside the note (note-local coordinates, rotated with the card)
+    strike: makeStroke([[948, 343], [1030, 339], [1112, 337]], { w: 7, color: C.active, alpha: 0.9, seed: 61, wob: 0.9 }),
+    under: makeStroke((function () { var p = []; for (var i = 0; i <= 40; i++) { var x = 955 + i * 5; p.push([x, 503 + Math.sin(i / 40 * Math.PI * 2) * -6]); } return p; })(), { w: 5, color: C.active, alpha: 0.9, seed: 62, wob: 0.4 })
+  };
+
+  // ---------- motion state (single owner: GSAP timeline) ----------
+  var st = {
+    band: 0, title: 0, hubFill: 0, hubRing: 0, hubLabel: 0,
+    l0: 0, l1: 0, l2: 0, l3: 0, c0: 0, c1: 0,
+    r0: 0, r1: 0, r2: 0, r3: 0, n0: 0, n1: 0, n2: 0, n3: 0,
+    note: 0, noteHead: 0, oldVal: 0, strike: 0, oldDim: 0, new1: 0, new2: 0, under: 0
+  };
+
+  function render() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+    ctx.drawImage(paper, 0, 0);
+
+    // heading: broad highlighter band, then handwritten title
+    drawStroke(S.band, st.band);
+    writeText("an idea becomes a connected system", 150, 110, 44, C.ink, st.title);
+
+    // system diagram — exact paint order: hub fill, links, rings, hub ring, labels
+    drawStroke(S.hubFill, st.hubFill);
+    drawStroke(S.links[0], st.l0); drawStroke(S.links[1], st.l1);
+    drawStroke(S.links[2], st.l2); drawStroke(S.links[3], st.l3);
+    drawStroke(S.cross[0], st.c0); drawStroke(S.cross[1], st.c1);
+    drawStroke(S.rings[0], st.r0); drawStroke(S.rings[1], st.r1);
+    drawStroke(S.rings[2], st.r2); drawStroke(S.rings[3], st.r3);
+    drawStroke(S.hubRing, st.hubRing);
+    // labels only after their owning ring is complete
+    var labs = [["people", "n0"], ["tools", "n1"], ["data", "n2"], ["flow", "n3"]];
+    labs.forEach(function (l) {
+      var p = nodes[l[0]];
+      // small paper knock-out so labels stay readable over the ink line
+      if (st[l[1]] > 0) {
+        ctx.save(); ctx.globalAlpha = 0.9 * Math.min(1, st[l[1]] * 2); ctx.fillStyle = C.paper;
+        ctx.beginPath(); ctx.ellipse(p[0], p[1] - 1, 30, 16, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      }
+      writeText(l[0], p[0], p[1] + 8, 24, C.ink, st[l[1]], 1, "center");
+    });
+    writeText("idea", hub[0], hub[1] + 12, 34, C.active, st.hubLabel, 1, "center");
+
+    // sticky note — container first, then its contents
+    if (st.note > 0) {
+      ctx.save();
+      var drop = (1 - st.note) * -26;
+      ctx.translate(1060, 380 + drop); ctx.rotate(-3 * Math.PI / 180 * (0.4 + 0.6 * st.note)); ctx.translate(-1060, -380);
+      ctx.globalAlpha = Math.min(1, st.note * 1.6);
+      ctx.fillStyle = "rgba(36,40,49,0.10)";
+      ctx.fillRect(936, 238, 260, 300);
+      ctx.fillStyle = C.note;
+      ctx.beginPath();
+      ctx.moveTo(930, 232); ctx.lineTo(1188, 228); ctx.lineTo(1191, 531); ctx.lineTo(933, 529); ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      writeText("what we have:", 955, 285, 26, C.ink, st.noteHead);
+      writeText("1 idea", 955, 355, 40, C.ink, st.oldVal, 1 - 0.4 * st.oldDim);
+      drawStroke(S.strike, st.strike);
+      writeText("5 linked", 955, 440, 46, C.active, st.new1);
+      writeText("parts!", 955, 488, 46, C.active, st.new2);
+      drawStroke(S.under, st.under);
+      ctx.restore();
+    }
+  }
+
+  var tl = gsap.timeline({ paused: true, onUpdate: render });
+  function T(prop, start, dur, ease) {
+    var o = {}; o[prop] = 1; o.duration = dur; o.ease = ease || "sine.inOut";
+    tl.to(st, o, start);
+  }
+  // heading: broad band at marker pace, title written along it
+  T("band", 0.00, 0.50, "power1.inOut");
+  T("title", 0.10, 0.55, "none");
+  // hub idea
+  T("hubFill", 0.42, 0.34);
+  T("hubRing", 0.50, 0.36);
+  T("hubLabel", 0.80, 0.16, "none");
+  // links grow outward from the idea
+  T("l0", 0.72, 0.30); T("l1", 0.78, 0.30); T("l2", 0.84, 0.30); T("l3", 0.90, 0.30);
+  // node rings land on the link ends
+  T("r0", 0.92, 0.28); T("r1", 0.99, 0.28); T("r2", 1.06, 0.28); T("r3", 1.13, 0.28);
+  T("n0", 1.20, 0.14, "none"); T("n1", 1.27, 0.14, "none"); T("n2", 1.34, 0.14, "none"); T("n3", 1.41, 0.14, "none");
+  // system cross-links
+  T("c0", 1.16, 0.26); T("c1", 1.24, 0.26);
+  // note: container then old value
+  T("note", 1.22, 0.24, "back.out(1.2)");
+  T("noteHead", 1.46, 0.18, "none");
+  T("oldVal", 1.56, 0.14, "none");
+  // deliberate pause 1.70–1.86, then a sharp strike-through
+  T("strike", 1.86, 0.15, "power2.in");
+  T("oldDim", 2.02, 0.12);
+  // correct value written below, then underlined
+  T("new1", 2.08, 0.28, "none");
+  T("new2", 2.30, 0.20, "none");
+  T("under", 2.46, 0.20, "sine.inOut");
+  tl.to({}, { duration: 0.01 }, 2.99); // pad to full 3 s; clean hold 2.66–3.0
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+
+  function redraw() { render(); }
+  window.addEventListener("hf-seek", function (e) {
+    var t = e && e.detail && typeof e.detail.time === "number" ? e.detail.time : null;
+    if (t !== null) tl.seek(t, false);
+    render();
+  });
+  tl.seek(0, false);
+  render();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

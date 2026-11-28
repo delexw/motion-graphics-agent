@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dense Technical Notebook — an idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #EEF1EC; }
+  #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #EEF1EC; }
+  #root svg { display: block; width: 100%; height: 100%; }
+  .mono { font-family: Menlo, "SF Mono", "Courier New", monospace; }
+  .serif { font-family: Georgia, "Times New Roman", serif; }
+</style>
+<script src="gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#B9C7D2" stroke-width=".6"/></pattern>
+    <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V6" stroke="#242831" stroke-width=".8"/></pattern>
+    <clipPath id="interiorClip"><path d="M778 500C700 440 700 230 840 214C980 230 980 440 902 500Z"/></clipPath>
+  </defs>
+
+  <!-- stationary notebook page -->
+  <rect width="1280" height="720" fill="#EEF1EC"/>
+  <rect x="440" y="40" width="800" height="640" fill="url(#grid)"/>
+  <path d="M440 40V680" stroke="#C9554B" stroke-width="1" opacity=".55"/>
+
+  <!-- CORE: inactive circuit detail (low contrast, thin) -->
+  <g id="core" fill="none" stroke="#A9B3BD" stroke-width="1" clip-path="url(#interiorClip)">
+    <path d="M740 300H800V250M740 380H790V470M960 280H900V240M960 400H930V470M820 480V460H900M760 340H700"/>
+    <path d="M830 230V200M880 470V510M940 330H990"/>
+    <rect x="812" y="352" width="34" height="22" stroke-width="1"/>
+    <rect x="886" y="282" width="20" height="14"/>
+    <circle cx="760" cy="420" r="4"/><circle cx="930" cy="430" r="4"/><circle cx="900" cy="250" r="3"/>
+  </g>
+
+  <!-- ACTIVE PATH (traced inside the opened layer) -->
+  <path id="trace" d="M790 440L800 330L860 270L920 340L870 430L790 440M860 270L870 430" fill="none" stroke="#9F352D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <g id="nodes" fill="#EEF1EC" stroke="#9F352D" stroke-width="2.5">
+    <circle class="node" cx="790" cy="440" r="7"/>
+    <circle class="node" cx="800" cy="330" r="7"/>
+    <circle class="node" cx="860" cy="270" r="7"/>
+    <circle class="node" cx="920" cy="340" r="7"/>
+    <circle class="node" cx="870" cy="430" r="7"/>
+  </g>
+
+  <!-- LAYER B: one contour layer, hinged on x = 962, folds open with locked orientation -->
+  <g id="layerB">
+    <g id="layerFront">
+      <path d="M778 500C700 440 700 230 840 214C980 230 980 440 902 500Z" fill="#E4CEAA" fill-opacity=".94" stroke="#242831" stroke-width="1.6" stroke-dasharray="7 4"/>
+      <g fill="none" stroke="#B49A72" stroke-width="1" clip-path="url(#interiorClip)">
+        <path d="M720 260H980M720 300H980M720 340H980M720 380H980M720 420H980M720 460H980"/>
+      </g>
+      <text class="mono" x="842" y="364" text-anchor="middle" font-size="13" fill="#5A4A33" letter-spacing="2">LAYER B</text>
+    </g>
+    <g id="layerBack" opacity="0">
+      <path d="M778 500C700 440 700 230 840 214C980 230 980 440 902 500Z" fill="#F4EBDA" fill-opacity=".55" stroke="none"/>
+      <path d="M778 500C700 440 700 230 840 214C980 230 980 440 902 500Z" fill="url(#hatch)" opacity=".55" stroke="#242831" stroke-width="1.2"/>
+    </g>
+  </g>
+  <path id="hinge" d="M962 228V492" fill="none" stroke="#242831" stroke-width=".8" stroke-dasharray="10 3 2 3"/>
+
+  <!-- SHELL: locked exterior silhouette (heaviest weight) -->
+  <g fill="none" stroke="#242831" stroke-linejoin="round" stroke-linecap="round">
+    <path id="shell" d="M760 520C660 450 650 200 840 180C1030 200 1020 450 920 520L915 580H765Z" stroke-width="5"/>
+    <path id="base1" d="M770 600H910" stroke-width="3"/>
+    <path id="base2" d="M780 620H900" stroke-width="3"/>
+  </g>
+
+  <!-- LEADERS / DIMENSIONS (lightest weight) -->
+  <g fill="none" stroke="#242831" stroke-width=".8">
+    <path id="dim" d="M640 180H700M640 520H700M670 180V520"/>
+    <path id="figLeader" d="M760 300H640"/>
+    <path id="layerLeader" d="M1072 262L1112 196H1200"/>
+    <path id="traceLeader" d="M790 440L722 556H692" stroke="#9F352D"/>
+  </g>
+  <path id="angleArc" d="M1012 352A50 50 0 0 0 1004 325" fill="none" stroke="#9F352D" stroke-width="1"/>
+
+  <!-- technical legends attached to stable leaders -->
+  <g class="mono" font-size="13" fill="#242831">
+    <text id="tFig" x="566" y="296">fig. 3a</text>
+    <text id="tH" x="676" y="356" transform="rotate(-90 676 356)">h = 340</text>
+    <text id="tLayer" x="1114" y="168">LAYER B</text>
+    <text id="tPeel" x="1114" y="188" fill="#9F352D">peeled 32°</text>
+    <text id="tTrace" x="686" y="560" text-anchor="end" fill="#9F352D">trace → 5 nodes</text>
+  </g>
+
+  <!-- left column: title block -->
+  <text id="kicker" class="mono" x="60" y="110" font-size="13" letter-spacing="3" fill="#9F352D">NOTEBOOK p.165</text>
+  <g class="serif" font-size="44" fill="#242831">
+    <text class="tl" x="56" y="180">An idea</text>
+    <text class="tl" x="56" y="232" font-style="italic">becomes a</text>
+    <text class="tl" x="56" y="284">connected</text>
+    <text class="tl" x="56" y="336" font-style="italic">system.</text>
+  </g>
+  <path id="rule1" d="M58 366H300" stroke="#242831" stroke-width="3"/>
+  <path id="rule2" d="M58 374H300" stroke="#242831" stroke-width=".7"/>
+  <g class="mono" font-size="13" fill="#4A505C">
+    <text id="n1" x="58" y="410">outer contour: locked</text>
+    <text id="n2" x="58" y="432">inner layer: peeled + traced</text>
+  </g>
+</svg>
+</div>
+<script>
+(function () {
+  var FOLD = -Math.cos(32 * Math.PI / 180); // flap rests 32° short of flat-open: scaleX = -0.848
+  function prepDraw(el) {
+    var len = el.getTotalLength();
+    el.style.strokeDasharray = len + " " + len;
+    el.style.strokeDashoffset = len;
+    return len;
+  }
+  var q = function (s) { return document.querySelector(s); };
+  var drawIds = ["#shell", "#base1", "#base2", "#dim", "#figLeader", "#layerLeader", "#traceLeader", "#trace", "#angleArc", "#hinge", "#rule1", "#rule2"];
+  var lens = {};
+  drawIds.forEach(function (id) {
+    var el = q(id);
+    if (id === "#hinge") { el.style.opacity = 0; return; }
+    lens[id] = prepDraw(el);
+  });
+
+  var tl = gsap.timeline({ paused: true });
+  function draw(id, at, dur, ease) {
+    tl.fromTo(id, { strokeDashoffset: lens[id] }, { strokeDashoffset: 0, duration: dur, ease: ease || "power2.inOut", immediateRender: true }, at);
+  }
+  function show(sel, at, dur, y) {
+    tl.fromTo(sel, { opacity: 0, y: y || 0 }, { opacity: 1, y: 0, duration: dur, ease: "power2.out", immediateRender: true }, at);
+  }
+
+  // 0.00–0.80  reveal overall drawing
+  tl.fromTo(".tl", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.38, ease: "power2.out", stagger: 0.07, immediateRender: true }, 0.02);
+  show("#kicker", 0.0, 0.3);
+  draw("#shell", 0.0, 0.7, "power2.inOut");
+  show("#layerB", 0.25, 0.35);
+  show("#core", 0.3, 0.4);
+  draw("#base1", 0.45, 0.22);
+  draw("#base2", 0.52, 0.22);
+  draw("#rule1", 0.35, 0.3);
+  draw("#rule2", 0.42, 0.3);
+  show("#n1", 0.5, 0.25);
+  draw("#dim", 0.45, 0.35, "power1.inOut");
+  draw("#figLeader", 0.6, 0.2);
+  show("#tFig", 0.75, 0.2);
+  show("#tH", 0.75, 0.2);
+
+  // 0.85–1.45  peel LAYER B about its hinge, orientation locked (orthographic fold, no spin)
+  tl.fromTo("#hinge", { opacity: 0 }, { opacity: 1, duration: 0.15, ease: "none", immediateRender: true }, 0.8);
+  tl.fromTo("#layerB", { scaleX: 1 }, { scaleX: 0.0001, duration: 0.3, ease: "power2.in", svgOrigin: "962 352", immediateRender: true }, 0.85);
+  tl.set("#layerFront", { opacity: 1 }, 0);
+  tl.set("#layerFront", { opacity: 0 }, 1.15);
+  tl.set("#layerBack", { opacity: 0 }, 0);
+  tl.set("#layerBack", { opacity: 1 }, 1.15);
+  tl.to("#layerB", { scaleX: FOLD, duration: 0.32, ease: "back.out(1.2)", svgOrigin: "962 352" }, 1.15);
+  draw("#angleArc", 1.42, 0.15, "power1.out");
+  draw("#layerLeader", 1.42, 0.18, "power2.out");
+  show("#tLayer", 1.56, 0.18);
+  show("#tPeel", 1.62, 0.18);
+  show("#n2", 1.5, 0.25);
+
+  // 1.55–2.30  trace one internal path through 5 nodes
+  var T0 = 1.55, TD = 0.72;
+  tl.fromTo("#trace", { strokeDashoffset: lens["#trace"] }, { strokeDashoffset: 0, duration: TD, ease: "none", immediateRender: true }, T0);
+  var arrive = [0, 0.175, 0.309, 0.455, 0.619];
+  var nodes = document.querySelectorAll(".node");
+  nodes.forEach(function (n, i) {
+    tl.fromTo(n, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.18, ease: "back.out(1.2)", transformOrigin: "50% 50%", immediateRender: true }, T0 + arrive[i] * TD - 0.03);
+  });
+  draw("#traceLeader", 2.22, 0.16, "power2.out");
+  show("#tTrace", 2.34, 0.18);
+
+  // 2.52–3.00  settled reading hold
+  tl.to({}, { duration: 0.01 }, 2.99);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  tl.seek(0);
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

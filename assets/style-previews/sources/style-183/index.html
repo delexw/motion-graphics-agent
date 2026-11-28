@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Printed Long Take — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #15120F; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; background: #15120F; overflow: hidden; }
+  #plate { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+  #caption {
+    position: absolute; left: 5%; top: 84.5%; margin: 0;
+    font-family: Georgia, "Times New Roman", serif; font-weight: normal;
+    font-size: 36px; line-height: 1.1; color: #EADBC0; background: #15120F;
+    padding: 2px 6px 4px 0; white-space: nowrap; opacity: 0;
+  }
+</style>
+<script src="gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="plate" width="1280" height="720"></canvas>
+  <h1 id="caption">An idea becomes a connected system</h1>
+</div>
+<script>
+(function () {
+  "use strict";
+  var W = 1280, H = 720;
+  // One print coordinate system: plate is 1440 x 480 world units, viewed through a fixed 1160 x 480 window.
+  // The pan is kept to ~280 px (under ~5 px per frame) so the registered texture stays coherent between frames.
+  var PW = 1440, PH = 480, WX = 60, WY = 80, VW = 1160, VH = 480;
+  var CAM_MAX = PW - VW;              // 280
+  var INK = "#15120F", PLATE = "#1F1A15", MARK = "#3F362C", LIGHT = "#EADBC0", ACTIVE = "#C0463A", LABEL = "#A8957A";
+
+  var canvas = document.getElementById("plate");
+  var ctx = canvas.getContext("2d");
+
+  // ---------- seeded helpers ----------
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function smooth(e0, e1, x) { var t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); }
+  function tone(x, y) { // deterministic engraved tonal field 0..1
+    var v = 0.5 + 0.22 * Math.sin(x * 0.0061 + y * 0.011) + 0.16 * Math.sin(x * 0.0173 - y * 0.0093 + 1.7) + 0.12 * Math.sin((x + y) * 0.031 + 0.4);
+    return clamp(v, 0, 1);
+  }
+
+  // ---------- static engraving texture (cached once) ----------
+  var tex = document.createElement("canvas"); tex.width = PW; tex.height = PH;
+  (function buildTexture() {
+    var tg = tex.getContext("2d");
+    tg.fillStyle = PLATE; tg.fillRect(0, 0, PW, PH);
+    var marks = document.createElement("canvas"); marks.width = PW; marks.height = PH;
+    var g = marks.getContext("2d");
+    var rnd = mulberry32(183);
+    // zone weights: I seed dots, II parallel lines, III crosshatch mesh
+    function wDots(x) { return 1 - smooth(410, 530, x); }
+    function wLines(x) { return smooth(410, 530, x); }
+    function wCross(x) { return smooth(900, 1020, x); }
+    // line spacing narrows continuously: ~20 -> 16 -> 14 -> 11 (kept coarse enough to survive video encoding)
+    function sp(x) { return x < 470 ? 20 : x < 960 ? 20 - 6 * smooth(470, 960, x) : 14 - 3 * smooth(960, 1440, x); }
+    // phase table phi(x) = integral dx / sp(x), over extended range for slanted lines
+    var X0 = -1200, X1 = 3600, phi = [], acc = 0;
+    for (var x = X0; x <= X1; x++) { phi.push(acc); acc += 1 / sp(x); }
+    function invPhi(n) { // smallest x with phi >= n
+      var lo = 0, hi = phi.length - 1; while (lo < hi) { var m = (lo + hi) >> 1; if (phi[m] < n) lo = m + 1; else hi = m; } return X0 + lo;
+    }
+    g.lineCap = "round";
+    function family(slope, weightFn) {
+      var nMax = Math.floor(acc);
+      for (var n = 1; n < nMax; n++) {
+        var xb = invPhi(n);
+        for (var y = 0; y < PH; y += 6) {
+          var xa = xb + slope * y, xc = xb + slope * (y + 6);
+          var xm = (xa + xc) / 2;
+          if (xm < -10 || xm > PW + 10) continue;
+          var w = weightFn(xm);
+          if (w < 0.02) continue;
+          var tn = tone(xm, y);
+          g.globalAlpha = 0.75 + 0.25 * w;
+          g.strokeStyle = MARK;
+          g.lineWidth = (1.0 + 1.0 * tn) * (0.6 + 0.4 * w);
+          g.beginPath(); g.moveTo(xa, y); g.lineTo(xc, y + 6); g.stroke();
+        }
+      }
+    }
+    var T = 1 / Math.tan(35 * Math.PI / 180);
+    family(-T, wLines);
+    family(T, wCross);
+    // seed stipple, 28 pt grid with tonal radius
+    g.fillStyle = MARK;
+    for (var gx = 14; gx < 620; gx += 28) {
+      for (var gy = 14; gy < PH; gy += 28) {
+        var w = wDots(gx); if (w < 0.03) continue;
+        var jx = gx + (rnd() - 0.5) * 2.2, jy = gy + (rnd() - 0.5) * 2.2;
+        g.globalAlpha = 0.75 + 0.25 * w;
+        g.beginPath(); g.arc(jx, jy, (1.4 + 1.2 * tone(gx, gy)) * w, 0, Math.PI * 2); g.fill();
+      }
+    }
+    g.globalAlpha = 1;
+    // soften the burin marks once (static, cached) so the panning texture stays coherent after encoding
+    tg.filter = "blur(1px)"; tg.drawImage(marks, 0, 0); tg.filter = "none";
+  })();
+
+  // ---------- trace geometry (world units) ----------
+  var segs = [
+    [[120, 320], [260, 320], [380, 190], [520, 190]],
+    [[520, 190], [700, 190], [820, 330], [980, 330]],
+    [[980, 330], [1140, 330], [1260, 200], [1420, 200]],
+    [[1420, 200], [1580, 200], [1680, 300], [1800, 300]],
+    [[1800, 300], [1940, 300], [2040, 220], [2150, 220]]
+  ];
+  // compress the long trace into the shorter plate while keeping its shape family
+  segs = segs.map(function (s) { return s.map(function (q) { return [120 + (q[0] - 120) * 0.532, q[1]]; }); });
+  var pts = [];
+  segs.forEach(function (s, i) {
+    for (var k = (i ? 1 : 0); k <= 60; k++) {
+      var t = k / 60, u = 1 - t;
+      pts.push([
+        u*u*u*s[0][0] + 3*u*u*t*s[1][0] + 3*u*t*t*s[2][0] + t*t*t*s[3][0],
+        u*u*u*s[0][1] + 3*u*u*t*s[1][1] + 3*u*t*t*s[2][1] + t*t*t*s[3][1]
+      ]);
+    }
+  });
+  var START = [120, 320], HUB = [1200, 220];
+  var landmarks = [[333, 190], [578, 330], [812, 200], [1014, 300]];
+  var nodes = { A: [1340, 110], B: [1385, 268], C: [1285, 392], D: [1085, 398] };
+  var links = [ // [from, to, start, end] within network progress 0..1
+    [HUB, nodes.A, 0.00, 0.45], [HUB, nodes.B, 0.08, 0.52], [HUB, nodes.C, 0.16, 0.60],
+    [HUB, nodes.D, 0.24, 0.68], [nodes.A, nodes.B, 0.45, 0.85], [nodes.B, nodes.C, 0.52, 0.92], [nodes.C, nodes.D, 0.60, 1.00]
+  ];
+
+  // ---------- camera: steady rate, slowing where hatch spacing changes ----------
+  var CAM_END = 2.3, NET_START = 2.12, NET_END = 2.62;
+  var camTable = (function () {
+    var N = 2300, v = [], acc = [0], sum = 0, i;
+    for (i = 0; i < N; i++) {
+      var t = (i + 0.5) / N * CAM_END;
+      var s = 1 - 0.45 * Math.exp(-Math.pow((t - 0.95) / 0.22, 2)); // linger as the seed dots give way to line hatch
+      s *= smooth(-0.05, 0.3, t) * 0.75 + 0.25;       // short pick-up from the first frame
+      s *= 1 - smooth(1.95, CAM_END + 0.02, t) * 0.97; // settle onto the hub
+      sum += s; acc.push(sum);
+    }
+    return acc.map(function (a) { return a / sum * CAM_MAX; });
+  })();
+  function camAt(t) {
+    var f = clamp(t / CAM_END, 0, 1) * (camTable.length - 1), i = Math.floor(f), r = f - i;
+    return i >= camTable.length - 1 ? CAM_MAX : camTable[i] + (camTable[i + 1] - camTable[i]) * r;
+  }
+  var easeNet = gsap.parseEase("power1.inOut"), easePop = gsap.parseEase("back.out(1.7)");
+
+  // ---------- drawing ----------
+  function groove(drawPath, width) { // carved light: shadow cut, then light trace
+    ctx.save(); ctx.translate(2, 3); ctx.strokeStyle = "rgba(0,0,0,0.8)"; ctx.lineWidth = width + 5; drawPath(); ctx.stroke(); ctx.restore();
+    ctx.strokeStyle = LIGHT; ctx.lineWidth = width; drawPath(); ctx.stroke();
+  }
+  function ring(p, r, fill, scale) {
+    if (scale <= 0.001) return;
+    ctx.save(); ctx.translate(p[0], p[1]); ctx.scale(scale, scale);
+    ctx.fillStyle = "rgba(0,0,0,0.75)"; ctx.beginPath(); ctx.arc(2, 3, r + 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = fill; ctx.strokeStyle = LIGHT; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+
+  function render(time) {
+    var t = clamp(time, 0, 3);
+    var cam = camAt(t);
+    var c = cam / CAM_MAX;
+    var head = 120 + (HUB[0] - 120) * Math.pow(c, 0.8);
+    var net = easeNet(clamp((t - NET_START) / (NET_END - NET_START), 0, 1));
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H);
+
+    // registered plate through the moving viewport
+    ctx.save();
+    ctx.beginPath(); ctx.rect(WX, WY, VW, VH); ctx.clip();
+    ctx.translate(WX - cam, WY);
+    ctx.drawImage(tex, 0, 0);
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+
+    // carved trace up to the burin head
+    groove(function () {
+      ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+      for (var i = 1; i < pts.length; i++) {
+        var p = pts[i];
+        if (p[0] <= head) { ctx.lineTo(p[0], p[1]); continue; }
+        var q = pts[i - 1], r = (head - q[0]) / (p[0] - q[0]);
+        if (r > 0) ctx.lineTo(q[0] + (p[0] - q[0]) * r, q[1] + (p[1] - q[1]) * r);
+        break;
+      }
+    }, 3);
+
+    // network links grow from the hub
+    links.forEach(function (L) {
+      var k = clamp((net - L[2]) / (L[3] - L[2]), 0, 1); if (k <= 0) return;
+      var a = L[0], b = L[1];
+      groove(function () { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k); }, 3);
+    });
+
+    // start node
+    ring(START, 13, PLATE, 1);
+    ctx.fillStyle = LIGHT; ctx.beginPath(); ctx.arc(START[0], START[1], 4, 0, Math.PI * 2); ctx.fill();
+    // landmarks pop as the trace passes
+    landmarks.forEach(function (p) { ring(p, 8, PLATE, easePop(clamp((head - p[0]) / 90, 0, 1))); });
+    // network nodes pop when their first link arrives
+    [[nodes.A, 0.45], [nodes.B, 0.52], [nodes.C, 0.60], [nodes.D, 0.68]].forEach(function (n) {
+      ring(n[0], 11, PLATE, easePop(clamp((net - n[1] + 0.06) / 0.16, 0, 1)));
+    });
+    // registration mark + active hub
+    var hubK = clamp((head - (HUB[0] - 60)) / 60, 0, 1);
+    if (hubK > 0) {
+      ctx.save(); ctx.globalAlpha = hubK; ctx.strokeStyle = ACTIVE; ctx.lineWidth = 1.5; ctx.setLineDash([3, 6]);
+      ctx.beginPath(); ctx.moveTo(HUB[0], 12); ctx.lineTo(HUB[0], PH - 12); ctx.stroke(); ctx.restore();
+    }
+    ring(HUB, 12, ACTIVE, easePop(hubK));
+    // burin tip glint while cutting
+    var tipA = 1 - hubK;
+    if (tipA > 0.01 && head < HUB[0]) {
+      var hp = pts[0];
+      for (var j = 1; j < pts.length; j++) { if (pts[j][0] > head) { var q2 = pts[j - 1], r2 = (head - q2[0]) / (pts[j][0] - q2[0]); hp = [q2[0] + (pts[j][0] - q2[0]) * r2, q2[1] + (pts[j][1] - q2[1]) * r2]; break; } }
+      var gr = ctx.createRadialGradient(hp[0], hp[1], 0, hp[0], hp[1], 18);
+      gr.addColorStop(0, "rgba(234,219,192," + (0.9 * tipA) + ")"); gr.addColorStop(1, "rgba(234,219,192,0)");
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(hp[0], hp[1], 18, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+
+    // plate edge (fixed window frame)
+    ctx.strokeStyle = "#3A3128"; ctx.lineWidth = 2; ctx.strokeRect(WX, WY, VW, VH);
+
+    // registered zone labels travel with the plate
+    ctx.save();
+    ctx.beginPath(); ctx.rect(WX, 568, VW, 34); ctx.clip();
+    ctx.font = "13px Menlo, Monaco, monospace"; ctx.fillStyle = LABEL; ctx.textBaseline = "alphabetic";
+    if ("letterSpacing" in ctx) ctx.letterSpacing = "3px";
+    [["I · SEED · 28 PT", 4], ["II · LINES · 16 PT", 474], ["III · MESH · 12 PT", 964]].forEach(function (l) {
+      ctx.fillText(l[0], WX + l[1] - cam, 592);
+    });
+    ctx.restore();
+  }
+
+  // ---------- one paused GSAP timeline owns time ----------
+  var driver = { _t: 0 };
+  Object.defineProperty(driver, "t", { get: function () { return this._t; }, set: function (v) { this._t = v; render(v); } });
+  var tl = gsap.timeline({ paused: true });
+  tl.fromTo("#caption", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 0.15);
+  tl.fromTo(driver, { t: 0 }, { t: 3, duration: 3, ease: "none", immediateRender: true }, 0);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  function redraw() { render(tl.time()); }
+  window.addEventListener("hf-seek", function (e) {
+    var d = e && e.detail; var tt = d && typeof d.time === "number" ? d.time : null;
+    if (tt !== null && Math.abs(tl.time() - tt) > 1e-6) tl.seek(tt, false);
+    redraw();
+  });
+  render(0);
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

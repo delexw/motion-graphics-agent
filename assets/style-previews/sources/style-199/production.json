@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "Projected System",
+  "displayDescription": "A white architectural model lights up as a projected blue network and the CONNECTED SYSTEM label sweep out from the idea tower.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Three.js 0.187 (WebGL, bundled locally to three.bundle.js)"
+  ],
+  "motionEngine": [
+    "GSAP (single paused timeline at window.__timelines.video)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, sound effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "No Blender was used. The model is built with Three.js boxes and standard materials with soft shadows.",
+    "Projection is an approximation: a plan-aligned decal texture is mixed into surfaces that face up, coming from a straight-overhead projector. The faint beam is drawn as see-through haze, not volumetric light.",
+    "No reviewed preview recipes or background-review evidence were supplied, so the preview shows the style's main action.",
+    "The illustrative block layout is invented; it is not based on supplied real-world footprints.",
+    "The project technology selection tool failed because PROJECT_DEPENDENCIES.json is missing; the runtime libraries are local files (three.bundle.js, gsap.min.js)."
+  ]
+}

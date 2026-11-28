@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "title": "An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Starting population",
+      "startSeconds": 0,
+      "endSeconds": 0.85,
+      "purpose": "Show the field, both agent populations unlinked, the legend and the rule before any interaction.",
+      "visuals": ["Field grid wipes in left to right", "9 idea circles and 14 builder triangles appear in a stagger", "Dashed radius r ring on the first idea to receive a link (single-agent rule inset)", "Bar '1' holds all 23 agents"],
+      "assets": ["sim.js", "gsap.min.js"],
+      "beats": [
+        {"startSeconds": 0, "endSeconds": 0.6, "development": "Field, population, legend and rule text reveal", "captions": ["An idea becomes a connected system", "RULE", "builder seeks nearest idea", "link if d < r", "idea", "builder"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 0.6, "endSeconds": 0.85, "development": "Radius r ring pops around the focus idea to explain the rule", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.25}
+      ]
+    },
+    {
+      "id": "scene-2",
+      "title": "Interaction under one rule",
+      "startSeconds": 0.85,
+      "endSeconds": 2.3,
+      "purpose": "Builders move toward the nearest idea they can sense. A link grows when the distance falls below r, and linked agents form systems with soft halos.",
+      "visuals": ["Builders travel along baked paths", "Link lines grow from builder to idea", "Pale halos mark agents that belong to a system", "Bars move from '1' to '2–3' and '4+'; link and system counters come from the same run"],
+      "assets": ["sim.js"],
+      "beats": [
+        {"startSeconds": 0.85, "endSeconds": 1.6, "development": "First links form; isolated agents drop from 23 to about 8", "captions": ["links / systems counter"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 1.6, "endSeconds": 2.3, "development": "Shared builders merge ideas into larger systems; the ring fades; the run settles at 2 / 9 / 12", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-3",
+      "title": "Resulting distribution",
+      "startSeconds": 2.3,
+      "endSeconds": 3,
+      "purpose": "Hold on the settled field and the distribution so the result can be read.",
+      "visuals": ["Static settled clusters", "Bars ×2 / ×9 / ×12 with the 'agents by system size' axis", "Counter shows links 14 · systems 7"],
+      "assets": [],
+      "beats": [
+        {"startSeconds": 2.3, "endSeconds": 3, "development": "Settled reading hold", "captions": ["RESULTING DISTRIBUTION", "agents by system size"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.7}
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["The starting population is visible about 0.3 s before movement begins, as the style requires", "The interaction settles in the baked run at about 2.0 s, before the 2.3 s hold"],
+    "justifiedHolds": ["0.7 s final hold to read the distribution bars and counters"]
+  },
+  "notes": ["Silent preview", "Every frame is computed from timeline time, using baked simulation steps with interpolation, so seeking in any order gives the same frame", "No reviewed preview recipe was supplied in STYLE.json"]
+}

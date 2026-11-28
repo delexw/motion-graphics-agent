@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Agent Simulation",
+  "displayDescription": "Ideas and builders meet under one link rule; a baked, seeded run forms connected systems and the distribution bars shift as it happens.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative simulation: a seeded (seed 7), pre-baked 36-step rule run; counts are not measured data.",
+    "STYLE.json has no tech.preview_recipes and no BACKGROUND_REVIEW.json was supplied, so no reviewed recipe or source frames are shown; the preview shows the core Motion Graphic action.",
+    "Blender was not used. Flat 2D diagram drawn in Canvas 2D, with GSAP from the local gsap.min.js; no depth or lighting effects are needed for this medium.",
+    "The builder orange #D9622B comes from ILLUSTRATION.svg; the other colours follow the style's colour roles. The cool light background was picked to suit the scene."
+  ]
+}

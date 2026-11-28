@@ -154,6 +154,7 @@ export async function createProjectReuseDraft(
     requirements.music.instructions = choices.music
       ? original.requirements?.music.instructions || ""
       : "";
+    requirements.music.style = choices.music ? original.requirements?.music.style : undefined;
     request.requirements = requirements;
     if (choices.content) {
       request.scriptItems = structuredClone(original.scriptItems);

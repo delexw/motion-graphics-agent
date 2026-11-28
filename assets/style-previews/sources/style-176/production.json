@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "News Package",
+  "displayDescription": "Segment strap reads, upper grid switches to supporting data, and the pinned programme mark never changes.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP (local gsap.min.js, one paused timeline at window.__timelines.video)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative bulletin: the figures (1 idea, 7 nodes, 11 links) and source label describe an illustrative model, not measured data.",
+    "No tech.preview_recipes in STYLE.json and no BACKGROUND_REVIEW.json supplied; the catalogue characteristic action is demonstrated instead.",
+    "Navy scene background follows the approved illustration (background policy is scene dependent); red = identification, light blue = emphasis, white/translucent panels = neutral information surface.",
+    "Blender not used. SVG + GSAP only.",
+    "creative_pool.select_project_technologies failed (missing PROJECT_DEPENDENCIES.json); GSAP is the host-provided local gsap.min.js."
+  ]
+}

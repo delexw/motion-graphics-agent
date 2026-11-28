@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pictogram Catalogue — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #0B4A6E; overflow: hidden; }
+  #root { width: 100%; height: 100%; position: relative; }
+  #root svg { display: block; width: 100%; height: 100%; }
+  text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+</style>
+<script src="gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <!-- Shared icon-grid component: the bulb. Every card reuses this exact geometry. -->
+    <g id="bulb">
+      <path d="M0-62c-34 0-58 25-58 56 0 22 12 35 22 47 6 8 9 15 9 23h54c0-8 3-15 9-23 10-12 22-25 22-47 0-31-24-56-58-56z"/>
+      <rect x="-24" y="72" width="48" height="11" rx="5"/>
+      <rect x="-17" y="89" width="34" height="11" rx="5"/>
+    </g>
+  </defs>
+
+  <!-- Stationary scene: deep blue sheet with darker footer band -->
+  <rect width="1280" height="720" fill="#0B4A6E"/>
+  <rect y="580" width="1280" height="140" fill="#083A57"/>
+
+  <text x="110" y="80" font-size="14" letter-spacing="4" fill="#B9D5DE">PICTOGRAM CATALOGUE · SHEET A</text>
+  <text x="110" y="130" font-size="40" font-weight="700" fill="#FFFFFF">An idea becomes a connected system</text>
+
+  <!-- Front-facing cards on one baseline -->
+  <rect x="110" y="200" width="280" height="280" rx="28" fill="#F4F7F8"/>
+  <rect x="500" y="200" width="280" height="280" rx="28" fill="#F4F7F8"/>
+  <rect x="890" y="200" width="280" height="280" rx="28" fill="#F4F7F8"/>
+
+  <!-- Chevrons (static heads, no shafts) -->
+  <path id="chev1" d="M434 318 456 340 434 362" fill="none" stroke="#B9D5DE" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path id="chev2" d="M824 318 846 340 824 362" fill="none" stroke="#B9D5DE" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- CARD 02 new parts: two coral links -->
+  <g id="links">
+    <path id="link-l" d="M608 292 566 254" stroke="#E4572E" stroke-width="10" stroke-linecap="round" fill="none" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/>
+    <path id="link-r" d="M672 292 714 254" stroke="#E4572E" stroke-width="10" stroke-linecap="round" fill="none" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/>
+    <circle id="node-l" cx="560" cy="248" r="0" fill="#E4572E"/>
+    <circle id="node-r" cx="720" cy="248" r="0" fill="#E4572E"/>
+  </g>
+
+  <!-- CARD 03 new parts: coral ring, navy spokes and nodes -->
+  <g id="system">
+    <circle id="ring" cx="1030" cy="340" r="100" fill="none" stroke="#E4572E" stroke-width="8" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" transform="rotate(-90 1030 340)"/>
+    <g stroke="#142536" stroke-width="8" stroke-linecap="round" fill="none">
+      <path class="spoke" d="M1082 340h34" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/>
+      <path class="spoke" d="M1056 295l17-29.5" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/>
+      <path class="spoke" d="M1004 295l-17-29.5" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/>
+      <path class="spoke" d="M978 340h-34" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/>
+      <path class="spoke" d="M1004 385l-17 29.5" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/>
+      <path class="spoke" d="M1056 385l17 29.5" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/>
+    </g>
+    <g fill="#142536" stroke="#F4F7F8" stroke-width="6">
+      <circle class="sysnode" cx="1130" cy="340" r="0"/>
+      <circle class="sysnode" cx="1080" cy="253" r="0"/>
+      <circle class="sysnode" cx="980" cy="253" r="0"/>
+      <circle class="sysnode" cx="930" cy="340" r="0"/>
+      <circle class="sysnode" cx="980" cy="427" r="0"/>
+      <circle class="sysnode" cx="1080" cy="427" r="0"/>
+    </g>
+  </g>
+
+  <!-- Settled bulbs that stay in each catalogue card -->
+  <use id="bulb1" href="#bulb" fill="#142536" transform="translate(250 322) scale(0)"/>
+  <use id="bulb2" href="#bulb" fill="#142536" transform="translate(640 336) scale(.72)" opacity="0"/>
+  <use id="bulb3" href="#bulb" fill="#142536" transform="translate(1030 334) scale(.48)" opacity="0"/>
+
+  <!-- The carried component: one bulb travelling along the shared baseline -->
+  <use id="carrier" href="#bulb" fill="#142536" transform="translate(250 322) scale(1)" opacity="0"/>
+
+  <!-- Companion labels on a shared baseline -->
+  <g font-size="20" font-weight="700" letter-spacing="3" fill="#FFFFFF">
+    <text id="lab1" x="110" y="530" opacity="0">01  IDEA</text>
+    <text id="lab2" x="500" y="530" opacity="0">02  LINK</text>
+    <text id="lab3" x="890" y="530" opacity="0">03  SYSTEM</text>
+  </g>
+
+  <text x="110" y="656" font-size="20" fill="#B9D5DE">Same bulb. A wider symbol each time. New parts shown in coral.</text>
+</svg>
+</div>
+<script>
+(function () {
+  var q = function (s) { return document.querySelector(s); };
+  var qa = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  var tl = gsap.timeline({ paused: true, defaults: { overwrite: false } });
+
+  // 0.00–0.30  Symbol 01: bulb resolves as a complete form
+  tl.fromTo('#bulb1', { attr: { transform: 'translate(250 322) scale(0)' } },
+    { attr: { transform: 'translate(250 322) scale(1)' }, duration: 0.3, ease: 'back.out(1.4)' }, 0);
+  tl.fromTo('#lab1', { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'power1.out' }, 0.2);
+  // hold 0.30–0.65
+
+  // 0.65–1.05  Carry the bulb to card 02, shrinking onto the same centre line
+  tl.fromTo('#carrier', { opacity: 0 }, { opacity: 1, duration: 0.01 }, 0.65);
+  tl.fromTo('#carrier', { attr: { transform: 'translate(250 322) scale(1)' } },
+    { attr: { transform: 'translate(640 336) scale(0.72)' }, duration: 0.4, ease: 'power2.inOut' }, 0.65);
+  tl.fromTo('#chev1', { stroke: '#B9D5DE' }, { stroke: '#FFFFFF', duration: 0.15, ease: 'none' }, 0.65);
+  tl.to('#chev1', { stroke: '#B9D5DE', duration: 0.2, ease: 'none' }, 1.05);
+  tl.fromTo('#bulb2', { opacity: 0 }, { opacity: 1, duration: 0.01 }, 1.05);
+  tl.to('#carrier', { opacity: 0, duration: 0.01 }, 1.05);
+
+  // 1.05–1.38  Consequence: links draw out, nodes appear once shafts arrive
+  tl.fromTo(['#link-l', '#link-r'], { attr: { 'stroke-dashoffset': 1 } },
+    { attr: { 'stroke-dashoffset': 0 }, duration: 0.22, ease: 'power2.out' }, 1.05);
+  tl.fromTo(['#node-l', '#node-r'], { attr: { r: 0 } },
+    { attr: { r: 16 }, duration: 0.16, ease: 'back.out(2)' }, 1.27);
+  tl.fromTo('#lab2', { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'power1.out' }, 1.3);
+  // hold 1.43–1.65
+
+  // 1.65–2.05  Carry the same bulb to card 03
+  tl.to('#carrier', { opacity: 1, duration: 0.01 }, 1.65);
+  tl.fromTo('#carrier', { attr: { transform: 'translate(640 336) scale(0.72)' } },
+    { attr: { transform: 'translate(1030 334) scale(0.48)' }, duration: 0.4, ease: 'power2.inOut', immediateRender: false }, 1.65);
+  tl.fromTo('#chev2', { stroke: '#B9D5DE' }, { stroke: '#FFFFFF', duration: 0.15, ease: 'none' }, 1.65);
+  tl.to('#chev2', { stroke: '#B9D5DE', duration: 0.2, ease: 'none' }, 2.05);
+  tl.fromTo('#bulb3', { opacity: 0 }, { opacity: 1, duration: 0.01 }, 2.05);
+  tl.to('#carrier', { opacity: 0, duration: 0.01 }, 2.05);
+
+  // 2.00–2.45  Consequence: ring closes, spokes extend, nodes join
+  tl.fromTo('#ring', { attr: { 'stroke-dashoffset': 1 } },
+    { attr: { 'stroke-dashoffset': 0 }, duration: 0.35, ease: 'power2.inOut' }, 2.0);
+  tl.fromTo('.spoke', { attr: { 'stroke-dashoffset': 1 } },
+    { attr: { 'stroke-dashoffset': 0 }, duration: 0.16, ease: 'power2.out', stagger: 0.03 }, 2.08);
+  tl.fromTo('.sysnode', { attr: { r: 0 } },
+    { attr: { r: 15 }, duration: 0.14, ease: 'back.out(2)', stagger: 0.03 }, 2.2);
+  tl.fromTo('#lab3', { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'power1.out' }, 2.3);
+
+  // Settled catalogue hold 2.50–3.00
+  tl.set({}, {}, 3);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  tl.seek(0);
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

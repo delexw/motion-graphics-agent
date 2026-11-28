@@ -5,6 +5,7 @@ import { LanguageTracksSchema, type LanguageMedia } from "../language-tracks";
 import { normalizeSubtitleFields } from "../subtitle-compatibility";
 import { ScriptItemsSchema, scriptItemsProblem } from "../script-items";
 import type { VideoBuildPlan } from "../agents/schemas/video-build-plan";
+import type { SceneBackgroundTreatment } from "../agents/scene-background";
 import { validateStyleSelection } from "../style-selection";
 import { z } from "zod";
 import { VideoLanguageSchema, VideoTranslationsSchema } from "../video-language";
@@ -126,7 +127,13 @@ export interface VideoGenerationJob extends JobState {
   poster?: string;
   production?: Production;
   storyboardReady?: boolean;
-  buildPlan?: { model: string; sessionId: string; value: VideoBuildPlan };
+  buildPlan?: {
+    model: string;
+    sessionId: string;
+    value: VideoBuildPlan;
+    sceneBackgroundTreatment?: SceneBackgroundTreatment;
+  };
+  sceneBackgroundTreatment?: SceneBackgroundTreatment;
   correctionSession?: { model: string; sessionId: string };
   correctionBypasses?: VideoCorrectionBypass[];
 }

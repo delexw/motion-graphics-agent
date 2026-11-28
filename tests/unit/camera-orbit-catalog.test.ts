@@ -1,3 +1,5 @@
+import metadataFingerprints from "../fixtures/orbit-catalog-metadata-fingerprints.json";
+import { withoutStylePrompt } from "../fixtures/manga-reference-baseline";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -24,20 +26,7 @@ const laterMotionIds = [
   "motion-055",
 ];
 // Motion Graphics authored after the orbit review were not part of it and must not claim motion-043.
-const laterStyleIds = [
-  "style-137",
-  "style-138",
-  "style-139",
-  "style-140",
-  "style-141",
-  "style-142",
-  "style-143",
-];
-// The user-directed Manga crew revision postdates the orbit review. Keep its
-// historical evidence unchanged and verify the revised metadata separately.
-const laterMetadataHashes: Record<string, string> = {
-  "style-136": "82a925d0a2c44852e328f691e300b703a8b26f45fc4b117442f1f2e3e7541021",
-};
+const isLaterStyle = (id: string) => Number(id.slice("style-".length)) > 136;
 const withoutLaterMotionAdditions = (pattern: Record<string, unknown>) => {
   const { variants: _variants, ...rest } = pattern;
   return rest;
@@ -49,12 +38,10 @@ it("records the Opus orbit assessment and attaches only approved Motion Graphics
   );
   const raw = {
     ...catalogSource,
-    styles: catalogSource.styles.filter(
-      (style: { id: string }) => !laterStyleIds.includes(style.id),
-    ),
+    styles: catalogSource.styles.filter((style: { id: string }) => !isLaterStyle(style.id)),
   };
   for (const style of catalogSource.styles.filter((entry: { id: string }) =>
-    laterStyleIds.includes(entry.id),
+    isLaterStyle(entry.id),
   ))
     expect(
       style.motion_references.candidates.map((entry: { motion_id: string }) => entry.motion_id),
@@ -119,8 +106,8 @@ it("records the Opus orbit assessment and attaches only approved Motion Graphics
       motion_graphic_variants: _variants,
       ...metadata
     } = style;
-    expect(hash(metadata), style.id).toBe(
-      laterMetadataHashes[style.id] ?? row.originalMetadataHash,
+    expect(hash(withoutStylePrompt(metadata)), style.id).toBe(
+      metadataFingerprints[style.id as keyof typeof metadataFingerprints],
     );
   }
   expect(review.styleReviews.some((row: { decision: string }) => row.decision === "attach")).toBe(

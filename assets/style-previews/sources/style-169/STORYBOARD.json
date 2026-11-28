@@ -1,0 +1,51 @@
+{
+  "version": 3,
+  "title": "Rebuilt Screencast — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Point to the control",
+      "startSeconds": 0,
+      "endSeconds": 0.8,
+      "purpose": "Show the Idea Board in its unlinked state, with the guide card's leader pointing at the single target control while the cursor travels to it.",
+      "visuals": ["Idea Board window with pale core node, grey-outlined part nodes and faint dotted proposed links", "Dark guide card docked over the board's right half, dashed leader pointing up to Connect all", "Cursor travels from the right to the Connect all button; focus ring appears on hover"],
+      "assets": ["index.html inline SVG layers"],
+      "beats": [
+        {"startSeconds": 0, "endSeconds": 0.62, "development": "Cursor moves to the Connect all button; status pill reads 0 links active.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 0.62, "endSeconds": 0.8, "development": "Short pause on the input: focus ring settles around the button, which the cursor touches only at its lower-right corner.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.18}
+      ]
+    },
+    {
+      "id": "scene-2",
+      "title": "Clear the path and press",
+      "startSeconds": 0.8,
+      "endSeconds": 1.42,
+      "purpose": "Move the guide out of the reading path before the change, then activate the control once.",
+      "visuals": ["Guide card slides from over the board to its docked column on the right; the leader stays attached and becomes a short horizontal pointer", "Single button press with cursor squeeze"],
+      "assets": ["index.html inline SVG layers"],
+      "beats": [
+        {"startSeconds": 0.8, "endSeconds": 1.3, "development": "Guide card moves right and up out of the board; the Data and Team area is now unobstructed.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 1.3, "endSeconds": 1.42, "development": "Connect all is pressed once (scale and brighten, then release).", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-3",
+      "title": "Follow the state change",
+      "startSeconds": 1.42,
+      "endSeconds": 3,
+      "purpose": "Show the resulting board state: the idea becomes a connected system.",
+      "visuals": ["Core Idea node fills active blue", "Four links draw one after another from the core to Users, Data, Team and Launch; each node outline turns blue as its link lands", "Status pill counts 1 to 4 links active", "Dashed Data–Team cross-link appears; guide progress bar advances", "Cursor retreats into the gutter between board and guide"],
+      "assets": ["index.html inline SVG layers"],
+      "beats": [
+        {"startSeconds": 1.42, "endSeconds": 2.45, "development": "Core activates, links draw in sequence, counter steps to 4 links active, cross-link and progress update.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 2.45, "endSeconds": 3, "development": "Settled result hold: connected board, 4 links active, guide readable beside it, nothing covering the target.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.55}
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["Single task demonstrated once: point, clear the path, press, follow the result.", "All motion finishes by 2.45 s, before the 2.7 s settle requirement."],
+    "justifiedHolds": ["0.62–0.8 s pause on the input before activation, as the Motion Graphic requires.", "2.45–3.0 s settled hold to read the resulting board state and the guide copy."]
+  },
+  "notes": ["Silent preview: no music, effects, narration or subtitles.", "STYLE.json contains no tech.preview_recipes and no BACKGROUND_REVIEW.json was supplied, so this preview demonstrates the primary Rebuilt Screencast behaviour.", "The interface is an original simulated UI built from vector layers, not a recording of a real application."]
+}

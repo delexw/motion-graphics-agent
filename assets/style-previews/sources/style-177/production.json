@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Archive Newsreel",
+  "displayDescription": "Context card, hard cut to an idea sparking a five-station network, then a held evidence caption.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative procedural archive plate: film grain, scratches, vignette and splice flash are approximations drawn in Canvas 2D, not scanned archival footage",
+    "No real historical record or exact date is depicted; the card uses the reel label from the approved copy",
+    "No Blender used",
+    "Project technology selection tool failed (missing project dependency record); renderer uses local gsap.min.js and native Canvas 2D"
+  ]
+}

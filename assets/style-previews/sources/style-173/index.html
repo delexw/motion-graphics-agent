@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Microscope Slide — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #04070A; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; background: #04070A; }
+  #scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+</style>
+<script src="gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="scene" width="1280" height="720" aria-label="Microscope view: an idea becomes a connected system"></canvas>
+</div>
+<script>
+(function () {
+  var W = 1280, H = 720;
+  var canvas = document.getElementById('scene');
+  var ctx = canvas.getContext('2d');
+  var FONT = 'Menlo, Consolas, "DejaVu Sans Mono", "Courier New", monospace';
+
+  // Resolved scene palette (dark-field illumination, from the approved illustration).
+  var C = {
+    bg: '#04070A', fieldIn: '#124A47', fieldMid: '#062220', fieldOut: '#010605',
+    ring: '#1D2A30', stain: '#7FF0D8', core: '#E8FFF8', guide: '#CDEFE8',
+    active: '#FFB547', inset: '#0B3533', white: '#FFFFFF'
+  };
+
+  // Seeded PRNG for procedural marks (deterministic).
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  var rnd = mulberry32(173);
+
+  // ---- Specimen, in sample coordinates (µm-based: main objective = 2 px/µm) ----
+  var HUB = { x: 0, y: 0, r: 22 };
+  var NODES = [
+    { x: -130, y: -110 }, { x: 130, y: -80 }, { x: -80, y: 140 },
+    { x: 150, y: 90 }, { x: 200, y: -160 }, { x: -210, y: 20 }
+  ];
+  var ANCHOR = NODES[1]; // the registered junction
+  // Edges: from, to, control point, delay fraction
+  var EDGES = [
+    { a: HUB, b: NODES[0], c: { x: -40, y: -60 }, d: 0.00 },
+    { a: HUB, b: NODES[1], c: { x: 70, y: -40 }, d: 0.08 },
+    { a: HUB, b: NODES[2], c: { x: 10, y: 80 }, d: 0.16 },
+    { a: HUB, b: NODES[3], c: { x: 80, y: 50 }, d: 0.24 },
+    { a: NODES[1], b: NODES[4], c: { x: 170, y: -140 }, d: 0.45 },
+    { a: HUB, b: NODES[5], c: { x: -110, y: -10 }, d: 0.32 }
+  ];
+  // Plane 1 (shallow) debris and plane 3 (deep) fibres, seeded.
+  var DEBRIS = [];
+  for (var i = 0; i < 14; i++) DEBRIS.push({ x: (rnd() - 0.5) * 760, y: (rnd() - 0.5) * 560, r: 10 + rnd() * 22, k: rnd() });
+  var FIBRES = [];
+  for (var j = 0; j < 9; j++) FIBRES.push({ x: (rnd() - 0.5) * 800, y: (rnd() - 0.5) * 600, a: rnd() * Math.PI, l: 120 + rnd() * 220, w: 2 + rnd() * 4 });
+  var VESICLES = [];
+  for (var v = 0; v < 18; v++) VESICLES.push({ t: rnd(), o: (rnd() - 0.5) * 2.2, r: 0.35 + rnd() * 0.5 });
+  var MEMBRANE = [];
+  for (var m = 0; m < 40; m++) MEMBRANE.push({ a: rnd() * Math.PI * 2, r: 0.6 + rnd() * 0.35, s: 0.2 + rnd() * 0.4 });
+
+  function qpt(e, t) {
+    var u = 1 - t;
+    return { x: u * u * e.a.x + 2 * u * t * e.c.x + t * t * e.b.x, y: u * u * e.a.y + 2 * u * t * e.c.y + t * t * e.b.y };
+  }
+  function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+
+  // Cached static background grain (stationary).
+  var grain = document.createElement('canvas'); grain.width = W; grain.height = H;
+  (function () {
+    var g = grain.getContext('2d'), r2 = mulberry32(9);
+    g.fillStyle = 'rgba(205,239,232,0.035)';
+    for (var n = 0; n < 1400; n++) g.fillRect(r2() * W, r2() * H, 1, 1);
+  })();
+
+  // ---- Animated state (sole owner: GSAP timeline) ----
+  var S = {
+    pan: 170,      // sample x-offset of the field centre (scan)
+    panY: -40,
+    focus: 0,      // 0 = plane 1 (shallow debris), 1 = plane 2 (network), 2 = plane 3
+    grow: 0,       // connection growth 0..1
+    box: 0,        // reticle box on anchor
+    leader: 0,     // leader lines draw
+    inset: 0,      // inset magnified view open 0..1
+    insetLabel: 0, // inset content (scale bar) after container complete
+    kicker: 0, title: 0, meta: 0
+  };
+
+  function blurFor(depth) { return Math.min(14, Math.abs(S.focus - depth) * 11); }
+
+  // Draw the specimen with transform: screen = origin + (p - centre) * scale
+  function drawSpecimen(g, ox, oy, cx, cy, sc, detail) {
+    function X(p) { return ox + (p.x - cx) * sc; }
+    function Y(p) { return oy + (p.y - cy) * sc; }
+
+    // Plane 3: deep fibres
+    var b3 = blurFor(2);
+    g.save(); g.filter = b3 > 0.3 ? 'blur(' + (b3 * Math.min(sc, 2)).toFixed(2) + 'px)' : 'none';
+    g.strokeStyle = 'rgba(127,240,216,0.10)'; g.lineCap = 'round';
+    FIBRES.forEach(function (f) {
+      g.lineWidth = f.w * sc;
+      g.beginPath();
+      g.moveTo(X({ x: f.x, y: f.y }), Y({ x: f.x, y: f.y }));
+      g.lineTo(X({ x: f.x + Math.cos(f.a) * f.l, y: f.y + Math.sin(f.a) * f.l }), Y({ x: f.x + Math.cos(f.a) * f.l, y: f.y + Math.sin(f.a) * f.l }));
+      g.stroke();
+    });
+    g.restore();
+
+    // Plane 2: the network (idea -> connected system)
+    var b2 = blurFor(1);
+    g.save(); g.filter = b2 > 0.3 ? 'blur(' + (b2 * Math.min(sc, 2)).toFixed(2) + 'px)' : 'none';
+    g.lineCap = 'round'; g.strokeStyle = C.stain; g.lineWidth = 3 * sc;
+    EDGES.forEach(function (e) {
+      var p = clamp01((S.grow - e.d) / 0.5);
+      if (p <= 0) return;
+      g.beginPath();
+      var steps = 28, s0 = qpt(e, 0);
+      g.moveTo(X(s0), Y(s0));
+      for (var k = 1; k <= steps * p; k++) { var q = qpt(e, k / steps * 1); if (k / steps > p) break; g.lineTo(X(q), Y(q)); }
+      var qe = qpt(e, p); g.lineTo(X(qe), Y(qe));
+      g.stroke();
+      if (detail) { // vesicles travelling along strands, visible only at high magnification
+        g.fillStyle = C.core;
+        VESICLES.forEach(function (vs) {
+          if (vs.t > p) return;
+          var q2 = qpt(e, vs.t);
+          g.beginPath(); g.arc(X(q2) + vs.o * sc, Y(q2) - vs.o * sc * 0.6, vs.r * sc, 0, Math.PI * 2); g.fill();
+        });
+      }
+    });
+    // nodes: appear when their edge arrives
+    function cell(p, r, a) {
+      if (a <= 0) return;
+      var rr = r * (0.6 + 0.4 * a);
+      g.globalAlpha = a;
+      g.fillStyle = 'rgba(127,240,216,0.22)'; g.strokeStyle = C.stain; g.lineWidth = 2 * Math.max(1, sc * 0.5);
+      g.beginPath(); g.arc(X(p), Y(p), rr * sc, 0, Math.PI * 2); g.fill(); g.stroke();
+      if (detail) {
+        g.fillStyle = 'rgba(232,255,248,0.35)';
+        MEMBRANE.forEach(function (mb) {
+          g.beginPath(); g.arc(X(p) + Math.cos(mb.a) * rr * mb.r * sc, Y(p) + Math.sin(mb.a) * rr * mb.r * sc, mb.s * sc, 0, Math.PI * 2); g.fill();
+        });
+      }
+      g.fillStyle = C.core;
+      g.beginPath(); g.arc(X(p), Y(p), rr * 0.36 * sc, 0, Math.PI * 2); g.fill();
+      g.globalAlpha = 1;
+    }
+    cell(HUB, HUB.r, 1);
+    EDGES.forEach(function (e) { cell(e.b, 10, clamp01(((S.grow - e.d) / 0.5 - 0.85) / 0.15)); });
+    g.restore();
+
+    // Plane 1: shallow debris (sharp at start, defocused once we pull to plane 2)
+    var b1 = blurFor(0);
+    g.save(); g.filter = b1 > 0.3 ? 'blur(' + (b1 * Math.min(sc, 2)).toFixed(2) + 'px)' : 'none';
+    DEBRIS.forEach(function (d) {
+      g.fillStyle = 'rgba(205,239,232,' + (0.10 + d.k * 0.12).toFixed(3) + ')';
+      g.strokeStyle = 'rgba(205,239,232,0.35)'; g.lineWidth = 1.5;
+      g.beginPath(); g.ellipse(X(d), Y(d), d.r * sc, d.r * 0.7 * sc, d.k * 3, 0, Math.PI * 2); g.fill(); g.stroke();
+    });
+    g.restore();
+  }
+
+  function scaleBar(x, y, px, label) {
+    ctx.fillStyle = 'rgba(1,6,5,0.72)';
+    ctx.fillRect(x - 8, y - 26, Math.max(px, 70) + 16, 38);
+    ctx.fillStyle = C.white; ctx.fillRect(x, y, px, 4);
+    ctx.font = '600 14px ' + FONT; ctx.textBaseline = 'alphabetic';
+    ctx.fillText(label, x, y - 8);
+  }
+
+  var EP = { x: 460, y: 360, r: 300 };
+  var IN = { x: 1030, y: 290, r: 150, mag: 5 };
+
+  function render() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.filter = 'none'; ctx.globalAlpha = 1;
+    ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+    ctx.drawImage(grain, 0, 0);
+
+    // ---- Eyepiece field (×400) ----
+    ctx.save();
+    ctx.beginPath(); ctx.arc(EP.x, EP.y, EP.r, 0, Math.PI * 2); ctx.clip();
+    var rg = ctx.createRadialGradient(EP.x, EP.y, 0, EP.x, EP.y, EP.r);
+    rg.addColorStop(0, C.fieldIn); rg.addColorStop(0.8, C.fieldMid); rg.addColorStop(1, C.fieldOut);
+    ctx.fillStyle = rg; ctx.fillRect(EP.x - EP.r, EP.y - EP.r, EP.r * 2, EP.r * 2);
+    drawSpecimen(ctx, EP.x, EP.y, S.pan, S.panY, 1, false);
+    // fixed reticle
+    ctx.strokeStyle = 'rgba(205,239,232,0.18)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(EP.x - EP.r, EP.y); ctx.lineTo(EP.x + EP.r, EP.y); ctx.moveTo(EP.x, EP.y - EP.r); ctx.lineTo(EP.x, EP.y + EP.r); ctx.stroke();
+    ctx.strokeStyle = 'rgba(205,239,232,0.4)';
+    ctx.beginPath();
+    for (var t = -4; t <= 4; t++) { if (!t) continue; ctx.moveTo(EP.x + t * 40, EP.y); ctx.lineTo(EP.x + t * 40, EP.y + 8); }
+    ctx.stroke();
+    // vignette
+    var vg = ctx.createRadialGradient(EP.x, EP.y, EP.r * 0.75, EP.x, EP.y, EP.r);
+    vg.addColorStop(0, 'rgba(1,6,5,0)'); vg.addColorStop(1, 'rgba(1,6,5,0.6)');
+    ctx.fillStyle = vg; ctx.fillRect(EP.x - EP.r, EP.y - EP.r, EP.r * 2, EP.r * 2);
+    scaleBar(290, 600, 100, '50 µm');
+    ctx.restore();
+    ctx.strokeStyle = C.ring; ctx.lineWidth = 10;
+    ctx.beginPath(); ctx.arc(EP.x, EP.y, EP.r, 0, Math.PI * 2); ctx.stroke();
+
+    // objective / focus readout above field
+    ctx.font = '600 13px ' + FONT; ctx.fillStyle = C.guide; ctx.textBaseline = 'alphabetic';
+    ctx.fillText('OBJ ×400', 168, 44);
+    // focus gauge (3 planes)
+    var gx = 640, gy = 40;
+    ctx.fillStyle = 'rgba(205,239,232,0.25)'; ctx.fillRect(gx, gy - 1, 120, 2);
+    for (var pl = 0; pl < 3; pl++) { ctx.fillRect(gx + pl * 60 - 1, gy - 6, 2, 12); }
+    ctx.fillStyle = C.active; ctx.beginPath(); ctx.arc(gx + S.focus * 60, gy, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = C.guide; ctx.fillText('Z', gx - 20, gy + 5);
+
+    // ---- Reticle box on anchor (registered to sample coordinates) ----
+    var ax = EP.x + (ANCHOR.x - S.pan), ay = EP.y + (ANCHOR.y - S.panY);
+    if (S.box > 0) {
+      ctx.globalAlpha = S.box; ctx.strokeStyle = C.active; ctx.lineWidth = 2.5;
+      var bs = 30 + (1 - S.box) * 18;
+      ctx.strokeRect(ax - bs, ay - bs, bs * 2, bs * 2);
+      ctx.globalAlpha = 1;
+    }
+    // leader lines (draw from box toward inset)
+    if (S.leader > 0) {
+      ctx.save(); ctx.strokeStyle = 'rgba(255,181,71,0.6)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]);
+      var ends = [[ax + 30, ay - 30, IN.x - 30, IN.y - IN.r + 3], [ax + 30, ay + 30, IN.x - 30, IN.y + IN.r - 3]];
+      ends.forEach(function (e) {
+        ctx.beginPath(); ctx.moveTo(e[0], e[1]);
+        ctx.lineTo(e[0] + (e[2] - e[0]) * S.leader, e[1] + (e[3] - e[1]) * S.leader); ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    // ---- Magnified inset (×2000), same sample coordinates around the anchor ----
+    if (S.inset > 0) {
+      var r = IN.r * S.inset;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(IN.x, IN.y, r, 0, Math.PI * 2); ctx.clip();
+      ctx.fillStyle = C.inset; ctx.fillRect(IN.x - IN.r, IN.y - IN.r, IN.r * 2, IN.r * 2);
+      // inset sharpens slightly after opening (fine focus)
+      drawSpecimen(ctx, IN.x, IN.y, ANCHOR.x - 6, ANCHOR.y + 4, IN.mag, true);
+      if (S.insetLabel > 0) {
+        ctx.globalAlpha = S.insetLabel;
+        scaleBar(960, 410, 50, '5 µm');
+        ctx.globalAlpha = 1;
+      }
+      ctx.restore();
+      ctx.strokeStyle = C.active; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(IN.x, IN.y, r, 0, Math.PI * 2); ctx.stroke();
+      if (S.insetLabel > 0) {
+        ctx.globalAlpha = S.insetLabel; ctx.font = '600 13px ' + FONT; ctx.fillStyle = C.active;
+        ctx.fillText('OBJ ×2000', IN.x + 70, IN.y - IN.r - 12);
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // ---- Copy ----
+    ctx.textBaseline = 'alphabetic';
+    if (S.kicker > 0) {
+      ctx.globalAlpha = S.kicker; ctx.font = '600 14px ' + FONT; ctx.fillStyle = C.active;
+      var planeN = S.focus < 0.5 ? 1 : 2;
+      ctx.fillText('SLIDE 01 · FOCUS PLANE ' + planeN + '/3', 880, 500 + (1 - S.kicker) * 8);
+    }
+    if (S.title > 0) {
+      ctx.globalAlpha = S.title; ctx.font = '700 26px ' + FONT; ctx.fillStyle = C.guide;
+      var dy = (1 - S.title) * 10;
+      ctx.fillText('An idea becomes', 880, 540 + dy);
+      ctx.fillText('a connected system', 880, 574 + dy);
+    }
+    if (S.meta > 0) {
+      ctx.globalAlpha = S.meta; ctx.font = '14px ' + FONT; ctx.fillStyle = C.guide;
+      ctx.fillText('×400 → ×2000 · one junction', 880, 612);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ---- One paused, seekable GSAP timeline owns every animated value ----
+  var tl = gsap.timeline({ paused: true, onUpdate: render });
+  // Scan across the sample at plane 1; decelerate onto the network ("slow at a feature")
+  tl.to(S, { pan: 0, panY: 0, duration: 1.0, ease: 'power3.out' }, 0);
+  tl.to(S, { kicker: 1, duration: 0.35, ease: 'power2.out' }, 0.15);
+  tl.to(S, { title: 1, duration: 0.45, ease: 'power2.out' }, 0.25);
+  // Focus pull: plane 1 -> plane 2 (debris softens, the idea network resolves)
+  tl.to(S, { focus: 1, duration: 0.55, ease: 'sine.inOut' }, 0.8);
+  // The idea connects: strands grow from the hub
+  tl.to(S, { grow: 1, duration: 0.85, ease: 'power2.out' }, 0.55);
+  // Lock on the registered junction, then change objective (×2000 inset)
+  tl.to(S, { box: 1, duration: 0.25, ease: 'back.out(1.2)' }, 1.45);
+  tl.to(S, { leader: 1, duration: 0.25, ease: 'power2.inOut' }, 1.6);
+  tl.to(S, { inset: 1, duration: 0.4, ease: 'power2.out' }, 1.75);
+  tl.to(S, { insetLabel: 1, duration: 0.2, ease: 'power1.out' }, 2.15);
+  tl.to(S, { meta: 1, duration: 0.3, ease: 'power2.out' }, 2.05);
+  tl.set({}, {}, 3); // full 3 s duration; hold the sharp focus plane from ~2.35 s
+  tl.seek(0, false);
+  render();
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  document.addEventListener('hf-seek', function (e) {
+    var t = e && e.detail && typeof e.detail.time === 'number' ? e.detail.time : tl.time();
+    tl.seek(t, false); render();
+  });
+  window.addEventListener('hf-seek', function () { render(); });
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

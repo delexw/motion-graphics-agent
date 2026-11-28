@@ -1,6 +1,10 @@
 import type { CreativeRequest } from "./contracts";
 import type { RoomLibraryAsset } from "./room";
-import { acceptsBriefAttachment, type BriefRequirements } from "./brief-sections";
+import {
+  acceptsBriefAttachment,
+  BriefRequirementsSchema,
+  type BriefRequirements,
+} from "./brief-sections";
 import { validateAssetLimits } from "./asset-limits";
 export type BriefAttachmentSection = "main" | "images" | "videos" | "music";
 export const emptyRequirements = (): BriefRequirements => ({
@@ -29,11 +33,11 @@ export function normalizeBriefAttachmentSections(
   next.videos.assetIds = [...new Set([...next.videos.assetIds, ...videoIds])];
   return next;
 }
-export function toggleRoomAsset(
-  request: CreativeRequest,
+export function toggleRoomAsset<T extends Pick<CreativeRequest, "assetIds" | "requirements">>(
+  request: T,
   asset: RoomLibraryAsset,
   selected: RoomLibraryAsset[],
-): CreativeRequest {
+): T {
   const section = roomMaterialSection(asset.originalName);
   if (!section) throw Error(`${asset.originalName} can’t be used in a brief`);
   const removing = request.assetIds.includes(asset.id);
@@ -55,4 +59,24 @@ export function toggleRoomAsset(
     ? requirements[section].assetIds.filter((id) => id !== asset.id)
     : [...requirements[section].assetIds, asset.id];
   return { ...request, assetIds: ids, requirements };
+}
+
+/** Apply attachment rules without requiring the rest of an in-progress brief to be complete. */
+export function toggleSavedDraftAttachment(
+  request: Record<string, unknown>,
+  asset: RoomLibraryAsset,
+  selected: RoomLibraryAsset[],
+) {
+  const attachments = toggleRoomAsset(
+    {
+      assetIds: selected.map(({ id }) => id),
+      requirements:
+        request.requirements === undefined
+          ? undefined
+          : BriefRequirementsSchema.parse(request.requirements),
+    },
+    asset,
+    selected,
+  );
+  return { ...request, ...attachments };
 }

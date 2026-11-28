@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>One-Bit Dither — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #142536; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; }
+  #stage { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="stage" width="1280" height="720" aria-label="An idea becomes a connected system"></canvas>
+</div>
+<script src="gsap.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  // ---- Fixed pixel grid: 320x180 binary buffer, integer 4x nearest-neighbour output ----
+  var W = 320, H = 180, S = 4;
+  var INK = [0x14, 0x25, 0x36];   // foreground #142536
+  var PAPER = [0xED, 0xF1, 0xF3]; // background #EDF1F3
+
+  // 8x8 ordered (Bayer) threshold matrix, normalised to (0,1)
+  var bayer = new Float32Array(64);
+  (function () {
+    var m = [[0]];
+    for (var n = 1; n < 8; n *= 2) {
+      var size = n * 2, next = [];
+      for (var y = 0; y < size; y++) {
+        next.push([]);
+        for (var x = 0; x < size; x++) {
+          var base = m[y % n][x % n] * 4;
+          var q = (y < n ? 0 : 2) + (x < n ? 0 : 1);
+          var add = [0, 2, 3, 1][q];
+          next[y].push(base + add);
+        }
+      }
+      m = next;
+    }
+    for (var yy = 0; yy < 8; yy++) for (var xx = 0; xx < 8; xx++) bayer[yy * 8 + xx] = (m[yy][xx] + 0.5) / 64;
+  })();
+
+  // ---- 5x7 bitmap font, built on the same grid ----
+  var FONT = {
+    "A": ["01110","10001","10001","11111","10001","10001","10001"],
+    "B": ["11110","10001","10001","11110","10001","10001","11110"],
+    "C": ["01110","10001","10000","10000","10000","10001","01110"],
+    "D": ["11110","10001","10001","10001","10001","10001","11110"],
+    "E": ["11111","10000","10000","11110","10000","10000","11111"],
+    "I": ["11111","00100","00100","00100","00100","00100","11111"],
+    "M": ["10001","11011","10101","10101","10001","10001","10001"],
+    "N": ["10001","11001","10101","10011","10001","10001","10001"],
+    "O": ["01110","10001","10001","10001","10001","10001","01110"],
+    "S": ["01111","10000","10000","01110","00001","00001","11110"],
+    "T": ["11111","00100","00100","00100","00100","00100","00100"],
+    "Y": ["10001","10001","01010","00100","00100","00100","00100"],
+    " ": ["00000","00000","00000","00000","00000","00000","00000"]
+  };
+
+  // ---- Static cached masks (computed once) ----
+  var BULB_X = 92, BULB_Y = 82;
+  var NODES = [
+    [205, 45, 4], [250, 45, 4], [295, 45, 4],
+    [205, 115, 4], [250, 115, 4], [295, 115, 4],
+    [250, 80, 6]
+  ];
+  // distance to nearest node edge (for dithered halo), cached
+  var nodeDist = new Float32Array(W * H);
+  var nodeIdx = new Int8Array(W * H);
+  for (var y0 = 0; y0 < H; y0++) for (var x0 = 0; x0 < W; x0++) {
+    var best = 1e9, bi = -1;
+    for (var k = 0; k < NODES.length; k++) {
+      var nd = NODES[k];
+      var dx = Math.max(0, Math.abs(x0 - nd[0]) - nd[2]);
+      var dy = Math.max(0, Math.abs(y0 - nd[1]) - nd[2]);
+      var d = Math.sqrt(dx * dx + dy * dy);
+      if (d < best) { best = d; bi = k; }
+    }
+    nodeDist[y0 * W + x0] = best; nodeIdx[y0 * W + x0] = bi;
+  }
+
+  // ---- Canvas setup ----
+  var stage = document.getElementById("stage");
+  var ctx = stage.getContext("2d");
+  var buf = document.createElement("canvas");
+  buf.width = W; buf.height = H;
+  var bctx = buf.getContext("2d");
+  var img = bctx.createImageData(W, H);
+  var bits = new Uint8Array(W * H); // 1 = ink, 0 = paper
+
+  function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+
+  function drawText(str, cx, cy, scale, val) {
+    for (var i = 0; i < str.length; i++) {
+      var g = FONT[str[i]] || FONT[" "];
+      for (var r = 0; r < 7; r++) for (var c = 0; c < 5; c++) {
+        if (g[r][c] !== "1") continue;
+        for (var sy = 0; sy < scale; sy++) for (var sx = 0; sx < scale; sx++) {
+          var px = cx + (i * 6 + c) * scale + sx, py = cy + r * scale + sy;
+          if (px >= 0 && px < W && py >= 0 && py < H) bits[py * W + px] = val;
+        }
+      }
+    }
+  }
+  function fillRect(x, y, w, h, val) {
+    for (var yy = y; yy < y + h; yy++) for (var xx = x; xx < x + w; xx++)
+      if (xx >= 0 && xx < W && yy >= 0 && yy < H) bits[yy * W + xx] = val;
+  }
+
+  // ---- Animated state: owned exclusively by the GSAP timeline ----
+  var state = { grow: 0, front: 0, title: 0, caption: 0 };
+  var PANEL_X = 180, BAND = 14;
+
+  function render() {
+    var p = state.grow, f = state.front;
+    var connEnd = 112 + clamp(f / 0.25, 0, 1) * (PANEL_X - 112);
+    var front = PANEL_X + clamp((f - 0.12) / 0.88, 0, 1) * 160; // threshold boundary in cells
+
+    for (var y = 0; y < H; y++) {
+      for (var x = 0; x < W; x++) {
+        var i = y * W + x;
+        var th = bayer[(y & 7) * 8 + (x & 7)];
+        var ink;
+        if (x < PANEL_X) {
+          // Region 1: dark field; light density grows into the idea (bulb)
+          var dx = x - BULB_X, dy = y - BULB_Y;
+          var r = Math.sqrt(dx * dx + dy * dy);
+          // expanding density front: radius grows with p, tone falls off outward
+          var light = clamp(1.0 - r / (6 + 74 * p), 0, 1) * clamp(p * 1.3, 0, 1);
+          light = light * light * 1.35;
+          var glass = r <= 19 || (Math.abs(dx) <= 10 && dy >= 0 && dy <= 24);
+          if (glass) light = Math.max(light, clamp((p - 0.35) / 0.4, 0, 1) + 0.0001);
+          // base bands of the bulb (dark gaps)
+          if ((dy >= 23 && dy <= 27 && Math.abs(dx) <= 10) || (dy >= 30 && dy <= 33 && Math.abs(dx) <= 8)) light = p > 0.6 ? 0 : light;
+          if ((dy >= 28 && dy <= 29 && Math.abs(dx) <= 10)) light = Math.max(light, clamp((p - 0.6) / 0.2, 0, 1));
+          // connector leaving the idea toward the system
+          if (y >= 81 && y <= 82 && x >= 112 && x < connEnd) light = 1;
+          ink = light > th ? 0 : 1;
+        } else {
+          // Region 2: switched by a moving threshold boundary (ink -> paper)
+          var s = clamp((front - x) / BAND, 0, 1);
+          var dark = 0.09; // sparse static dot texture of the switched surface
+          var vis = x < front - 4;
+          if (vis) {
+            var nd = nodeDist[i];
+            var node = NODES[nodeIdx[i]];
+            var nodeOn = clamp((front - node[0] - 2) / 12, 0, 1);
+            if (nd <= 0 && nodeOn > 0.01) dark = 1;
+            else if (nd < 12) dark = Math.max(dark, 0.5 * (1 - nd / 12) * nodeOn);
+            // horizontal links
+            if ((y === 80 || y === 79) && x < front - 4) dark = 1;
+            if ((y === 45 || y === 46 || y === 115 || y === 114) && x >= 205 && x <= 295) dark = 1;
+            // vertical links grow out of their row once passed
+            var cols = [205, 250, 295];
+            for (var c = 0; c < 3; c++) {
+              var cx = cols[c];
+              if (x === cx || x === cx + 1) {
+                var prog = clamp((front - cx) / 24, 0, 1);
+                if (Math.abs(y - 80) <= prog * 35) dark = 1;
+              }
+            }
+            if ((y === 45 || y === 46 || y === 115 || y === 114) && x > front - 6) dark = 0.09;
+          }
+          var d = 1 + (dark - 1) * s;
+          ink = d > th ? 1 : 0;
+        }
+        bits[i] = ink;
+      }
+    }
+
+    // Lettering on the grid with solid backings (revealed with their backing as one group)
+    if (state.title >= 1) {
+      fillRect(6, 6, 90, 24, 1);
+      drawText("AN IDEA", 10, 11, 2, 0);
+    }
+    if (state.caption >= 1) {
+      fillRect(192, 133, 112, 34, 0);
+      drawText("BECOMES A", 198, 138, 1, 1);
+      drawText("CONNECTED SYSTEM", 198, 154, 1, 1);
+    }
+
+    var data = img.data;
+    for (var j = 0, o = 0; j < W * H; j++, o += 4) {
+      var col = bits[j] ? INK : PAPER;
+      data[o] = col[0]; data[o + 1] = col[1]; data[o + 2] = col[2]; data[o + 3] = 255;
+    }
+    bctx.putImageData(img, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(buf, 0, 0, W * S, H * S);
+  }
+
+  // ---- One paused, seekable GSAP timeline ----
+  var tl = gsap.timeline({ paused: true, onUpdate: render });
+  tl.set(state, { title: 1 }, 0.2);
+  tl.to(state, { grow: 1, duration: 0.95, ease: "power1.inOut" }, 0.1);
+  tl.to(state, { front: 1, duration: 0.9, ease: "power2.inOut" }, 1.0);
+  tl.set(state, { caption: 1 }, 1.85);
+  tl.to({}, { duration: 0.001 }, 2.999);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+
+  function seekTo(t) { tl.seek(t, false); render(); }
+  window.addEventListener("hf-seek", function (e) {
+    var t = e && e.detail && typeof e.detail.time === "number" ? e.detail.time : tl.time();
+    seekTo(t);
+  });
+  seekTo(0);
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

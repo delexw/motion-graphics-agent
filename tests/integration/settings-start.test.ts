@@ -8,7 +8,7 @@ import { Workflow } from "../../src/server/jobs/workflow";
 import { dataRoot } from "../../src/server/runtime/config";
 import { CodedError } from "../../src/shared/errors";
 import { RequestSchema } from "../../src/shared/contracts";
-import { RoomPatchSchema } from "../../src/shared/room";
+import { additionalIdeaDraftKey, RoomPatchSchema } from "../../src/shared/room";
 import { randomUUID } from "node:crypto";
 
 const review = vi.hoisted(() => vi.fn());
@@ -139,6 +139,50 @@ it("rejects an identical concurrent submit without a second check or project", a
   pending.resolve();
   expect((await first).statusCode).toBe(202);
   expect(store.list()).toHaveLength(1);
+});
+
+it("starts the specified additional idea and transfers only its attachments", async () => {
+  const { app, store } = await fixture();
+  review.mockResolvedValue(report);
+  const draftId = randomUUID();
+  const assetId = randomUUID();
+  store.asset({
+    id: assetId,
+    name: "reference.png",
+    path: "/tmp/reference.png",
+    kind: "image/png",
+    bytes: 1,
+    owner: { kind: "draft", id: draftId },
+  });
+  const primary = { instructions: "Keep the existing idea" };
+  const request = RequestSchema.parse({
+    instructions: "Build the separate idea",
+    assetIds: [assetId],
+  });
+  store.patchRoom(
+    RoomPatchSchema.parse({
+      client: "fixture",
+      baseRevision: store.room().revision,
+      drafts: {
+        new: { request: primary },
+        [additionalIdeaDraftKey(draftId)]: { id: draftId, request },
+      },
+    }),
+  );
+  const send = (revision: number) =>
+    app.inject({
+      method: "POST",
+      url: "/api/runs",
+      headers,
+      payload: { ...request, sourceDraft: { draftId, revision } },
+    });
+  expect((await send(0)).statusCode).toBe(409);
+  expect(review).not.toHaveBeenCalled();
+  const result = await send(store.room().revision);
+  expect(result.statusCode).toBe(202);
+  expect(store.getAsset(assetId)?.owner).toEqual({ kind: "project", id: result.json().id });
+  expect(store.room().drafts.new.request).toEqual(primary);
+  expect(store.settingsChecks()[0].draftId).toBe(draftId);
 });
 it("rejects an edited draft and retains it instead of starting stale settings", async () => {
   const { app, store, prepare } = await fixture();

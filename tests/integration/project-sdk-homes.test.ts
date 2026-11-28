@@ -1,9 +1,9 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { mkdtemp, mkdir, readFile, writeFile, rm, lstat } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile, rm, lstat, readdir } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 vi.mock("../../src/server/agents/codex-tool-hooks", () => ({ prepareCodexToolHook: vi.fn() }));
-import { isolatedCodexHome } from "../../src/server/agents/sdk-home";
+import { isolatedCodexHome, syncCodexLogin } from "../../src/server/agents/sdk-home";
 import { prepareClaudeHome } from "../../src/server/agents/claude-home";
 import { dataRoot } from "../../src/server/runtime/config";
 import { randomUUID } from "node:crypto";
@@ -169,5 +169,36 @@ it("keeps shared initialization running when only one caller in the same project
   } finally {
     finish?.();
     await rm(root, { recursive: true, force: true });
+  }
+});
+
+it("keeps the main and project Codex logins on the most recently renewed copy", async () => {
+  const source = await mkdtemp(path.join(os.tmpdir(), "sdk-source-"));
+  const home = await mkdtemp(path.join(os.tmpdir(), "sdk-home-"));
+  vi.stubEnv("CODEX_HOME", source);
+  const login = (account: string, refreshed: string) =>
+    JSON.stringify({ tokens: { account_id: account }, last_refresh: refreshed });
+  const userFile = path.join(source, "auth.json");
+  const projectFile = path.join(home, "auth.json");
+  try {
+    await writeFile(userFile, login("acct", "2026-11-25T00:00:00Z"));
+    await writeFile(projectFile, login("acct", "2026-10-10T00:00:00Z"));
+    expect(await syncCodexLogin(home)).toBe("project_updated");
+    expect(await readFile(projectFile, "utf8")).toBe(login("acct", "2026-11-25T00:00:00Z"));
+    expect(await syncCodexLogin(home)).toBe("unchanged");
+
+    await writeFile(projectFile, login("acct", "2026-11-28T00:00:00Z"));
+    expect(await syncCodexLogin(home)).toBe("user_updated");
+    expect(await readFile(userFile, "utf8")).toBe(login("acct", "2026-11-28T00:00:00Z"));
+
+    await writeFile(projectFile, login("other", "2026-12-01T00:00:00Z"));
+    expect(await syncCodexLogin(home)).toBe("project_updated");
+    expect(await readFile(projectFile, "utf8")).toBe(login("acct", "2026-11-28T00:00:00Z"));
+
+    await rm(userFile);
+    expect(await syncCodexLogin(home)).toBe("unchanged");
+    expect((await readdir(source)).filter((name) => name.endsWith(".tmp"))).toEqual([]);
+  } finally {
+    await Promise.all([source, home].map((p) => rm(p, { recursive: true, force: true })));
   }
 });

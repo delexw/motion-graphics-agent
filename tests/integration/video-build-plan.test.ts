@@ -1,3 +1,5 @@
+import { executeInitialBuild } from "../../src/server/domains/video/execution/initial-build";
+import { combinedStyleGuideFixture } from "../fixtures/combined-style-guide";
 import { StoryboardSchema } from "../../src/shared/agents/schemas/storyboard";
 import { ProductionSchema } from "../../src/shared/agents/schemas/video";
 import { afterEach, expect, it, vi } from "vitest";
@@ -5,12 +7,12 @@ import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { z } from "zod";
-import { validStoryboard } from "../fixtures/storyboard";
+import { validPlannedStoryboard, validStoryboard } from "../fixtures/storyboard";
 import {
   fullVideoPlanSchemaFor,
   videoBuildPlanSchemaFor,
 } from "../../src/shared/agents/schemas/video-build-plan";
-import type { VideoGenerationJob } from "../../src/shared/domains/video";
+import { VideoRequestSchema, type VideoGenerationJob } from "../../src/shared/domains/video";
 vi.mock("../../src/server/agents/providers", () => ({ agentTurn: vi.fn() }));
 import { agentTurn } from "../../src/server/agents/providers";
 import {
@@ -73,7 +75,7 @@ function validPlan() {
 function fullPlan(duration = 3, width = size.width, height = size.height) {
   return {
     version: 2 as const,
-    storyboard: validStoryboard(duration),
+    storyboard: validPlannedStoryboard(duration),
     capturePlan: null,
     width,
     height,
@@ -108,6 +110,7 @@ async function input() {
   return {
     job: job(workspace),
     provider: "codex" as const,
+    request: VideoRequestSchema.parse({ instructions: "Show how the cover opens." }),
     prompt: "Read style-context.json; preserve exact text",
     ...size,
     signal: new AbortController().signal,
@@ -121,6 +124,9 @@ it("constrains SDK dimensions and duration with literal schema values", () => {
   const json = z.toJSONSchema(schema);
   expect(json.properties?.width).toMatchObject({ const: 1920 });
   expect(json.properties?.fps).toMatchObject({ const: 60 });
+  expect(json.properties?.storyboard).not.toHaveProperty(
+    "properties.scenes.items.properties.shots",
+  );
   expect(() => schema.parse({ ...validPlan(), fps: 30 })).toThrow();
 });
 it.each(["target", "time", "missingScene", "duplicateScene", "duplicateLayer", "hold"])(
@@ -168,6 +174,7 @@ it("plans in the selected preview session, persists it and hands off in the retu
   );
   expect(guidance).toContain("explicit from/to values with units");
   expect(guidance).toContain("specify only the representative preview beat");
+  expect(guidance).not.toContain("## Story & structure");
   expect(options.job.sessionId).toBe("same-session");
   expect(options.job.buildPlan?.sessionId).toBe("same-session");
   expect(prompt).toContain("Read VIDEO_BUILD_PLAN.json completely");
@@ -321,7 +328,6 @@ it.each([
     const targetDuration = kind === "full" ? 120 : 3;
     const { generateVideo } = await import("../../src/server/domains/video/workflow");
     const { loadCatalog } = await import("../../src/server/catalog/catalog");
-    const { VideoRequestSchema } = await import("../../src/shared/domains/video");
     const options = await input();
     const controller = new AbortController();
     options.job.kind = kind;
@@ -408,6 +414,22 @@ it.each([
               ? "REVISION SCOPE"
               : "IMPLEMENT THE SAVED VIDEO BUILD PLAN",
       );
+      if (!refining && !resuming) {
+        expect(call.prompt).toMatch(/^# Video build guide/);
+        expect(call.prompt.match(/^## .+$/gm)).toHaveLength(11);
+        expect(call.prompt).toContain(
+          "Give a few precisely positioned elements enough space to carry the idea.",
+        );
+        expect(call.prompt).toContain(
+          `## Timing and movement\nEffective settings for this build: {"durationSeconds":${duration}`,
+        );
+        expect(call.prompt).not.toContain("ORIGINAL USER IDEA");
+        const references = await readFile(
+          path.join(call.workspace, "VIDEO_REQUIREMENTS.md"),
+          "utf8",
+        );
+        expect(references).toContain("ORIGINAL USER IDEA");
+      }
       if (kind === "preview") {
         expect(call.prompt).not.toContain("ORIGINAL USER IDEA");
         expect(call.prompt).not.toContain("NEXT-TURN BUILD SPECIFICATION");
@@ -567,7 +589,14 @@ it.each(["claude", "codex"] as const)(
     options.job.duration = 300;
     options.job.model = provider === "claude" ? "claude-opus-5-5" : "gpt-6.2-astra";
     options.job.sessionId = undefined;
-    const plan = fullPlan(300);
+    const plan = {
+      ...fullPlan(300),
+      plan: [
+        "## Story & structure",
+        "Logline: An ordinary cover opens to reveal how its mechanism works.",
+        "1. Opening (0–300 s). The latch releases and the cover lifts. The audience sees how the latch lets the cover move. End on the exposed mechanism to resolve the opening question.",
+      ].join("\n\n"),
+    };
     vi.mocked(agentTurn).mockResolvedValueOnce({ value: plan, sessionId: "full-plan-session" });
     const referenceUrls = ["https://example.com/app"];
     const prompt = await prepareVideoBuildPlan({ ...options, provider, referenceUrls });
@@ -586,10 +615,30 @@ it.each(["claude", "codex"] as const)(
     expect(planningPrompt).toContain("Plan the complete requested film at its full duration");
     expect(planningPrompt).toContain("inspect the live application using the reference tools");
     expect(planningPrompt).toContain("never claim planned footage already exists");
+    expect(planningPrompt).toContain("## Story & structure");
+    expect(planningPrompt).toContain("Write a one-sentence logline");
+    expect(planningPrompt).toContain(
+      "what visibly happens, what the audience should understand and how it leads into the next section",
+    );
+    expect(planningPrompt).toContain("then break the scenes down into timed shots");
+    expect(planningPrompt).not.toContain("### Scene backgrounds");
+    expect(planningPrompt).toContain(
+      "Use the 11-section style guide to decide how to present those scenes.",
+    );
+    expect(planningPrompt).toContain("FULL-FILM SHOT BREAKDOWN");
+    expect(planningPrompt.indexOf("## Story & structure")).toBeLessThan(
+      planningPrompt.indexOf("FULL-FILM SHOT BREAKDOWN"),
+    );
+    expect(planningPrompt).toContain("each shot's startSeconds and endSeconds");
+    expect(prompt).toContain("Follow the complete shot breakdown in the saved plan");
     expect(planningPrompt).not.toContain("specify only the representative preview beat");
     expect(prompt).toContain("Implement the complete film now");
     expect(options.job.sessionId).toBe("full-plan-session");
     expect(options.job.buildPlan?.value).toMatchObject({ version: 2, durationSeconds: 300 });
+    const savedPlan = JSON.parse(
+      await readFile(path.join(options.job.workspace, "VIDEO_BUILD_PLAN.json"), "utf8"),
+    );
+    expect(savedPlan).toMatchObject({ plan: plan.plan, storyboard: plan.storyboard });
     await prepareVideoBuildPlan({ ...options, provider, referenceUrls });
     expect(agentTurn).toHaveBeenCalledOnce();
   },
@@ -701,6 +750,146 @@ it("requires a complete full-film storyboard before handing off a new build", as
   );
   expect(options.onEvent.mock.calls.some(([event]) => event.type === "plan_ready")).toBe(false);
 });
+it("blocks the builder when a scene has no shots and gives the planner a chance to fix it", async () => {
+  const planning = await input();
+  planning.job.kind = "full";
+  const plan = fullPlan();
+  const scene = plan.storyboard.scenes[0];
+  const { shots: _shots, ...withoutShots } = scene;
+  const incomplete = { ...plan, storyboard: { ...plan.storyboard, scenes: [withoutShots] } };
+  const buildTurn = vi.fn();
+  const build = () =>
+    executeInitialBuild({
+      planning,
+      candidate: {
+        id: "direction",
+        primaryStyleId: "style-001",
+        supportingStyleIds: [],
+        sceneRoles: [],
+        rationale: "One clear mechanical reveal",
+        feasible: true,
+        missingAssets: [],
+        score: 1,
+        confidence: 1,
+        dimensions: {},
+      },
+      styles: [],
+      buildTurn,
+    });
+  vi.mocked(agentTurn).mockResolvedValueOnce({ value: incomplete, sessionId: "main" });
+  vi.mocked(agentTurn).mockImplementationOnce(async (call) => {
+    expect(call.sessionId).toBe("main");
+    expect(call.prompt).toContain("shots");
+    expect(buildTurn).not.toHaveBeenCalled();
+    await expect(
+      readFile(path.join(planning.job.workspace, "VIDEO_BUILD_PLAN.json")),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+    return { value: plan, sessionId: "main" };
+  });
+
+  await build();
+
+  expect(buildTurn).toHaveBeenCalledOnce();
+  const saved = JSON.parse(
+    await readFile(path.join(planning.job.workspace, "VIDEO_BUILD_PLAN.json"), "utf8"),
+  );
+  expect(saved.storyboard.scenes[0].shots).toEqual(scene.shots);
+});
+
+it("rejects a gap, overlap, empty direction or out-of-shot cue in a full-film shot plan", () => {
+  const schema = fullVideoPlanSchemaFor(size, true);
+  expect(z.toJSONSchema(schema).properties?.storyboard).toMatchObject({
+    properties: { scenes: { items: { required: expect.arrayContaining(["shots"]) } } },
+  });
+  const plan = fullPlan();
+  const scene = plan.storyboard.scenes[0];
+  const [shot] = scene.shots;
+  const withShots = (shots: unknown[]) => ({
+    ...plan,
+    storyboard: { ...plan.storyboard, scenes: [{ ...scene, shots }] },
+  });
+  expect(
+    schema.safeParse(
+      withShots([
+        { ...shot, endSeconds: 1 },
+        { ...shot, startSeconds: 1 },
+      ]),
+    ).success,
+  ).toBe(true);
+  for (const nextStart of [0.9, 1.1])
+    expect(
+      schema.safeParse(
+        withShots([
+          { ...shot, endSeconds: 1 },
+          { ...shot, startSeconds: nextStart },
+        ]),
+      ).success,
+    ).toBe(false);
+  expect(schema.safeParse(withShots([{ ...shot, endSeconds: 2 }])).success).toBe(false);
+  expect(schema.safeParse(withShots([{ ...shot, cameraMovement: " " }])).success).toBe(false);
+  expect(
+    schema.safeParse(
+      withShots([
+        {
+          ...shot,
+          cues: [{ kind: "sfx", atSeconds: 3, description: "The latch clicks" }],
+        },
+      ]),
+    ).success,
+  ).toBe(false);
+});
+
+it("validates shot cues against enabled tracks and their absolute script windows", () => {
+  const plan = fullPlan();
+  const scene = plan.storyboard.scenes[0];
+  const [shot] = scene.shots;
+  const withCue = (kind: string, atSeconds: number) => ({
+    ...plan,
+    storyboard: {
+      ...plan.storyboard,
+      scenes: [
+        {
+          ...scene,
+          shots: [{ ...shot, cues: [{ kind, atSeconds, description: "Explain the latch" }] }],
+        },
+      ],
+    },
+  });
+  const cueSettings = VideoRequestSchema.parse({
+    instructions: "Explain the opening mechanism in a short silent caption.",
+    speech: { mode: "off" },
+    scriptItems: [
+      {
+        id: "caption",
+        startSeconds: 1,
+        endSeconds: 2,
+        text: "Lift the latch.",
+        speech: { mode: "off" },
+        showSubtitles: true,
+      },
+    ],
+  });
+  const schema = fullVideoPlanSchemaFor({ ...size, cueSettings }, true);
+  expect(schema.safeParse(plan).success).toBe(false);
+  expect(schema.safeParse(withCue("subtitle", 1)).success).toBe(true);
+  expect(schema.safeParse(withCue("subtitle", 0.5)).success).toBe(false);
+  expect(schema.safeParse(withCue("narration", 1)).success).toBe(false);
+  expect(
+    fullVideoPlanSchemaFor(
+      { ...size, cueSettings: { subtitles: { mode: "off" } } },
+      true,
+    ).safeParse(withCue("subtitle", 1)).success,
+  ).toBe(false);
+
+  const inactiveNarration = VideoRequestSchema.parse({
+    instructions: "Show the mechanism with subtitles off.",
+    speech: { mode: "narration", source: "subtitles" },
+    subtitles: { mode: "off" },
+  });
+  const inactiveSchema = fullVideoPlanSchemaFor({ ...size, cueSettings: inactiveNarration }, true);
+  expect(inactiveSchema.safeParse(withCue("narration", 1)).success).toBe(false);
+  expect(inactiveSchema.safeParse(plan).success).toBe(true);
+});
 it("saves the validated storyboard before announcing readiness and preserves it on retries", async () => {
   const options = await input();
   options.job.kind = "full";
@@ -710,7 +899,7 @@ it("saves the validated storyboard before announcing readiness and preserves it 
   expect(options.job.storyboardReady).toBe(true);
   expect(
     JSON.parse(await readFile(path.join(options.job.workspace, "STORYBOARD.json"), "utf8")),
-  ).toEqual(plan.storyboard);
+  ).toEqual(StoryboardSchema.parse(plan.storyboard));
   await prepareVideoBuildPlan(options);
   expect(agentTurn).toHaveBeenCalledOnce();
   expect(options.onEvent).toHaveBeenCalledWith(
@@ -729,7 +918,7 @@ it("rejects a storyboard whose duration differs from the full-film plan", () => 
 it("upgrades historical full-film plans before new capture work", async () => {
   const options = await input();
   options.job.kind = "full";
-  const { storyboard: _storyboard, ...oldPlan } = fullPlan();
+  const oldPlan = { ...fullPlan(), storyboard: validStoryboard() };
   options.job.buildPlan = {
     model: options.job.model,
     sessionId: options.job.sessionId!,
@@ -740,13 +929,49 @@ it("upgrades historical full-film plans before new capture work", async () => {
   expect(agentTurn).toHaveBeenCalledOnce();
   expect(
     JSON.parse(await readFile(path.join(options.job.workspace, "STORYBOARD.json"), "utf8")),
-  ).toEqual(fullPlan().storyboard);
+  ).toEqual(validStoryboard());
+});
+
+it("can resume a saved plan upgrade after a replacement provider session fails validation", async () => {
+  const options = await input();
+  options.job.kind = "full";
+  options.job.storyboardReady = true;
+  const oldPlan = { ...fullPlan(), storyboard: validStoryboard() };
+  options.job.buildPlan = {
+    model: options.job.model,
+    sessionId: options.job.sessionId!,
+    value: oldPlan,
+  };
+  const originalSessionId = options.job.sessionId;
+  vi.mocked(agentTurn).mockImplementation(async (call) => {
+    call.onEvent?.({
+      type: "session",
+      message: "Replacement planning session",
+      data: { sessionId: "replacement-session" },
+    });
+    expect(options.job.sessionId).toBe(originalSessionId);
+    return { value: oldPlan, sessionId: "replacement-session" };
+  });
+
+  await expect(prepareVideoBuildPlan(options)).rejects.toBeInstanceOf(StructuredOutputError);
+  expect(agentTurn).toHaveBeenCalledTimes(3);
+  expect(vi.mocked(agentTurn).mock.calls[1][0].sessionId).toBe("replacement-session");
+  expect(options.job.sessionId).toBe(originalSessionId);
+  expect(options.job.buildPlan.value).toEqual(oldPlan);
+  expect(options.job.storyboardReady).toBe(false);
+
+  vi.mocked(agentTurn).mockResolvedValueOnce({ value: fullPlan(), sessionId: "working-session" });
+  await expect(prepareVideoBuildPlan(options)).resolves.toContain(
+    "IMPLEMENT THE SAVED VIDEO BUILD PLAN",
+  );
+  expect(options.job.sessionId).toBe("working-session");
+  expect(options.job.buildPlan.sessionId).toBe("working-session");
+  expect(options.job.storyboardReady).toBe(true);
 });
 
 it("links every capture chapter to the storyboard before recording", () => {
   const plan = {
     ...fullPlan(),
-    storyboard: StoryboardSchema.parse(fullPlan().storyboard),
     capturePlan: {
       scope: "Show playback",
       story: "Watch an example",
@@ -811,7 +1036,6 @@ it("revises a saved capture budget in the same main session and saves the new st
   options.job.kind = "full";
   const approved = {
     ...fullPlan(),
-    storyboard: StoryboardSchema.parse(validStoryboard()),
     capturePlan: {
       scope: "Create",
       story: "Show creation",
@@ -862,7 +1086,7 @@ it("revises a saved capture budget in the same main session and saves the new st
   expect(options.job.buildPlan.value).toEqual(revised);
   expect(
     JSON.parse(await readFile(path.join(options.job.workspace, "STORYBOARD.json"), "utf8")),
-  ).toEqual(revised.storyboard);
+  ).toEqual(StoryboardSchema.parse(revised.storyboard));
   expect(options.onEvent).toHaveBeenCalledWith(expect.objectContaining({ type: "plan_ready" }));
 });
 
@@ -891,7 +1115,6 @@ it.each([false, true])(
       : null;
     const plan = {
       ...fullPlan(),
-      storyboard: StoryboardSchema.parse(fullPlan().storyboard),
       capturePlan,
     };
     if (capture) plan.storyboard.scenes[0].assets = ["capture:watch"];
@@ -911,8 +1134,125 @@ it.each([false, true])(
     ).toEqual(plan);
     expect(
       JSON.parse(await readFile(path.join(options.job.workspace, "STORYBOARD.json"), "utf8")),
-    ).toEqual(plan.storyboard);
+    ).toEqual(StoryboardSchema.parse(plan.storyboard));
     await prepareVideoBuildPlan(options);
     expect(ready()).toHaveLength(capture ? 3 : 2);
   },
 );
+
+it("requires the 11 combined sections for a new multi-style full build and reuses the saved guide", async () => {
+  const options = await input();
+  options.job.kind = "full";
+  options.job.duration = 30;
+  const request = VideoRequestSchema.parse({
+    instructions: "Explain the original film idea",
+    duration: 30,
+    outputLanguage: "zh",
+    subtitles: { mode: "provided", text: "按照原文。" },
+    speech: { mode: "off" },
+    requirements: {
+      main: {},
+      images: {},
+      urls: {},
+      music: { instructions: "Use the requested bossa nova." },
+    },
+  });
+  const completePlan = fullPlan(30);
+  completePlan.storyboard.scenes[0].shots[0].cues = [
+    { kind: "subtitle", atSeconds: 0, description: "Show the approved Chinese subtitle." },
+    { kind: "music", atSeconds: 0, description: "Start the requested bossa nova." },
+  ];
+  vi.mocked(agentTurn).mockImplementationOnce(async (call) => {
+    const guidance = await readFile(
+      path.join(options.job.workspace, "VIDEO_PLANNING_GUIDANCE.md"),
+      "utf8",
+    );
+    expect(guidance).toContain("one project-specific combinedStyleGuide with all 11 sections");
+    expect(call.schema.safeParse(fullPlan(30)).success).toBe(false);
+    expect(
+      call.schema.safeParse({
+        ...fullPlan(30),
+        combinedStyleGuide: { ...combinedStyleGuideFixture, "Sound options": " " },
+      }).success,
+    ).toBe(false);
+    return {
+      value: { ...completePlan, combinedStyleGuide: combinedStyleGuideFixture },
+      sessionId: "planned-combination",
+    };
+  });
+  const planningOptions = { ...options, request, styleCombination: true };
+  const prompt = await prepareVideoBuildPlan(planningOptions);
+  const saved = JSON.parse(
+    await readFile(path.join(options.job.workspace, "VIDEO_BUILD_PLAN.json"), "utf8"),
+  );
+  expect(saved.combinedStyleGuide).toEqual(combinedStyleGuideFixture);
+  const { loadCatalog } = await import("../../src/server/catalog/catalog");
+  const styles = (await loadCatalog()).styles.filter(
+    ({ id }) => id === "style-001" || id === "style-002",
+  );
+  const buildTurn = vi.fn();
+  const build = (preview: boolean) =>
+    executeInitialBuild({
+      planning: preview
+        ? {
+            ...planningOptions,
+            request,
+            job: { ...planningOptions.job, kind: "preview", duration: 3 },
+          }
+        : { ...planningOptions, request },
+      candidate: {
+        id: "direction",
+        combinedStyleGuide: combinedStyleGuideFixture,
+        primaryStyleId: "style-001",
+        supportingStyleIds: ["style-002"],
+        sceneRoles: ["Use the supporting style for the paper fold."],
+        rationale: "A readable diagram",
+        feasible: true,
+        missingAssets: [],
+        score: 1,
+        confidence: 1,
+        dimensions: {},
+      },
+      styles,
+      buildTurn,
+    });
+  await build(false);
+  await build(true);
+  const authoringPrompt = buildTurn.mock.calls[0][0];
+  const [guide, references] = authoringPrompt.split("# Supporting references");
+  expect(guide.match(/^## .+$/gm)).toEqual(
+    Object.keys(combinedStyleGuideFixture).map((heading) => `## ${heading}`),
+  );
+  for (const value of Object.values(combinedStyleGuideFixture)) expect(guide).toContain(value);
+  const previewPrompt = buildTurn.mock.calls[1][0];
+  for (const style of styles) {
+    const summary = style.executable_prompt_template.split("\n", 1)[0].slice(2);
+    for (const prompt of [guide, previewPrompt]) {
+      expect(prompt).toContain(summary);
+      expect(prompt.indexOf(summary)).toBeLessThan(prompt.indexOf("## Visual identity"));
+    }
+  }
+  expect(previewPrompt).toContain(
+    '"audio":"silent","narration":"off","music":"off","effects":"off"',
+  );
+  expect(previewPrompt).not.toContain("Use the requested bossa nova.");
+  expect(guide).toContain(
+    '## Sound options\nEffective settings for this build: {"narration":{"mode":"off"},"musicInstructions":"Use the requested bossa nova.","musicAssetIds":[]}',
+  );
+  expect(guide).toContain(
+    '## Timing and movement\nEffective settings for this build: {"durationSeconds":30,"requestedFilmDuration":30}',
+  );
+  expect(guide).toContain(
+    '## Lettering and captions\nEffective settings for this build: {"videoLanguage":"zh","subtitlesEnabled":true,"subtitleSettings":{"mode":"provided","text":"按照原文。"}}',
+  );
+  expect(guide).toContain(
+    '## Implementation tools\nEffective settings for this build: {"renderer":"hyperframes","compositionPipeline":"HyperFrames"}',
+  );
+  expect(authoringPrompt).not.toContain(planningOptions.prompt);
+  expect(authoringPrompt).not.toContain(request.instructions);
+  expect(references).toContain("VIDEO_REQUIREMENTS.md");
+  expect(references).toContain("VIDEO_BUILD_PLAN.json");
+  expect(references).toContain("STORYBOARD.json");
+  expect(await prepareVideoBuildPlan(planningOptions)).toBe(prompt);
+  expect(agentTurn).toHaveBeenCalledOnce();
+});

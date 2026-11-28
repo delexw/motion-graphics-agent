@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "Pencil Cutaway",
+  "displayDescription": "Coloured-pencil hatching builds a lightbulb, then its outer layer peels back to show a labelled red network inside.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP 3.15.1 (local gsap.min.js)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, sound effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "STYLE.json has no reviewed preview recipes and no BACKGROUND_REVIEW.json was supplied, so the preview shows the Motion Graphic's main action: build the specimen with overlapping hatches, then peel back one layer to show the labelled interior.",
+    "Coloured pencil is approximated procedurally: seeded Canvas 2D strokes with a cached noise grain knocked out of them, over a cached paper-tooth texture. It is not scanned pencil or physically simulated pigment.",
+    "The paper peel is a 2D fold: distances across the hinge are scaled by cos(angle) and shaded. There is no true 3D curl, bending or self-shadowing.",
+    "No Blender was used, as instructed. Rendering is Canvas 2D and timing is a single GSAP timeline.",
+    "The dependency-record tool (select_project_technologies) could not run because this preview project has no PROJECT_DEPENDENCIES.json. Canvas 2D is a browser feature and GSAP is the supplied local gsap.min.js, so nothing was installed."
+  ]
+}

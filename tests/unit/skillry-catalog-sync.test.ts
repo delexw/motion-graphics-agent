@@ -15,7 +15,7 @@ describe("Skillry catalog additions and focused recipes", () => {
       expect(
         chroma.contrast(style.palette.tokens.foreground, style.palette.tokens.background),
       ).toBeGreaterThanOrEqual(4.5);
-      expect(style.executable_prompt_template).toContain("STORYBOARD.json");
+      expect(style.executable_prompt_template).toContain("## Characteristic actions");
       expect(style.executable_prompt_template).not.toContain("Stained-Glass Light Projection");
       expect(style.tech.recommended_stack.some((tool) => tool.name === "HyperFrames")).toBe(false);
     }

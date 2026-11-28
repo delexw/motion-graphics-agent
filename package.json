@@ -10,6 +10,8 @@
     "speech:setup:ming": "node --import tsx scripts/setup-ming-tts.ts",
     "speech:setup:pocket": "node --import tsx scripts/setup-pocket-tts.ts",
     "speech:setup": "node --import tsx scripts/setup-speech.ts",
+    "electron:setup": "install-electron",
+    "electron:prod": "node scripts/desktop/launch.mjs",
     "dev": "node --import tsx src/server/index.ts",
     "build": "tsc --noEmit && vite build",
     "start": "node --import tsx src/server/index.ts",
@@ -70,6 +72,7 @@
     "d3-polygon": "^3.0.1",
     "dotenv": "^18.0.9",
     "dsh-cost-meter": "^1.9.65",
+    "electron": "^45.5.0",
     "esbuild": "^0.28.2",
     "fast-xml-parser": "^5.11.2",
     "fastify": "^5.12.7",
@@ -87,7 +90,7 @@
     "micromark-extension-gfm": "^3.0.0",
     "minisearch": "^7.2.0",
     "motion": "^14.9.0",
-    "multiplane": "^0.3.13",
+    "multiplane": "^0.3.16",
     "nanoid": "^6.0.2",
     "otio.js": "^0.1.0",
     "paper": "^0.17.0",
@@ -115,8 +118,10 @@
     "streamdown": "^2.7.1",
     "tailwind-merge": "^3.7.0",
     "three": "^0.187.0",
+    "tsx": "^4.23.15",
     "use-stick-to-bottom": "^1.1.6",
     "wavesurfer.js": "^8.0.4",
+    "yaml": "^2.9.1",
     "yauzl": "^3.4.0",
     "yazl": "^3.3.1",
     "zod": "^4.6.7"
@@ -143,11 +148,9 @@
     "oxlint": "^1.90.0",
     "playwright": "^1.64.1",
     "tailwindcss": "^4.3.3",
-    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.5",
-    "vitest": "^5.0.5",
-    "yaml": "^2.9.1"
+    "vitest": "^5.0.5"
   },
   "overrides": {
     "@deepseek-ai/dsh": {

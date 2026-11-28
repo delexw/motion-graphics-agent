@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "title": "Terrain Map Explainer — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Reference location",
+      "startSeconds": 0,
+      "endSeconds": 0.78,
+      "purpose": "Establish the map and place the locator on the IDEA peak first.",
+      "visuals": ["Top-down Three.js relief map on a navy sea with an elevation-ramp shader and contour lines", "Title card slides in", "Locator pin drops onto the IDEA summit and its ring expands", "North arrow, 2 km scale bar and elevation legend shown at fixed sizes"],
+      "assets": ["index.html", "technology-three_js-hRuXqO/index.js", "gsap.min.js"],
+      "beats": [
+        {"startSeconds": 0, "endSeconds": 0.78, "development": "Terrain heights rise from 35% to full, so contour bands spread across the islands; the locator lands on IDEA and the IDEA label appears.", "captions": ["An idea becomes a connected system", "Peak = the idea · routes = its connections", "IDEA"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-2",
+      "title": "Linked terrain section",
+      "startSeconds": 0.78,
+      "endSeconds": 1.68,
+      "purpose": "Open the A–IDEA–C section linked to the located place.",
+      "visuals": ["Navy section line traced over the map from A through IDEA to C and labelled SECTION LINE", "Camera pitches about 52° into oblique relief with north kept screen-up", "A 3D slice cut along the same line rises above the terrain", "Section card opens; profile drawn from the same elevation samples, then its labels and scale appear", "Dotted leader joins C on the map to the card"],
+      "assets": ["index.html"],
+      "beats": [
+        {"startSeconds": 0.78, "endSeconds": 1.13, "development": "The section line draws from A through IDEA to C; the SECTION LINE tag and A/C markers appear.", "captions": ["SECTION LINE", "A", "C"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 1.13, "endSeconds": 1.68, "development": "The view tilts into relief, the 3D slice lifts and the section card shows the matching profile, the IDEA elevation, the distance axis and vertical exaggeration.", "captions": ["SECTION A – IDEA – C", "IDEA · 980 m", "0 km", "8.1 km", "Vertical ×4.1"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.2}
+      ]
+    },
+    {
+      "id": "scene-3",
+      "title": "Focus back to the map",
+      "startSeconds": 1.68,
+      "endSeconds": 3,
+      "purpose": "Return to the plan view and restore the routes last, then hold the settled map.",
+      "visuals": ["Camera returns to top-down; the slice sinks back into its line and fades", "Orange dashed routes draw IDEA–A, IDEA–C, IDEA–D and A–C over the terrain", "Route endpoints and the D label appear", "Settled frame holds from 2.55 s"],
+      "assets": ["index.html"],
+      "beats": [
+        {"startSeconds": 1.68, "endSeconds": 2.55, "development": "Tilt returns to plan view while the routes are restored one after another; D node and label appear.", "captions": ["D"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 2.55, "endSeconds": 3, "development": "Settled hold: map, locator, section line, routes, scale, legend and both cards are all readable.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.45}
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["Locator first (0.22–0.85 s), section opened second (0.78–1.68 s), routes restored last (1.98–2.55 s), as the style requires.", "The camera tilt is a single out-and-back move with no idle drift."],
+    "justifiedHolds": ["2.55–3.0 s settled reading hold so the cards, scale and legend are readable after the motion."]
+  },
+  "notes": ["Silent preview: no music, effects or narration.", "No reviewed preview recipes are listed in STYLE.json (tech.preview_recipes absent; the task lists optional recipes as []), so this preview shows the main characteristic action of the Motion Graphic.", "Terrain is an illustrative procedural heightfield (four Gaussian hills), not real geographic data; the map, 3D slice and section profile all sample the same elevation function along the same line.", "Blender was not used."]
+}

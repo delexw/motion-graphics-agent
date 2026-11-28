@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Transmission X-Ray",
+  "displayDescription": "A closed case is scanned to reveal an idea and its links; the isolated scan rotates 90° to show the idea core's depth.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP (local gsap.min.js, one paused seekable timeline)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Density image is a simulated illustration, not measured transmission data.",
+    "3D rotation is an orthographic projection of a simple point/ellipsoid model in Canvas 2D; the bulb's depth is approximated by a projected-width scale.",
+    "No Blender used, per user instruction.",
+    "No reviewed preview recipes or BACKGROUND_REVIEW.json were supplied; the characteristic action (scan then rotate one isolated scan) is demonstrated."
+  ]
+}

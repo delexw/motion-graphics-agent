@@ -9,11 +9,11 @@ import { McpUploads, mcpUploadPath, mcpUploadTokenHeader, mcpUploadContentType }
 export function registerKitevaMcpRoutes(app: FastifyInstance, dependencies: KitevaMcpDependencies) {
   // This guard lives across HTTP requests, rather than inside an individual MCP connection.
   let submitting = false;
-  const start: KitevaMcpDependencies["start"] = async (request) => {
+  const start: KitevaMcpDependencies["start"] = async (request, sourceDraft) => {
     if (submitting) throw Error("An idea submission is already in progress; do not submit twice.");
     submitting = true;
     try {
-      return await dependencies.start(request);
+      return await dependencies.start(request, sourceDraft);
     } finally {
       submitting = false;
     }

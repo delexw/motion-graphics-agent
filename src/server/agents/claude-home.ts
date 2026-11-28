@@ -134,3 +134,17 @@ export async function claudeLoginEnvironment(home: string, signal?: AbortSignal)
     ? { [credentialEnvironmentVariables.claudeOauthToken]: token }
     : {};
 }
+
+export async function claudeLoginRenewed(
+  workspace: string,
+  usedLogin: Partial<Record<string, string>>,
+  signal?: AbortSignal,
+) {
+  const usedToken = usedLogin[credentialEnvironmentVariables.claudeOauthToken];
+  if (!usedToken) return false;
+  const home = await prepareClaudeHome(workspace, undefined, signal);
+  const currentToken = (
+    (await claudeLoginEnvironment(home, signal)) as Partial<Record<string, string>>
+  )[credentialEnvironmentVariables.claudeOauthToken];
+  return currentToken !== undefined && currentToken !== usedToken;
+}

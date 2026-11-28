@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "One-Bit Dither",
+  "displayDescription": "A dithered light grows into an idea bulb, then a moving threshold boundary switches the right panel into a connected system.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative procedural scene: tones are approximated with an 8x8 ordered Bayer threshold on a 320x180 one-bit buffer scaled 4x nearest-neighbour; no physical lighting or print simulation.",
+    "Exactly two pre-encode values (#142536 ink, #EDF1F3 paper) from the catalogue swatches; the accent #005885 and secondary #B9D5DE are not used because a third value would break the one-bit rule. The illustration's navy/yellow pair was treated as a composition reference only.",
+    "STYLE.json lists no reviewed preview recipes and no BACKGROUND_REVIEW.json was supplied; the preview demonstrates the catalogue's characteristic action (density growth into a shape, then a moving threshold boundary switching a second region).",
+    "Lettering is an original 5x7 bitmap font built on the same pixel grid with solid backings; video compression may add intermediate colours after export.",
+    "Blender was not used, per instruction."
+  ]
+}

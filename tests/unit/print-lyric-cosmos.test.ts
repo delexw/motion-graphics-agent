@@ -36,17 +36,26 @@ describe("Printed Spark Collage", () => {
     expect(supportedMotionIds).toContain("motion-050");
   });
 
-  it("uses the exact catalog templates and explicit bindings for both Opus authoring inputs", async () => {
+  it("records the historical style prompt hashes and preserves exact motion bindings", async () => {
     const catalog = await loadCatalog();
     const review = JSON.parse(
       await readFile("assets/catalog/reviews/offset-halftone-lyric-cosmos.json", "utf8"),
     );
     expect(review.previewInputs).toHaveLength(2);
     for (const input of review.previewInputs) {
-      const template =
-        input.entryId === "style-142"
-          ? catalog.styles.find((entry) => entry.id === input.entryId)!.executable_prompt_template
-          : catalog.motions.find((entry) => entry.id === input.entryId)!.executable_prompt_template;
+      expect(input.model).toBe("claude-opus-5-5");
+      expect(input.additionalVisualBrief).toBe(false);
+      if (input.entryId === "style-142") {
+        expect(input.templateSha256).toMatch(/^[a-f0-9]{64}$/);
+        expect(input.resolvedPromptSha256).toMatch(/^[a-f0-9]{64}$/);
+        expect(
+          catalog.styles.find((entry) => entry.id === input.entryId)?.executable_prompt_template,
+        ).toMatch(/^> .+\n\n## Visual identity/);
+        continue;
+      }
+      const template = catalog.motions.find(
+        (entry) => entry.id === input.entryId,
+      )!.executable_prompt_template;
       expect(sha256(template)).toBe(input.templateSha256);
       const resolved = resolveTemplate(template, input.variables);
       expect(resolved).not.toMatch(/\{\{\w+\}\}/);

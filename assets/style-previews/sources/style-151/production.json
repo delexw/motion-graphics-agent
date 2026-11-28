@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "Circuit Trace",
+  "displayDescription": "A pulse leaves the IDEA pad, branches at junction J1 and lights U1, U2 and U3 in order of trace length.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP 3.15.1 (local gsap.min.js, single paused timeline at window.__timelines.video)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative procedural PCB: flat top-view SVG solder mask, copper and plating; no physical copper lighting, conductivity or real signal timing is simulated.",
+    "Current is shown as a constant-speed brightness state (560 px/s along each copper centreline); branch arrival delays are derived from route length, not measured electrical data.",
+    "STYLE.json supplies no tech.preview_recipes and no BACKGROUND_REVIEW.json exists, so the preview demonstrates the core characteristic action rather than a named recipe.",
+    "Stable top view without a moving crop: the background and via grid must stay stationary, so focus follows the active trace through its brightness instead of a camera move.",
+    "Blender was not used, per user instruction."
+  ]
+}

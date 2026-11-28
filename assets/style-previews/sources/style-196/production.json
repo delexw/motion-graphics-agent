@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Transit Map",
+  "displayDescription": "A new blue route connects Idea to Network, seats the System Central interchange, then a marker rides the link.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Original illustrative network, not real transit data.",
+    "Flat schematic SVG medium; no depth or material simulation is implied by this style.",
+    "STYLE.json contains no tech.preview_recipes and no BACKGROUND_REVIEW.json was supplied, so the catalogue characteristic action is demonstrated.",
+    "GSAP loaded from the host-provided local gsap.min.js; Creative Pool technology finalization failed because the project dependency record file is missing."
+  ]
+}

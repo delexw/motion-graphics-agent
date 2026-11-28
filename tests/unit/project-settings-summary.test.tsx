@@ -98,3 +98,28 @@ it("omits source provenance for an original project and avoids inventing an unkn
   expect(html).toContain("Source project");
   expect(html).not.toContain("Version ");
 });
+
+it("shows adjustive effort as a plain setting chip", () => {
+  expect(summary({ dynamicModelEffort: true })).toContain("<span>Adjustive effort: Yes</span>");
+  expect(summary({})).toContain("<span>Adjustive effort: No</span>");
+  expect(summary({ dynamicModelEffort: true })).not.toContain("combobox");
+});
+
+it("shows the music chip only from the selected music style setting", () => {
+  const music = (value: Record<string, unknown>) =>
+    summary({ requirements: { main: {}, images: {}, urls: {}, music: value } });
+  expect(music({ style: "Bossa Nova" })).toContain("Music: Bossa Nova");
+  expect(music({ instructions: "Bossa nova, about 3 minutes" })).not.toContain("Music:");
+  expect(summary({})).not.toContain("Music:");
+});
+
+it("accepts only music styles from the picker list", () => {
+  const parse = (style: string) =>
+    RequestSchema.safeParse({
+      instructions: "Explain a useful idea",
+      requirements: { main: {}, images: {}, urls: {}, music: { style } },
+    }).success;
+  expect(parse("Bossa Nova")).toBe(true);
+  expect(parse("bossa nova")).toBe(false);
+  expect(parse("Smooth lounge")).toBe(false);
+});

@@ -97,7 +97,8 @@ if(t===0)return;ctx.arc(640,360,radius - 30,0,Math.PI*2);ctx.fill();
       await writePreviewPlan(workspace, brief, [candidate]);
       await writeStoryboardJson(workspace, validStoryboard(), 3);
       vi.mocked(agentTurn).mockImplementation(async (options) => {
-        if (options.prompt.startsWith("# Build this preview")) {
+        if (options.prompt.includes("\n# Build this preview\n")) {
+          expect(options.prompt).toMatch(/^# Video build guide/);
           expect(options.sessionId).toBeUndefined();
           expect(options.readOnly).toBeUndefined();
           expect(

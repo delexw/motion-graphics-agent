@@ -46,6 +46,7 @@ vi.mock("@anthropic-ai/claude-agent-sdk", () => ({
 }));
 vi.mock("../../src/server/agents/sdk-home", () => ({
   isolatedCodexHome: async () => "/isolated-home",
+  syncCodexLogin: async () => "unchanged",
 }));
 vi.mock("@openai/codex-sdk", () => ({
   Codex: class {

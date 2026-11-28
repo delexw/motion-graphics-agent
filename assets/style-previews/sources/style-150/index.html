@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Caption-Led News — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #0B0F14; overflow: hidden; }
+  #root { width: 100%; height: 100%; position: relative; }
+  #root svg { display: block; width: 100%; height: 100%; }
+  .serif { font-family: Georgia, "Times New Roman", serif; font-weight: 700; }
+  .sans { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <clipPath id="clip-l1"><rect x="40" y="118" width="640" height="90"/></clipPath>
+    <clipPath id="clip-l2"><rect x="40" y="198" width="640" height="90"/></clipPath>
+    <clipPath id="clip-l3"><rect x="40" y="290" width="640" height="94"/></clipPath>
+    <clipPath id="clip-l4"><rect x="40" y="368" width="640" height="94"/></clipPath>
+    <clipPath id="clip-pane"><rect id="pane-clip-rect" x="948" y="96" width="4" height="420"/></clipPath>
+    <clipPath id="clip-bar"><rect id="bar-clip-rect" x="0" y="592" width="0" height="80"/></clipPath>
+  </defs>
+
+  <!-- Stationary scene background (newsroom night ink) -->
+  <rect width="1280" height="720" fill="#0B0F14"/>
+
+  <!-- Kicker chip -->
+  <g id="kicker">
+    <rect id="kicker-bg" x="64" y="70" width="170" height="30" fill="#E8EDF1"/>
+    <text id="kicker-text" x="76" y="92" class="sans" font-weight="700" font-size="16" letter-spacing="2" fill="#0B0F14">THE BRIEFING</text>
+  </g>
+
+  <!-- Lead headline: four phrase-broken lines, masked rise -->
+  <g class="serif" font-size="64" fill="#F4F6F8">
+    <g clip-path="url(#clip-l1)"><text id="l1" x="64" y="190">An idea</text></g>
+    <g clip-path="url(#clip-l2)"><text id="l2" x="64" y="270">becomes a</text></g>
+    <g clip-path="url(#clip-l3)">
+      <rect id="term-hl" x="56" y="300" width="380" height="80" fill="#0A6FAA"/>
+      <text id="l3" x="68" y="358">connected</text>
+    </g>
+    <g clip-path="url(#clip-l4)"><text id="l4" x="64" y="440">system.</text></g>
+  </g>
+
+  <!-- Evidence pane: original network chart detail -->
+  <g id="pane" clip-path="url(#clip-pane)">
+    <rect x="700" y="96" width="500" height="420" fill="#151C26"/>
+    <g id="grid" stroke="#1E2835" stroke-width="1">
+      <path d="M700 166H1200M700 236H1200M700 306H1200M700 376H1200M700 446H1200M783 96V516M866 96V516M950 96V516M1033 96V516M1116 96V516" fill="none"/>
+    </g>
+    <g id="edges" stroke="#4C5D6E" stroke-width="2" fill="none"></g>
+    <g id="hub-edges" stroke="#5FC0F5" stroke-width="3" fill="none"></g>
+    <g id="nodes" fill="#9FB3C4"></g>
+    <circle id="hub-ring" cx="950" cy="360" r="62" fill="none" stroke="#5FC0F5" stroke-width="4"/>
+    <circle id="hub" cx="950" cy="360" r="12" fill="#5FC0F5"/>
+  </g>
+  <!-- Pane corner brackets -->
+  <g id="brackets" fill="none" stroke="#FFFFFF" stroke-width="4">
+    <path class="bk" d="M700 122V96H726"/>
+    <path class="bk" d="M1174 96H1200V122"/>
+    <path class="bk" d="M1200 490V516H1174"/>
+    <path class="bk" d="M726 516H700V490"/>
+  </g>
+  <text id="fig-cap" data-reveal-after="pane" x="700" y="548" class="sans" font-size="15" letter-spacing="0.5" fill="#9FB3C4">FIG. 1 · DETAIL: ONE NODE, FIVE LINKS</text>
+
+  <!-- Leader from term to evidence (no arrowhead; endpoint ring appears on arrival) -->
+  <path id="leader" d="M436 337H640L888 352" fill="none" stroke="#5FC0F5" stroke-width="3" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/>
+  <circle id="leader-dot" cx="436" cy="337" r="6" fill="#5FC0F5"/>
+
+  <!-- Key fact lower bar -->
+  <g id="bar" clip-path="url(#clip-bar)">
+    <rect x="0" y="592" width="1280" height="80" fill="#F4F6F8"/>
+    <rect x="0" y="592" width="150" height="80" fill="#0A6FAA"/>
+    <g id="bar-text" data-reveal-after="bar">
+      <text x="26" y="640" class="sans" font-weight="700" font-size="20" letter-spacing="1" fill="#FFFFFF">KEY FACT</text>
+      <text x="180" y="642" class="sans" font-weight="700" font-size="28" fill="#0B0F14">Every new link traces back to the first idea.</text>
+    </g>
+  </g>
+</svg>
+</div>
+<script src="gsap.min.js"></script>
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ---- Static layout, measured once from the local font (deterministic, no animation state) ----
+  var kt = $("kicker-text");
+  $("kicker-bg").setAttribute("width", Math.ceil(kt.getComputedTextLength() + 24));
+  var termRight = Math.ceil(68 + $("l3").getComputedTextLength() + 14);
+  $("term-hl").setAttribute("width", termRight - 56);
+  $("leader").setAttribute("d", "M" + termRight + " 337H640L888 352");
+  $("leader-dot").setAttribute("cx", termRight);
+
+  // ---- Network chart detail (original illustration) ----
+  var P = {
+    a: [780, 200], b: [880, 170], c: [990, 230], d: [1120, 180], e: [830, 330],
+    h: [950, 360], f: [1080, 320], g: [1150, 440], i: [900, 470], j: [760, 450]
+  };
+  var outer = [["a","b"],["b","c"],["c","d"],["b","e"],["d","f"],["f","g"],["i","j"],["j","e"]];
+  var hubLinks = [["h","e"],["h","c"],["h","f"],["h","g"],["h","i"]];
+  function mkLine(parent, pair) {
+    var l = document.createElementNS(NS, "path");
+    var p = P[pair[0]], q = P[pair[1]];
+    l.setAttribute("d", "M" + p[0] + " " + p[1] + "L" + q[0] + " " + q[1]);
+    l.setAttribute("pathLength", "1");
+    l.setAttribute("stroke-dasharray", "1 1");
+    l.setAttribute("stroke-dashoffset", "1");
+    parent.appendChild(l);
+    return l;
+  }
+  var edgeEls = outer.concat(hubLinks).map(function (pr) { return mkLine($("edges"), pr); });
+  var hubEls = hubLinks.map(function (pr) { return mkLine($("hub-edges"), pr); });
+  var nodeEls = Object.keys(P).filter(function (k) { return k !== "h"; }).map(function (k) {
+    var c = document.createElementNS(NS, "circle");
+    c.setAttribute("cx", P[k][0]); c.setAttribute("cy", P[k][1]); c.setAttribute("r", 7);
+    $("nodes").appendChild(c);
+    return c;
+  });
+
+  // ---- One paused, seekable timeline owns every animated property ----
+  var tl = gsap.timeline({ paused: true, defaults: { ease: "power2.inOut" } });
+
+  // Initial states
+  tl.set("#kicker", { x: -24, opacity: 0 }, 0);
+  tl.set(["#l1", "#l2", "#l3", "#l4"], { y: 88 }, 0);
+  tl.set("#term-hl", { scaleX: 0, transformOrigin: "0% 50%" }, 0);
+  tl.set(nodeEls, { scale: 0, transformOrigin: "50% 50%" }, 0);
+  tl.set(["#hub", "#hub-ring"], { scale: 0, transformOrigin: "50% 50%" }, 0);
+  tl.set(".bk", { opacity: 0 }, 0);
+  tl.set("#fig-cap", { opacity: 0, y: 8 }, 0);
+  tl.set("#leader-dot", { scale: 0, transformOrigin: "50% 50%" }, 0);
+  tl.set("#bar-text", { opacity: 0 }, 0);
+
+  // 0.00–0.85  Lead: kicker then phrase lines rise out of their masks
+  tl.to("#kicker", { x: 0, opacity: 1, duration: 0.3, ease: "power2.out" }, 0.0);
+  tl.to(["#l1", "#l2", "#l3", "#l4"], { y: 0, duration: 0.45, ease: "power3.out", stagger: 0.12 }, 0.12);
+
+  // 0.90–1.35  Evidence pane opens from its centre slot (main fact stays still)
+  tl.to("#pane-clip-rect", { attr: { x: 700, width: 500 }, duration: 0.45, ease: "power3.inOut" }, 0.9);
+  tl.to(".bk", { opacity: 1, duration: 0.15, ease: "none", stagger: 0.04 }, 1.25);
+  tl.to("#fig-cap", { opacity: 1, y: 0, duration: 0.25, ease: "power2.out" }, 1.38);
+
+  // 1.10–1.65  Chart detail builds: links draw, nodes pop
+  tl.to(edgeEls, { attr: { "stroke-dashoffset": 0 }, duration: 0.35, ease: "power1.inOut", stagger: 0.015 }, 1.1);
+  tl.to(nodeEls, { scale: 1, duration: 0.22, ease: "back.out(1.6)", stagger: 0.025 }, 1.3);
+
+  // 1.45–1.70  Selected term is marked with the editorial colour
+  tl.to("#term-hl", { scaleX: 1, duration: 0.25, ease: "power3.out" }, 1.45);
+
+  // 1.68–2.05  Hand-off: leader travels from term to the matching node
+  tl.to("#leader-dot", { scale: 1, duration: 0.12, ease: "back.out(2)" }, 1.66);
+  tl.to("#leader", { attr: { "stroke-dashoffset": 0 }, duration: 0.36, ease: "power2.inOut" }, 1.7);
+
+  // 2.04–2.30  Arrival: hub + ring appear, its five links light up
+  tl.to("#hub", { scale: 1, duration: 0.18, ease: "back.out(2)" }, 2.04);
+  tl.to("#hub-ring", { scale: 1, duration: 0.24, ease: "back.out(1.4)" }, 2.06);
+  tl.to(hubEls, { attr: { "stroke-dashoffset": 0 }, duration: 0.22, ease: "power2.out", stagger: 0.02 }, 2.08);
+
+  // 1.90–2.30  Key fact bar wipes in; its copy appears only after the bar is complete
+  tl.to("#bar-clip-rect", { attr: { width: 1280 }, duration: 0.3, ease: "power3.inOut" }, 1.9);
+  tl.to("#bar-text", { opacity: 1, duration: 0.12, ease: "none" }, 2.2);
+
+  // 2.32–3.00  Shared settled hold of term, leader, evidence and key fact
+  tl.to({}, { duration: 0.01 }, 2.99);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  tl.seek(0);
+  window.addEventListener("hf-seek", function (e) {
+    var t = e && e.detail && typeof e.detail.time === "number" ? e.detail.time : null;
+    if (t !== null) tl.seek(t, false);
+  });
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

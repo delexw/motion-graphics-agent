@@ -1,0 +1,40 @@
+{
+  "version": 3,
+  "title": "Pixel Sprites in Lit 3D — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Walk through the lit street",
+      "startSeconds": 0,
+      "endSeconds": 1.95,
+      "purpose": "Establish the pixel actor in layered 3D depth: projected shadow, foreground occlusion and parallax.",
+      "visuals": ["Moonlit stone street, brick back wall with a dim circuit panel, far skyline", "Overhead beam casting a shadow band across the floor", "Foreground stone pillar", "Warm street lamp on the right", "Title card top-left on a solid dark panel"],
+      "assets": ["index.html", "scene.js", "three.bundle.js", "gsap.min.js"],
+      "beats": [
+        {"startSeconds": 0, "endSeconds": 0.6, "development": "Title card slides in (settled by 0.32s); the sprite starts walking and passes through the beam's projected shadow band around 0.37s, darkening as it crosses.", "captions": ["LVL 166 · LIT SPRITE", "AN IDEA BECOMES A CONNECTED SYSTEM"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.28},
+        {"startSeconds": 0.6, "endSeconds": 1.5, "development": "The camera trucks right with the walk; the sprite passes behind the foreground pillar (fully hidden for about 0.3s near 1.0s) and comes back out.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 1.5, "endSeconds": 1.95, "development": "The sprite slows into the warm lamp pool, shifting from cool to warm shading, and stops.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-2",
+      "title": "The idea connects the system",
+      "startSeconds": 1.95,
+      "endSeconds": 3,
+      "purpose": "Turn the stop under the practical light into the subject: an idea becomes a connected system.",
+      "visuals": ["Sprite looks up and points", "Pixel light-bulb pops above its head", "Yellow pixel packet flies to the wall panel", "Cyan network traces and nodes light in sequence"],
+      "assets": ["scene.js"],
+      "beats": [
+        {"startSeconds": 1.95, "endSeconds": 2.2, "development": "Lamp brightens; sprite switches to a look-up pose; a pixel bulb pops in stepped scale and sends a spark to the panel.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 2.2, "endSeconds": 2.66, "development": "Traces grow node to node from where the spark lands until all six nodes are lit.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 2.66, "endSeconds": 3, "development": "Settled hold: lit network, sprite under the warm lamp, title readable.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.34}
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["Walk is brisk (about 4 units/s) to fit the shadow pass, pillar occlusion and lamp stop into 1.95s.", "Network connection resolves by 2.66s, before the 2.7s settle limit."],
+    "justifiedHolds": ["0.3s full pillar occlusion so depth reads", "Final 0.34s hold on the connected system"]
+  },
+  "notes": ["Silent preview.", "No preview recipes listed in STYLE.json; the catalogue's characteristic action is demonstrated.", "All animated values come from one GSAP timeline; the WebGL frame is redrawn from that state on every seek and on hf-seek."]
+}

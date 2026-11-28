@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import {
   roomEntryLabel,
+  hasRoomDraftContent,
   type RoomDraft,
   type RoomLibraryAsset,
   type RoomProjectView,
@@ -37,6 +38,7 @@ import {
 } from "../../shared/room";
 import { type Run, type StyleExample, isRunSettled } from "../../shared/contracts";
 import { projectName } from "../../shared/project-name";
+import type { AssetOwner } from "../../shared/asset-owner";
 import { scopedAssetQuestions } from "../../shared/asset-question-scopes";
 import { briefSectionFileAccept } from "../../shared/brief-sections";
 import { ProjectMediaStack } from "../components/project-media-stack";
@@ -91,7 +93,7 @@ import {
   emptyRoomDraft,
   roomEditDraft,
   roomMaterialSection,
-  removeRoomEditDraft,
+  removeRoomDraft,
 } from "./onboarding";
 import type { StylePicker } from "../components/style-picker";
 import "./room.css";
@@ -101,7 +103,8 @@ const launcherItems = roomLauncherUtilities.map((page) => ({
   key: page,
   label: roomUtilities[page].title,
 }));
-type UploadedAsset = RoomLibraryAsset & { duplicate?: boolean };
+type ShelfAsset = RoomLibraryAsset & { owner?: AssetOwner };
+type UploadedAsset = ShelfAsset & { duplicate?: boolean };
 const menuBarHeight = 60;
 function roomViewportArea() {
   return {
@@ -153,7 +156,7 @@ export function CreativeRoom({
   const saved = useRoomState();
   const { room, setRoom, loaded } = saved;
   const [front, setFront] = useState<string>();
-  const [materials, setMaterials] = useState<RoomLibraryAsset[]>([]);
+  const [materials, setMaterials] = useState<ShelfAsset[]>([]);
   const [stack, setStack] = useState<string[]>(["assistant"]);
   const [question, setQuestion] = useState<{ runId: string; id: string }>();
   const [error, setError] = useState("");
@@ -178,7 +181,7 @@ export function CreativeRoom({
     : utility
       ? roomUtilityWindowId(utility.page)
       : undefined;
-  const refreshMaterials = () => api<RoomLibraryAsset[]>("/api/room/library").then(setMaterials);
+  const refreshMaterials = () => api<ShelfAsset[]>("/api/room/library").then(setMaterials);
   useEffect(() => {
     refreshMaterials().catch((e) =>
       setError(
@@ -411,10 +414,16 @@ export function CreativeRoom({
       4,
     );
   }
-  const draftKeys = Object.keys(room.drafts).filter((key) => key.startsWith("edit:"));
+  const draftKeys = Object.keys(room.drafts).filter((key) => key !== "new");
   const conversationItems = [
     { key: "new", label: translateUi("New idea") },
     ...draftKeys.map((key) => {
+      if (!key.startsWith("edit:")) {
+        const instructions = room.drafts[key].request.instructions;
+        const title =
+          typeof instructions === "string" ? instructions.trim().replace(/\s+/g, " ") : "";
+        return { key, label: title.slice(0, 80) || translateUi("New idea") };
+      }
       const source = all.find((run) => `edit:${run.id}` === key);
       return {
         key,
@@ -515,7 +524,9 @@ export function CreativeRoom({
   const setDraft = (key: string, draft: RoomDraft) =>
     setRoom((previous) => ({ ...previous, drafts: { ...previous.drafts, [key]: draft } }));
   const removeDraftAction =
-    conversation.startsWith("edit:") && room.drafts[conversation] ? (
+    !currentQuestion &&
+    room.drafts[conversation] &&
+    (conversation !== "new" || hasRoomDraftContent(room.drafts.new)) ? (
       <Tooltip title={translateUi("Remove draft")}>
         <Button
           type="text"
@@ -527,14 +538,14 @@ export function CreativeRoom({
           onClick={() => {
             const draftKey = conversation;
             modal.confirm({
-              title: translateUi("Remove this editing draft?"),
+              title: translateUi("Remove draft"),
               content: translateUi("The project, videos and material shelf will be kept."),
               okText: translateUi("Remove draft"),
               okButtonProps: { danger: true },
               onOk: () => {
                 setRoom((previous) => ({
                   ...previous,
-                  drafts: removeRoomEditDraft(previous.drafts, draftKey),
+                  drafts: removeRoomDraft(previous.drafts, draftKey),
                 }));
                 setConversation("new");
                 setQuestion(undefined);
@@ -588,14 +599,23 @@ export function CreativeRoom({
           }}
         />
       );
-    if (conversation === "new" || conversation.startsWith("edit:"))
+    if (conversation === "new" || room.drafts[conversation]) {
+      const draft = room.drafts[conversation] || emptyRoomDraft();
+      const additionalIdea = conversation !== "new" && !conversation.startsWith("edit:");
       return (
         <RoomOnboarding
-          onBeforeStart={saved.retry}
+          onBeforeStart={additionalIdea ? () => saved.saveIdeaForStart(conversation) : saved.retry}
           key={conversation}
-          draft={room.drafts[conversation] || emptyRoomDraft()}
+          draft={draft}
           onChange={(draft) => setDraft(conversation, draft)}
-          materials={materials}
+          materials={
+            additionalIdea
+              ? materials.filter(
+                  (asset) =>
+                    !asset.owner || (asset.owner.kind === "draft" && asset.owner.id === draft.id),
+                )
+              : materials
+          }
           styles={styles}
           examples={examples}
           onUpload={upload}
@@ -612,10 +632,12 @@ export function CreativeRoom({
                 ),
               };
             });
+            if (additionalIdea) setConversation("new");
             onCreated(run);
           }}
         />
       );
+    }
     if (!current)
       return <p className="room-hint room-pad">{translateUi("Choose a conversation.")}</p>;
     const waiting = openQuestions(current);
@@ -1016,6 +1038,9 @@ export function CreativeRoom({
                       <div className="room-assistant-bar">
                         <Dropdown
                           trigger={["click"]}
+                          onOpenChange={(open) => {
+                            if (open) void saved.refresh();
+                          }}
                           menu={{
                             selectable: true,
                             selectedKeys: [conversationKey],

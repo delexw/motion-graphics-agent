@@ -1,7 +1,8 @@
 import type { RequestSettingsReview } from "./request-settings-review";
 import type { assetLimits } from "./asset-limits";
 import type { AssetOwner } from "./asset-owner";
-import type { VideoRequest } from "./domains/video";
+import type { MusicStyleGroup } from "./music-styles";
+import type { CreativeRequest } from "./contracts";
 
 export const kitevaMcpPath = "/mcp";
 
@@ -29,7 +30,7 @@ export type KitevaMcpResult =
       kind: "created";
       revision?: number;
       id: string;
-      request: VideoRequest;
+      request: CreativeRequest;
       languageSettings?: import("./language-tracks").LanguageTrackRow[];
       url: string;
       started: false;
@@ -48,9 +49,11 @@ export type KitevaMcpResult =
   | { kind: "assets"; target: AssetOwner; assets: KitevaMcpAsset[]; revision?: number }
   | {
       kind: "options";
-      defaults: Partial<VideoRequest>;
+      outputType: CreativeRequest["outputType"];
+      defaults: Partial<CreativeRequest>;
       languageDefaults?: { generateNarration: boolean; showSubtitles: boolean };
       settingsSchema: Record<string, unknown>;
+      musicStyleGroups: readonly MusicStyleGroup[];
       uploadLimits: typeof assetLimits;
       supportedExtensions: string[];
     }

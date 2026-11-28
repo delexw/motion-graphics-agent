@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rebuilt Screencast — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #D3DEE5; }
+  #root { width: 100%; height: 100%; position: relative; }
+  #root svg { display: block; width: 100%; height: 100%; }
+  text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+</style>
+<script src="./gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E4EBEF"/>
+      <stop offset="1" stop-color="#BFCFD8"/>
+    </linearGradient>
+    <pattern id="dot" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.3" fill="#B9D5DE"/>
+    </pattern>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#142536" flood-opacity=".2"/>
+    </filter>
+    <filter id="shGuide" x="-15%" y="-15%" width="130%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#142536" flood-opacity=".28"/>
+    </filter>
+    <clipPath id="boardClip"><rect x="71" y="134" width="778" height="515"/></clipPath>
+  </defs>
+
+  <!-- Stationary scene background -->
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <text x="70" y="62" font-size="24" font-weight="700" fill="#142536">An idea becomes a connected system</text>
+
+  <!-- ===== Interface: Idea Board window ===== -->
+  <g id="window">
+    <rect x="70" y="90" width="780" height="560" rx="14" fill="#fff" filter="url(#sh)"/>
+    <path d="M70 134V104a14 14 0 0 1 14-14h752a14 14 0 0 1 14 14v30z" fill="#142536"/>
+    <g fill="#B9D5DE"><circle cx="96" cy="112" r="6"/><circle cx="116" cy="112" r="6"/><circle cx="136" cy="112" r="6"/></g>
+    <text x="460" y="117" font-size="14" fill="#fff" text-anchor="middle">Idea Board</text>
+    <rect x="71" y="134" width="778" height="515" fill="url(#dot)"/>
+
+    <g clip-path="url(#boardClip)">
+      <!-- Ghost (proposed, not yet linked) connections -->
+      <g id="ghosts" stroke="#9FB3C0" stroke-width="1.5" stroke-dasharray="3 7" fill="none">
+        <path d="M300 400L200 250"/><path d="M300 400L530 260"/><path d="M300 400L570 500"/><path d="M300 400L180 560"/>
+      </g>
+      <!-- Active links (drawn on action) -->
+      <g id="links" stroke="#005885" stroke-width="3" fill="none" stroke-linecap="round">
+        <path id="link-users" d="M300 400L200 250"/>
+        <path id="link-data" d="M300 400L530 260"/>
+        <path id="link-team" d="M300 400L570 500"/>
+        <path id="link-launch" d="M300 400L180 560"/>
+      </g>
+      <path id="link-cross" d="M530 260L570 500" stroke="#005885" stroke-width="2" stroke-dasharray="6 6" fill="none" opacity="0"/>
+
+      <!-- Part nodes -->
+      <g id="nodes" font-size="16" text-anchor="middle">
+        <g class="node" id="node-users"><rect class="nb" x="142" y="228" width="116" height="44" rx="10" fill="#fff" stroke="#8FA2AF" stroke-width="1.5"/><text x="200" y="256" fill="#142536">Users</text></g>
+        <g class="node" id="node-data"><rect class="nb" x="472" y="238" width="116" height="44" rx="10" fill="#fff" stroke="#8FA2AF" stroke-width="1.5"/><text x="530" y="266" fill="#142536">Data</text></g>
+        <g class="node" id="node-team"><rect class="nb" x="512" y="478" width="116" height="44" rx="10" fill="#fff" stroke="#8FA2AF" stroke-width="1.5"/><text x="570" y="506" fill="#142536">Team</text></g>
+        <g class="node" id="node-launch"><rect class="nb" x="122" y="538" width="116" height="44" rx="10" fill="#fff" stroke="#8FA2AF" stroke-width="1.5"/><text x="180" y="566" fill="#142536">Launch</text></g>
+      </g>
+
+      <!-- Core idea node: unlinked (pale) and linked (active) states -->
+      <g id="core">
+        <rect id="core-off" x="236" y="372" width="128" height="56" rx="12" fill="#DCE8EE" stroke="#8FA2AF" stroke-width="1.5"/>
+        <text id="core-off-t" x="300" y="407" font-size="20" font-weight="700" fill="#142536" text-anchor="middle">Idea</text>
+        <rect id="core-on" x="236" y="372" width="128" height="56" rx="12" fill="#005885" opacity="0"/>
+        <text id="core-on-t" x="300" y="407" font-size="20" font-weight="700" fill="#fff" text-anchor="middle" opacity="0">Idea</text>
+      </g>
+    </g>
+
+    <!-- Status pill -->
+    <g id="status">
+      <rect x="92" y="604" width="170" height="30" rx="15" fill="#EDF1F3"/>
+      <circle id="status-dot-off" cx="110" cy="619" r="5" fill="#8FA2AF"/>
+      <circle id="status-dot-on" cx="110" cy="619" r="5" fill="#005885" opacity="0"/>
+      <g font-size="14" fill="#142536">
+        <text id="count-0" x="124" y="624">0 links active</text>
+        <text id="count-1" x="124" y="624" opacity="0">1 link active</text>
+        <text id="count-2" x="124" y="624" opacity="0">2 links active</text>
+        <text id="count-3" x="124" y="624" opacity="0">3 links active</text>
+        <text id="count-4" x="124" y="624" opacity="0">4 links active</text>
+      </g>
+    </g>
+
+    <!-- Target control -->
+    <rect id="focus-ring" x="670" y="148" width="164" height="54" rx="12" fill="none" stroke="#005885" stroke-opacity=".35" stroke-width="3" opacity="0"/>
+    <g id="btn">
+      <rect id="btn-bg" x="676" y="154" width="152" height="42" rx="9" fill="#005885"/>
+      <text x="752" y="181" font-size="16" font-weight="700" fill="#fff" text-anchor="middle">Connect all</text>
+    </g>
+  </g>
+
+  <!-- ===== Guide (original, independent layer) ===== -->
+  <line id="leader" x1="752" y1="236" x2="752" y2="200" stroke="#142536" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <circle id="leader-dot" cx="752" cy="200" r="4" fill="#142536"/>
+  <g id="guide">
+    <!-- authored at its final docked position (890,150); starts offset over the board -->
+    <rect x="890" y="150" width="320" height="400" rx="16" fill="#142536" filter="url(#shGuide)"/>
+    <text x="922" y="196" font-size="13" letter-spacing="2" fill="#B9D5DE">STEP 2 OF 3</text>
+    <text x="922" y="240" font-size="28" font-weight="700" fill="#fff">Connect the idea</text>
+    <g font-size="16" fill="#D6E4EA">
+      <text x="922" y="290">Press Connect all to link</text>
+      <text x="922" y="316">every part to the core idea.</text>
+      <text x="922" y="356">Each new link turns blue</text>
+      <text x="922" y="382">on the board.</text>
+    </g>
+    <rect x="922" y="480" width="256" height="6" rx="3" fill="#2C4257"/>
+    <rect id="progress" x="922" y="480" width="128" height="6" rx="3" fill="#4FA3CF"/>
+  </g>
+
+  <!-- ===== Cursor (independent layer, tip at local 0,0) ===== -->
+  <g id="cursor-pos" transform="translate(1080 360)">
+    <g id="cursor">
+      <path d="M0 0v26l7-6 5 11 5-2-5-11h9z" fill="#142536" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>
+</div>
+
+<script>
+(function () {
+  var tl = gsap.timeline({ paused: true, defaults: { overwrite: false } });
+
+  // ---- Initial states (all owned by this timeline) ----
+  var GUIDE_START = { x: -330, y: 80 };     // over the board's right half, below the button
+  gsap.set('#guide', GUIDE_START);
+  gsap.set('#cursor-pos', { x: 1080, y: 360 });
+  gsap.set('#btn', { scale: 1, transformOrigin: '50% 50%' });
+  gsap.set('#cursor', { scale: 1, transformOrigin: '0px 0px' });
+
+  var ids = ['users', 'data', 'team', 'launch'];
+  ids.forEach(function (id) {
+    var p = document.getElementById('link-' + id);
+    var len = p.getTotalLength();
+    gsap.set(p, { strokeDasharray: len, strokeDashoffset: len });
+  });
+
+  // 0.00–0.62 Cursor travels to the one control
+  tl.to('#cursor-pos', { x: 802, y: 184, duration: 0.62, ease: 'power3.inOut' }, 0.0);
+  // 0.55 Hover: focus ring announces the target (pause on the input)
+  tl.to('#focus-ring', { opacity: 1, duration: 0.18, ease: 'sine.out' }, 0.52);
+
+  // 0.80–1.22 Guide moves out of the reading path, leader stays attached to the button
+  tl.to('#guide', { x: 0, y: 0, duration: 0.42, ease: 'power2.inOut' }, 0.80);
+  tl.to('#leader', { attr: { x1: 890, y1: 175, x2: 838, y2: 175 }, duration: 0.42, ease: 'power2.inOut' }, 0.80);
+  tl.to('#leader-dot', { attr: { cx: 838, cy: 175 }, duration: 0.42, ease: 'power2.inOut' }, 0.80);
+
+  // 1.30 Activation: one press
+  tl.to('#btn', { scale: 0.94, duration: 0.07, ease: 'power2.in' }, 1.30);
+  tl.to('#cursor', { scale: 0.88, duration: 0.07, ease: 'power2.in' }, 1.30);
+  tl.to('#btn', { scale: 1, duration: 0.16, ease: 'back.out(2)' }, 1.37);
+  tl.to('#cursor', { scale: 1, duration: 0.16, ease: 'back.out(2)' }, 1.37);
+  tl.to('#btn-bg', { fill: '#0A6FA3', duration: 0.07 }, 1.30);
+  tl.to('#btn-bg', { fill: '#005885', duration: 0.2 }, 1.40);
+  tl.to('#focus-ring', { opacity: 0, duration: 0.3, ease: 'sine.in' }, 1.55);
+
+  // 1.42 Core idea becomes active
+  tl.to('#core-on, #core-on-t', { opacity: 1, duration: 0.2, ease: 'sine.out' }, 1.42);
+  tl.to('#core-off, #core-off-t', { opacity: 0, duration: 0.2, ease: 'sine.out' }, 1.42);
+  tl.set('#status-dot-on', { opacity: 1 }, 1.42);
+  tl.set('#status-dot-off', { opacity: 0 }, 1.42);
+
+  // 1.50 Cursor retreats into the gutter, clear of board and guide
+  tl.to('#cursor-pos', { x: 862, y: 300, duration: 0.45, ease: 'power2.inOut' }, 1.50);
+
+  // 1.48–2.36 Links draw one by one; each node and the counter update on completion
+  var start = 1.48, step = 0.2, dur = 0.28;
+  ids.forEach(function (id, i) {
+    var t = start + i * step;
+    tl.to('#link-' + id, { strokeDashoffset: 0, duration: dur, ease: 'power2.out' }, t);
+    tl.to('#node-' + id + ' .nb', { stroke: '#005885', strokeWidth: 2.5, duration: 0.14, ease: 'sine.out' }, t + dur - 0.06);
+    tl.set('#count-' + i, { opacity: 0 }, t + dur);
+    tl.set('#count-' + (i + 1), { opacity: 1 }, t + dur);
+  });
+  tl.to('#ghosts', { opacity: 0, duration: 0.5, ease: 'sine.inOut' }, 1.6);
+  // secondary cross-link
+  tl.to('#link-cross', { opacity: 1, duration: 0.22, ease: 'sine.out' }, 2.20);
+  // guide progress follows the state change
+  tl.to('#progress', { attr: { width: 171 }, duration: 0.36, ease: 'power2.out' }, 2.12);
+
+  // Settled hold until 3.0
+  tl.set({}, {}, 3);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  tl.seek(0, false);
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "characters": [],
+  "displayTitle": "Visual Sketchnote",
+  "displayDescription": "A felt-pen sketchnote draws a light bulb, links it to a triangle of ideas and resolves into a connected system.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, sound effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Felt-pen texture is approximated with a solid Canvas 2D stroke plus a seeded offset second pass; no real ink bleed or paper absorption.",
+    "Handwriting is a left-to-right wipe of a system handwriting font (Marker Felt / Bradley Hand / Comic Sans fallback), not stroke-order lettering.",
+    "STYLE.json lists no preview_recipes and no BACKGROUND_REVIEW.json was supplied, so no recipe-specific refresh or source-frame evidence could be applied; the catalogue characteristic action is demonstrated instead.",
+    "Background is a cool off-white dot-grid notebook page chosen for the subject (scene-dependent policy), not the catalogue cream swatch.",
+    "Project technology record could not be written: the selection tool reported a missing project dependencies file. Runtime uses only native Canvas 2D and the supplied local gsap.min.js; no packages installed.",
+    "Blender not used."
+  ]
+}

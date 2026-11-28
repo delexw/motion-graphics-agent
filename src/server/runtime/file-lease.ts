@@ -2,7 +2,11 @@ import { setTimeout as delay } from "node:timers/promises";
 import { lock } from "proper-lockfile";
 
 /** Cross-process lease; waiting and ownership follow the caller cancellation. */
-export async function acquireFileLease(file: string, signal: AbortSignal) {
+export async function acquireFileLease(
+  file: string,
+  signal: AbortSignal,
+  { wait = true }: { wait?: boolean } = {},
+) {
   const compromised = new AbortController();
   const leaseSignal = AbortSignal.any([signal, compromised.signal]);
   for (;;) {
@@ -17,7 +21,7 @@ export async function acquireFileLease(file: string, signal: AbortSignal) {
         onCompromised: (error) => compromised.abort(error),
       });
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ELOCKED") throw error;
+      if (!wait || (error as NodeJS.ErrnoException).code !== "ELOCKED") throw error;
       await delay(250, undefined, { signal: leaseSignal });
       continue;
     }

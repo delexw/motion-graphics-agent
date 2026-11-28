@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "title": "Glass Studio Product — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Silhouette and reflection",
+      "startSeconds": 0,
+      "endSeconds": 0.95,
+      "purpose": "Bring up the glass capsule's outline on the dark studio ground before the interior, then pass one broad reflection across the shell while the idea's opaque network appears inside.",
+      "visuals": ["Fresnel silhouette of a thick-walled glass capsule", "Narrow fixed studio edge strip", "One broad reflection band sweeping across the front shell", "Opaque teal core and four pearl nodes with grey links fading up behind the glass", "Contact shadow with soft teal floor glow", "Slow close three-quarter camera orbit"],
+      "assets": ["index.html", "scene.bundle.js", "gsap.min.js"],
+      "beats": [
+        {"startSeconds": 0, "endSeconds": 0.45, "development": "Shell silhouette and floor shadow resolve; kicker and title lines rise in on the clean left plane.", "captions": ["GLASS STUDIO · 164", "An idea becomes", "a connected system"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 0.45, "endSeconds": 0.95, "development": "Glass body tint and narrow edge strip appear; the broad reflection begins sweeping left to right; internal core, nodes and links fade up visibly through the shell.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.3}
+      ]
+    },
+    {
+      "id": "scene-2",
+      "title": "Shallow component view",
+      "startSeconds": 0.95,
+      "endSeconds": 1.5,
+      "purpose": "Open the shell a little to show wall thickness and the open slot while the component approaches.",
+      "visuals": ["Front shell half slides forward revealing its bright thickness lip", "Internal nodes spread slightly apart", "Dark open slot with secondary-blue collar on the upper-right shoulder", "Glass cartridge with opaque teal core enters from the upper right"],
+      "assets": ["scene.bundle.js"],
+      "beats": [
+        {"startSeconds": 0.95, "endSeconds": 1.5, "development": "Front half opens 0.5 units, the reflection sweep finishes, and the cartridge travels toward the seat.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.5}
+      ]
+    },
+    {
+      "id": "scene-3",
+      "title": "Join at the seat",
+      "startSeconds": 1.5,
+      "endSeconds": 3,
+      "purpose": "Close the shell and seat the component; the seat activates the live link so the idea becomes a connected system.",
+      "visuals": ["Front half closes onto the back half", "Cartridge seats into the collar at 2.05s", "Collar turns active teal with a brief scale pulse", "Core-to-node live link and a thin conduit to the seat light teal", "Settled hold of the closed product"],
+      "assets": ["scene.bundle.js"],
+      "beats": [
+        {"startSeconds": 1.5, "endSeconds": 2.05, "development": "Shell closes, internals re-seat, cartridge drives into the slot.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.5},
+        {"startSeconds": 2.05, "endSeconds": 3, "development": "Contact at the seat: collar and live link turn teal; the supporting line appears and everything holds settled from about 2.6s.", "captions": ["One shell. Five seated parts. One live link."], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.55}
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["Silhouette precedes interior per the style timing rule.", "Single reflection pass, no repeated sweeps.", "Copy is fully settled by 2.45s; camera orbit settles by 2.6s."],
+    "justifiedHolds": ["2.45–3.0s settled hold on the closed, seated product and full copy for reading and the review check."]
+  },
+  "notes": ["Silent preview.", "No preview_recipes exist in STYLE.json; the preview demonstrates the catalogue characteristic action.", "All values are driven by one paused GSAP timeline; render() is a pure function of timeline state and also runs on hf-seek."]
+}

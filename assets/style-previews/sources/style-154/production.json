@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Uncut Countdown",
+  "displayDescription": "Four synchronised views expand from one clock, the trigger fires at zero and the outcome view takes over.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative procedural vector scene; not real multi-camera footage.",
+    "No tech.preview_recipes in STYLE.json and no BACKGROUND_REVIEW.json supplied, so the preview demonstrates the Motion Graphic's primary characteristic action.",
+    "Background is a cool grey-blue stationary grid chosen for the systems subject (scene-dependent policy).",
+    "No Blender used, per user instruction."
+  ]
+}

@@ -6,6 +6,10 @@ import { expect } from "@playwright/test";
 import { test } from "../fixtures/playwright-test";
 import { projectGovernance } from "../../src/server/governance/report";
 import { RequestSchema, type Run } from "../../src/shared/contracts";
+import {
+  sceneBackgroundPurpose,
+  sceneBackgroundQuestion,
+} from "../../src/shared/agents/scene-background";
 
 test("expands visual and audio choices through the same Governance table", async ({ page }) => {
   test.setTimeout(60_000);
@@ -14,7 +18,21 @@ test("expands visual and audio choices through the same Governance table", async
     createdAt: "2026-10-22T00:00:00Z",
     phase: "generating",
     request: RequestSchema.parse({ instructions: "Explain an idea" }),
-    candidates: [],
+    candidates: [
+      {
+        id: "direction",
+        displayTitle: "Garden reveal",
+        primaryStyleId: "style-110",
+        supportingStyleIds: [],
+        sceneRoles: [],
+        rationale: "Reveal the setting",
+        feasible: true,
+        missingAssets: [],
+        score: 1,
+        confidence: 1,
+        dimensions: {},
+      },
+    ],
     jobs: [
       {
         id: "full",
@@ -158,6 +176,49 @@ test("expands visual and audio choices through the same Governance table", async
       })),
     ).activity,
   );
+  rows.push(
+    ...projectGovernance(
+      run,
+      ["recorded", "failed", "pending"].flatMap((status, index) => {
+        const data = {
+          invocationId: `background-${index}`,
+          provider: "jev",
+          model: "jev-1.14.0",
+          purpose: sceneBackgroundPurpose,
+          ...(status === "pending" ? { previewCandidateIds: ["direction"] } : {}),
+        };
+        const base = {
+          runId: run.id,
+          jobId: status === "pending" ? undefined : "full",
+          time: run.createdAt,
+          message: "",
+        };
+        return [
+          { ...base, id: 200 + index * 2, type: "invocation", data },
+          ...(status === "pending"
+            ? []
+            : [
+                {
+                  ...base,
+                  id: 201 + index * 2,
+                  type: status === "failed" ? "warning" : "usage",
+                  data:
+                    status === "failed"
+                      ? { ...data, outcome: "failed" }
+                      : {
+                          ...data,
+                          usage: { input_tokens: 100, output_tokens: 10 },
+                          decision: {
+                            questionKey: sceneBackgroundQuestion,
+                            answer: { choice: "both" },
+                          },
+                        },
+                },
+              ]),
+        ];
+      }),
+    ).activity,
+  );
   const cacheDir = await mkdtemp(path.join(os.tmpdir(), "governance-authoring-"));
   const server = await createBrowserFixtureServer({
     cacheDir,
@@ -229,7 +290,7 @@ createRoot(document.getElementById('root')).render(React.createElement(React.Fra
         .evaluate((el) => el.textContent),
     ).toContain("Existing local code and libraries (82%)");
     const expanders = await page.$$("button.ant-table-row-expand-icon");
-    expect(expanders).toHaveLength(6);
+    expect(expanders).toHaveLength(7);
     for (let count = 1; count <= expanders.length; count++) {
       await page.locator("button.ant-table-row-expand-icon-collapsed").first().click();
       await page.waitForFunction(
@@ -243,6 +304,19 @@ createRoot(document.getElementById('root')).render(React.createElement(React.Fra
     await page.waitForFunction(
       () => document.querySelectorAll('section[aria-label="Authoring comparison"]').length === 2,
     );
+    const backgrounds = page
+      .locator(".governance-jev-call")
+      .filter({ hasText: sceneBackgroundPurpose });
+    await expect(backgrounds).toHaveCount(3);
+    await expect(
+      backgrounds.getByText("Layered and simple backgrounds", { exact: true }),
+    ).toHaveCount(1);
+    await expect(backgrounds.getByText(/^failed$/i)).toHaveCount(1);
+    await expect(backgrounds.getByText("No final result recorded", { exact: true })).toHaveCount(1);
+    await expect(backgrounds.getByText("Preview · Garden reveal", { exact: true })).toHaveCount(1);
+    await expect(
+      backgrounds.getByText("Full film · v1 · Garden reveal", { exact: true }),
+    ).toHaveCount(2);
     const effortRows = await page
       .locator('section[aria-label="Reasoning effort:"]')
       .evaluateAll((sections) =>
@@ -467,7 +541,7 @@ createRoot(document.getElementById('root')).render(React.createElement(React.Fra
     const recordedCalls = await page
       .locator("#jev-totals .governance-jev-call")
       .evaluateAll((elements) => elements.map((element) => element.textContent));
-    expect(recordedCalls).toHaveLength(5);
+    expect(recordedCalls).toHaveLength(8);
     expect(recordedCalls[0]).toContain("100");
     expect(
       await page

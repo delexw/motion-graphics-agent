@@ -5,8 +5,11 @@
 | `strategies/style-combination.ts` | Evaluate combinations, then select across all batches | Score / Noul, then repeated Choice |
 | `strategies/visual-authoring.ts`  | Select one primary visual capability or bundled skill | Choice                             |
 | `strategies/audio-authoring.ts`   | Select local audio authoring or Audio Studio MCP      | Choice                             |
+| `strategies/scene-background.ts`  | Choose layered, simple or mixed video backgrounds     | Choice                             |
 
 `client.ts` owns model/version, credentials and SDK configuration. `choice.ts` owns shared Choice execution and invocation/usage events. Each strategy owns its own context and criteria. Visual and audio selections are independent and saved separately in the job and style-context.json.
+
+Background selection compares the idea, style and relevant preview beat. Automatic preview planning receives a decision for each direction. Previews with the same fixed styles share a decision. Each preview builds from its saved direction. Full video planning saves the treatment with its plan. A retry that gains a treatment after a failed selection updates the plan before building. Governance labels the decision with its preview direction or film version. If JEV is unavailable, the model works from the original idea and style.
 
 Audio selection runs only for full video jobs with a Music prompt and no uploaded Music audio. Uploads use their existing source guidance, and silent previews bypass audio selection. The exact Music prompt is passed through unchanged. Empty Music settings add no generation task. Original idea requirements remain authoritative for the main planner.
 

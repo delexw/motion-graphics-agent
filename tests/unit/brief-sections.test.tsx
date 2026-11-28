@@ -98,6 +98,8 @@ it("renders section-specific upload controls and keeps each attachment in its as
       onUpload={async () => {}}
       urls="https://example.com"
       onUrlsChange={() => {}}
+      musicStyle={undefined}
+      onMusicStyleChange={() => {}}
     >
       <textarea aria-label="Main prompt" />
     </BriefRequirements>,

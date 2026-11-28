@@ -15,10 +15,10 @@ import { registerKitevaMcpRoutes } from "../../src/server/mcp/routes";
 import { loadCatalog } from "../../src/server/catalog/catalog";
 import { RoomPatchSchema } from "../../src/shared/room";
 import { toggleRoomAsset } from "../../src/shared/brief-attachments";
-import { type VideoRequest, VideoRequestSchema } from "../../src/shared/domains/video";
+import { VideoRequestSchema } from "../../src/shared/domains/video";
 import type { KitevaMcpResult } from "../../src/shared/kiteva-mcp";
 import type { AssetOwner } from "../../src/shared/asset-owner";
-import type { Run } from "../../src/shared/contracts";
+import type { CreativeRequest, Run } from "../../src/shared/contracts";
 import { kitevaMcpPath } from "../../src/shared/kiteva-mcp";
 import { assetLimits } from "../../src/shared/asset-limits";
 import { customerToolActivity } from "../../src/shared/activity-model";
@@ -32,7 +32,7 @@ async function setup(transport: "memory" | "http" = "memory") {
   cleanups.push(() => rm(directory, { recursive: true, force: true }));
   const store = new Store(":memory:");
   cleanups.push(() => store.close());
-  const start = vi.fn(async (request: VideoRequest) => {
+  const start = vi.fn(async (request: CreativeRequest) => {
     const run = {
       id: randomUUID(),
       request,
@@ -205,6 +205,38 @@ it("checks the uploaded document at confirmation and discards rejected bytes", a
   expect((await call("confirm_upload", { uploadId })).isError).toBe(true);
   expect(store.room()).toEqual(before);
   expect(await readdir(path.join(directory, "runtime", "draft", target.id))).toEqual([]);
+});
+
+it("detaches a file from a draft with blank idea text and keeps its original file", async () => {
+  const { store, call, target, file } = await setup();
+  const imported = await call("import_asset", {
+    target,
+    source: { kind: "local_file", path: file },
+  });
+  if (imported.data.kind !== "asset_imported") throw Error("Import failed");
+  const assetId = imported.data.asset.id;
+  const room = store.room();
+  const draft = room.drafts.new;
+  store.patchRoom(
+    RoomPatchSchema.parse({
+      client: "fixture",
+      baseRevision: room.revision,
+      drafts: { new: { ...draft, request: { ...draft.request, instructions: "" } } },
+    }),
+  );
+  const detached = await call("manage_idea_assets", {
+    draftId: target.id,
+    assetId,
+    action: "detach",
+    revision: store.room().revision,
+  });
+  expect(detached.isError).not.toBe(true);
+  expect(store.room().drafts.new).toMatchObject({
+    request: { instructions: "", assetIds: [] },
+    assets: [],
+  });
+  expect(store.getAsset(assetId)?.owner).toEqual(target);
+  expect(await readFile(store.getAsset(assetId)!.path)).toEqual(await readFile(file));
 });
 
 it("links draft, imported asset and started project IDs and preserves UI attachment semantics", async () => {

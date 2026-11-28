@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Urban Ink and Wash — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #E9ECE7; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #E9ECE7; }
+  #scene { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+  .caption { position: absolute; left: 11%; top: 82.5%; margin: 0;
+    font-family: Georgia, "Times New Roman", serif; font-style: italic; font-weight: 400;
+    font-size: 38px; line-height: 44px; color: #242831; opacity: 0; }
+  .note { position: absolute; right: 6.25%; top: 91.5%; margin: 0;
+    font-family: Georgia, "Times New Roman", serif; font-size: 16px; letter-spacing: 3px;
+    color: #242831; opacity: 0; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="scene" width="1280" height="720"></canvas>
+  <p class="caption" id="caption">An idea becomes<br>a connected system.</p>
+  <p class="note" id="note">MAIN ST. · SKETCH NO. 7</p>
+</div>
+<script src="gsap.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var W = 1280, H = 720;
+  var INK = "#242831", ACTIVE = "#9F352D", SKY = "#8FB3C6", PAPER = "#E9ECE7";
+  var canvas = document.getElementById("scene");
+  var ctx = canvas.getContext("2d");
+
+  function rng(seed) {
+    var a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) >>> 0;
+      var t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function mk(w, h) { var c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
+
+  // ---------- Stationary paper plane (cached, seeded) ----------
+  var paper = mk(W, H);
+  (function () {
+    var p = paper.getContext("2d");
+    p.fillStyle = PAPER; p.fillRect(0, 0, W, H);
+    var img = p.getImageData(0, 0, W, H), d = img.data, r = rng(4);
+    for (var i = 0; i < d.length; i += 4) {
+      var n = (r() - 0.5) * 9;
+      d[i] += n; d[i + 1] += n; d[i + 2] += n;
+    }
+    p.putImageData(img, 0, 0);
+    var r2 = rng(11);
+    p.globalAlpha = 0.035; p.fillStyle = "#6b6f72";
+    for (var k = 0; k < 900; k++) { // paper fibres
+      p.fillRect(r2() * W, r2() * H, 1 + r2() * 3, 1);
+    }
+    p.globalAlpha = 1;
+  })();
+
+  // ---------- Pen strokes ----------
+  // Each stroke: points, start/end in "line pass" units, width, overshoot.
+  var strokes = [];
+  function stroke(pts, t0, t1, w, opts) {
+    opts = opts || {};
+    var r = rng(strokes.length * 97 + 13);
+    var over = opts.over == null ? 5 : opts.over;
+    // overshoot first and last segment (urban-sketch construction marks)
+    if (over > 0 && pts.length >= 2) {
+      var a = pts[0], b = pts[1];
+      var dx = a[0] - b[0], dy = a[1] - b[1], l = Math.hypot(dx, dy) || 1;
+      pts = [[a[0] + dx / l * over, a[1] + dy / l * over]].concat(pts.slice(1));
+      var y = pts[pts.length - 1], z = pts[pts.length - 2];
+      dx = y[0] - z[0]; dy = y[1] - z[1]; l = Math.hypot(dx, dy) || 1;
+      pts = pts.slice(0, -1).concat([[y[0] + dx / l * over, y[1] + dy / l * over]]);
+    }
+    // subdivide with seeded wobble
+    var out = [], cum = [0], total = 0;
+    for (var i = 0; i < pts.length - 1; i++) {
+      var p0 = pts[i], p1 = pts[i + 1];
+      var sl = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]);
+      var n = Math.max(2, Math.ceil(sl / 7));
+      var nx = -(p1[1] - p0[1]) / (sl || 1), ny = (p1[0] - p0[0]) / (sl || 1);
+      var phase = r() * 6.28, amp = opts.wobble == null ? 0.7 : opts.wobble;
+      for (var j = (i === 0 ? 0 : 1); j <= n; j++) {
+        var u = j / n;
+        var off = Math.sin(u * 3.1 + phase) * amp * Math.sin(u * Math.PI);
+        var q = [p0[0] + (p1[0] - p0[0]) * u + nx * off, p0[1] + (p1[1] - p0[1]) * u + ny * off];
+        if (out.length) { total += Math.hypot(q[0] - out[out.length - 1][0], q[1] - out[out.length - 1][1]); cum.push(total); }
+        out.push(q);
+      }
+    }
+    var widths = out.map(function (_, k) {
+      var u = k / (out.length - 1);
+      var press = 0.55 + 0.45 * Math.sin(Math.min(1, u * 1.15) * Math.PI * 0.5 + 0.0) * (1 - Math.pow(u, 6) * 0.5);
+      return w * press * (0.92 + r() * 0.16);
+    });
+    strokes.push({ pts: out, cum: cum, len: total, w: widths, t0: t0, t1: t1, dash: !!opts.dash, alpha: opts.alpha || 1 });
+  }
+  function rect(x0, y0, x1, y1, t0, t1, w) { stroke([[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]], t0, t1, w, { over: 3 }); }
+
+  // Big street structure first (pass units 0..1 mapped by GSAP)
+  stroke([[0, 400], [1280, 400]], 0.00, 0.16, 2.6, { over: 0, wobble: 0.5 });
+  stroke([[0, 640], [560, 400]], 0.04, 0.20, 3.2);
+  stroke([[1280, 640], [720, 400]], 0.06, 0.22, 3.2);
+  // left block
+  stroke([[60, 160], [330, 250], [330, 440], [60, 540], [60, 160]], 0.14, 0.40, 3.2, { over: 4 });
+  stroke([[330, 250], [470, 290], [470, 410], [330, 440]], 0.28, 0.46, 3.0);
+  // right block
+  stroke([[1220, 160], [950, 250], [950, 440], [1220, 540], [1220, 160]], 0.18, 0.44, 3.2, { over: 4 });
+  stroke([[950, 250], [810, 290], [810, 410], [950, 440]], 0.32, 0.50, 3.0);
+  // landmark tower (recurring anchor)
+  stroke([[600, 410], [600, 180], [640, 140], [680, 180], [680, 410]], 0.44, 0.66, 3.6, { over: 3 });
+  stroke([[600, 180], [680, 180]], 0.60, 0.68, 3.0);
+  stroke([[640, 140], [640, 84]], 0.64, 0.72, 2.8, { over: 0 });
+  // facade details
+  var det = [
+    [[100, 250], [290, 300]], [[100, 330], [290, 360]], [[100, 410], [290, 420]],
+    [[1180, 250], [990, 300]], [[1180, 330], [990, 360]], [[1180, 410], [990, 420]],
+    [[360, 300], [360, 400]], [[440, 310], [440, 400]], [[920, 300], [920, 400]], [[840, 310], [840, 400]],
+    [[620, 220], [660, 220]], [[620, 270], [660, 270]], [[620, 320], [660, 320]],
+    [[150, 520], [150, 470], [210, 455], [210, 497]], [[1130, 520], [1130, 470], [1070, 455], [1070, 497]],
+    [[626, 410], [626, 372], [654, 372], [654, 410]]
+  ];
+  det.forEach(function (s, i) { stroke(s, 0.58 + i * 0.016, 0.70 + i * 0.016, 1.7, { over: 3, wobble: 0.5 }); });
+  // cobble/kerb hatching on the road
+  for (var c = 0; c < 4; c++) {
+    var yy = 430 + c * c * 9 + c * 14, sp = (yy - 400) / 240;
+    stroke([[640 - 70 - sp * 330, yy], [640 - 30 - sp * 160, yy]], 0.74 + c * 0.02, 0.82 + c * 0.02, 1.1, { over: 0, wobble: 0.4 });
+    stroke([[640 + 30 + sp * 160, yy], [640 + 70 + sp * 330, yy]], 0.75 + c * 0.02, 0.83 + c * 0.02, 1.1, { over: 0, wobble: 0.4 });
+  }
+
+  // lamp = the idea (circle + rays), drawn as strokes too
+  var lamp = [];
+  for (var a = 0; a <= 36; a++) { var th = -Math.PI / 2 + a / 36 * Math.PI * 2; lamp.push([640 + Math.cos(th) * 10, 72 + Math.sin(th) * 10]); }
+  stroke(lamp, 0.86, 0.94, 2.8, { over: 0, wobble: 0.2 });
+
+  function drawStroke(s, p) {
+    if (p <= 0) return;
+    var L = s.len * clamp(p, 0, 1);
+    ctx.strokeStyle = INK; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.globalAlpha = s.alpha;
+    for (var i = 1; i < s.pts.length; i++) {
+      if (s.cum[i - 1] >= L) break;
+      var a = s.pts[i - 1], b = s.pts[i], f = 1;
+      if (s.cum[i] > L) f = (L - s.cum[i - 1]) / (s.cum[i] - s.cum[i - 1] || 1);
+      ctx.lineWidth = s.w[i];
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]);
+      ctx.lineTo(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ---------- Transparent pigment islands (separate irregular masks) ----------
+  function blob(cx, cy, rx, ry, seed, rough, sq) {
+    var r = rng(seed), N = 96, ph = [r() * 6, r() * 6, r() * 6], pts = [];
+    for (var i = 0; i < N; i++) {
+      var th = i / N * Math.PI * 2, c = Math.cos(th), s = Math.sin(th);
+      var e = 2 / sq;
+      var x = Math.sign(c) * Math.pow(Math.abs(c), e), y = Math.sign(s) * Math.pow(Math.abs(s), e);
+      var k = 1 + rough * (0.5 * Math.sin(th * 5 + ph[0]) + 0.3 * Math.sin(th * 11 + ph[1]) + 0.2 * Math.sin(th * 23 + ph[2])) + (r() - 0.5) * rough * 0.6;
+      pts.push({ x: x * rx * k, y: y * ry * k, lag: r() });
+    }
+    return { cx: cx, cy: cy, pts: pts };
+  }
+  function blobPath(g, b, p, ox, oy) {
+    g.beginPath();
+    for (var i = 0; i < b.pts.length; i++) {
+      var q = b.pts[i];
+      var pp = clamp((p * 1.35 - q.lag * 0.35), 0, 1);
+      pp = 1 - Math.pow(1 - pp, 2.2);
+      var x = b.cx + q.x * pp + (ox || 0), y = b.cy + q.y * pp + (oy || 0);
+      if (i) g.lineTo(x, y); else g.moveTo(x, y);
+    }
+    g.closePath();
+  }
+  // Pre-render the full wash (granulation + edge darkening), revealed later through a growing mask.
+  function washLayer(b, color, alpha, seed) {
+    var cv = mk(W, H), g = cv.getContext("2d"), r = rng(seed);
+    g.fillStyle = color; g.globalAlpha = alpha;
+    blobPath(g, b, 1); g.fill();
+    g.save(); blobPath(g, b, 1); g.clip();
+    g.globalAlpha = alpha * 0.55; // second, offset pass = pooled pigment
+    for (var j = 0; j < 5; j++) {
+      g.beginPath();
+      g.ellipse(b.cx + (r() - 0.5) * 120, b.cy + (r() - 0.5) * 180, 30 + r() * 60, 40 + r() * 90, r() * 3, 0, 6.283);
+      g.fill();
+    }
+    g.globalAlpha = 0.10; // granulation
+    for (var k = 0; k < 2600; k++) g.fillRect(b.cx + (r() - 0.5) * 900, b.cy + (r() - 0.5) * 600, 1.4, 1.4);
+    g.restore();
+    g.globalAlpha = Math.min(1, alpha * 1.25); g.strokeStyle = color; g.lineWidth = 2.2; // drying edge
+    blobPath(g, b, 1); g.stroke();
+    // paper gap where light falls (lift pigment)
+    return cv;
+  }
+  var towerBlob = blob(646, 250, 66, 178, 21, 0.06, 4.2);
+  var lampBlob = blob(640, 76, 30, 28, 33, 0.14, 2.0);
+  var skyBlob = blob(640, 182, 520, 116, 7, 0.035, 6.0);
+  var towerWash = washLayer(towerBlob, ACTIVE, 0.42, 5);
+  var lampWash = washLayer(lampBlob, "#C8553A", 0.42, 6);
+  var skyWash = washLayer(skyBlob, SKY, 0.26, 8);
+  // light gap on the tower's lit face (paper left bare)
+  var gap = blob(668, 300, 9, 90, 40, 0.15, 2.4);
+  [towerWash].forEach(function (cv) {
+    var g = cv.getContext("2d"); g.globalCompositeOperation = "destination-out"; g.globalAlpha = 0.85;
+    blobPath(g, gap, 1); g.fill();
+  });
+
+  function drawWash(cv, b, p) {
+    if (p <= 0) return;
+    ctx.save();
+    blobPath(ctx, b, p); ctx.clip();
+    ctx.globalCompositeOperation = "multiply";
+    ctx.drawImage(cv, 0, 0);
+    ctx.restore();
+  }
+
+  // ---------- Connections: idea lamp -> building nodes ----------
+  var nodes = [[330, 250], [470, 290], [950, 250], [810, 290], [60, 160], [1220, 160]];
+  var ctrl = [[470, 210], [560, 240], [790, 210], [720, 240], [340, 60], [940, 60]];
+  function quad(p0, c, p1, t) {
+    var u = 1 - t; return [u * u * p0[0] + 2 * u * t * c[0] + t * t * p1[0], u * u * p0[1] + 2 * u * t * c[1] + t * t * p1[1]];
+  }
+
+  // ---------- Timeline state (single owner: GSAP) ----------
+  var S = { line: 0, sky: 0, tower: 0, lamp: 0, rays: 0, links: 0, nodes: 0 };
+  var caption = document.getElementById("caption"), note = document.getElementById("note");
+
+  function render() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+    ctx.drawImage(paper, 0, 0);
+    // washes sit under the ink (ink committed on paper, wash over/under reads as transparent)
+    drawWash(skyWash, skyBlob, S.sky);
+    drawWash(towerWash, towerBlob, S.tower);
+    drawWash(lampWash, lampBlob, S.lamp);
+    for (var i = 0; i < strokes.length; i++) {
+      var s = strokes[i];
+      drawStroke(s, (S.line - s.t0) / (s.t1 - s.t0));
+    }
+    // rays
+    if (S.rays > 0) {
+      var rays = [[[612, 52], [596, 40]], [[668, 52], [684, 40]], [[640, 46], [640, 28]]];
+      ctx.strokeStyle = INK; ctx.lineCap = "round"; ctx.lineWidth = 2.2;
+      rays.forEach(function (r, k) {
+        var p = clamp(S.rays * 1.5 - k * 0.25, 0, 1); if (p <= 0) return;
+        ctx.beginPath(); ctx.moveTo(r[0][0], r[0][1]);
+        ctx.lineTo(r[0][0] + (r[1][0] - r[0][0]) * p, r[0][1] + (r[1][1] - r[0][1]) * p); ctx.stroke();
+      });
+    }
+    // dotted connection lines grow from the lamp
+    if (S.links > 0) {
+      ctx.fillStyle = INK;
+      for (var n = 0; n < nodes.length; n++) {
+        var p = clamp(S.links * 1.6 - n * 0.12, 0, 1);
+        var steps = 70;
+        for (var j = 1; j <= steps * p; j++) {
+          var q = quad([640, 86], ctrl[n], nodes[n], j / steps);
+          ctx.beginPath(); ctx.arc(q[0], q[1], 1.15, 0, 6.283); ctx.fill();
+        }
+        var np = clamp((S.nodes * 1.6 - n * 0.12), 0, 1);
+        if (np > 0) { ctx.beginPath(); ctx.arc(nodes[n][0], nodes[n][1], 5.2 * np, 0, 6.283); ctx.fill(); }
+      }
+    }
+  }
+
+  var tl = gsap.timeline({ paused: true, onUpdate: render });
+  // 0.00–1.40  dark line pass: street, blocks, landmark tower, details, lamp
+  tl.to(S, { line: 1, duration: 1.40, ease: "power1.inOut" }, 0.0);
+  tl.to(S, { rays: 1, duration: 0.25, ease: "power2.out" }, 1.30);
+  // 1.35–2.05  local colour opens on the landmark only after it reads
+  tl.to(S, { tower: 1, duration: 0.70, ease: "sine.inOut" }, 1.35);
+  tl.to(S, { lamp: 1, duration: 0.45, ease: "sine.out" }, 1.45);
+  tl.to(S, { sky: 1, duration: 0.75, ease: "sine.inOut" }, 1.55);
+  // 1.85–2.45  the idea connects to the street (system)
+  tl.to(S, { links: 1, duration: 0.55, ease: "power2.inOut" }, 1.85);
+  tl.to(S, { nodes: 1, duration: 0.50, ease: "back.out(1.6)" }, 1.95);
+  // 2.05–2.45  captions, then hold to 3.0
+  tl.fromTo(caption, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.40, ease: "power2.out" }, 2.05);
+  tl.fromTo(note, { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power1.out" }, 2.15);
+  tl.set({}, {}, 3.0);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  function seekTo(t) { tl.seek(clamp(+t || 0, 0, 3), false); render(); }
+  window.addEventListener("hf-seek", function (e) {
+    var t = e && e.detail && (e.detail.time != null ? e.detail.time : e.detail);
+    if (typeof t === "number") seekTo(t); else render();
+  });
+  tl.seek(0); render();
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

@@ -16,6 +16,8 @@ import { InputRequired } from "../../../shared/input-checkpoint";
 import { CodedError } from "../../../shared/errors";
 import { prepareSpeech } from "../../audio/speech";
 import { prepareVideoBuildPlan } from "./build-plan";
+import { selectSceneBackground } from "../../jev/strategies/scene-background";
+import { sceneBackgroundPurpose } from "../../../shared/agents/scene-background";
 import { captureWithTimingRetries } from "../../jobs/subworkflows/chapter-capture/timing-retry";
 import { BriefSchema, type Brief } from "../../../shared/agents/schemas/video";
 import path from "node:path";
@@ -107,10 +109,33 @@ export async function generateVideo(input: {
       request.aspectRatio,
       job.kind === "preview" ? 720 : request.resolution === "1440p" ? 1440 : 1080,
     );
+    if (
+      job.kind === "full" &&
+      !job.sceneBackgroundTreatment &&
+      !job.production &&
+      !job.refinementPrompt
+    ) {
+      const treatment = await activityScope(sceneBackgroundPurpose, () =>
+        selectSceneBackground({
+          request: sourceRequest,
+          brief,
+          candidate,
+          styles,
+          kind: job.kind,
+          signal,
+          onEvent,
+        }),
+      );
+      if (treatment) {
+        job.sceneBackgroundTreatment = treatment;
+        update();
+      }
+    }
     if (job.kind === "full" && !job.production && !job.refinementPrompt) {
       const planningInput = {
         job,
         provider: request.provider,
+        request,
         prompt: buildVideoPrompt({
           job,
           candidate,
@@ -123,6 +148,7 @@ export async function generateVideo(input: {
         }),
         referenceUrls: request.urls,
         automaticDuration: request.duration === "auto",
+        styleCombination: candidate.supportingStyleIds.length > 0,
         targetDuration: typeof request.duration === "number" ? request.duration : undefined,
         minimumDuration: Math.max(0, ...(request.scriptItems || []).map((item) => item.endSeconds)),
         ...size,
@@ -201,10 +227,12 @@ export async function generateVideo(input: {
       planning: {
         referenceUrls: request.urls,
         automaticDuration: request.duration === "auto",
+        styleCombination: candidate.supportingStyleIds.length > 0,
         targetDuration: typeof request.duration === "number" ? request.duration : undefined,
         minimumDuration: Math.max(0, ...(request.scriptItems || []).map((item) => item.endSeconds)),
         job,
         provider: request.provider,
+        request,
         prompt,
         ...size,
         fps,
@@ -216,7 +244,7 @@ export async function generateVideo(input: {
     };
     if (!job.production) {
       if (job.refinementPrompt) await executeRefinement(execution);
-      else await executeInitialBuild({ ...execution, candidateId: candidate.id });
+      else await executeInitialBuild({ ...execution, candidate, styles });
     } else if (decisions) {
       await executeQuestionResume({ ...execution, decisions, emit, refinementDuration });
     }

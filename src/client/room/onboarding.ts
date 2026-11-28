@@ -130,8 +130,8 @@ export function roomDraftStep(draft: RoomDraft): number {
   return RoomDraftSchema.parse(draft).step;
 }
 
-export function removeRoomEditDraft(drafts: Record<string, RoomDraft>, key: string) {
-  if (!key.startsWith("edit:") || !Object.hasOwn(drafts, key)) return drafts;
+export function removeRoomDraft(drafts: Record<string, RoomDraft>, key: string) {
+  if (!Object.hasOwn(drafts, key)) return drafts;
   const remaining = { ...drafts };
   delete remaining[key];
   return remaining;
@@ -148,7 +148,11 @@ export function roomDraftRequest(draft: Partial<RoomDraft>): CreativeRequest {
       draft.request && typeof draft.request === "object" ? draft.request : {},
     ),
   ) as Record<string, unknown>;
-  const merged = { ...initialRoomRequest(), ...saved };
+  const defaults = switchRoomOutputType(
+    initialRoomRequest(),
+    saved.outputType === "page" ? "page" : "video",
+  );
+  const merged = { ...defaults, ...saved };
   const count =
     typeof merged.candidateCount === "number" && merged.candidateCount > 0
       ? Math.min(5, Math.round(merged.candidateCount))
@@ -161,7 +165,7 @@ export function roomDraftRequest(draft: Partial<RoomDraft>): CreativeRequest {
     ...merged,
     scriptItems: undefined,
     outputLanguage: saved.outputLanguage,
-    instructions: initialRoomRequest().instructions,
+    instructions: defaults.instructions,
     urls: [],
     assetIds: [],
     requirements: undefined,
@@ -175,9 +179,7 @@ export function roomDraftRequest(draft: Partial<RoomDraft>): CreativeRequest {
     typeof savedSubtitles.text === "string"
       ? savedSubtitles.text
       : undefined;
-  const base = parsed.success
-    ? parsed.data
-    : switchRoomOutputType(initialRoomRequest(), saved.outputType === "page" ? "page" : "video");
+  const base = parsed.success ? parsed.data : defaults;
   if (
     base.outputType === "video" &&
     base.subtitles?.mode === "provided" &&

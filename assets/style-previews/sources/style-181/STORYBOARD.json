@@ -1,0 +1,11 @@
+{"version":3,"title":"Pictogram Catalogue — An idea becomes a connected system","durationSeconds":3,
+"scenes":[{"id":"scene-1","title":"Catalogue sheet A","startSeconds":0,"endSeconds":3,"purpose":"Show one recognisable bulb pictogram carried across three front-facing cards while the wider symbol grows into a connected system.",
+"visuals":["Deep blue sheet with title and footer caption","Three light cards on one baseline with chevrons","Shared bulb component drawn from one SVG definition","Coral accent marks the new parts on each card"],
+"assets":["index.html","gsap.min.js"],
+"beats":[
+{"startSeconds":0,"endSeconds":0.65,"development":"Card 01: the bulb resolves as a complete form and its label appears; brief hold.","captions":["01  IDEA"],"audio":{"music":"","effects":[],"subtitles":[]},"readingHoldSeconds":0.3},
+{"startSeconds":0.65,"endSeconds":1.65,"development":"The same bulb travels along the baseline into card 02 and shrinks; two coral links draw out of it and their nodes appear once the shafts arrive; label 02 appears and holds.","captions":["02  LINK"],"audio":{"music":"","effects":[],"subtitles":[]},"readingHoldSeconds":0.2},
+{"startSeconds":1.65,"endSeconds":3,"development":"The bulb is carried again into card 03 and shrinks further; a coral ring closes around it, six spokes extend and six nodes join; label 03 appears and the full catalogue holds settled from 2.5 s.","captions":["03  SYSTEM"],"audio":{"music":"","effects":[],"subtitles":[]},"readingHoldSeconds":0.5}
+]}],
+"pacingAudit":{"findings":["Each symbol completes before the bulb is carried forward; carries take 0.4 s each.","Title and footer caption stay visible throughout."],"justifiedHolds":["Final 0.5 s hold lets the complete three-card sheet read as a whole."]},
+"notes":["Silent preview.","No reviewed preview recipes were supplied in STYLE.json; the preview demonstrates the core characteristic action.","Card 01 and 02 keep their own settled bulb so the sheet reads as a catalogue."]}

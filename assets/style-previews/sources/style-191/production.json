@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "Spy Titles",
+  "displayDescription": "A red slash cuts a paper idea in half; the falling piece reveals the network hidden inside, then the SYSTEM slab slaps in.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "No reviewed preview recipes were supplied (tech.preview_recipes absent, task lists []), so the preview demonstrates the core characteristic action: a silhouette hidden in the title's opening shape revealed by one graphic cut.",
+    "No BACKGROUND_REVIEW.json was supplied; background is chosen from the subject (night-navy spy-file desk) rather than the illustrative #EDF1F3 swatch.",
+    "Cut paper is approximated with flat opaque SVG fills and hard, unblurred offset shadows; no paper fibre, thickness or lighting simulation.",
+    "GSAP is loaded from the provided local gsap.min.js; the project technology selection tool failed (missing PROJECT_DEPENDENCIES.json), so SVG/GSAP are recorded here only.",
+    "No Blender used, per user instruction."
+  ]
+}

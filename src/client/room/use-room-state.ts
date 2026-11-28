@@ -6,10 +6,12 @@ import {
   rebaseRoom,
   roomChanges,
   withoutRoomEntries,
+  type IdeaDraftSource,
   type RoomPatch,
   type RoomState,
 } from "../../shared/room";
 import { api } from "../lib/api";
+import { translateUi } from "../i18n";
 
 export type RoomSaveStatus = "loading" | "saved" | "saving" | "unsaved" | "failed";
 const channelName = "kiteva-room";
@@ -111,6 +113,7 @@ export function useRoomState() {
     return inflight.current;
   }, [pending, settle, adopt]);
   const refresh = useCallback(async () => {
+    await inflight.current;
     const base = synced.current;
     if (!base || inflight.current) return;
     try {
@@ -193,5 +196,24 @@ export function useRoomState() {
     },
     [show, showConflicts, settle],
   );
-  return { room, setRoom, loaded, status, error, conflicts, resolveConflict, retry: save };
+  async function saveIdeaForStart(key: string): Promise<IdeaDraftSource> {
+    await save();
+    const saved = synced.current;
+    const draftId = saved?.drafts[key]?.id;
+    if (!saved || !draftId || roomChanges(saved, latest.current).drafts[key] !== undefined)
+      throw Error(translateUi("Your room changes aren’t saved yet."));
+    return { draftId, revision: saved.revision };
+  }
+  return {
+    room,
+    setRoom,
+    loaded,
+    status,
+    error,
+    conflicts,
+    resolveConflict,
+    retry: save,
+    refresh,
+    saveIdeaForStart,
+  };
 }

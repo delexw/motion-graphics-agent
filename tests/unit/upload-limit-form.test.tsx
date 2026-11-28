@@ -19,6 +19,8 @@ it("shows shared upload limits and disables only the full attachment category", 
       onUpload={async () => {}}
       urls=""
       onUrlsChange={() => {}}
+      musicStyle={undefined}
+      onMusicStyleChange={() => {}}
     >
       {null}
     </BriefRequirements>,

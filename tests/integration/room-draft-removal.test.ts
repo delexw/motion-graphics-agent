@@ -2,12 +2,12 @@ import { expect, it } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { removeRoomEditDraft, roomDraftRequest } from "../../src/client/room/onboarding";
+import { removeRoomDraft, roomDraftRequest } from "../../src/client/room/onboarding";
 import { RoomStateSchema } from "../../src/shared/room";
 import { Store } from "../../src/server/jobs/store";
 import { RequestSchema, type Run } from "../../src/shared/contracts";
 
-it("removes only the selected edit draft without mutating other drafts", () => {
+it("removes only the selected draft without mutating other drafts", () => {
   const drafts = RoomStateSchema.parse({
     drafts: {
       new: { request: { instructions: "New concept" } },
@@ -18,13 +18,13 @@ it("removes only the selected edit draft without mutating other drafts", () => {
       "edit:two": { request: { instructions: "Another edit" } },
     },
   }).drafts;
-  const next = removeRoomEditDraft(drafts, "edit:one");
+  const next = removeRoomDraft(drafts, "edit:one");
   expect(next["edit:one"]).toBeUndefined();
   expect(drafts["edit:one"]).toBeDefined();
   expect(next.new).toBe(drafts.new);
   expect(next["edit:two"]).toBe(drafts["edit:two"]);
-  expect(removeRoomEditDraft(drafts, "new")).toBe(drafts);
-  expect(removeRoomEditDraft(drafts, "edit:missing")).toBe(drafts);
+  expect(removeRoomDraft(drafts, "new").new).toBeUndefined();
+  expect(removeRoomDraft(drafts, "edit:missing")).toBe(drafts);
 });
 
 it("persists draft removal across reload while preserving the project and video references", async () => {
@@ -59,7 +59,7 @@ it("persists draft removal across reload while preserving the project and video 
         new: { request: { instructions: "Keep new idea" } },
       },
     });
-    store.saveRoom({ ...state, drafts: removeRoomEditDraft(state.drafts, "edit:one") });
+    store.saveRoom({ ...state, drafts: removeRoomDraft(state.drafts, "edit:one") });
     store.close();
     store = new Store(filename);
     expect(store.room().drafts["edit:one"]).toBeUndefined();

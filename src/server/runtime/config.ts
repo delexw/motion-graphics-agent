@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 import { resolveLocalPorts } from "../../shared/local-ports";
 import { defaultProviderModels } from "../../shared/model-display-name";
 import { appRoot, dataRoot } from "./paths";
-export { appRoot, dataRoot } from "./paths";
+export { appRoot, dataRoot, desktopBackend, jobsDatabasePath, roomLibraryRoot } from "./paths";
 dotenv.config({ path: path.join(appRoot, ".env"), quiet: true });
 dotenv.config({ path: path.join(appRoot, ".env.local"), quiet: true });
 mkdirSync(dataRoot, { recursive: true, mode: 0o700 });

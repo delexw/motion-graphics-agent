@@ -1,0 +1,74 @@
+{
+  "version": 3,
+  "title": "Backlit Paper Lantern — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Light passes through the lantern layers",
+      "startSeconds": 0,
+      "endSeconds": 3,
+      "purpose": "Show the idea (bulb cutout) handing its light to a far paper wall, whose narrow opening reveals the connected-system outline.",
+      "visuals": [
+        "Quiet oblique Three.js camera with a slow push-in showing three paper planes at separate depths (bulb z=0, wall z=-0.6, network z=-1.4) and the lantern back wall (z=-3)",
+        "Hidden warm lamp (z=-2) behind all cutouts; its light pools on the back wall and glows at paper cut edges",
+        "Near bulb layer: soft, broad rim and halo; far wall layer: crisper, tighter rim",
+        "Teal connected-system silhouette seen only through the slanted opening",
+        "Matte cards outside the bright cavity hold the label row and caption"
+      ],
+      "assets": [
+        "lantern-scene.js",
+        "technology-three_js-ZGqahE/index.js",
+        "gsap.min.js"
+      ],
+      "beats": [
+        {
+          "startSeconds": 0,
+          "endSeconds": 0.9,
+          "development": "Lamp wakes behind LAYER 1; bulb silhouette edges and halo light up warm; label LAYER 1 turns teal; caption rises onto its matte card.",
+          "captions": ["LAYER 1 · LAYER 2 · OPENING", "An idea becomes", "a connected system."],
+          "audio": { "music": "", "effects": [], "subtitles": [] },
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 0.9,
+          "endSeconds": 1.6,
+          "development": "Light travels right behind LAYER 2; bulb rim dims while the far wall's left edge and opening edges catch a crisper rim; label LAYER 2 active.",
+          "captions": [],
+          "audio": { "music": "", "effects": [], "subtitles": [] },
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 1.6,
+          "endSeconds": 2.3,
+          "development": "Lamp slides behind the narrow opening; the third outline (node-and-link system) transmits teal and appears through the slit; label OPENING active.",
+          "captions": [],
+          "audio": { "music": "", "effects": [], "subtitles": [] },
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 2.3,
+          "endSeconds": 3,
+          "development": "Hold on the revealed connected system with camera settled; all copy readable.",
+          "captions": ["An idea becomes", "a connected system."],
+          "audio": { "music": "", "effects": [], "subtitles": [] },
+          "readingHoldSeconds": 0.7
+        }
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": [
+      "Each layer receives the light for about 0.7 s, enough to register its edge response before the hand-off.",
+      "All motion settles by 2.3 s, leaving a 0.7 s final hold."
+    ],
+    "justifiedHolds": [
+      "2.3–3.0 s hold on the last silhouette, as the style asks, and to read the caption."
+    ]
+  },
+  "notes": [
+    "No reviewed recipes were supplied in STYLE.json tech.preview_recipes; the preview demonstrates the characteristic action: light moves behind two layers in order and reveals a third outline through a narrow opening.",
+    "Silent preview.",
+    "Paper light transport is an illustrative shader approximation."
+  ]
+}

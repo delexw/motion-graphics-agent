@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { MotionPatternSchema } from "../../src/shared/contracts";
 import { technologyPool } from "../../src/shared/technology-pool";
 import { loadCatalog } from "../../src/server/catalog/catalog";
+import { parseStyleGuide } from "../../src/shared/agents/schemas/combined-style-guide";
 import { catalogRoot } from "../../src/server/runtime/config";
 import {
   validateExamplePalette,
@@ -124,9 +125,11 @@ describe("Pixel RPG Quest Explainer catalog entry", () => {
     );
     const entry = raw.styles.find((s: { id: string }) => s.id === STYLE_ID);
     for (const key of entry.tech.recommended_stack_keys) expect(technologyPool).toHaveProperty(key);
-    expect(style.executable_prompt_template).toContain("{{render_pipeline}}");
-    expect(style.executable_prompt_template).toContain(style.visual_cues);
-    expect(style.executable_prompt_template).toContain(style.tech.implementation);
+    expect(
+      parseStyleGuide(style.executable_prompt_template)?.sections["Implementation tools"],
+    ).toContain("sample nearest neighbour");
+    expect(style.executable_prompt_template).toContain("## Visual identity");
+    expect(style.executable_prompt_template).toContain("## Implementation tools");
     expect(
       style.suggested_combinations!.suggestions.map((s) => s.supporting_styles[0].style_id),
     ).toEqual(["style-057", "style-097"]);

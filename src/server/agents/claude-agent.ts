@@ -1,9 +1,10 @@
 import { projectRuntimeFiles } from "../runtime/project-files";
-import { prepareClaudeHome, claudeLoginEnvironment } from "./claude-home";
+import { prepareClaudeHome, claudeLoginEnvironment, claudeLoginRenewed } from "./claude-home";
 import { withProcessScope } from "../runtime/process-scope";
 import { commandActivity } from "./command-activity";
 import { nativeWebTools, researchToolDenial } from "./research-policy";
 import { ModelCapacityError } from "./capacity-error";
+import { ModelLoginRenewedError } from "./login-renewed-error";
 import {
   query,
   type SDKMessage,
@@ -392,6 +393,12 @@ export const claudeAgent: Agent = {
       } catch (error) {
         if (!signal.aborted && !completed && terminalAssistantError === "overloaded")
           throw new ModelCapacityError("Claude is temporarily overloaded", "claude");
+        if (
+          !signal.aborted &&
+          terminalAssistantError === "authentication_failed" &&
+          (await claudeLoginRenewed(workspace, loginEnvironment, signal))
+        )
+          throw new ModelLoginRenewedError("claude");
         throw error;
       } finally {
         signal.removeEventListener("abort", abort);

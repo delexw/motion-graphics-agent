@@ -1,0 +1,26 @@
+{
+  "characters": [],
+  "displayTitle": "Firefly Pointillism",
+  "displayDescription": "Warm firefly points form an idea bulb, accumulate along routes into a network, and one teal pulse lights a node.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Glow is a bounded radial-sprite approximation of firefly light, not physical light emission or bloom.",
+    "STYLE.json contains no tech.preview_recipes and no BACKGROUND_REVIEW.json was supplied, so no specific recipe or source-frame evidence could be demonstrated; the preview implements the catalogue's characteristic action.",
+    "Blender was not used per user instruction."
+  ]
+}

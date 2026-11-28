@@ -1,0 +1,29 @@
+{
+  "characters": [],
+  "displayTitle": "LiDAR Survey",
+  "displayDescription": "A pushbroom LiDAR scan builds height-coloured returns, then an 11–13.5 m slice reveals a hidden network of 5 nodes and 5 links.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Three.js 0.187.0 (WebGL Points + ShaderMaterial)",
+    "SVG/HTML overlay for legend, labels and projected outline"
+  ],
+  "motionEngine": [
+    "GSAP 3.15.1 single paused timeline (window.__timelines.video)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative study: the point cloud is procedurally generated from a seeded PRNG, not measured LiDAR data; the RETURNS readout counts these illustrative points.",
+    "Returns are flat round sprites with no intensity/echo modelling; the beam is a translucent fan approximation.",
+    "No Blender used. Three.js bundled locally from the existing read-only node_modules (three 0.187.0) with local esbuild into vendor/three.bundle.js; no installs.",
+    "STYLE.json lists no tech.preview_recipes and no BACKGROUND_REVIEW.json was supplied, so the preview demonstrates the catalogue's characteristic action (scan, accumulate, slice toggle reveals hidden outline).",
+    "Project technology selection tool failed (missing PROJECT_DEPENDENCIES.json), so dependency records were not written."
+  ]
+}

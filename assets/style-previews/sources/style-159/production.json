@@ -1,0 +1,26 @@
+{
+  "characters": [],
+  "displayTitle": "Inner View",
+  "displayDescription": "A locked head silhouette reveals a panning night-city network inside its matte, then its horizon aligns with the outside world.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative procedural Canvas 2D scene; the double exposure is a composited alpha matte, not photographic film exposure.",
+    "No reviewed preview recipes were supplied (STYLE.json has no tech.preview_recipes) and no BACKGROUND_REVIEW.json exists; the preview demonstrates the catalogue's characteristic action.",
+    "Blender was not used, per user instruction."
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "version": 3,
+  "title": "Pen Plotter — An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Plot the idea, then the system",
+      "startSeconds": 0,
+      "endSeconds": 3,
+      "purpose": "Show a pen plotter turning an idea (bulb) into a connected system (node network), with visible pen lifts and no ink during travel on a fixed, registered sheet.",
+      "visuals": [
+        "Stationary dark plotter bed with registered off-white sheet and four registration marks",
+        "Static title 'An idea becomes a connected system' and footer 'PLOT 07 · 0.3 MM DRY PEN · SHEET REGISTERED'",
+        "Moving gantry bridge, carriage and pen head; ink paths revealed by stroke length",
+        "Live status line showing PEN DOWN / PEN UP"
+      ],
+      "assets": ["index.html", "gsap.min.js"],
+      "beats": [
+        {
+          "startSeconds": 0,
+          "endSeconds": 0.12,
+          "development": "Pen lowers onto the top of the bulb contour; status shows pen up homing.",
+          "captions": ["○ PEN UP · HOMING"],
+          "audio": {"music": "", "effects": [], "subtitles": []},
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 0.12,
+          "endSeconds": 1.2,
+          "development": "Three nested bulb contours, the base threads and the filament are traced by path length; the pen lifts, pauses and travels between each without ink.",
+          "captions": ["● PEN DOWN: CONTOUR 01–03 / BASE / FILAMENT", "○ PEN UP · TRAVEL"],
+          "audio": {"music": "", "effects": [], "subtitles": []},
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 1.2,
+          "endSeconds": 2.5,
+          "development": "Long pen-up travel from the filament to the network, then one continuous trail ringing each node and drawing links 01–08; pen lifts to swap to red and draws link 09 to the new node.",
+          "captions": ["● PEN DOWN: LINK 01–08", "○ PEN UP · SWAP PEN", "● PEN DOWN: LINK 09"],
+          "audio": {"music": "", "effects": [], "subtitles": []},
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 2.5,
+          "endSeconds": 3,
+          "development": "Pen lifts off the red node and the full plot holds settled for reading.",
+          "captions": ["○ PEN UP · 9 LINKS PLOTTED"],
+          "audio": {"music": "", "effects": [], "subtitles": []},
+          "readingHoldSeconds": 0.38
+        }
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["Brisk constant-speed plotting with short lift pauses; all ink completes by 2.5 s and the scene is settled by 2.62 s."],
+    "justifiedHolds": ["2.62–3.0 s: final reading hold of the finished plot and title."]
+  },
+  "notes": [
+    "Silent preview.",
+    "No reviewed preview recipes exist in STYLE.json; the core Pen Plotter characteristic action is demonstrated.",
+    "All state derives from GSAP timeline time via a pure render(time); hf-seek re-renders."
+  ]
+}

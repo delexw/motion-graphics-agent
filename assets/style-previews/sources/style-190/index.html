@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spreadsheet Cell Art — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #E9EEF1; overflow: hidden; }
+  #root { width: 100%; height: 100%; position: relative; }
+  svg { display: block; width: 100%; height: 100%; }
+  .ui { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+  .mono { font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" class="ui">
+  <defs>
+    <clipPath id="bodyClip"><rect x="130" y="186" width="1020" height="440"/></clipPath>
+    <filter id="menuShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#142536" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- stationary background -->
+  <rect width="1280" height="720" fill="#E9EEF1"/>
+  <text x="130" y="62" font-size="30" font-weight="700" fill="#142536">An idea becomes a connected system</text>
+
+  <!-- formula bar -->
+  <rect x="130" y="88" width="1020" height="40" fill="#FFFFFF" stroke="#B9C6CE"/>
+  <text x="146" y="115" font-family="Georgia, serif" font-style="italic" font-size="20" fill="#6A7C8A">fx</text>
+  <line x1="182" y1="94" x2="182" y2="122" stroke="#D3DCE1"/>
+  <text id="fxCell" x="1134" y="115" font-size="16" fill="#6A7C8A" text-anchor="end" class="mono">D3</text>
+  <text id="fxText" x="200" y="115" font-size="20" fill="#142536" class="mono"><tspan id="fxA">=B2</tspan><tspan id="fxB" fill="#005885"></tspan><tspan id="fxC"></tspan></text>
+  <rect id="caret" x="244" y="97" width="2" height="24" fill="#005885" opacity="0"/>
+
+  <!-- sheet surface -->
+  <rect x="130" y="150" width="1020" height="476" fill="#FFFFFF"/>
+
+  <!-- scrolling/filtered body (rows), clipped below frozen header -->
+  <g clip-path="url(#bodyClip)">
+    <g id="rows"></g>
+    <!-- stable column lines -->
+    <g stroke="#DCE3E8" stroke-width="1" id="colLines"></g>
+  </g>
+
+  <!-- frozen headers -->
+  <rect x="130" y="150" width="1020" height="36" fill="#DCE4E9"/>
+  <rect id="bHeadHi" x="350" y="150" width="160" height="36" fill="#B9D5DE" opacity="0"/>
+  <g font-size="18" fill="#4A5D6C" text-anchor="middle">
+    <text x="270" y="174">A</text>
+    <text x="422" y="174">B</text>
+    <text x="590" y="174">C</text>
+    <text x="750" y="174">D</text>
+    <text x="910" y="174">E</text>
+    <text x="1070" y="174">F</text>
+  </g>
+  <!-- filter button in B header -->
+  <g id="filterBtn">
+    <rect id="filterBtnBg" x="434" y="159" width="20" height="18" rx="3" fill="#DCE4E9"/>
+    <path id="filterIcon" d="M438 164h12l-4.6 5.2v4.4l-2.8 1.4v-5.8z" fill="#4A5D6C"/>
+  </g>
+  <rect x="130" y="186" width="60" height="440" fill="#DCE4E9" id="rowHeadBg"/>
+  <line x1="130" y1="186" x2="1150" y2="186" stroke="#B9C6CE"/>
+  <line x1="190" y1="150" x2="190" y2="626" stroke="#B9C6CE"/>
+  <g clip-path="url(#bodyClip)"><g id="rowNums" font-size="18" fill="#4A5D6C" text-anchor="middle" class="num"></g></g>
+  <rect id="hiddenMark" x="132" y="404" width="56" height="4" fill="#005885" opacity="0"/>
+
+  <!-- source range highlight and trace -->
+  <rect id="groupFill" x="190" y="230" width="320" height="176" fill="#B9D5DE" opacity="0.9"/>
+  <g id="srcPulses"></g>
+  <g id="groupText" font-size="20" fill="#142536"></g>
+  <rect id="rangeBox" x="352" y="232" width="156" height="172" fill="none" stroke="#005885" stroke-width="3"/>
+  <path id="link" d="M510 318C590 318 600 300 670 296" fill="none" stroke="#005885" stroke-width="2.5"/>
+
+  <!-- result cell D3 -->
+  <text x="684" y="258" font-size="20" font-weight="700" fill="#142536">Connected</text>
+  <rect id="d3Fill" x="670" y="274" width="160" height="44" fill="#005885"/>
+  <rect id="d3Sel" x="670" y="274" width="160" height="44" fill="none" stroke="#142536" stroke-width="2"/>
+  <rect id="d3Handle" x="824" y="312" width="8" height="8" fill="#142536"/>
+  <text id="d3Val" x="816" y="304" font-size="22" font-weight="700" fill="#142536" text-anchor="end" class="num">1</text>
+  <text id="was" x="684" y="346" font-size="16" fill="#005885" class="num">was 1 → now 20</text>
+
+  <!-- filter dropdown menu -->
+  <g id="menu" filter="url(#menuShadow)">
+    <rect x="352" y="190" width="176" height="176" rx="4" fill="#FFFFFF" stroke="#B9C6CE"/>
+    <text x="368" y="214" font-size="15" font-weight="700" fill="#4A5D6C">Filter Links</text>
+    <line x1="362" y1="224" x2="518" y2="224" stroke="#E1E7EB"/>
+    <g id="menuItems" font-size="17" fill="#142536" class="num"></g>
+  </g>
+</svg>
+</div>
+<script src="gsap.min.js"></script>
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent, text) {
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (text != null) n.textContent = text;
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  var ROW_H = 44, TOP = 186;
+  var data = [
+    { r: 1, a: "Part", b: "Links", head: true },
+    { r: 2, a: "Idea", b: 1, group: true },
+    { r: 3, a: "Sketch", b: 3, group: true },
+    { r: 4, a: "Prototype", b: 6, group: true },
+    { r: 5, a: "Team", b: 10, group: true },
+    { r: 6, a: "Noise", b: 0, noise: true },
+    { r: 7, a: "Doubt", b: 0, noise: true }
+  ];
+  for (var r = 8; r <= 12; r++) data.push({ r: r, blank: true });
+
+  var rowsG = document.getElementById("rows");
+  var numsG = document.getElementById("rowNums");
+  var groupText = document.getElementById("groupText");
+  var pulses = document.getElementById("srcPulses");
+  var noiseRows = [], noiseNums = [], belowRows = [], belowNums = [], srcPulse = [];
+
+  data.forEach(function (d) {
+    var y = TOP + (d.r - 1) * ROW_H;
+    var g = el("g", {}, rowsG);
+    el("rect", { x: 190, y: y, width: 960, height: ROW_H, fill: "#FFFFFF" }, g);
+    el("line", { x1: 190, y1: y + ROW_H, x2: 1150, y2: y + ROW_H, stroke: "#DCE3E8" }, g);
+    var n = el("text", { x: 160, y: y + 28 }, numsG, String(d.r));
+    var host = d.group ? groupText : g; // group text sits above the filter highlight
+    if (!d.blank) {
+      var col = d.noise ? "#A3B0B9" : "#142536";
+      el("text", { x: 204, y: y + 28, "font-size": 20, fill: col, "font-weight": d.head ? 700 : 400 }, host, d.a);
+      el("text", { x: 496, y: y + 28, "font-size": 20, fill: col, "text-anchor": "end", "font-weight": d.head ? 700 : 400, "class": "num" }, host, String(d.b));
+    }
+    if (d.group) srcPulse.push(el("rect", { x: 352, y: y + 2, width: 156, height: ROW_H - 4, fill: "#005885", opacity: 0 }, pulses));
+    if (d.noise) { noiseRows.push(g); noiseNums.push(n); }
+    if (d.r >= 8) { belowRows.push(g); belowNums.push(n); }
+  });
+  var colLines = document.getElementById("colLines");
+  [350, 510, 670, 830, 990].forEach(function (x) { el("line", { x1: x, y1: 186, x2: x, y2: 626 }, colLines); });
+
+  // filter menu checklist (values in column B)
+  var menuItems = document.getElementById("menuItems");
+  var menuVals = ["1", "3", "6", "10", "0"], menuChecks = [];
+  menuVals.forEach(function (v, i) {
+    var y = 230 + i * 26;
+    var box = el("rect", { x: 368, y: y + 5, width: 16, height: 16, rx: 2, fill: "#005885", stroke: "#005885" }, menuItems);
+    var tick = el("path", { d: "M371.5 " + (y + 13) + "l3.5 3.5 6-7", fill: "none", stroke: "#FFFFFF", "stroke-width": 2.2 }, menuItems);
+    el("text", { x: 396, y: y + 19 }, menuItems, v);
+    menuChecks.push({ box: box, tick: tick });
+  });
+  var zeroRow = el("rect", { x: 360, y: 230 + 4 * 26 + 1, width: 160, height: 24, fill: "#B9D5DE", opacity: 0 }, menuItems, null);
+  menuItems.insertBefore(zeroRow, menuItems.firstChild);
+
+  // ---- explicit data state rendered from timeline time (single owner for text) ----
+  var fxA = document.getElementById("fxA"), fxB = document.getElementById("fxB"), fxC = document.getElementById("fxC");
+  var caret = document.getElementById("caret");
+  var d3Val = document.getElementById("d3Val");
+  var FULL = "=SUM(B2:B5)";
+  var state = { typed: 0, value: 1 };
+  function renderText() {
+    var n = Math.round(state.typed);
+    if (n <= 0) { fxA.textContent = "=B2"; fxB.textContent = ""; fxC.textContent = ""; }
+    else {
+      var s = FULL.slice(0, n);
+      fxA.textContent = s.slice(0, 5);          // "=SUM("
+      fxB.textContent = s.slice(5, 10);         // "B2:B5" reference colour
+      fxC.textContent = s.slice(10);            // ")"
+    }
+    var chars = n <= 0 ? 3 : n;
+    caret.setAttribute("x", String(200 + chars * 12.04 + 1));
+    var v = Math.round(state.value);
+    d3Val.textContent = v >= 20 ? "20 ✓" : String(v);
+  }
+
+  // ---- one paused, seekable GSAP timeline ----
+  var tl = gsap.timeline({ paused: true, onUpdate: renderText });
+  var menu = document.getElementById("menu");
+  var rangeBox = document.getElementById("rangeBox");
+  var link = document.getElementById("link");
+  var RB = 2 * (156 + 172), LINK = link.getTotalLength();
+
+  // initial state (t = 0): unfiltered table, stale value 1 in D3
+  tl.set(menu, { opacity: 0, y: -8 }, 0)
+    .set("#groupFill", { scaleX: 0, svgOrigin: "190 230" }, 0)
+    .set(rangeBox, { strokeDasharray: "0 " + RB, opacity: 1 }, 0)
+    .set(link, { strokeDasharray: LINK + " " + LINK, strokeDashoffset: LINK }, 0)
+    .set("#d3Fill", { opacity: 0 }, 0)
+    .set("#d3Val", { fill: "#142536" }, 0)
+    .set("#d3Handle", { fill: "#142536" }, 0)
+    .set("#was", { opacity: 0, y: 4 }, 0)
+    .set("#hiddenMark", { opacity: 0 }, 0)
+    .set(state, { typed: 0, value: 1 }, 0)
+    .set(caret, { opacity: 0 }, 0);
+
+  // Beat 1 — filter one group (0.25 – 1.15)
+  tl.to("#bHeadHi", { opacity: 1, duration: 0.12, ease: "power2.out" }, 0.22)
+    .to("#filterBtnBg", { fill: "#005885", duration: 0.12 }, 0.22)
+    .to("#filterIcon", { fill: "#FFFFFF", duration: 0.12 }, 0.22)
+    .to(menu, { opacity: 1, y: 0, duration: 0.18, ease: "power2.out" }, 0.28)
+    .to(zeroRow, { opacity: 1, duration: 0.1 }, 0.5)
+    .to(menuChecks[4].box, { fill: "#FFFFFF", stroke: "#8A9AA6", duration: 0.08 }, 0.56)
+    .to(menuChecks[4].tick, { opacity: 0, duration: 0.06 }, 0.56)
+    .to(menu, { opacity: 0, y: -6, duration: 0.14, ease: "power2.in" }, 0.8)
+    .to("#bHeadHi", { opacity: 0, duration: 0.2 }, 0.86)
+    // Noise/Doubt rows collapse; rows 8+ close the gap; numbers 6,7 hide (stable numbering)
+    .to(noiseRows.concat(noiseNums), { opacity: 0, duration: 0.18, ease: "power1.in" }, 0.82)
+    .to(belowRows.concat(belowNums), { y: -2 * ROW_H, duration: 0.3, ease: "power2.inOut" }, 0.9)
+    .to("#hiddenMark", { opacity: 1, duration: 0.12 }, 1.12)
+    // filtered group highlight sweeps across A2:B5
+    .to("#groupFill", { scaleX: 1, duration: 0.32, ease: "power2.inOut" }, 1.0);
+
+  // Beat 2 — trace the formula's inputs (1.25 – 2.05)
+  tl.to(caret, { opacity: 1, duration: 0.01 }, 1.22)
+    .to(state, { typed: FULL.length, duration: 0.4, ease: "none" }, 1.24)
+    .to(rangeBox, { strokeDasharray: RB + " 0", duration: 0.36, ease: "power2.inOut" }, 1.5)
+    .set(rangeBox, { strokeDasharray: "10 6" }, 1.87)
+    .to(srcPulse, { opacity: 0.22, duration: 0.1, stagger: 0.07, ease: "power1.out" }, 1.55)
+    .to(srcPulse, { opacity: 0, duration: 0.18, stagger: 0.07, ease: "power1.in" }, 1.68)
+    .to(link, { strokeDashoffset: 0, duration: 0.3, ease: "power2.inOut" }, 1.8)
+    .to(caret, { opacity: 0, duration: 0.01 }, 1.9);
+
+  // Beat 3 — corrected value revealed in place (2.05 – 2.45), then hold
+  tl.to("#d3Fill", { opacity: 1, duration: 0.16, ease: "power2.out" }, 2.06)
+    .to("#d3Val", { fill: "#FFFFFF", duration: 0.12 }, 2.06)
+    .to(state, { value: 20, duration: 0.3, ease: "power2.out" }, 2.08)
+    .to("#was", { opacity: 1, y: 0, duration: 0.2, ease: "power2.out" }, 2.3)
+    .to({}, { duration: 0.01 }, 2.99);
+
+  renderText();
+  tl.seek(0);
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  window.addEventListener("hf-seek", function (e) {
+    var t = e && e.detail && typeof e.detail.time === "number" ? e.detail.time : null;
+    if (t != null) tl.seek(t, false);
+    renderText();
+  });
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

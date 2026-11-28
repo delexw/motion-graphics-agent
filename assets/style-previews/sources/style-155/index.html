@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Crayon Drawing Book — an idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #2E4B52; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; }
+  #stage { display: block; width: 100%; height: 100%; }
+</style>
+<script src="gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="stage" width="1280" height="720" aria-label="A crayon drawing book: a lightbulb is shaded in wax on a loose page, the page turns and reveals a connected network."></canvas>
+</div>
+<script>
+(function () {
+  'use strict';
+  var W = 1280, H = 720;
+  var BOOK = { x: 90, y: 70, w: 1100, h: 595 };
+  var GUTTER = 640;              // fixed gutter: the page mask is bound to this line
+  var PW = 550, PH = 595;        // single page size
+  var FONT = "'Chalkboard SE','Comic Sans MS','Marker Felt',sans-serif";
+  var C = {
+    desk: '#2E4B52', ink: '#242831', red: '#9F352D', tan: '#E4CEAA',
+    paperL: '#F1DDB8', paperR: '#F4E4C4', leaf: '#F6E9CF',
+    yellow: '#EDB53C', ochre: '#B97A1C', grey: '#5F6A78', blue: '#3E63A8'
+  };
+
+  // ---------- deterministic helpers ----------
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function mk(w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+  function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+
+  // value noise grid (seeded), bilinear sampled
+  function noiseField(w, h, cell, seed) {
+    var r = mulberry32(seed), gw = Math.ceil(w / cell) + 2, gh = Math.ceil(h / cell) + 2;
+    var g = new Float32Array(gw * gh);
+    for (var i = 0; i < g.length; i++) g[i] = r();
+    return function (x, y) {
+      var fx = x / cell, fy = y / cell, ix = fx | 0, iy = fy | 0, tx = fx - ix, ty = fy - iy;
+      var a = g[iy * gw + ix], b = g[iy * gw + ix + 1], c = g[(iy + 1) * gw + ix], d = g[(iy + 1) * gw + ix + 1];
+      return (a + (b - a) * tx) * (1 - ty) + (c + (d - c) * tx) * ty;
+    };
+  }
+
+  // ---------- cached static textures ----------
+  // Coarse paper tooth: alpha marks where wax skips the raised fibres (used with destination-out).
+  function makeTooth(w, h, seed) {
+    var c = mk(w, h), x = c.getContext('2d'), img = x.createImageData(w, h), d = img.data;
+    var n1 = noiseField(w, h, 2.2, seed), n2 = noiseField(w, h, 7, seed + 11), r = mulberry32(seed + 5);
+    for (var y = 0; y < h; y++) for (var i = 0; i < w; i++) {
+      var v = n1(i, y) * 0.55 + n2(i, y) * 0.3 + r() * 0.15;
+      var a = clamp01((v - 0.56) / 0.14);
+      var k = (y * w + i) * 4; d[k] = d[k + 1] = d[k + 2] = 0; d[k + 3] = a * 255;
+    }
+    x.putImageData(img, 0, 0); return c;
+  }
+  // Paper fibre speckle (warm, light) for page surfaces and a cooler grain for the desk.
+  function makeGrain(w, h, seed, rgb, strength) {
+    var c = mk(w, h), x = c.getContext('2d'), img = x.createImageData(w, h), d = img.data;
+    var n1 = noiseField(w, h, 1.6, seed), n2 = noiseField(w, h, 9, seed + 3), r = mulberry32(seed + 9);
+    for (var y = 0; y < h; y++) for (var i = 0; i < w; i++) {
+      var v = n1(i, y) * 0.5 + n2(i, y) * 0.35 + r() * 0.15 - 0.5;
+      var k = (y * w + i) * 4;
+      d[k] = rgb[0]; d[k + 1] = rgb[1]; d[k + 2] = rgb[2];
+      d[k + 3] = clamp01(Math.abs(v) * strength) * 255;
+    }
+    x.putImageData(img, 0, 0); return c;
+  }
+
+  var toothA = makeTooth(PW, PH, 101), toothB = makeTooth(PW, PH, 202), toothC = makeTooth(PW, PH, 303);
+  var toothFull = makeTooth(W, H, 404);
+  var paperGrain = makeGrain(PW, PH, 17, [110, 78, 40], 0.55);
+  var deskGrain = makeGrain(W, H, 29, [10, 24, 28], 0.9);
+
+  // ---------- wax mark construction (seeded, precomputed) ----------
+  function jitterCircle(cx, cy, r, seed, amp) {
+    var rr = mulberry32(seed), n = 72, pts = [], ph = rr() * 6.28;
+    for (var i = 0; i < n; i++) {
+      var a = i / n * Math.PI * 2;
+      var rad = r + Math.sin(a * 5 + ph) * amp * 0.4 + (rr() - 0.5) * amp;
+      pts.push([cx + Math.cos(a) * rad, cy + Math.sin(a) * rad]);
+    }
+    return pts;
+  }
+  function polyPath(ctx, pts) { ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]); ctx.closePath(); }
+
+  // Hatch strokes covering a box around (cx,cy) at an angle; uneven spacing and per-stroke weights.
+  function hatch(cx, cy, half, angleDeg, spacing, width, seed) {
+    var rr = mulberry32(seed), a = angleDeg * Math.PI / 180;
+    var tx = Math.cos(a), ty = Math.sin(a), nx = -ty, ny = tx, out = [], dir = 1;
+    for (var d = -half; d <= half; d += spacing * (0.7 + rr() * 0.6)) {
+      var len = Math.sqrt(Math.max(0, half * half - d * d)) + 14;
+      var ox = cx + nx * d, oy = cy + ny * d;
+      var s = { ax: ox - tx * len * dir, ay: oy - ty * len * dir, bx: ox + tx * len * dir, by: oy + ty * len * dir,
+        wob: (rr() - 0.5) * 8, w: width * (0.8 + rr() * 0.45), weight: 0.6 + rr() * 0.9, bristles: [] };
+      for (var b = 0; b < 4; b++) s.bristles.push({ o: (b / 3 - 0.5) * s.w * 0.8 + (rr() - 0.5) * 2, a: 0.55 + rr() * 0.45 });
+      out.push(s); dir = -dir;
+    }
+    // uneven schedule: cumulative weights → each stroke owns a slice of pass progress
+    var tot = 0; out.forEach(function (s) { tot += s.weight; });
+    var acc = 0; out.forEach(function (s) { s.t0 = acc / tot; acc += s.weight; s.t1 = acc / tot; });
+    return out;
+  }
+  function strokeLine(ctx, s, frac, color, alpha) {
+    if (frac <= 0) return;
+    var ex = s.ax + (s.bx - s.ax) * frac, ey = s.ay + (s.by - s.ay) * frac;
+    var mx = (s.ax + ex) / 2, my = (s.ay + ey) / 2;
+    var dx = ex - s.ax, dy = ey - s.ay, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+    ctx.strokeStyle = color; ctx.lineCap = 'round';
+    for (var i = 0; i < s.bristles.length; i++) {
+      var br = s.bristles[i];
+      ctx.globalAlpha = alpha * br.a; ctx.lineWidth = s.w / 2.6;
+      ctx.beginPath();
+      ctx.moveTo(s.ax + nx * br.o, s.ay + ny * br.o);
+      ctx.quadraticCurveTo(mx + nx * (br.o + s.wob), my + ny * (br.o + s.wob), ex + nx * br.o, ey + ny * br.o);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawStrokes(ctx, list, p, color, alpha) {
+    for (var i = 0; i < list.length; i++) {
+      var s = list[i]; if (p <= s.t0) break;
+      strokeLine(ctx, s, clamp01((p - s.t0) / (s.t1 - s.t0)), color, alpha);
+    }
+  }
+  // a single scheduled stroke from a→b (outline arcs, rays, edges)
+  function seg(ax, ay, bx, by, width, seed) {
+    var rr = mulberry32(seed), s = { ax: ax, ay: ay, bx: bx, by: by, wob: (rr() - 0.5) * 6, w: width, bristles: [] };
+    for (var b = 0; b < 4; b++) s.bristles.push({ o: (b / 3 - 0.5) * width * 0.75 + (rr() - 0.5) * 1.5, a: 0.6 + rr() * 0.4 });
+    return s;
+  }
+  function polyline(ctx, pts, p, width, color, alpha, seed) {
+    // draw closed jittered outline progressively as short bristled segments
+    var n = pts.length, upto = p * n;
+    for (var i = 0; i < n; i++) {
+      if (i >= upto) break;
+      var a = pts[i], b = pts[(i + 1) % n], f = clamp01(upto - i);
+      strokeLine(ctx, seg(a[0], a[1], b[0], b[1], width, seed + i), f, color, alpha);
+    }
+  }
+
+  // ---------- the bulb (hand-built subject), in leaf-local coordinates ----------
+  function makeBulb(cx, cy, seed) {
+    var B = { cx: cx, cy: cy };
+    B.mask = jitterCircle(cx, cy, 95, seed, 6);                  // flat mask with fractured edge
+    B.base = [[cx - 41, cy + 88], [cx + 42, cy + 90], [cx + 40, cy + 150], [cx - 39, cy + 148]];
+    B.pass1 = hatch(cx, cy, 104, -38, 10, 15, seed + 1);         // broad light wax
+    B.pass1b = hatch(cx, cy + 118, 46, -38, 10, 13, seed + 2);   // grey screw base
+    B.pass2 = hatch(cx - 30, cy + 40, 70, 52, 9, 12, seed + 3);  // ochre shadow, cross direction
+    B.shadeClip = jitterCircle(cx - 22, cy + 30, 72, seed + 4, 7);
+    B.outline = jitterCircle(cx, cy, 95, seed, 6);
+    var rays = [[0, -130, 0, -158], [-104, -86, -124, -106], [104, -86, 124, -106], [-136, 0, -162, 0], [136, 0, 162, 0]];
+    B.rays = rays.map(function (r, i) { var s = seg(cx + r[0], cy + r[1], cx + r[2], cy + r[3], 9, seed + 20 + i); s.t0 = i / rays.length; s.t1 = (i + 1) / rays.length; return s; });
+    return B;
+  }
+  var scratch = mk(PW, PH), sx = scratch.getContext('2d');
+  function waxLayer(target, drawFn, clipPts, tooth, ox) {
+    sx.setTransform(1, 0, 0, 1, 0, 0); sx.globalCompositeOperation = 'source-over'; sx.clearRect(0, 0, PW, PH);
+    sx.save(); if (clipPts) { polyPath(sx, clipPts); sx.clip(); }
+    drawFn(sx); sx.restore();
+    sx.globalCompositeOperation = 'destination-out'; sx.drawImage(tooth, ox || 0, 0); sx.drawImage(tooth, (ox || 0) - PW, 0);
+    sx.globalCompositeOperation = 'source-over';
+    target.drawImage(scratch, 0, 0);
+  }
+  // three uneven passes: p1 flat mask fill, p2 pressure shading, p3 outline + rays
+  function drawBulb(ctx, B, p1, p2, p3) {
+    if (p1 > 0) {
+      waxLayer(ctx, function (c) { drawStrokes(c, B.pass1, p1, C.yellow, 0.78); }, B.mask, toothA, 0);
+      waxLayer(ctx, function (c) { drawStrokes(c, B.pass1b, clamp01(p1 * 1.6 - 0.6), C.grey, 0.85); }, B.base, toothA, 37);
+    }
+    if (p2 > 0) {
+      waxLayer(ctx, function (c) {
+        c.save(); polyPath(c, B.mask); c.clip();
+        drawStrokes(c, B.pass2, p2, C.ochre, 0.8); c.restore();
+      }, B.shadeClip, toothB, 0);
+    }
+    if (p3 > 0) {
+      waxLayer(ctx, function (c) {
+        polyline(c, B.outline, clamp01(p3 * 1.35), 7, C.ink, 0.95, 900);
+        drawStrokes(c, B.rays, clamp01(p3 * 1.5 - 0.5), C.red, 0.95);
+      }, null, toothC, 0);
+    }
+  }
+
+  // ---------- page surfaces (cached) ----------
+  function paper(ctx, color, w, h, flip) {
+    ctx.fillStyle = color; ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(paperGrain, 0, 0, w, h);
+    // soft gutter shading inside the page (hinge side)
+    var g = flip ? ctx.createLinearGradient(w, 0, w - 70, 0) : ctx.createLinearGradient(0, 0, 70, 0);
+    g.addColorStop(0, 'rgba(90,62,30,0.30)'); g.addColorStop(1, 'rgba(90,62,30,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  }
+  function title(ctx, ox, oy) {
+    ctx.textBaseline = 'alphabetic';
+    ctx.font = '700 42px ' + FONT;
+    ctx.fillStyle = C.ink; ctx.fillText('An idea becomes', ox, oy);
+    ctx.fillStyle = C.red; ctx.fillText('a connected system', ox, oy + 50);
+  }
+
+  var bulbFront = makeBulb(290, 330, 7);   // on the loose leaf, right-hand side
+  var bulbBack = makeBulb(260, 330, 7);    // same mark seen on the leaf's verso once turned
+
+  var baseLeft, baseRight, leafBack, leafFront = mk(PW, PH), lfx = leafFront.getContext('2d'), leafPaper;
+  var netPts = [[775, 330], [905, 220], [1060, 300], [1080, 480], [810, 530]], hub = [940, 430];
+  var edges = [[0, 1], [1, 2], [2, 5], [5, 0], [1, 5], [5, 3], [3, 2], [5, 4], [4, 0]];
+
+  function buildCaches() {
+    // left base page: title page
+    baseLeft = mk(PW, PH); var L = baseLeft.getContext('2d');
+    paper(L, C.paperL, PW, PH, true); title(L, 50, 80);
+    // right base page: the connected system, hand-built in wax
+    baseRight = mk(PW, PH); var R = baseRight.getContext('2d');
+    paper(R, C.paperR, PW, PH, false);
+    var all = netPts.concat([hub]), off = function (p) { return [p[0] - GUTTER, p[1] - BOOK.y]; };
+    waxLayer(R, function (c) {
+      edges.forEach(function (e, i) { var a = off(all[e[0]]), b = off(all[e[1]]); strokeLine(c, seg(a[0], a[1], b[0], b[1], 10, 500 + i), 1, C.red, 0.95); });
+    }, null, toothB, 11);
+    netPts.forEach(function (p, i) {
+      var q = off(p), m = jitterCircle(q[0], q[1], 30, 600 + i, 3.5);
+      waxLayer(R, function (c) { drawStrokes(c, hatch(q[0], q[1], 36, -38 + i * 17, 7, 10, 620 + i), 1, C.blue, 0.92); }, m, toothA, i * 23);
+      waxLayer(R, function (c) { polyline(c, m, 1, 4.5, C.ink, 0.95, 640 + i * 80); }, null, toothC, i * 13);
+    });
+    var hq = off(hub), hm = jitterCircle(hq[0], hq[1], 42, 700, 4);
+    waxLayer(R, function (c) { drawStrokes(c, hatch(hq[0], hq[1], 48, 40, 7, 11, 701), 1, C.red, 0.95); }, hm, toothA, 5);
+    waxLayer(R, function (c) { drawStrokes(c, hatch(hq[0] + 10, hq[1] + 12, 34, -40, 8, 9, 702), 1, '#6E2018', 0.6); }, hm, toothB, 5);
+    waxLayer(R, function (c) { polyline(c, hm, 1, 5, C.ink, 0.95, 710); }, null, toothC, 3);
+    R.font = '22px ' + FONT; R.fillStyle = C.ink; R.fillText('…turns the page into a web', 60, 550);
+    // leaf paper (front) and leaf verso (title + finished bulb + caption)
+    leafPaper = mk(PW, PH); paper(leafPaper.getContext('2d'), C.leaf, PW, PH, false);
+    leafBack = mk(PW, PH); var K = leafBack.getContext('2d');
+    paper(K, C.paperL, PW, PH, true); title(K, 50, 80);
+    drawBulb(K, bulbBack, 1, 1, 1);
+    K.font = '22px ' + FONT; K.fillStyle = C.ink; K.fillText('one bright idea…', 50, 550);
+  }
+
+  // ---------- main canvas ----------
+  var cv = document.getElementById('stage'), ctx = cv.getContext('2d');
+  var linkCanvas = mk(W, H), lk = linkCanvas.getContext('2d');
+  var dir = (function () { var a = [350, 400], b = netPts[0], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy); return [dx / L, dy / L]; })();
+  var link = seg(350 + dir[0] * 99, 400 + dir[1] * 99, netPts[0][0] - dir[0] * 32, netPts[0][1] - dir[1] * 32, 12, 808);
+
+  // GSAP owns every animated property of this proxy; the canvas is redrawn from it.
+  var S = { p1: 0, p2: 0, p3: 0, turn: 0, link: 0 };
+
+  function drawLeaf(theta) {
+    var c = Math.cos(theta), sn = Math.sin(theta), face, N = 64, cy = BOOK.y + PH / 2;
+    if (c >= 0) {
+      lfx.setTransform(1, 0, 0, 1, 0, 0); lfx.drawImage(leafPaper, 0, 0);
+      drawBulb(lfx, bulbFront, S.p1, S.p2, S.p3); face = leafFront;
+    } else face = leafBack;
+    var ac = Math.abs(c); if (ac < 0.004) return;
+    // shadow cast by the lifted leaf onto the page beneath
+    var edgeX = GUTTER + PW * c, sw = 30 + 70 * sn;
+    var g = ctx.createLinearGradient(edgeX, 0, edgeX + (c >= 0 ? sw : -sw), 0);
+    g.addColorStop(0, 'rgba(40,28,14,' + (0.32 * sn).toFixed(3) + ')'); g.addColorStop(1, 'rgba(40,28,14,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(c >= 0 ? edgeX : edgeX - sw, BOOK.y, sw, PH);
+    // foreshortened strips; the outer edge lifts toward the viewer (slight vertical growth)
+    for (var i = 0; i < N; i++) {
+      var u0 = i / N * PW, u1 = (i + 1) / N * PW;          // leaf coordinate from hinge
+      var su0 = c >= 0 ? u0 : PW - u1;                         // source x on the visible face
+      var x0 = GUTTER + u0 * c, x1 = GUTTER + u1 * c;
+      var um = (u0 + u1) / 2 / PW, hs = PH * (1 + 0.07 * sn * um);
+      var dx = Math.min(x0, x1), dw = Math.abs(x1 - x0) + 0.8;
+      ctx.drawImage(face, su0, 0, PW / N, PH, dx, cy - hs / 2, dw, hs);
+    }
+    // turning shade: darker while edge-on, lighter highlight on the curl
+    var shade = ctx.createLinearGradient(GUTTER, 0, edgeX, 0);
+    shade.addColorStop(0, 'rgba(60,40,20,' + (0.25 * sn).toFixed(3) + ')');
+    shade.addColorStop(0.7, 'rgba(255,245,225,' + (0.12 * sn).toFixed(3) + ')');
+    shade.addColorStop(1, 'rgba(60,40,20,' + (0.18 * sn).toFixed(3) + ')');
+    ctx.fillStyle = shade;
+    ctx.beginPath();
+    ctx.moveTo(GUTTER, BOOK.y); ctx.lineTo(edgeX, cy - PH * (1 + 0.07 * sn) / 2);
+    ctx.lineTo(edgeX, cy + PH * (1 + 0.07 * sn) / 2); ctx.lineTo(GUTTER, BOOK.y + PH); ctx.closePath(); ctx.fill();
+  }
+
+  function draw() {
+    if (!baseLeft) buildCaches();
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    // stationary desk + book block
+    ctx.fillStyle = C.desk; ctx.fillRect(0, 0, W, H); ctx.drawImage(deskGrain, 0, 0);
+    ctx.fillStyle = 'rgba(12,22,26,0.45)'; ctx.fillRect(BOOK.x + 10, BOOK.y + 14, BOOK.w, BOOK.h);
+    ctx.fillStyle = '#D8BE90'; ctx.fillRect(BOOK.x - 4, BOOK.y + 4, BOOK.w + 8, BOOK.h);
+    ctx.drawImage(baseLeft, BOOK.x, BOOK.y); ctx.drawImage(baseRight, GUTTER, BOOK.y);
+    // fixed gutter crease
+    var gg = ctx.createLinearGradient(GUTTER - 40, 0, GUTTER + 40, 0);
+    gg.addColorStop(0, 'rgba(90,62,30,0)'); gg.addColorStop(0.5, 'rgba(90,62,30,0.35)'); gg.addColorStop(1, 'rgba(90,62,30,0)');
+    ctx.fillStyle = gg; ctx.fillRect(GUTTER - 40, BOOK.y, 80, PH);
+    // the one page movement: leaf hinged on the gutter, 0 → π
+    drawLeaf(S.turn * Math.PI);
+    // connector stroke across the gutter once the page has landed
+    if (S.link > 0) {
+      lk.setTransform(1, 0, 0, 1, 0, 0); lk.globalCompositeOperation = 'source-over'; lk.clearRect(0, 0, W, H);
+      strokeLine(lk, link, S.link, C.red, 0.95);
+      lk.globalCompositeOperation = 'destination-out'; lk.drawImage(toothFull, 0, 0); lk.globalCompositeOperation = 'source-over';
+      ctx.drawImage(linkCanvas, 0, 0);
+    }
+  }
+
+  // ---------- one paused, seekable GSAP timeline ----------
+  var tl = gsap.timeline({ paused: true, onUpdate: draw });
+  tl.to(S, { p1: 1, duration: 0.62, ease: 'none' }, 0.1)          // pass 1: flat mask, light pressure
+    .to(S, { p2: 1, duration: 0.42, ease: 'none' }, 0.74)         // pass 2: heavier shadow, cross hatch
+    .to(S, { p3: 1, duration: 0.38, ease: 'none' }, 1.13)         // pass 3: outline + rays
+    .to(S, { turn: 1, duration: 0.7, ease: 'power2.inOut' }, 1.56) // page movement reveal
+    .to(S, { link: 1, duration: 0.3, ease: 'power2.out' }, 2.26)   // idea connects to the system
+    .set({}, {}, 3);
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+
+  window.addEventListener('hf-seek', function (e) {
+    var t = e && e.detail && typeof e.detail.time === 'number' ? e.detail.time : tl.time();
+    tl.seek(t, false); draw();
+  });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { baseLeft = null; draw(); });
+  tl.seek(0, false); draw();
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

@@ -1,0 +1,108 @@
+{
+ "version": 3,
+ "title": "Copperplate Engraving \u2014 An Idea becomes a connected System",
+ "durationSeconds": 3,
+ "scenes": [
+  {
+   "id": "scene-1",
+   "title": "Laying the bands",
+   "startSeconds": 0,
+   "endSeconds": 1.4,
+   "purpose": "Show the burin building tone purely from line density on a warm paper plate set on a dark mat.",
+   "visuals": [
+    "Plate copy lettered into the left margin with a left-to-right burin wipe",
+    "Horizontal ground band, then a 45\u00b0 band, then -40\u00b0 and 80\u00b0 cross bands that darken toward the core",
+    "Concentric tapered contour arcs ring the halo"
+   ],
+   "assets": [
+    "index.html"
+   ],
+   "beats": [
+    {
+     "startSeconds": 0,
+     "endSeconds": 0.8,
+     "development": "Parallel horizontal and diagonal hatch bands are incised line by line across the disc while the title copy is lettered in the margin.",
+     "captions": [
+      "PLATE I.",
+      "An Idea",
+      "becomes a connected System"
+     ],
+     "audio": {
+      "music": "",
+      "effects": [],
+      "subtitles": []
+     },
+     "readingHoldSeconds": 0
+    },
+    {
+     "startSeconds": 0.8,
+     "endSeconds": 1.4,
+     "development": "Cross bands are laid only where the surface darkens toward the centre; contour arcs follow the round halo; the red rule and plate caption appear.",
+     "captions": [
+      "SCULPSIT \u00b7 THE LIGHT RELEASED FROM THE DARK"
+     ],
+     "audio": {
+      "music": "",
+      "effects": [],
+      "subtitles": []
+     },
+     "readingHoldSeconds": 0
+    }
+   ]
+  },
+  {
+   "id": "scene-2",
+   "title": "Light released",
+   "startSeconds": 1.4,
+   "endSeconds": 3,
+   "purpose": "Release the light-bulb idea as bare paper out of the dense dark and connect it into a system.",
+   "visuals": [
+    "Bulb-shaped paper reserve burnished outward from the core",
+    "Single-pass outline incision, glass highlight strokes and screw collar",
+    "Ink filament then red accent triangle and nodes inside the bare paper"
+   ],
+   "assets": [
+    "index.html"
+   ],
+   "beats": [
+    {
+     "startSeconds": 1.4,
+     "endSeconds": 2.1,
+     "development": "The bulb grows as clean paper out of the cross-hatched dark, then its outline, highlights and collar are incised.",
+     "captions": [],
+     "audio": {
+      "music": "",
+      "effects": [],
+      "subtitles": []
+     },
+     "readingHoldSeconds": 0
+    },
+    {
+     "startSeconds": 2.1,
+     "endSeconds": 3,
+     "development": "The filament links the parts and the red connected-system triangle and nodes snap in; the bare-paper highlight is held settled.",
+     "captions": [],
+     "audio": {
+      "music": "",
+      "effects": [],
+      "subtitles": []
+     },
+     "readingHoldSeconds": 0.5
+    }
+   ]
+  }
+ ],
+ "pacingAudit": {
+  "findings": [
+   "All motion completes by 2.5 s; the copy is fully lettered by 0.8 s."
+  ],
+  "justifiedHolds": [
+   "2.5\u20133.0 s hold on the released bare-paper bulb, as the style asks to hold the emerging highlight."
+  ]
+ },
+ "notes": [
+  "Silent preview.",
+  "Primary Motion Graphic style-160 characteristic action demonstrated; no reviewed preview recipes exist in STYLE.json.",
+  "Canvas state lives on a detached paused GSAP timeline driven by a getter/setter tween inside the registered timeline (fires on every render, including suppressed-event seeks) and by hf-seek; all marks are seeded."
+ ]
+}

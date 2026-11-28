@@ -1,10 +1,19 @@
 import { afterEach, expect, it, vi } from "vitest";
 const calls = vi.hoisted(() => ({
   order: [] as string[],
+  acquireLease: vi.fn(),
   update: vi.fn(),
   pixelUpdate: vi.fn(),
   listen: vi.fn(),
   close: vi.fn(),
+}));
+vi.mock("../../src/server/runtime/config", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../src/server/runtime/config")>()),
+  jobsDatabasePath: ":memory:",
+  port: 0,
+}));
+vi.mock("../../src/server/runtime/file-lease", () => ({
+  acquireFileLease: calls.acquireLease,
 }));
 vi.mock("../../src/server/agents/bundled-skills/installation", () => ({
   refreshSkills: async () => {
@@ -42,6 +51,10 @@ it.each([false, true])(
   "refreshes Audio Studio before serving and keeps the app available on maintenance failure (%s)",
   async (fails) => {
     vi.resetModules();
+    calls.acquireLease.mockImplementation(async (_file: string, signal: AbortSignal) => ({
+      signal,
+      release: vi.fn(async () => {}),
+    }));
     vi.spyOn(console, "log").mockImplementation(() => {});
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     calls.pixelUpdate.mockImplementation(async () => {
@@ -56,6 +69,13 @@ it.each([false, true])(
       calls.order.push("listen");
     });
     await import("../../src/server/index");
+    expect(calls.acquireLease).toHaveBeenCalledExactlyOnceWith(
+      ":memory:",
+      expect.any(AbortSignal),
+      {
+        wait: false,
+      },
+    );
     expect(calls.order).toEqual(["bevy", "skills", "pixel assets", "audio", "app", "listen"]);
     expect(calls.pixelUpdate).toHaveBeenCalledWith({
       installIfMissing: false,

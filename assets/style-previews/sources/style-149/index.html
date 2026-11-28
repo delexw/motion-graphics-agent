@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Evidence Briefing Board — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #D9E2E7; overflow: hidden; }
+  #root { width: 100%; height: 100%; position: relative; }
+  #board { width: 100%; height: 100%; display: block; }
+  .sans { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  .mono { font-family: Menlo, "SF Mono", Monaco, Consolas, monospace; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg id="board" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M20 0H0V20" fill="none" stroke="#CCD9DF" stroke-width="1"/>
+    </pattern>
+    <clipPath id="boardClip"><rect x="40" y="36" width="1200" height="648"/></clipPath>
+  </defs>
+
+  <!-- Stationary board surface -->
+  <rect width="1280" height="720" fill="#D9E2E7"/>
+  <rect x="40" y="36" width="1200" height="648" fill="#F5F8F9"/>
+  <rect x="40" y="36" width="1200" height="648" fill="url(#grid)"/>
+  <rect x="40" y="36" width="1200" height="648" fill="none" stroke="#142536" stroke-width="2"/>
+
+  <!-- Common specification (standalone heading, readable from frame 0) -->
+  <g id="header">
+    <rect x="56" y="54" width="700" height="78" fill="#F5F8F9"/>
+    <text x="64" y="88" class="sans" font-weight="700" font-size="30" fill="#142536">AN IDEA BECOMES A CONNECTED SYSTEM</text>
+    <text x="64" y="120" class="mono" font-size="15" fill="#005885">COMMON SPEC · 5 NODES · ALL LINKED · WITHIN 2 HOPS OF THE IDEA</text>
+  </g>
+
+  <!-- Option panels: identical size, identical drawing scale -->
+  <g id="panels">
+    <g id="panelA">
+      <rect x="64" y="150" width="360" height="440" fill="#FFFFFF" stroke="#142536" stroke-width="2"/>
+      <text x="80" y="176" class="mono" font-size="14" fill="#142536">OPTION A · ISOLATED</text>
+    </g>
+    <g id="panelB">
+      <rect x="460" y="150" width="360" height="440" fill="#FFFFFF" stroke="#142536" stroke-width="2"/>
+      <text x="476" y="176" class="mono" font-size="14" fill="#142536">OPTION B · CHAIN</text>
+    </g>
+    <g id="panelC">
+      <rect id="frameC" x="856" y="150" width="360" height="440" fill="#FFFFFF" stroke="#142536" stroke-width="2"/>
+      <text x="872" y="176" class="mono" font-size="14" fill="#142536">OPTION C · HUB + RING</text>
+    </g>
+  </g>
+
+  <!-- Stamped clearance rings (left behind by the moving guide) -->
+  <g id="stamps">
+    <g id="stampA" transform="translate(244 370)">
+      <circle r="120" fill="#B9D5DE" fill-opacity=".35" stroke="#005885" stroke-width="2" stroke-dasharray="8 6"/>
+      <text y="-128" class="mono" font-size="13" fill="#005885" text-anchor="middle">r = 2 HOPS</text>
+    </g>
+    <g id="stampB" transform="translate(640 370)">
+      <circle r="120" fill="#B9D5DE" fill-opacity=".35" stroke="#005885" stroke-width="2" stroke-dasharray="8 6"/>
+      <text y="-128" class="mono" font-size="13" fill="#005885" text-anchor="middle">r = 2 HOPS</text>
+    </g>
+    <g id="stampC" transform="translate(1036 370)">
+      <circle r="120" fill="#B9D5DE" fill-opacity=".35" stroke="#005885" stroke-width="2" stroke-dasharray="8 6"/>
+      <text y="-128" class="mono" font-size="13" fill="#005885" text-anchor="middle">r = 2 HOPS</text>
+    </g>
+  </g>
+
+  <!-- Option A: isolated nodes, no links -->
+  <g id="optA">
+    <g class="node nodeA" transform="translate(170 290)"><circle r="12" fill="#fff" stroke="#142536" stroke-width="3"/></g>
+    <g class="node nodeA" transform="translate(330 300)"><circle r="12" fill="#fff" stroke="#142536" stroke-width="3"/></g>
+    <g class="node nodeA" transform="translate(150 470)"><circle r="12" fill="#fff" stroke="#142536" stroke-width="3"/></g>
+    <g class="node nodeA" transform="translate(345 455)"><circle r="12" fill="#fff" stroke="#142536" stroke-width="3"/></g>
+    <g class="idea" transform="translate(244 370)"><circle r="16" fill="#005885"/></g>
+  </g>
+
+  <!-- Option B: chain, 4 hops -->
+  <g id="optB">
+    <path id="linkB" d="M560 440L620 380L680 320L740 260L790 210" stroke="#142536" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <g class="idea" transform="translate(560 440)"><circle r="16" fill="#005885"/></g>
+    <g class="node nodeB" transform="translate(620 380)"><circle r="12" fill="#fff" stroke="#142536" stroke-width="3"/></g>
+    <g class="node nodeB" transform="translate(680 320)"><circle r="12" fill="#fff" stroke="#142536" stroke-width="3"/></g>
+    <g class="node nodeB" transform="translate(740 260)"><circle r="12" fill="#fff" stroke="#142536" stroke-width="3"/></g>
+    <g class="node nodeB" transform="translate(790 210)"><circle r="12" fill="#fff" stroke="#142536" stroke-width="3"/></g>
+  </g>
+
+  <!-- Option C: hub + ring, max 1 hop -->
+  <g id="optC">
+    <path class="linkC" d="M1036 370L1036 280" stroke="#142536" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path class="linkC" d="M1036 370L1126 370" stroke="#142536" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path class="linkC" d="M1036 370L1036 460" stroke="#142536" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path class="linkC" d="M1036 370L946 370" stroke="#142536" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path id="ringC" d="M1036 280L1126 370L1036 460L946 370Z" stroke="#142536" stroke-width="3" fill="none" stroke-linejoin="round"/>
+    <g class="node nodeC" transform="translate(1036 280)"><circle r="12" fill="#fff" stroke="#142536" stroke-width="3"/></g>
+    <g class="node nodeC" transform="translate(1126 370)"><circle r="12" fill="#fff" stroke="#142536" stroke-width="3"/></g>
+    <g class="node nodeC" transform="translate(1036 460)"><circle r="12" fill="#fff" stroke="#142536" stroke-width="3"/></g>
+    <g class="node nodeC" transform="translate(946 370)"><circle r="12" fill="#fff" stroke="#142536" stroke-width="3"/></g>
+    <g class="idea" transform="translate(1036 370)"><circle r="16" fill="#005885"/></g>
+  </g>
+
+  <!-- Verdict chips: labels revealed only after their chip container completes -->
+  <g id="chips">
+    <g id="chipA">
+      <rect id="chipA-box" x="80" y="540" width="328" height="34" fill="#E4EBEE"/>
+      <text data-reveal-after="chipA-box" class="mono chipText" x="96" y="562" font-size="15" font-weight="700" fill="#142536">✕ 0 LINKS</text>
+    </g>
+    <g id="chipB">
+      <rect id="chipB-box" x="476" y="540" width="328" height="34" fill="#E4EBEE"/>
+      <text data-reveal-after="chipB-box" class="mono chipText" x="492" y="562" font-size="15" font-weight="700" fill="#142536">✕ 4 HOPS · EXCEEDS GUIDE</text>
+    </g>
+    <g id="chipC">
+      <rect id="chipC-box" x="872" y="540" width="328" height="34" fill="#005885"/>
+      <text data-reveal-after="chipC-box" class="mono chipText" x="888" y="562" font-size="15" font-weight="700" fill="#FFFFFF">✓ FEASIBLE · MAX 1 HOP</text>
+    </g>
+  </g>
+
+  <!-- The single moving clearance guide (same overlay for every option) -->
+  <g id="guide" clip-path="url(#boardClip)">
+    <g id="guideMove" transform="translate(244 0)">
+      <line x1="0" y1="140" x2="0" y2="600" stroke="#005885" stroke-width="2"/>
+      <circle cx="0" cy="370" r="120" fill="#B9D5DE" fill-opacity=".22" stroke="#005885" stroke-width="3" stroke-dasharray="8 6"/>
+      <circle cx="0" cy="370" r="5" fill="#005885"/>
+      <rect x="-58" y="600" width="116" height="22" fill="#005885"/>
+      <text x="0" y="615.5" class="mono" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">GUIDE r = 2</text>
+    </g>
+  </g>
+
+  <!-- Footer legend (units shared by all columns) -->
+  <text x="64" y="652" class="mono" font-size="13" fill="#3C5163">UNITS: HOPS FROM IDEA NODE · SAME CLEARANCE GUIDE APPLIED TO EACH OPTION · SHEET 01/01</text>
+</svg>
+</div>
+
+<script src="gsap.min.js"></script>
+<script>
+(function () {
+  var $ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  var q = function (s) { return document.querySelector(s); };
+
+  // Path lengths computed once from fixed geometry (deterministic).
+  function prepDraw(el) {
+    var len = el.getTotalLength();
+    el.setAttribute("stroke-dasharray", len + " " + len);
+    el.setAttribute("stroke-dashoffset", len);
+    return len;
+  }
+  var linkB = q("#linkB");
+  var lenB = prepDraw(linkB);
+  var linksC = $(".linkC");
+  var lensC = linksC.map(prepDraw);
+  var ringC = q("#ringC");
+  var lenRing = prepDraw(ringC);
+
+  var tl = gsap.timeline({ paused: true, defaults: { overwrite: false } });
+
+  // 0.00–0.75 · Build the three alternatives at one scale (nodes, then links)
+  tl.fromTo(".idea", { scale: 0, transformOrigin: "50% 50%" },
+    { scale: 1, duration: 0.3, ease: "back.out(1.6)", stagger: 0.05 }, 0.05);
+  tl.fromTo(".nodeA", { scale: 0, transformOrigin: "50% 50%" },
+    { scale: 1, duration: 0.28, ease: "back.out(1.6)", stagger: 0.04 }, 0.15);
+  tl.fromTo(".nodeB", { scale: 0, transformOrigin: "50% 50%" },
+    { scale: 1, duration: 0.28, ease: "back.out(1.6)", stagger: 0.06 }, 0.2);
+  tl.fromTo(".nodeC", { scale: 0, transformOrigin: "50% 50%" },
+    { scale: 1, duration: 0.28, ease: "back.out(1.6)", stagger: 0.04 }, 0.25);
+  tl.fromTo(linkB, { attr: { "stroke-dashoffset": lenB } },
+    { attr: { "stroke-dashoffset": 0 }, duration: 0.45, ease: "power2.inOut" }, 0.3);
+  linksC.forEach(function (el, i) {
+    tl.fromTo(el, { attr: { "stroke-dashoffset": lensC[i] } },
+      { attr: { "stroke-dashoffset": 0 }, duration: 0.25, ease: "power2.out" }, 0.35 + i * 0.03);
+  });
+  tl.fromTo(ringC, { attr: { "stroke-dashoffset": lenRing } },
+    { attr: { "stroke-dashoffset": 0 }, duration: 0.4, ease: "power2.inOut" }, 0.45);
+
+  // Moving clearance guide: enters, then crosses all three columns at ONE constant speed
+  var GUIDE_START = 0.8, PX = 1036 - 244, SPEED_DUR = 1.2; // 792 px in 1.2 s = 660 px/s
+  tl.fromTo("#guide", { opacity: 0 }, { opacity: 1, duration: 0.15, ease: "none" }, 0.7);
+  tl.fromTo("#guideMove", { x: 0 }, { x: PX, duration: SPEED_DUR, ease: "none" }, GUIDE_START);
+  tl.to("#guide", { opacity: 0, duration: 0.2, ease: "none" }, GUIDE_START + SPEED_DUR + 0.05);
+
+  // Each column is stamped and judged exactly when the guide is centred on it
+  var cols = ["A", "B", "C"];
+  cols.forEach(function (c, i) {
+    var t = GUIDE_START + (i * 396 / PX) * SPEED_DUR; // 0.8, 1.4, 2.0
+    tl.fromTo("#stamp" + c, { opacity: 0, scale: 0.9, transformOrigin: "50% 50%" },
+      { opacity: 1, scale: 1, duration: 0.18, ease: "power2.out" }, t - 0.02);
+    tl.fromTo("#chip" + c + "-box", { scaleX: 0, transformOrigin: "0% 50%" },
+      { scaleX: 1, duration: 0.18, ease: "power2.out" }, t + 0.02);
+    tl.fromTo("#chip" + c + " .chipText", { opacity: 0 },
+      { opacity: 1, duration: 0.1, ease: "none" }, t + 0.2);
+  });
+
+  // Hold on the feasible arrangement: C frame takes the active stroke
+  tl.fromTo("#frameC", { attr: { stroke: "#142536", "stroke-width": 2 } },
+    { attr: { stroke: "#005885", "stroke-width": 4 }, duration: 0.2, ease: "power2.out" }, 2.12);
+  tl.fromTo("#optC", { scale: 1, svgOrigin: "1036 370" },
+    { scale: 1.05, duration: 0.15, ease: "power2.out", yoyo: true, repeat: 1 }, 2.1);
+
+  // Pad timeline to exactly the composition duration
+  tl.set({}, {}, 3);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  tl.seek(0);
+
+  document.addEventListener("hf-seek", function (e) {
+    var t = e && e.detail && typeof e.detail.time === "number" ? e.detail.time : null;
+    if (t !== null) tl.seek(t, false);
+  });
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

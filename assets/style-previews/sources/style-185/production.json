@@ -1,0 +1,45 @@
+{
+  "characters": [
+    {
+      "id": "connect-o-tron",
+      "name": "Connect-O-Tron",
+      "appearance": "Invented gadget: white trapezoid base, orange capsule body with three state lamps, teal cone emitter, glass dome holding an idea light bulb; thick dark-ink outlines, flat fills.",
+      "personality": "",
+      "role": "Speculative device whose OFF/ON state turns an idea into a connected system.",
+      "evidence": "ILLUSTRATION.svg composition reference and index.html drawDevice()."
+    },
+    {
+      "id": "sidekick-robot",
+      "name": "Sidekick robot",
+      "appearance": "Small teal boxy robot head with white round eyes, pink-tipped antenna and white body block; same drawing in wide and close-up shots.",
+      "personality": "Easily astonished observer.",
+      "role": "Delivers the single strong reaction to the gadget.",
+      "evidence": "ILLUSTRATION.svg composition reference and index.html drawRobot()."
+    }
+  ],
+  "displayTitle": "Connect-O-Tron",
+  "displayDescription": "A cartoon gadget fires an idea, a robot does a hard double-take, and the cut back reveals the idea wired into a connected system.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, sound effects, narration or subtitles.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "No reviewed preview recipe exists in STYLE.json and no BACKGROUND_REVIEW.json was supplied; the preview demonstrates the catalogue characteristic action (gadget state, reaction cut, altered prop).",
+    "Cel animation is approximated with procedural Canvas 2D vector drawing; line boil is a seeded per-vertex jitter stepped at 12 drawings per second and frozen from 2.4 s.",
+    "Beam light and glows are flat translucent fills, not physical lighting.",
+    "Typography uses locally installed Futura with Trebuchet MS / sans-serif fallback; copy auto-shrinks to fit the bubble if the fallback is wider.",
+    "Blender was not used, per instruction."
+  ]
+}

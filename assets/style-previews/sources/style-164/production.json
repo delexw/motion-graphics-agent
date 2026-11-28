@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "Glass Studio",
+  "displayDescription": "A glass capsule shell opens a shallow component view and a cartridge joins at its seat, lighting one live link in the idea's network.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Three.js 0.187.0 (WebGL, MeshPhysicalMaterial, custom GLSL fresnel + reflection-strip shaders), bundled locally to scene.bundle.js with esbuild"
+  ],
+  "motionEngine": [
+    "GSAP 3 (local gsap.min.js) — one paused timeline at window.__timelines.video"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration. The seat contact at 2.05s is where a single mechanical contact cue would go if sound were enabled.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Glass is approximated: transparent clearcoat MeshPhysicalMaterial layers plus a fresnel silhouette shader and controlled additive reflection strips; no physical refraction/transmission or caustics.",
+    "Studio lighting uses a procedural RoomEnvironment PMREM map and two directional lights, not a captured HDRI.",
+    "STYLE.json contains no tech.preview_recipes and no BACKGROUND_REVIEW.json was supplied, so the preview demonstrates the catalogue's characteristic action (broad reflection sweep, shallow component view, join at an obvious seat).",
+    "Blender was not used, per user instruction; the scene is procedural Three.js geometry.",
+    "Typography uses system Helvetica Neue/Arial; the 200 weight may fall back to a regular weight where unavailable."
+  ]
+}

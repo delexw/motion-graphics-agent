@@ -4,15 +4,19 @@ import {
 } from "../../shared/request-settings-review";
 import { CodedError, parseErrorCode } from "../../shared/errors";
 import { z } from "zod";
-import type { VideoRequest } from "../../shared/domains/video";
+import type { CreativeRequest } from "../../shared/contracts";
+import type { IdeaDraftSource } from "../../shared/room";
 import { port } from "../runtime/config";
 
 /** Submit through the same validation and workflow entry point as the application. */
-export async function startIdeaThroughBackend(request: VideoRequest) {
+export async function startIdeaThroughBackend(
+  request: CreativeRequest,
+  sourceDraft?: IdeaDraftSource,
+) {
   const response = await fetch(`http://127.0.0.1:${port}/api/runs`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
+    body: JSON.stringify({ ...request, sourceDraft }),
     signal: AbortSignal.timeout(70000),
   });
   if (!response.ok) {

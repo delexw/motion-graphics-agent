@@ -16,6 +16,11 @@ const statusLabels: Record<JevCallDetail["status"], string> = {
 };
 
 const callsPerPage = 10;
+const backgroundTreatmentLabels = {
+  required: "Layered background required",
+  not_required: "Layered background not required",
+  both: "Layered and simple backgrounds",
+} as const;
 
 export function GovernanceJevCalls({ calls }: { calls: JevCallDetail[] }) {
   const [requestedPage, setPage] = useState(1);
@@ -32,6 +37,23 @@ export function GovernanceJevCalls({ calls }: { calls: JevCallDetail[] }) {
             {call.project && `${call.project} · `}
             {uiLanguage.date(call.time)}
           </div>
+          {call.backgroundTarget && (
+            <div className="governance-table-detail">
+              {[
+                translateUi(
+                  call.backgroundTarget.kind === "full"
+                    ? "Full film"
+                    : call.backgroundTarget.directions.length > 1
+                      ? "Preview directions"
+                      : "Preview",
+                ),
+                call.backgroundTarget.version && `v${call.backgroundTarget.version}`,
+                call.backgroundTarget.directions.join(" / "),
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </div>
+          )}
           {call.promptUrl && (
             <a href={call.promptUrl} target="_blank" rel="noreferrer">
               {translateUi("Recorded call input")}
@@ -47,6 +69,9 @@ export function GovernanceJevCalls({ calls }: { calls: JevCallDetail[] }) {
                   <div>
                     {translateUi("Selected effort:")} {governanceEffortLabel(call.selectedEffort)}
                   </div>
+                )}
+                {call.backgroundTreatment && (
+                  <div>{translateUi(backgroundTreatmentLabels[call.backgroundTreatment])}</div>
                 )}
               </dd>
             </div>

@@ -1,0 +1,26 @@
+{
+  "characters": [],
+  "displayTitle": "Cell Art",
+  "displayDescription": "A spreadsheet filters out zero-link rows, traces =SUM(B2:B5) and corrects D3 from 1 to 20 in place.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Simulated spreadsheet illustration, not a real spreadsheet application recording.",
+    "STYLE.json has no tech.preview_recipes and BACKGROUND_REVIEW.json is absent; the preview demonstrates the style's characteristic action instead.",
+    "GSAP is loaded from the supplied local gsap.min.js; creative_pool.select_project_technologies failed because PROJECT_DEPENDENCIES.json is missing from the project."
+  ]
+}

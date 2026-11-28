@@ -1,4 +1,4 @@
-import { hasRoomDraftContent, type RoomDraft } from "../../shared/room";
+import { findIdeaDraftKey, hasRoomDraftContent, type RoomDraft } from "../../shared/room";
 import {
   SettingsCheckRecordSchema,
   type SettingsCheckRecord,
@@ -6,9 +6,11 @@ import {
 import { randomUUID } from "node:crypto";
 import type { AssetOwner } from "../../shared/asset-owner";
 import { validateAssetLimits } from "../../shared/asset-limits";
-import { toggleRoomAsset, normalizeBriefAttachmentSections } from "../../shared/brief-attachments";
+import {
+  toggleSavedDraftAttachment,
+  normalizeBriefAttachmentSections,
+} from "../../shared/brief-attachments";
 import { BriefRequirementsSchema } from "../../shared/brief-sections";
-import { VideoRequestSchema } from "../../shared/domains/video";
 import { normalizeRetiredSpeechSelections } from "../../shared/speech-compatibility";
 import { activityItems } from "../../shared/activity-model";
 import {
@@ -19,9 +21,8 @@ import {
 import { activityBranchPage, type ActivityBranch } from "../../shared/activity-branches";
 import { normalizeSubtitleFields } from "../../shared/subtitle-compatibility";
 import { DatabaseSync } from "node:sqlite";
-import path from "node:path";
 import { EventEmitter } from "node:events";
-import { dataRoot, safeMessage } from "../runtime/config.js";
+import { jobsDatabasePath, safeMessage } from "../runtime/config.js";
 import type { Run, Asset, AgentProgressEvent, PreparationStep } from "../../shared/contracts.js";
 import { RoomStateSchema, applyRoomPatch, type RoomPatch, type RoomState } from "../../shared/room";
 import {
@@ -42,7 +43,7 @@ export class Store {
       retryItemId?: number;
     }
   >();
-  constructor(filename = path.join(dataRoot, "jobs.sqlite")) {
+  constructor(filename = jobsDatabasePath) {
     this.db = new DatabaseSync(filename);
     // The web development server and generation backend share this database.
     this.db.exec("PRAGMA busy_timeout=5000");
@@ -423,8 +424,8 @@ export class Store {
       const owned = { ...asset, owner };
       if (owner.kind === "draft") {
         const [key, draft] = entry!;
-        const request = toggleRoomAsset(
-          VideoRequestSchema.parse(draft.request),
+        const request = toggleSavedDraftAttachment(
+          draft.request,
           {
             id: asset.id,
             originalName: asset.originalName || asset.name,
@@ -505,11 +506,18 @@ export class Store {
           .prepare("UPDATE assets SET json=? WHERE id=?")
           .run(JSON.stringify({ ...asset, owner: { kind: "project", id: projectId } }), asset.id);
   }
-  saveProjectWithAssets(run: Run, draftId?: string) {
+  saveProjectWithAssets(run: Run, draftId?: string, draftBeforeCheck?: string) {
     this.db.exec("BEGIN IMMEDIATE");
     try {
-      if (draftId && this.room().drafts.new?.id !== draftId)
-        throw Error("Draft identity changed before the project started");
+      if (draftId) {
+        const drafts = this.room().drafts;
+        const key = findIdeaDraftKey(drafts, draftId);
+        if (
+          !key ||
+          (draftBeforeCheck !== undefined && JSON.stringify(drafts[key]) !== draftBeforeCheck)
+        )
+          throw Error("Draft changed before the project started");
+      }
       this.transferAssetOwners(draftId, run.id, run.request.assetIds);
       this.save(run);
       this.db.exec("COMMIT");

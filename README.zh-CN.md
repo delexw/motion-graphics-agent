@@ -66,32 +66,39 @@
 这里只保留最近三条按日期归档的更新记录，不按连续自然日计算。更早的记录见[变更日志](CHANGELOG.md#daily-update-archive)，版本发布记录见[完整 changelog](CHANGELOG.md)。
 
 <details>
+<summary>2026-11-28</summary>
+
+- **通过 MCP 制作 HTML 页面。** 给 `create_idea` 传入 `settings.outputType: "page"` 保存互动网页草稿，再用 `start_idea` 启动制作。详见 [MCP 页面指南](docs/agent-mcp.md#build-an-html-page)。
+- **视频规划。** 成片计划说明各段剧情如何衔接，并把每个场景拆成带时间的镜头。预览或成片重试时，会复用已记录的背景决定。
+- **Gemini CLI。** Kiteva 将共用会话数据库的 CLI 调用排队。Antigravity 返回空会话 ID 时，Kiteva 会重试启动。
+
+</details>
+
+<details>
+<summary>2026-11-26</summary>
+
+- **Motion Graphics：**新增 56 种风格和相应预览。199 份风格指南均包含总览和 11 个章节，在风格详情中可查看。项目设置决定音频、字幕和交付要求。
+
+- **音乐风格：**可搜索 50 种分组风格，并将选中的风格加入可编辑的音乐提示词。MCP 的 `get_idea_options` 也会返回这些风格。
+
+- **Three.js：**浏览器打包工具现在接受项目本地的 Three.js，Node.js 专用库仍不会进入浏览器包。
+
+- **桌面启动器：**运行 `npm run electron:prod`，在 Electron 窗口中打开已构建的 Kiteva，并显示 macOS 菜单栏或 Windows 托盘图标。
+
+- **Multiplane：**试用渲染器升级至 0.3.16。即使操作系统重用了进程 ID，等待已退出渲染任务的操作也会结束。镜头创作指南说明了如何在运动模糊下保持字幕切换和闪烁等效果清晰。
+
+- **MCP 渲染器：**新创意默认使用 HyperFrames，也可以选择 Multiplane。
+
+- **MCP 草稿：**「新创意」已有草稿时，仍可另存一个新创意。可在助手的会话下拉菜单中打开草稿，也可用垃圾桶图标移除所选草稿。MCP 按草稿 ID 启动相应项目。创意文本为空时也可以移除附件引用。
+
+</details>
+
+<details>
 <summary>2026-11-25</summary>
 
 - **远程 MCP 上传：**通过 `request_upload` 获取限时上传链接，将文件上传到 Kiteva，再用 `confirm_upload` 将文件添加到草稿或项目。上传链接五分钟内有效，且只能使用一次。Kiteva 确认文件时使用与网页端相同的附件规则。详见 [MCP 上传指南](docs/agent-mcp.md#import-and-attach-files)。
 - **Gemini 创作（测试版）：**可在项目设置或通过 MCP 选择 Gemini 4 Neon 或 Carbon。Kiteva 使用 Antigravity CLI 登录或已配置的 Gemini API。治理页面记录 Gemini 用量，并在有费率时显示费用估算。详见[配置与限制](src/server/agents/gemini/README.md)。
 - **网站登录：**取消登录后，由负责管理浏览器的进程关闭它，已取消的请求无需等待浏览器响应。
-
-</details>
-
-<details>
-<summary>2026-11-24</summary>
-
-- **像素美术工具：**JEV 可在项目的主要创作工具之外选择 LPC 角色、PixelFX 环境特效，或同时使用两者。LPC 自动为符合条件的 CC0 和 CC BY 部件生成署名，其中包括经 OGA-BY 按 CC BY 3.0 使用的部件。安装时准备两个资源，启动时检查已安装的版本。
-- **模型调用：**Claude 和 Codex 改用原生 SDK 连接，移除 Caveman 代理。视频审查使用更小的帧；任务和提供方均未设置推理强度时，默认使用中等强度。
-- **依赖更新：**三个 DeepSeek Harness 软件包一并升级到 `0.2.2-rc.5`。Dependabot 将这些软件包后续的更新归为一组，包括候选版本。
-- **创作室：**引导页的计数和问题标记使用 Ant Design 当前的标签样式。
-- **测试与 CI：**浏览器测试改用 Playwright，每个测试使用独立的浏览器上下文。GitHub Actions 分别运行单元、集成和浏览器测试，安装器测试使用本地夹具。
-
-</details>
-
-<details>
-<summary>2026-11-22</summary>
-
-- **自适应推理强度：**每个项目可选择「是」或「否」，默认「否」。「是」允许 JEV 为每次受支持的模型调用选择推理强度；「否」使用任务或模型的默认设置。通过 MCP 创建草稿时也可以设置。
-- **治理页面：**项目时间显示在顶部，用量明细显示推理强度。JEV 仪表板先显示决策和分数，可展开查看理由、输入和比较结果。已保存的组合比较会在有记录时显示主样式和辅助样式名称。
-- **生成设置：**视频语言、制作方式和自适应推理强度的说明移至标签旁的信息图标。
-- **Bevy 创作：**Kiteva 可选择 Bevy 制作镜头。安装和启动时会准备受管理的运行环境，并通过内置技能列表更新兼容的社区指南。
 
 </details>
 
@@ -163,7 +170,7 @@ Storyboard 页面把它回放成一段小小的“幕后排练”：一位火柴
 
 |                      |                                                                                                                                                                                |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Motion Graphic       | **140** 种（`assets/catalog/video-style-catalog.json`）                                                                                                                        |
+| Motion Graphic       | **199** 种（`assets/catalog/video-style-catalog.json`）                                                                                                                        |
 | 动作（motions）      | **46** 种（`assets/catalog/motion-pattern-catalog.json`）                                                                                                                      |
 | 技术池条目           | **92** 条推荐，涵盖视觉构建、运动、渲染和辅助工具                                                                                                                              |
 | 启动时安装的创作技能 | **3** 个（[Anatomy](https://github.com/wheresryan22/anatomy)、[img2threejs](https://github.com/img2threejs/img2threejs)、[Stageshow](docs/stageshow.md)）                      |
@@ -207,6 +214,8 @@ cd motion-graphics-agent
 # 编辑自动创建的 .env.local：填入 TYPESAFE_API_KEY，以及需要的提供方 key。
 npm start                       # 打开 http://127.0.0.1:18417
 ```
+
+在 macOS 和 Windows 上，安装依赖后先运行一次 `npm run electron:setup`，构建后运行 `npm run electron:prod` 即可打开桌面窗口和托盘图标。该命令使用 `dist/client`，可在 `npm ci --omit=dev` 后运行。Electron 会在配置的本地端口启动并管理 Kiteva 服务。桌面和浏览器共用项目、草稿与上传文件。启动 Electron 前，请先停止通过 `npm start` 启动的服务。关闭窗口会将其隐藏到菜单栏或托盘。选择 **Open Kiteva** 可恢复同一个窗口。选择 **Quit Kiteva** 会停止 Electron 管理的服务。日志位于 `.data/desktop/`。
 
 轻量安装可运行 `./install.sh --minimal`，跳过旁白和 Audio Studio；`./install.sh --speech pocket` 只安装 Pocket TTS 旁白。
 `--audio-no-weights` 将 Audio Studio 模型下载推迟到首次生成。默认复用现有 `speech:setup*` 脚本安装 Kokoro、Pocket TTS、中文 Pocket TTS，以及 Apple Silicon 上的 Ming TTS。

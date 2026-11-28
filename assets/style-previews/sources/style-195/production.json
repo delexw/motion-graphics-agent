@@ -1,0 +1,29 @@
+{
+  "characters": [],
+  "displayTitle": "Tilt-Shift Town",
+  "displayDescription": "Miniature town from a fixed high view: focus pulls from a near van to a far truck as an idea hub links the houses into a system.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Three.js (WebGL2)",
+    "GLSL depth-of-field pass"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, sound effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Tilt-shift is approximated with a single-pass depth-aware gather blur (56 taps) whose blur radius comes from linearised scene depth versus a GSAP-keyframed world focus distance; it is not a physical lens simulation, and blurred foreground edges do not spill over sharper background pixels.",
+    "The miniature town, vehicles and connection arcs are procedural Three.js primitives with a shadow-mapped sun and hemisphere light; no photographed scene or real tilt-shift footage is used.",
+    "Blender was not used, per the user's instruction; Three.js was bundled locally from the existing three 0.187.0 package with local esbuild, with no installs.",
+    "STYLE.json contains no tech.preview_recipes and no BACKGROUND_REVIEW.json is supplied, so the preview demonstrates the catalogue's characteristic action (focus pull along a route from a near moving subject to a far one) rather than a reviewed recipe.",
+    "Silent preview."
+  ]
+}

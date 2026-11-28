@@ -20,7 +20,7 @@ export async function selectAudioAuthoring(input: {
   if (input.preview) return { source: "skipped", decisions: [] };
   const music = input.request.requirements?.music;
   if (music?.assetIds.length) return { source: "uploads", decisions: [] };
-  if (!music?.instructions.trim()) return { source: "skipped", decisions: [] };
+  if (!music?.instructions.trim() && !music?.style) return { source: "skipped", decisions: [] };
   const invocationId = randomUUID();
   try {
     let studio: Awaited<ReturnType<typeof audioStudioAvailability>>;
@@ -48,6 +48,7 @@ export async function selectAudioAuthoring(input: {
         "Choose exactly one available audio authoring capability that best satisfies the complete unchanged music request. Compare musical expressiveness, required cue precision, duration support, discovered editing operations, verified runtime availability and renderer integration constraints. Renderer metadata describes export/mixing, not music-generation readiness; inspect audioStudio.tools and its actual argument limits rather than inferring capability from a name. Respect supplied sources and explicit restrictions. Do not change the renderer, rewrite the request or prefer a tool merely because it is installed.",
       criteria,
       state: {
+        musicStyle: music.style,
         musicPrompt: music.instructions,
         originalIdea: input.request.instructions,
         renderer: rendererMetadataFor(videoRendererOf(input.request)),

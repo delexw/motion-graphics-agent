@@ -1,0 +1,30 @@
+{
+  "characters": [],
+  "displayTitle": "Art Deco",
+  "displayDescription": "Paired stepped frames close in, inlaid doors part from the axis, and a medallion connects a network: an idea becomes a connected system.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG (native browser: paths, patterns, clipPath, stroke-dashoffset)"
+  ],
+  "motionEngine": [
+    "GSAP (local gsap.min.js, one paused seekable timeline at window.__timelines.video)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Blender not used, per user instruction; scene is procedural 2D SVG.",
+    "Metal is approximated with flat gold raised-edge strokes, thin ivory bevel lines, fine gold inlay patterns and one gradient glint in a separate clip; no physical lighting.",
+    "STYLE.json contains no tech.preview_recipes entries, so no reviewed recipe is demonstrated. The refresh follows the updated catalogue guide instead: outer stepped frames arrive in mirrored pairs, metal is kept to raised edges and steps over dark bodies, rays stay behind the title field, and the piece ends with one shine.",
+    "No BACKGROUND_REVIEW.json or reference contact sheets were supplied.",
+    "Motion (motion.dev) not used; GSAP owns every animated property. chroma.js used only to compute contrast for the existing palette, no recolouring.",
+    "Typography uses locally installed Futura with Avenir Next / Century Gothic / sans-serif fallbacks.",
+    "Technology selection record could not be written (select_project_technologies reported a missing PROJECT_DEPENDENCIES.json); only native SVG plus host-provided gsap.min.js and chroma.min.js are used."
+  ]
+}

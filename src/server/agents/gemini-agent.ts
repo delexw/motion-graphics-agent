@@ -1,9 +1,17 @@
 import { spawn } from "node:child_process";
+import { setTimeout as delay } from "node:timers/promises";
 import { geminiCarbonModel } from "../../shared/agent-providers";
 import type { ModelEffort } from "../../shared/model-effort";
+import { RetryBudget } from "../../shared/retry-budget";
+import { WorkQueue } from "../jobs/queue";
 import { safeMessage } from "../runtime/config";
 import { withProcessScope } from "../runtime/process-scope";
-import type { Agent, AgentExecutionOptions, ProviderEvent } from "./agent";
+import {
+  agentExecutionSignal,
+  type Agent,
+  type AgentExecutionOptions,
+  type ProviderEvent,
+} from "./agent";
 import { ModelCapacityError } from "./capacity-error";
 import {
   prepareAgyCliConfiguration,
@@ -12,6 +20,13 @@ import {
 } from "./gemini/configuration";
 import { geminiEvents, parseAgyStreamEvent } from "./gemini/events";
 import type { GeminiEffort } from "./model-effort-levels";
+
+// Antigravity CLI turns share the signed-in user's conversation database.
+const agyConversationQueue = new WorkQueue(1);
+const agyStartupRetryDelaysMs = [1_000, 2_000, 4_000] as const;
+const agyConversationStartupFailure =
+  "failed to start conversation: backend returned an empty conversation id";
+class AgyConversationStartupError extends Error {}
 
 const geminiEffortAliases = {
   low: "low",
@@ -218,7 +233,6 @@ async function runViaAgyCli(
   effort?: GeminiEffort,
 ): Promise<{ result: unknown; sessionId?: string }> {
   const prepared = await prepareAgyCliConfiguration(options, effort);
-  options.signal.throwIfAborted();
 
   const emittedStepUsageIds = new Set<string>();
   let fallbackResultUsage: ProviderEvent | undefined;
@@ -228,6 +242,7 @@ async function runViaAgyCli(
   let finalResult: BridgeResultMessage | undefined;
   let cliError: string | undefined;
   let stderrText = "";
+  let toolActivityStarted = false;
 
   const emitSessionOnce = (id?: string) => {
     if (!id) return;
@@ -256,6 +271,7 @@ async function runViaAgyCli(
     if (parsed.conversationId) emitSessionOnce(parsed.conversationId);
     if (parsed.textDelta) streamedText += parsed.textDelta;
     for (const event of parsed.events) {
+      if (event.type === "tool" || event.type === "tool_result") toolActivityStarted = true;
       if (event.type === "session") {
         const id = (event.data as { sessionId?: string } | undefined)?.sessionId;
         emitSessionOnce(id);
@@ -293,6 +309,7 @@ async function runViaAgyCli(
   };
 
   try {
+    options.signal.throwIfAborted();
     const exitCode = await withProcessScope(options.signal, (scopedSignal) => {
       return new Promise<number>((resolve, reject) => {
         const child = spawn(prepared.agyBin, prepared.args, {
@@ -339,14 +356,20 @@ async function runViaAgyCli(
     });
 
     options.signal.throwIfAborted();
-    if (cliError) {
-      const message = safeMessage(cliError);
-      if (isCapacityMessage(message)) throw new ModelCapacityError(message, "gemini");
-      throw Error(message);
-    }
-    if (exitCode !== 0) {
+    if (cliError || exitCode !== 0) {
       const detail = stderrText.trim() ? `: ${safeMessage(stderrText.trim())}` : "";
-      const message = `Antigravity CLI exited with code ${exitCode}${detail}`;
+      const message = cliError
+        ? safeMessage(cliError)
+        : `Antigravity CLI exited with code ${exitCode}${detail}`;
+      if (
+        !sessionId &&
+        !streamedText.trim() &&
+        !emittedStepUsageIds.size &&
+        !toolActivityStarted &&
+        !finalResult &&
+        message.toLowerCase().includes(agyConversationStartupFailure)
+      )
+        throw new AgyConversationStartupError(message);
       if (isCapacityMessage(message)) throw new ModelCapacityError(message, "gemini");
       throw Error(message);
     }
@@ -364,7 +387,8 @@ async function runViaAgyCli(
     };
   } catch (error) {
     options.signal.throwIfAborted();
-    if (error instanceof ModelCapacityError) throw error;
+    if (error instanceof ModelCapacityError || error instanceof AgyConversationStartupError)
+      throw error;
     throw Error(safeMessage(error));
   } finally {
     await prepared.cleanup();
@@ -372,6 +396,26 @@ async function runViaAgyCli(
       options.onEvent(fallbackResultUsage);
     }
   }
+}
+
+async function runAgyWithStartupRetry(options: AgentExecutionOptions, effort?: GeminiEffort) {
+  for (const { index, number, remaining } of new RetryBudget(agyStartupRetryDelaysMs.length + 1)) {
+    options.signal.throwIfAborted();
+    try {
+      return await runViaAgyCli(options, effort);
+    } catch (error) {
+      options.signal.throwIfAborted();
+      if (!(error instanceof AgyConversationStartupError) || !remaining) throw error;
+      const delayMs = agyStartupRetryDelaysMs[index];
+      options.onEvent({
+        type: "retry",
+        message: `Gemini could not open a conversation. Retrying startup (${number}/${agyStartupRetryDelaysMs.length})…`,
+        data: { reason: "gemini_conversation_start", retry: number, delayMs },
+      });
+      await delay(delayMs, undefined, { signal: options.signal });
+    }
+  }
+  throw Error("Gemini conversation startup retry budget exhausted");
 }
 
 export const geminiAgent: Agent = {
@@ -385,6 +429,12 @@ export const geminiAgent: Agent = {
     }
     const effort = geminiNativeEffort(options.reasoningEffort, options.model);
     const transport = resolveGeminiTransport();
-    return transport === "sdk" ? runViaPythonSdk(options, effort) : runViaAgyCli(options, effort);
+    const run = () => {
+      const execution = { ...options, signal: agentExecutionSignal(options) };
+      return transport === "sdk"
+        ? runViaPythonSdk(execution, effort)
+        : runAgyWithStartupRetry(execution, effort);
+    };
+    return transport === "sdk" ? run() : agyConversationQueue.run(run, options.signal);
   },
 };

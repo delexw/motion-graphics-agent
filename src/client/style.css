@@ -3369,45 +3369,6 @@ html,
     display: none;
   }
 }
-.combination-accordion {
-  margin: 16px 0;
-}
-.combination-accordion .ant-collapse-header-text {
-  overflow-wrap: anywhere;
-  font-weight: 600;
-}
-.combination-guidance .combination-style-link.ant-btn {
-  display: inline;
-  height: auto;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  padding: 0;
-}
-.combination-preview-card {
-  margin: 16px 0;
-  min-width: 0;
-}
-.combination-preview-card .ant-card-head-title {
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-.combination-preview-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-.combination-preview-role {
-  color: var(--muted);
-  font-size: 11px;
-}
-@media (max-width: 600px) {
-  .combination-preview-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .combination-preview-card > .ant-card-body {
-    padding: 12px;
-  }
-}
 .technology-pool-page {
   min-width: 0;
   width: 100%;

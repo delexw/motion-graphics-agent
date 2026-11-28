@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Quiz Show",
+  "displayDescription": "A challenge cue passes its accent to the idea, five connections light up and each one adds a point until the score reads 5/5.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "STYLE.json lists no reviewed preview recipes, so this preview shows the Motion Graphic's main action: challenge, then countdown, then the accent passes to the performer, then the score registers.",
+    "No BACKGROUND_REVIEW.json was supplied, so no source-frame evidence was used. The deep indigo stage comes from the subject illustration, not from a reviewed source palette.",
+    "Stage lighting is a flat vector approximation (gradient spotlight cone, radial floor glow and bulb halo). There is no physical light simulation.",
+    "The 'performer' is the idea bulb, a symbolic silhouette rather than a person. The score display is original programme graphics."
+  ]
+}

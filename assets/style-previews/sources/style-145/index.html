@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ASCII Phosphor Terminal — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #04070A; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; }
+  #stage { display: block; width: 100%; height: 100%; }
+</style>
+<script src="./gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="stage" width="1280" height="720" aria-label="An idea becomes a connected system"></canvas>
+</div>
+<script>
+(function () {
+  "use strict";
+  var W = 1280, H = 720, DURATION = 3;
+  // ---- palette (approved roles) ----
+  var GLASS_CENTER = "#132131", GLASS_EDGE = "#070B10";
+  var PHOSPHOR = "#76E1CB";      // single phosphor colour (active)
+  var FOREGROUND = "#F5F4E8";    // copy + fresh-cell flash
+  var SECONDARY = "#294359";     // rules, idle legend
+  var DIM = "#7F9DB2";           // small labels
+  var BEZEL = "#1C232C";
+
+  // ---- one fixed-width grid for every mark ----
+  var X0 = 120, Y0 = 92, CW = 14, CH = 26, COLS = 74, ROWS = 21;
+  var FONT = "22px Menlo, Consolas, 'DejaVu Sans Mono', 'Courier New', monospace";
+  var TITLE_FONT = "bold 34px Menlo, Consolas, 'DejaVu Sans Mono', 'Courier New', monospace";
+  var RAMP = " .:-=+*#%@"; // glyph-coverage density ramp (10 levels)
+
+  var canvas = document.getElementById("stage");
+  var ctx = canvas.getContext("2d");
+  var glyphLayer = document.createElement("canvas");
+  glyphLayer.width = W; glyphLayer.height = H;
+  var gctx = glyphLayer.getContext("2d");
+
+  function cx(col) { return X0 + col * CW; }
+  function cy(row) { return Y0 + row * CH; }
+
+  // ---- static monitor texture (cached once) ----
+  var bg = document.createElement("canvas");
+  bg.width = W; bg.height = H;
+  (function buildBackground() {
+    var b = bg.getContext("2d");
+    b.fillStyle = "#04070A"; b.fillRect(0, 0, W, H);
+    // bezel
+    rr(b, 50, 30, 1180, 660, 44); b.fillStyle = BEZEL; b.fill();
+    var bz = b.createLinearGradient(0, 30, 0, 690);
+    bz.addColorStop(0, "rgba(255,255,255,0.06)"); bz.addColorStop(0.5, "rgba(255,255,255,0)"); bz.addColorStop(1, "rgba(0,0,0,0.25)");
+    rr(b, 50, 30, 1180, 660, 44); b.fillStyle = bz; b.fill();
+    // glass (front-on, subtle curve via radial falloff and inner shadow)
+    rr(b, 92, 66, 1096, 588, 26);
+    var g = b.createRadialGradient(640, 360, 40, 640, 360, 700);
+    g.addColorStop(0, GLASS_CENTER); g.addColorStop(1, GLASS_EDGE);
+    b.fillStyle = g; b.fill();
+    b.save(); rr(b, 92, 66, 1096, 588, 26); b.clip();
+    b.lineWidth = 28; b.strokeStyle = "rgba(0,0,0,0.35)"; b.shadowColor = "rgba(0,0,0,0.8)"; b.shadowBlur = 30;
+    rr(b, 78, 52, 1124, 616, 36); b.stroke();
+    b.shadowBlur = 0;
+    // soft glass reflection in the top-left corner, kept clear of text rows
+    var rf = b.createRadialGradient(240, 90, 10, 240, 90, 300);
+    rf.addColorStop(0, "rgba(180,220,230,0.05)"); rf.addColorStop(1, "rgba(180,220,230,0)");
+    b.fillStyle = rf; b.fillRect(92, 66, 600, 300);
+    b.restore();
+    // caption panel (solid surface for the title)
+    rr(b, 124, cy(17) + 8, 1032, 88, 8); b.fillStyle = "#091017"; b.fill();
+  })();
+  function rr(c, x, y, w, h, r) {
+    c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+  }
+
+  // ---- bulb (the idea): brightness field quantised to the ramp ----
+  var BULB_COL = 1, BULB_ROW = 3, BULB_W = 24;
+  var bulbCells = []; // {col,row,level,band}
+  (function buildBulb() {
+    var ccx = 12 * CW, ccy = 5.2 * CH, R = 148;
+    for (var r = 0; r < 11; r++) {
+      for (var c = 0; c < BULB_W; c++) {
+        var px = (c + 0.5) * CW, py = (r + 0.5) * CH;
+        var d = Math.hypot(px - ccx, py - ccy);
+        if (d > R) continue;
+        var body = Math.pow(1 - d / R, 0.55);
+        var hl = Math.exp(-(Math.pow(px - (ccx - 48), 2) + Math.pow(py - (ccy - 46), 2)) / (2 * 42 * 42));
+        var b = Math.min(1, body * 0.78 + hl * 0.45);
+        var lvl = Math.max(1, Math.round(b * 9));
+        bulbCells.push({ col: BULB_COL + c, row: BULB_ROW + r, level: lvl });
+      }
+    }
+    // neck + base, still as density glyphs (fixed final characters)
+    var base = [
+      [11, "     +########+     "],
+      [12, "     [========]     "],
+      [13, "      '------'      "]
+    ];
+    base.forEach(function (ln) {
+      for (var i = 0; i < ln[1].length; i++) {
+        var ch = ln[1][i]; if (ch === " ") continue;
+        bulbCells.push({ col: BULB_COL + 2 + i, row: BULB_ROW + ln[0], glyph: ch, level: 9 });
+      }
+    });
+    // registered bands: pairs of rows, bottom band first
+    bulbCells.forEach(function (cell) {
+      var localRow = cell.row - BULB_ROW;      // 0..14
+      cell.band = Math.floor((13 - localRow) / 2); // 0 (base) .. 6 (top)
+    });
+  })();
+  var BULB_START = 0.22, BAND_GAP = 0.095, STEP = 0.034;
+  function bulbLevelAt(cell, t) {
+    var s = BULB_START + cell.band * BAND_GAP;
+    if (t < s) return { k: 0, since: 0 };
+    var k = Math.min(cell.level, Math.floor((t - s) / STEP) + 1);
+    var changeAt = s + (k - 1) * STEP;
+    return { k: k, since: t - changeAt };
+  }
+  function bulbGlyph(cell, k) {
+    if (k <= 0) return " ";
+    if (cell.glyph && k >= cell.level) return cell.glyph;
+    return RAMP[cell.glyph ? Math.min(k, 8) : k];
+  }
+
+  // ---- network (the connected system): rasterised onto the same grid ----
+  var NET_COL = 45, NET_ROW = 3, NW = 27, NH = 13;
+  var net = []; for (var i0 = 0; i0 < NH; i0++) net.push(new Array(NW).fill(" "));
+  function put(c, r, s) { for (var i = 0; i < s.length; i++) net[r][c + i] = s[i]; }
+  (function buildNet() {
+    var r, c;
+    for (c = 3; c < 24; c++) { net[0][c] = "-"; net[12][c] = "-"; }
+    net[0][13] = "+"; net[12][13] = "+";
+    put(0, 0, "(o)"); put(24, 0, "(o)"); put(0, 12, "(o)"); put(24, 12, "(o)");
+    for (r = 1; r < 12; r++) { if (r !== 6) { net[r][1] = "|"; net[r][25] = "|"; net[r][13] = "|"; } }
+    put(0, 6, "(o)---(o)---(@)---(o)---(o)");
+    for (r = 1; r <= 5; r++) { net[r][1 + r] = "\\"; net[r][25 - r] = "/"; }
+    for (r = 7; r <= 11; r++) { net[r][13 - r] = "/"; net[r][13 + r] = "\\"; }
+  })();
+  // BFS from the entry node (left middle) -> reveal order grows along the links
+  var netCells = [];
+  (function orderNet() {
+    var depth = []; for (var r = 0; r < NH; r++) depth.push(new Array(NW).fill(-1));
+    var q = [[0, 6], [1, 6], [2, 6]]; q.forEach(function (p) { depth[p[1]][p[0]] = 0; });
+    var head = 0, maxD = 0;
+    while (head < q.length) {
+      var p = q[head++], d = depth[p[1]][p[0]];
+      for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) {
+        var x = p[0] + dx, y = p[1] + dy;
+        if (x < 0 || y < 0 || x >= NW || y >= NH) continue;
+        if (net[y][x] === " " || depth[y][x] >= 0) continue;
+        depth[y][x] = d + 1; maxD = Math.max(maxD, d + 1); q.push([x, y]);
+      }
+    }
+    for (var y = 0; y < NH; y++) for (var x = 0; x < NW; x++) {
+      if (net[y][x] === " ") continue;
+      netCells.push({ col: NET_COL + x, row: NET_ROW + y, glyph: net[y][x], depth: Math.max(0, depth[y][x]), maxD: maxD });
+    }
+  })();
+  var NET_START = 1.42, NET_SPAN = 0.78, NET_STEP = 0.04;
+  var NET_STAGES = [".", ":", "+"]; // density bands before the final link glyph
+  function netStateAt(cell, t) {
+    var s = NET_START + (cell.depth / cell.maxD) * NET_SPAN;
+    if (t < s) return { k: 0, since: 0 };
+    var k = Math.min(4, Math.floor((t - s) / NET_STEP) + 1);
+    return { k: k, since: t - (s + (k - 1) * NET_STEP) };
+  }
+  function netGlyph(cell, k) { return k <= 0 ? " " : (k >= 4 ? cell.glyph : NET_STAGES[k - 1]); }
+
+  // ---- copy ----
+  var PROMPT = "idea@term:~$ ./connect --all";
+  var OK = "  [ok]";
+  var TITLE = "AN IDEA BECOMES A CONNECTED SYSTEM";
+  var LEGEND = [".", ":", "+", "#", "@"];
+
+  // ---- drawing helpers (integer cell coordinates) ----
+  function drawCell(c, ch, col, row, color, alpha) {
+    if (ch === " " || alpha <= 0.003) return;
+    c.globalAlpha = alpha; c.fillStyle = color;
+    c.fillText(ch, cx(col) + 7, cy(row) + 13);
+  }
+  function mix(a, b, f) {
+    var pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+    var r = Math.round(((pa >> 16) & 255) * (1 - f) + ((pb >> 16) & 255) * f);
+    var g = Math.round(((pa >> 8) & 255) * (1 - f) + ((pb >> 8) & 255) * f);
+    var bl = Math.round((pa & 255) * (1 - f) + (pb & 255) * f);
+    return "rgb(" + r + "," + g + "," + bl + ")";
+  }
+  var PERSIST = 0.11; // phosphor persistence time constant (s)
+  function freshColor(since) { return mix(PHOSPHOR, FOREGROUND, Math.exp(-since / 0.06)); }
+
+  // ---- render from absolute timeline time ----
+  function render(t) {
+    t = Math.max(0, Math.min(DURATION, t));
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.clearRect(0, 0, W, H);
+    gctx.font = FONT; gctx.textAlign = "center"; gctx.textBaseline = "middle";
+
+    // prompt line (typed, row 0)
+    var pn = Math.max(0, Math.min(PROMPT.length, Math.floor((t - 0.02) / 0.009)));
+    for (var i = 0; i < pn; i++) drawCell(gctx, PROMPT[i], i, 0, FOREGROUND, 1);
+    if (t >= 2.3) {
+      var okn = Math.min(OK.length, Math.floor((t - 2.3) / 0.02) + 1);
+      for (i = 0; i < okn; i++) drawCell(gctx, OK[i], PROMPT.length + i, 0, PHOSPHOR, 1);
+    }
+    // rule (row 1), registered sweep
+    var rn = Math.min(COLS, Math.floor(t / 0.004));
+    for (i = 0; i < rn; i++) drawCell(gctx, "-", i, 1, SECONDARY, 1);
+
+    // bulb: density bands replace cells; previous glyph persists and decays
+    var maxBand = 0;
+    for (i = 0; i < bulbCells.length; i++) {
+      var cell = bulbCells[i], st = bulbLevelAt(cell, t);
+      if (st.k <= 0) continue;
+      if (!cell.glyph) maxBand = Math.max(maxBand, st.k);
+      var ghostA = 0.5 * Math.exp(-st.since / PERSIST);
+      if (st.k > 1 && ghostA > 0.01) drawCell(gctx, bulbGlyph(cell, st.k - 1), cell.col, cell.row, PHOSPHOR, ghostA);
+      drawCell(gctx, bulbGlyph(cell, st.k), cell.col, cell.row, freshColor(st.since), 1);
+    }
+
+    // middle: density legend + band label + arrow
+    var band5 = Math.min(5, Math.ceil(maxBand / 9 * 5));
+    for (i = 0; i < LEGEND.length; i++) {
+      var on = i < band5, cur = i === band5 - 1 && t < 1.25;
+      drawCell(gctx, LEGEND[i], 30 + i * 2, 7, cur ? FOREGROUND : (on ? PHOSPHOR : SECONDARY), on ? 1 : 0.9);
+    }
+    if (t >= 0.2) {
+      var label = "density band " + Math.max(1, band5) + "/5";
+      for (i = 0; i < label.length; i++) drawCell(gctx, label[i], 27 + i, 11, DIM, 1);
+    }
+    // arrow: shaft draws cell by cell; the head appears only once the shaft is complete
+    var SHAFT = 7, A0 = 1.12, ASTEP = 0.035, shaftCol = 34 - 4;
+    var sn = t < A0 ? 0 : Math.min(SHAFT, Math.floor((t - A0) / ASTEP) + 1);
+    for (i = 0; i < sn; i++) {
+      var since = t - (A0 + i * ASTEP);
+      drawCell(gctx, "=", shaftCol + i, 9, freshColor(since), 1);
+    }
+    var headAt = A0 + SHAFT * ASTEP;
+    if (sn >= SHAFT && t >= headAt) drawCell(gctx, ">", shaftCol + SHAFT, 9, freshColor(t - headAt), 1);
+
+    // network: grows outward from the entry node through density bands
+    for (i = 0; i < netCells.length; i++) {
+      var nc = netCells[i], ns = netStateAt(nc, t);
+      if (ns.k <= 0) continue;
+      var ga = 0.5 * Math.exp(-ns.since / PERSIST);
+      if (ns.k > 1 && ga > 0.01) drawCell(gctx, netGlyph(nc, ns.k - 1), nc.col, nc.row, PHOSPHOR, ga);
+      var isNode = nc.glyph === "o" || nc.glyph === "@" || nc.glyph === "(" || nc.glyph === ")";
+      drawCell(gctx, netGlyph(nc, ns.k), nc.col, nc.row, ns.k >= 4 && isNode && ns.since > 0.2 ? FOREGROUND : freshColor(ns.since), 1);
+    }
+    gctx.globalAlpha = 1;
+
+    // ---- composite: glass, phosphor bloom, sharp glyphs ----
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1; ctx.filter = "none";
+    ctx.drawImage(bg, 0, 0);
+    ctx.save();
+    rr(ctx, 92, 66, 1096, 588, 26); ctx.clip();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.filter = "blur(7px)"; ctx.globalAlpha = 0.6; ctx.drawImage(glyphLayer, 0, 0);
+    ctx.filter = "blur(2px)"; ctx.globalAlpha = 0.35; ctx.drawImage(glyphLayer, 0, 0);
+    ctx.filter = "none"; ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+    ctx.drawImage(glyphLayer, 0, 0);
+    ctx.restore();
+
+    // title on its solid panel: 2-cell pitch on the same grid, sharp, no bloom over letters
+    ctx.font = TITLE_FONT; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    var TT0 = 0.3, TSTEP = 0.02;
+    var tn = t < TT0 ? 0 : Math.min(TITLE.length, Math.floor((t - TT0) / TSTEP) + 1);
+    ctx.fillStyle = FOREGROUND;
+    for (i = 0; i < tn; i++) {
+      if (TITLE[i] !== " ") ctx.fillText(TITLE[i], cx(2 + i * 2) + CW, cy(19));
+    }
+    if (t >= TT0) {
+      var curCol = 2 + tn * 2;
+      ctx.fillStyle = PHOSPHOR;
+      ctx.fillRect(cx(curCol) + 4, cy(18) + 12, CW + 6, 30);
+    }
+  }
+
+  // ---- one paused GSAP timeline owns time ----
+  // The tweened property's setter redraws, so every seek (even with suppressed events) repaints.
+  var _t = 0;
+  var state = {};
+  Object.defineProperty(state, "t", { get: function () { return _t; }, set: function (v) { _t = v; render(v); } });
+  var tl = gsap.timeline({ paused: true, defaults: { ease: "none" } });
+  tl.fromTo(state, { t: 0 }, { t: DURATION, duration: DURATION, ease: "none", immediateRender: false }, 0);
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  window.addEventListener("hf-seek", function (e) {
+    var tt = e && e.detail && typeof e.detail.time === "number" ? e.detail.time : tl.time();
+    if (Math.abs(tl.time() - tt) > 1e-6) tl.seek(tt, false);
+    render(tl.time());
+  });
+  window.__renderAt = render;
+  render(0);
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

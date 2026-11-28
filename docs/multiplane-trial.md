@@ -13,13 +13,13 @@ This preserves the pointer, clicks, scrolling and zooms already rendered by Open
 
 ## Source and install
 
-- Package: [`multiplane@0.3.13`](https://www.npmjs.com/package/multiplane) on the npm registry.
+- Package: [`multiplane@0.3.16`](https://www.npmjs.com/package/multiplane) on the npm registry.
   It is published from [github.com/LBEILC/Multiplane](https://github.com/LBEILC/Multiplane),
   under the Apache-2.0 licence. The tarball's sha512 integrity is recorded in the lock file.
-- It is a normal dependency in the app's `package.json` and `package-lock.json`, pinned to
-  0.3.13. Multiplane 0.3.13 declares an exact, optional peer of `three` 0.180.0; the app's
+- It is a normal dependency in the app's `package.json` and `package-lock.json`, with a compatible range starting at 0.3.16 and a lockfile resolving
+  0.3.16. Multiplane 0.3.16 declares an exact, optional peer of `three` 0.180.0; the app's
   `overrides` entry (`"multiplane": { "three": "$three" }`) points it at the app's own `three`, so
-  the app and Multiplane share one copy (0.186.1). Multiplane keeps its own exact `playwright`
+  the app and Multiplane share one copy (0.187.0). Multiplane keeps its own exact `playwright`
   1.63.0 inside `node_modules/multiplane`.
 - `install.sh` explicitly runs `npm run multiplane:setup` after dependencies are installed. It disables implicit Playwright browser downloads during `npm ci`, then resolves the Playwright CLI from the installed Multiplane package, installs its matching Chromium and runs Multiplane's real doctor check. Setup fails if browser installation or doctor fails; `--skip-browser` skips both explicit browser setup steps.
 - Browser binaries live under `.data/browsers/multiplane`, shared by setup, doctor and rendering through `multiplaneEnvironment()`. An explicit `PLAYWRIGHT_BROWSERS_PATH` override is respected. This app-owned cache avoids cross-project Playwright cache cleanup; it is still runtime data, not committed source. Run `npm run multiplane:setup` again after renderer upgrades or if this folder is removed.

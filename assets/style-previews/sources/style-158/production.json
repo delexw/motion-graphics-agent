@@ -1,0 +1,30 @@
+{
+  "characters": [],
+  "displayTitle": "Data Units",
+  "displayDescription": "Equal blocks stack from a common zero against one ruler, 1, 3, 5 and 8, under a shallow orthographic orbit.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Three.js 0.187.0 (WebGLRenderer, OrthographicCamera, ShaderMaterial, EdgesGeometry) bundled locally to three.bundle.js",
+    "HTML/CSS overlay for text labels"
+  ],
+  "motionEngine": [
+    "GSAP 3.15.1 paused timeline at window.__timelines.video"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Blender not used, as instructed. Three.js and GSAP from the existing read-only node_modules are used; Three was bundled with local esbuild and nothing was installed.",
+    "Material is an illustrative approximation: flat-toned faces from one fixed key light in an sRGB ShaderMaterial, with a slight shift as the camera orbits. Contact shadows are pre-drawn radial textures; there is no real shadow casting or PBR.",
+    "An orthographic camera at fixed 20° elevation keeps every 1×1×1 unit the same height on screen; the orbit only changes the azimuth, from -34° to -16°.",
+    "Mapping: 1 count = one 1.0 world-unit cube stacked at a 1.0 pitch, the same as the ruler's tick spacing (56 px per unit).",
+    "No reviewed preview recipe was supplied (tech.preview_recipes is absent), so the preview shows the primary characteristic action.",
+    "creative_pool.select_project_technologies failed because PROJECT_DEPENDENCIES.json is missing from the project, so the technology selection could not be recorded through that tool."
+  ]
+}

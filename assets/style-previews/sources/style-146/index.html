@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Assembly Line Diagram — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #E2E8EB; overflow: hidden; }
+  #root { width: 100%; height: 100%; position: relative; }
+  #root svg { display: block; width: 100%; height: 100%; }
+  text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+</style>
+<script src="gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="hz" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="14" height="28" fill="#142536"/><rect x="14" width="14" height="28" fill="#B9D5DE"/>
+    </pattern>
+    <clipPath id="beltClip"><rect x="40" y="452" width="1200" height="60" rx="30"/></clipPath>
+  </defs>
+
+  <!-- stationary floor -->
+  <rect width="1280" height="720" fill="#E2E8EB"/>
+  <rect y="628" width="1280" height="92" fill="#C9D3D8"/>
+  <rect y="628" width="1280" height="14" fill="url(#hz)"/>
+
+  <!-- headline (independent, visible from frame 0) -->
+  <text x="60" y="92" font-weight="700" font-size="42" fill="#142536">An idea becomes a connected system</text>
+  <text x="60" y="128" font-size="18" letter-spacing="3" fill="#3A4D5E">LINE A · ONE PART · THREE HAND-OFFS</text>
+
+  <!-- STATION 1: SPARK (stamp) -->
+  <g id="station-1" transform="translate(300 0)">
+    <path d="M-96 400V300M96 400V300" stroke="#142536" stroke-width="8"/>
+    <g id="ram-1">
+      <rect x="-6" y="340" width="12" height="20" fill="#3A4D5E"/>
+      <rect x="-34" y="356" width="68" height="16" rx="3" fill="#142536"/>
+    </g>
+    <rect x="-120" y="236" width="240" height="96" rx="6" fill="#FFFFFF" stroke="#142536" stroke-width="3"/>
+    <rect x="-70" y="332" width="140" height="22" fill="#142536"/>
+    <rect id="head-1" x="-120" y="236" width="240" height="36" rx="6" fill="#142536"/>
+    <text x="0" y="261" text-anchor="middle" font-weight="700" font-size="20" fill="#FFFFFF">01 SPARK</text>
+    <text x="0" y="308" text-anchor="middle" font-size="17" fill="#142536">capture the thought</text>
+  </g>
+
+  <!-- STATION 2: SHAPE (mould shell) -->
+  <g id="station-2" transform="translate(640 0)">
+    <path d="M-96 400V300M96 400V300" stroke="#142536" stroke-width="8"/>
+    <rect x="-120" y="236" width="240" height="96" rx="6" fill="#FFFFFF" stroke="#142536" stroke-width="3"/>
+    <rect x="-70" y="332" width="140" height="22" fill="#142536"/>
+    <rect id="head-2" x="-120" y="236" width="240" height="36" rx="6" fill="#142536"/>
+    <text x="0" y="261" text-anchor="middle" font-weight="700" font-size="20" fill="#FFFFFF">02 SHAPE</text>
+    <text x="0" y="308" text-anchor="middle" font-size="17" fill="#142536">give it structure</text>
+  </g>
+
+  <!-- STATION 3: CONNECT (three-pin probe) -->
+  <g id="station-3" transform="translate(980 0)">
+    <path d="M-96 400V300M96 400V300" stroke="#142536" stroke-width="8"/>
+    <g id="probe-3">
+      <rect x="-6" y="340" width="12" height="16" fill="#3A4D5E"/>
+      <rect x="-40" y="354" width="80" height="10" rx="3" fill="#142536"/>
+      <path d="M0 364V372M-26 364V376M26 364V376" stroke="#142536" stroke-width="4"/>
+    </g>
+    <rect x="-120" y="236" width="240" height="96" rx="6" fill="#FFFFFF" stroke="#142536" stroke-width="3"/>
+    <rect x="-70" y="332" width="140" height="22" fill="#142536"/>
+    <rect id="head-3" x="-120" y="236" width="240" height="36" rx="6" fill="#142536"/>
+    <text x="0" y="261" text-anchor="middle" font-weight="700" font-size="20" fill="#FFFFFF">03 CONNECT</text>
+    <text x="0" y="308" text-anchor="middle" font-size="17" fill="#142536">link the parts</text>
+  </g>
+
+  <!-- transport line -->
+  <rect x="40" y="452" width="1200" height="60" rx="30" fill="#142536"/>
+  <g clip-path="url(#beltClip)">
+    <line id="tread" x1="40" y1="457" x2="1240" y2="457" stroke="#3A4D5E" stroke-width="4" stroke-dasharray="14 12" stroke-dashoffset="0"/>
+    <g id="rollers"></g>
+  </g>
+
+  <!-- THE PART: one persistent object id moving along the shared line -->
+  <g id="part" transform="translate(130 452)">
+    <circle id="flash" cx="0" cy="-22" r="14" fill="none" stroke="#005885" stroke-width="4" opacity="0"/>
+    <g id="s0"><circle id="s0-ring" cx="0" cy="-20" r="13" fill="none" stroke="#142536" stroke-width="4"/></g>
+    <g id="s1" opacity="0">
+      <path id="s1-bulb" transform="translate(0 -6) scale(0.78) translate(-474 -444)" d="M454 444v-10q-16-12-10-30q10-18 30-18q20 0 30 18q6 18-10 30v10z" fill="#FFFFFF" stroke="#005885" stroke-width="5"/>
+    </g>
+    <g id="s2" opacity="0">
+      <rect id="s2-body" x="-24" y="-50" width="48" height="44" rx="7" fill="#B9D5DE" stroke="#005885" stroke-width="4"/>
+      <g fill="#142536"><circle cx="0" cy="-54" r="4.5"/><circle cx="-28" cy="-28" r="4.5"/><circle cx="28" cy="-28" r="4.5"/></g>
+    </g>
+    <g id="s3" opacity="0">
+      <g stroke="#005885" stroke-width="4" fill="none">
+        <path class="edge" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M0 -46L-26 -12"/>
+        <path class="edge" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M0 -46L26 -12"/>
+        <path class="edge" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M-26 -12H26"/>
+      </g>
+      <g fill="#005885">
+        <circle class="node" cx="0" cy="-46" r="10"/>
+        <circle class="node" cx="-26" cy="-12" r="8.5"/>
+        <circle class="node" cx="26" cy="-12" r="8.5"/>
+      </g>
+    </g>
+    <!-- state label beside the object -->
+    <g id="tags" font-size="15" font-weight="700">
+      <g id="tag0"><rect x="36" y="-34" width="80" height="24" rx="12" fill="#FFFFFF" stroke="#142536" stroke-width="2"/><text x="76" y="-17" text-anchor="middle" fill="#142536">raw idea</text></g>
+      <g id="tag1" opacity="0"><rect x="36" y="-34" width="78" height="24" rx="12" fill="#FFFFFF" stroke="#142536" stroke-width="2"/><text x="75" y="-17" text-anchor="middle" fill="#142536">concept</text></g>
+      <g id="tag2" opacity="0"><rect x="36" y="-34" width="72" height="24" rx="12" fill="#FFFFFF" stroke="#142536" stroke-width="2"/><text x="72" y="-17" text-anchor="middle" fill="#142536">module</text></g>
+      <g id="tag3" opacity="0"><rect x="36" y="-34" width="70" height="24" rx="12" fill="#005885"/><text x="71" y="-17" text-anchor="middle" fill="#FFFFFF">system</text></g>
+    </g>
+  </g>
+
+  <!-- station 2 mould shell, in front of the part so it hides the state swap -->
+  <g transform="translate(640 0)">
+    <rect id="mould-2" x="-38" y="354" width="76" height="96" rx="6" fill="#FFFFFF" stroke="#142536" stroke-width="4"/>
+  </g>
+
+  <!-- hand-off ledger: each station's output traced to the next input -->
+  <g id="ledger" font-size="16" fill="#142536" text-anchor="middle">
+    <text id="led0" x="130" y="604">raw idea</text>
+    <text id="led1" x="470" y="604" opacity="0">concept</text>
+    <text id="led2" x="810" y="604" opacity="0">module</text>
+    <text id="led3" x="1150" y="604" opacity="0" fill="#005885" font-weight="700">system</text>
+    <g stroke="#3A4D5E" stroke-width="4" fill="none" stroke-linecap="round">
+      <path id="shaft-1" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M182 598H420"/>
+      <path id="head-a1" data-arrowhead-for="shaft-1" opacity="0" d="M410 590L422 598L410 606"/>
+      <path id="shaft-2" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M520 598H762"/>
+      <path id="head-a2" data-arrowhead-for="shaft-2" opacity="0" d="M752 590L764 598L752 606"/>
+      <path id="shaft-3" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M858 598H1104"/>
+      <path id="head-a3" data-arrowhead-for="shaft-3" opacity="0" d="M1094 590L1106 598L1094 606"/>
+    </g>
+  </g>
+</svg>
+</div>
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  var rollers = document.getElementById("rollers");
+  for (var x = 80; x <= 1200; x += 40) {
+    var g = document.createElementNS(NS, "g");
+    g.setAttribute("class", "roller");
+    g.setAttribute("transform", "translate(" + x + " 484)");
+    var spin = document.createElementNS(NS, "g");
+    spin.setAttribute("class", "spin");
+    var c = document.createElementNS(NS, "circle");
+    c.setAttribute("r", "11"); c.setAttribute("fill", "#3A4D5E");
+    c.setAttribute("stroke", "#B9D5DE"); c.setAttribute("stroke-width", "2");
+    var s = document.createElementNS(NS, "path");
+    s.setAttribute("d", "M-9 0H9M0 -9V9"); s.setAttribute("stroke", "#B9D5DE"); s.setAttribute("stroke-width", "2");
+    spin.appendChild(c); spin.appendChild(s); g.appendChild(spin); rollers.appendChild(g);
+  }
+  var spins = document.querySelectorAll("#rollers .spin");
+
+  var ACTIVE = "#005885", FG = "#142536";
+  var R = 11, DEG = 180 / Math.PI;
+
+  // initial poses
+  gsap.set("#part", { x: 130, y: 452 });
+  gsap.set(spins, { rotation: 0, transformOrigin: "50% 50%" });
+  gsap.set("#mould-2", { scaleY: 0.18, transformOrigin: "50% 0%" });
+  gsap.set(["#s1", "#s2", "#s3"], { scale: 0.6, transformOrigin: "50% 100%" });
+  gsap.set("#s0", { transformOrigin: "50% 100%" });
+  gsap.set("#flash", { transformOrigin: "50% 50%", scale: 1 });
+  gsap.set(".node", { scale: 0, transformOrigin: "50% 50%" });
+
+  var tl = gsap.timeline({ paused: true, defaults: { ease: "power2.inOut" } });
+  var travelled = 0;
+  function travel(from, to, start, dur) {
+    var d = to - from; travelled += d;
+    tl.to("#part", { x: to, duration: dur, ease: "power2.inOut" }, start);
+    tl.to(spins, { rotation: travelled / R * DEG, duration: dur, ease: "power2.inOut" }, start);
+    tl.to("#tread", { attr: { "stroke-dashoffset": -travelled }, duration: dur, ease: "power2.inOut" }, start);
+  }
+  function headOn(n, t) { tl.to("#head-" + n, { attr: { fill: ACTIVE }, duration: 0.12, ease: "sine.inOut" }, t); }
+  function headOff(n, t) { tl.to("#head-" + n, { attr: { fill: FG }, duration: 0.15, ease: "sine.inOut" }, t); }
+  function swapTag(a, b, t) {
+    tl.to("#tag" + a, { opacity: 0, duration: 0.1, ease: "sine.inOut" }, t);
+    tl.fromTo("#tag" + b, { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.16, ease: "power2.out", immediateRender: false }, t + 0.06);
+  }
+  function ledger(n, start, dur) {
+    tl.to("#shaft-" + n, { attr: { "stroke-dashoffset": 0 }, duration: dur, ease: "power2.inOut" }, start);
+    tl.set("#head-a" + n, { opacity: 1 }, start + dur);           // arrowhead only once shaft arrives
+    tl.fromTo("#led" + n, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.16, ease: "power2.out", immediateRender: false }, start + dur - 0.02);
+  }
+
+  // ---- feed: raw idea rides into station 1
+  travel(130, 300, 0.10, 0.36);
+
+  // ---- STATION 1 · SPARK: stamp -> concept
+  headOn(1, 0.44);
+  tl.to("#s0-ring", { attr: { stroke: ACTIVE }, duration: 0.1, ease: "sine.inOut" }, 0.44);
+  tl.to("#ram-1", { y: 46, duration: 0.13, ease: "power2.in" }, 0.46);
+  tl.to("#s0", { scale: 0, opacity: 0, duration: 0.1, ease: "power2.in" }, 0.59);
+  tl.fromTo("#flash", { opacity: 1, scale: 1 }, { opacity: 0, scale: 3.4, duration: 0.26, ease: "power2.out", immediateRender: false }, 0.59);
+  tl.to("#ram-1", { y: 0, duration: 0.16, ease: "power2.out" }, 0.62);
+  tl.to("#s1", { opacity: 1, scale: 1, duration: 0.2, ease: "back.out(1.6)" }, 0.63);
+  swapTag(0, 1, 0.62);
+  tl.to("#s1-bulb", { attr: { stroke: FG }, duration: 0.15, ease: "sine.inOut" }, 0.86);
+  headOff(1, 0.86);
+
+  // ---- hand-off 1 -> 2
+  travel(300, 640, 0.90, 0.32);
+  ledger(1, 0.90, 0.28);
+
+  // ---- STATION 2 · SHAPE: mould closes over concept -> module
+  headOn(2, 1.20);
+  tl.to("#s1-bulb", { attr: { stroke: ACTIVE }, duration: 0.08, ease: "sine.inOut" }, 1.20);
+  tl.to("#mould-2", { scaleY: 1, attr: { stroke: ACTIVE }, duration: 0.14, ease: "power2.in" }, 1.22);
+  tl.set("#s1", { opacity: 0 }, 1.37);
+  tl.set("#s2", { opacity: 1, scale: 1 }, 1.37);
+  tl.to("#mould-2", { scaleY: 0.18, attr: { stroke: FG }, duration: 0.16, ease: "power2.out" }, 1.40);
+  swapTag(1, 2, 1.40);
+  tl.to("#s2-body", { attr: { stroke: FG }, duration: 0.15, ease: "sine.inOut" }, 1.56);
+  headOff(2, 1.56);
+
+  // ---- hand-off 2 -> 3
+  travel(640, 980, 1.60, 0.32);
+  ledger(2, 1.60, 0.28);
+
+  // ---- STATION 3 · CONNECT: probe links three nodes -> system
+  headOn(3, 1.90);
+  tl.to("#s2-body", { attr: { stroke: ACTIVE }, duration: 0.08, ease: "sine.inOut" }, 1.90);
+  tl.to("#probe-3", { y: 22, duration: 0.12, ease: "power2.in" }, 1.92);
+  tl.to("#s2", { opacity: 0, scale: 0.7, duration: 0.1, ease: "power2.in" }, 2.04);
+  tl.set("#s3", { opacity: 1, scale: 1 }, 2.04);
+  tl.to(".node", { scale: 1, duration: 0.14, ease: "back.out(2)", stagger: 0.03 }, 2.04);
+  tl.to(".edge", { attr: { "stroke-dashoffset": 0 }, duration: 0.14, ease: "power2.out", stagger: 0.03 }, 2.08);
+  tl.to("#probe-3", { y: 0, duration: 0.14, ease: "power2.out" }, 2.10);
+  swapTag(2, 3, 2.08);
+  headOff(3, 2.26);
+
+  // ---- release: exit in the same screen direction
+  travel(980, 1140, 2.24, 0.30);
+  ledger(3, 2.24, 0.28);
+
+  // settled hold to the end
+  tl.to({}, { duration: 0.01 }, 2.99);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  tl.progress(1).progress(0);
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

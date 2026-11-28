@@ -1,0 +1,30 @@
+{
+  "characters": [],
+  "displayTitle": "Terrain Explainer",
+  "displayDescription": "A locator lands on the IDEA peak, a linked A–IDEA–C terrain section opens in relief, then focus returns to the map as routes connect.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Three.js 0.187.0 (WebGLRenderer, PerspectiveCamera, BufferGeometry heightfield, ShaderMaterial elevation ramp + contours, 3D section slice)",
+    "SVG overlay projected from the same 3D coordinates"
+  ],
+  "motionEngine": [
+    "GSAP 3.15.1 paused timeline window.__timelines.video"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, sound effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative procedural terrain: four Gaussian hills stand in for real geographic data. The contours, routes, 3D slice and section profile all come from one shared elevation function and coordinate transform.",
+    "The 3D slice is lifted above the terrain so it is readable. It is a diagram device, not a physical cutaway; relief is exaggerated 1.2× in 3D, and the section card states its own vertical exaggeration.",
+    "The scale bar is accurate for the top-down map view; while the camera is tilted (about 1.0–2.2 s) it is only approximate.",
+    "Shading is a simple hillshade with fixed light. No physically based materials or shadows.",
+    "STYLE.json has no reviewed preview recipes, so the preview shows the main characteristic action.",
+    "Blender was not used, as instructed."
+  ]
+}

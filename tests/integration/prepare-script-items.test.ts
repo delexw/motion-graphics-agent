@@ -1,4 +1,4 @@
-import { validStoryboard } from "../fixtures/storyboard";
+import { validPlannedStoryboard } from "../fixtures/storyboard";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -9,6 +9,12 @@ import { BriefSchema } from "../../src/shared/agents/schemas/video";
 import { prepareVideoBuildPlan } from "../../src/server/domains/video/build-plan";
 import type { VideoGenerationJob } from "../../src/shared/domains/video";
 import { scriptItemsDirection } from "../../src/shared/script-items";
+
+vi.mock("../../src/server/agents/providers", () => ({
+  agentTurn: vi.fn(async () => {
+    throw Error("Unexpected provider call");
+  }),
+}));
 
 it("generates only requested items from the approved plan, preserves Eve and exact copy, and caches by plan", async () => {
   const workspace = await mkdtemp(path.join(os.tmpdir(), "generated-script-test-"));
@@ -57,9 +63,17 @@ it("generates only requested items from the approved plan, preserves Eve and exa
       suggestedDuration: 60,
       durationReason: "Demo",
     });
+    const storyboard = validPlannedStoryboard(60);
+    storyboard.scenes[0].shots[0].cues = [
+      { kind: "narration", atSeconds: 0, description: "Introduce the application." },
+      { kind: "subtitle", atSeconds: 0, description: "Show the introduction." },
+      { kind: "narration", atSeconds: 10, description: "Explain chapter navigation." },
+      { kind: "subtitle", atSeconds: 10, description: "Caption the demonstration." },
+    ];
     const plan = {
       version: 2 as const,
-      storyboard: validStoryboard(60),
+      storyboard,
+      capturePlan: null,
       width: 1280,
       height: 720,
       fps: 30,
@@ -114,6 +128,7 @@ it("generates only requested items from the approved plan, preserves Eve and exa
       prepareVideoBuildPlan({
         job,
         provider: "claude",
+        request,
         prompt: "Build",
         width: 1280,
         height: 720,

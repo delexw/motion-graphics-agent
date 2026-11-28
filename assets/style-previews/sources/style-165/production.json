@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "Technical Notebook",
+  "displayDescription": "An idea's bulb contour stays locked while one labelled layer peels open and a red path traces five connected nodes.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP 3.15.1 (local gsap.min.js)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, sound effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "The peel is a flat 2D fold: the layer is squeezed toward a hinge line and flipped to show its back. It is not a simulated 3D paper bend, so there is no perspective or lighting.",
+    "The circuit and node system is illustrative, not measured data.",
+    "STYLE.json lists no optional preview recipes, so the preview shows the main style's characteristic action.",
+    "No BACKGROUND_REVIEW.json was supplied. The background policy lets the scene decide, so a cool graph-paper background was chosen.",
+    "The step that records the final technology choice failed because PROJECT_DEPENDENCIES.json is missing. SVG (built into the browser) and the bundled gsap.min.js are the only tools used, and nothing was installed."
+  ]
+}

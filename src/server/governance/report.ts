@@ -6,6 +6,7 @@ import type { ClaudeTokenUsage } from "./token-usage";
 import type { AgentProgressEvent, Run } from "../../shared/contracts";
 import { isRunSettled } from "../../shared/contracts";
 import { projectName } from "../../shared/project-name";
+import { jobVersions } from "../../shared/job-versions";
 import { jobAuthoringSelection } from "./authoring-selections";
 import { renderCacheReviewDetails } from "./render-cache-reviews";
 import { combinationSelections } from "./combination-selection";
@@ -372,10 +373,26 @@ export function projectGovernance(
     }
   }
   const name = projectName(run);
+  const versions = jobVersions(run.jobs);
   for (const { model, ...call } of recordedJevCalls(events, {
     defaultPurpose: "Historical activity · function unrecorded",
     project: name,
     projectId: run.id,
+    backgroundTarget: (event) => {
+      const job = run.jobs.find(({ id }) => id === event.jobId);
+      const plannedIds = record(event.data).previewCandidateIds;
+      const ids = job ? [job.candidateId] : Array.isArray(plannedIds) ? plannedIds : [];
+      if (!job && !ids.length) return undefined;
+      const directions = ids.flatMap((id) => {
+        const title = run.candidates.find((candidate) => candidate.id === id)?.displayTitle;
+        return title ? [title] : [];
+      });
+      return {
+        kind: job?.kind ?? "preview",
+        directions,
+        version: job ? versions.get(job.id) : undefined,
+      };
+    },
   })) {
     const row = rows.get(`${model}|${call.purpose}`);
     if (row) (row.jevCalls ??= []).push(call);

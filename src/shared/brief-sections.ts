@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { musicStyles } from "./music-styles";
 
 export const briefSectionNames = ["main", "music", "images", "videos", "urls"] as const;
 export type BriefSectionName = (typeof briefSectionNames)[number];
@@ -8,7 +9,9 @@ const RequirementSchema = z.object({
 });
 export const BriefRequirementsSchema = z.object({
   main: RequirementSchema,
-  music: RequirementSchema,
+  music: RequirementSchema.extend({
+    style: z.enum(musicStyles as [string, ...string[]]).optional(),
+  }),
   images: RequirementSchema,
   videos: RequirementSchema.default({ instructions: "", assetIds: [] }),
   urls: z.object({ instructions: z.string().trim().max(8000).default("") }),

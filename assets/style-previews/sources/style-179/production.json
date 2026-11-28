@@ -1,0 +1,30 @@
+{
+  "characters": [],
+  "displayTitle": "Paper Lantern",
+  "displayDescription": "A hidden lamp passes behind a paper bulb, then a far paper wall, revealing a teal connected-system outline through a narrow opening.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Three.js 0.187.0 (WebGLRenderer + custom GLSL ShaderMaterial)",
+    "Canvas 2D (one-time silhouette mask/blur textures)"
+  ],
+  "motionEngine": [
+    "GSAP (single paused timeline at window.__timelines.video)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Paper transmission, cut-edge rim light and scattered halo are illustrative shader approximations (exponential lateral falloff per layer), not physically based light transport through paper fibres.",
+    "Each paper layer is a flat plane with a Canvas 2D mask; paper thickness and self-shadowing are not modelled.",
+    "The lamp is a uniform position with no visible bulb geometry; its presence is shown only by the light it casts on the cavity back wall and paper edges.",
+    "No reviewed preview recipes were supplied (STYLE.json has no tech.preview_recipes) and no BACKGROUND_REVIEW.json exists; the preview demonstrates the style's characteristic action instead.",
+    "Blender was not used, per instruction.",
+    "Project technology selection could not be recorded: the selection tool reported a missing host file (PROJECT_DEPENDENCIES.json). Actual runtime use: three (copied into runtime/ and bundled to technology-three_js-ZGqahE/index.js), local gsap.min.js, WebGL/GLSL, Canvas 2D."
+  ]
+}

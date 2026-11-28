@@ -1,3 +1,4 @@
+import { combinedStyleGuideFixture } from "./combined-style-guide";
 import type { ContentBrief, StyleCandidate } from "../../src/shared/contracts";
 
 export function automaticPreviewResult(context: unknown) {
@@ -7,6 +8,9 @@ export function automaticPreviewResult(context: unknown) {
       previewBeat: brief.previewBeat,
       directions: directions.map((direction) => ({
         id: direction.id,
+        ...(direction.supportingStyleIds.length
+          ? { combinedStyleGuide: combinedStyleGuideFixture }
+          : {}),
         displayTitle: "Clear Reveal",
         displayDescription: "An idea becomes a readable result",
         sceneRoles: ["Establish the source, reveal its transformation, then hold the result"],

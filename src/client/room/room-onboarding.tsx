@@ -42,7 +42,7 @@ import {
   ClipboardCheck,
 } from "lucide-react";
 import type { CreativeRequest, Run, StyleExample } from "../../shared/contracts";
-import type { RoomDraft, RoomLibraryAsset } from "../../shared/room";
+import type { IdeaDraftSource, RoomDraft, RoomLibraryAsset } from "../../shared/room";
 import {
   attachRoomStepUploads,
   roomDraftRequest,
@@ -58,6 +58,7 @@ import {
   toggleRoomDraftAsset,
 } from "./onboarding";
 import { StylePicker } from "../components/style-picker";
+import { MusicStylePicker } from "../components/music-style-picker";
 import { manualStyleLimit, trimStylesForDuration } from "../../shared/style-selection";
 import { defaultProviderModels, modelDisplayName } from "../../shared/model-display-name";
 import { api } from "../lib/api";
@@ -120,7 +121,7 @@ export function RoomOnboarding({
   styles: Parameters<typeof StylePicker>[0]["styles"];
   examples: StyleExample[];
   onCreated: (run: Run) => void;
-  onBeforeStart?: () => Promise<unknown>;
+  onBeforeStart?: () => Promise<IdeaDraftSource | void>;
   onUpload: (files: File[]) => Promise<RoomLibraryAsset[]>;
   onDeleteMaterial?: (asset: RoomLibraryAsset) => Promise<void>;
 }) {
@@ -269,11 +270,11 @@ export function RoomOnboarding({
             setBusy(true);
             setError("");
             try {
-              await onBeforeStart?.();
+              const sourceDraft = await onBeforeStart?.();
               if (request.outputType === "video") await ensureSpeechGenerationReady(request);
               const run = await api<Run>("/api/runs", {
                 method: "POST",
-                body: JSON.stringify(roomSubmission(request)),
+                body: JSON.stringify({ ...roomSubmission(request), sourceDraft }),
               });
               onCreated(run);
             } catch (e) {
@@ -385,6 +386,16 @@ export function RoomOnboarding({
                 )
               }
             />
+            {section === "music" && (
+              <MusicStylePicker
+                style={requirements.music.style}
+                onChange={(style) =>
+                  patch({
+                    requirements: { ...requirements, music: { ...requirements.music, style } },
+                  })
+                }
+              />
+            )}
             <span className="room-attachment-status">
               {translateUi(
                 sectionSelected.length ? "Attached to this idea" : "No files attached to this idea",

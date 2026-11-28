@@ -1,0 +1,29 @@
+{
+  "characters": [],
+  "displayTitle": "Copperplate Engraving",
+  "displayDescription": "Burin hatch bands lay and cross on a paper plate until a light-bulb idea is burnished out of the dark and wired into a red connected system.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Engraving is a procedural Canvas 2D approximation: tapered filled polygons stand in for burin grooves; there is no real intaglio ink wiping, plate tone or emboss relief.",
+    "Paper grain and the plate-mark are a cached, seeded bitmap texture rather than scanned paper.",
+    "STYLE.json lists no tech.preview_recipes and no BACKGROUND_REVIEW.json was supplied, so the preview shows the primary characteristic action (cross-hatch bands by contour group releasing a lighter form) instead of a separate recipe.",
+    "No Blender was used, per the user instruction.",
+    "The project-technology recorder failed (missing PROJECT_DEPENDENCIES.json); Canvas 2D is native and GSAP is loaded from the host-provided local gsap.min.js.",
+    "Georgia may be replaced by a fallback serif in the render environment; the copy is unchanged."
+  ]
+}

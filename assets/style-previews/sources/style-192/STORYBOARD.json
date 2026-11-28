@@ -1,0 +1,60 @@
+{
+  "version": 3,
+  "title": "An idea becomes a connected system",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Idea handed to a shared system",
+      "startSeconds": 0,
+      "endSeconds": 3,
+      "purpose": "Stick Figure Explainer characteristic action: one figure poses to claim an idea, the hand follows the idea to a shared board, a second figure makes contact and the connected system is held.",
+      "visuals": [
+        "Two navy stick figures with dot joints standing on a floor line, an easel board between them",
+        "Blue-outlined lightbulb prop with soft pale-blue glow",
+        "Network of one filled core node and three ring nodes on the board"
+      ],
+      "assets": [],
+      "beats": [
+        {
+          "startSeconds": 0,
+          "endSeconds": 0.85,
+          "development": "Choice: the bulb pops in with the 'idea' label; the left figure raises its arm along an arc and its hand settles under the bulb, holding the choice pose from 0.6 s.",
+          "captions": ["An idea becomes a connected system", "idea"],
+          "audio": { "music": "", "effects": [], "subtitles": [] },
+          "readingHoldSeconds": 0.25
+        },
+        {
+          "startSeconds": 0.85,
+          "endSeconds": 1.45,
+          "development": "Action: the hand follows through as the bulb arcs along a dashed trail onto the board and becomes the filled core node with a pale ripple; the 'shared system' label appears; the right figure steps toward the board, each foot lifting on an arc and planting.",
+          "captions": ["shared system"],
+          "audio": { "music": "", "effects": [], "subtitles": [] },
+          "readingHoldSeconds": 0
+        },
+        {
+          "startSeconds": 1.45,
+          "endSeconds": 3,
+          "development": "Result: the right figure's hand plants on the board edge; three nodes pop and six edges draw from the core into a connected network, then the full outcome holds from about 2.3 s.",
+          "captions": [],
+          "audio": { "music": "", "effects": [], "subtitles": [] },
+          "readingHoldSeconds": 0.7
+        }
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": [
+      "Three poses (choice, action, result) each get a brief hold; the result is settled before 2.7 s."
+    ],
+    "justifiedHolds": [
+      "0.6-0.85 s choice pose hold so the claimed idea reads before it moves.",
+      "2.3-3.0 s outcome hold for the connected system and caption."
+    ]
+  },
+  "notes": [
+    "Silent preview: no music, effects or narration.",
+    "No reviewed preview recipes were supplied (STYLE.json has no tech.preview_recipes, and there is no BACKGROUND_REVIEW.json); the preview demonstrates the style's catalogued characteristic action.",
+    "Limbs use two-bone inverse kinematics so hands and feet stay at contact points; this is an illustrative approximation, not motion capture."
+  ]
+}

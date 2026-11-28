@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Scan-Lit Documentary — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #080C12; overflow: hidden; }
+  #root { width: 100%; height: 100%; position: relative; }
+  #stage { width: 100%; height: 100%; display: block; }
+  .mono { font-family: Menlo, "SF Mono", Monaco, Consolas, monospace; font-size: 13px; letter-spacing: 1.5px; }
+  .serif { font-family: Georgia, "Times New Roman", serif; font-size: 46px; }
+  .sans { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 17px; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg id="stage" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="vg" cx=".65" cy=".5" r=".7">
+      <stop offset="0" stop-color="#121B27"/>
+      <stop offset="1" stop-color="#06090E"/>
+    </radialGradient>
+    <radialGradient id="scanned" cx="840" cy="370" r="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1B2A3A"/>
+      <stop offset="1" stop-color="#132030"/>
+    </radialGradient>
+    <pattern id="sl" width="4" height="4" patternUnits="userSpaceOnUse">
+      <path d="M0 1h4" stroke="#76E1CB" stroke-opacity=".07"/>
+    </pattern>
+    <clipPath id="disc"><circle cx="840" cy="370" r="258"/></clipPath>
+    <!-- Timed scanning mask: cumulative swept sector, path d derived from the GSAP-owned sweep angle -->
+    <mask id="scanMask" maskUnits="userSpaceOnUse" x="0" y="0" width="1280" height="720">
+      <path id="sweptPath" d="M840 370Z" fill="#fff"/>
+    </mask>
+  </defs>
+
+  <!-- Stationary background: unscanned regions stay near black -->
+  <rect width="1280" height="720" fill="#070A10"/>
+  <rect width="1280" height="720" fill="url(#vg)"/>
+  <circle cx="840" cy="370" r="260" fill="#0A1018"/>
+
+  <!-- Evidence layers (registered once, revealed only through the scan mask) -->
+  <g id="scannedLayer" mask="url(#scanMask)" clip-path="url(#disc)">
+    <circle cx="840" cy="370" r="260" fill="url(#scanned)"/>
+    <circle cx="840" cy="370" r="260" fill="url(#sl)"/>
+    <g id="returns" fill="#F5F4E8"></g>
+  </g>
+
+  <!-- Instrument graticule -->
+  <g id="graticule" fill="none" stroke="#294359" stroke-width="1.5">
+    <circle class="ring" cx="840" cy="370" r="85"/>
+    <circle class="ring" cx="840" cy="370" r="170"/>
+    <circle class="ring" cx="840" cy="370" r="255"/>
+    <path id="crossH" d="M580 370H1100"/>
+    <path id="crossV" d="M840 110V630"/>
+  </g>
+  <g id="ticks" stroke="#294359" stroke-width="1"></g>
+
+  <!-- Instrument sweep (teal = instrument colour only) -->
+  <g clip-path="url(#disc)">
+    <g id="sweep" transform="rotate(30 840 370)">
+      <g id="wedge"></g>
+      <path d="M840 370H1100" stroke="#76E1CB" stroke-width="2"/>
+    </g>
+  </g>
+
+  <!-- Relationship line (drawn only after both findings exist) -->
+  <line id="link" x1="715" y1="440" x2="715" y2="440" stroke="#F5F4E8" stroke-opacity=".8" stroke-width="1.6" stroke-dasharray="5 6"/>
+
+  <!-- Evidence E1 · IDEA (measured evidence = cream) -->
+  <g id="e1">
+    <circle id="e1ping" cx="700" cy="450" r="6" fill="none" stroke="#F5F4E8" stroke-width="1.5" opacity="0"/>
+    <circle id="e1ring" cx="700" cy="450" r="18" fill="none" stroke="#F5F4E8" stroke-opacity=".45" opacity="0"/>
+    <circle id="e1dot" cx="700" cy="450" r="6" fill="#F5F4E8" opacity="0"/>
+  </g>
+
+  <!-- Evidence E2 · SYSTEM: three connected nodes -->
+  <g id="e2">
+    <circle id="e2ping" cx="991" cy="266" r="10" fill="none" stroke="#F5F4E8" stroke-width="1.5" opacity="0"/>
+    <path id="e2tri" d="M990 250L1012 272L972 276Z" fill="none" stroke="#F5F4E8" stroke-width="1.8" stroke-linejoin="round"/>
+    <circle id="e2ring" cx="991" cy="266" r="34" fill="none" stroke="#F5F4E8" stroke-opacity=".45" opacity="0"/>
+    <circle class="e2n" id="e2n1" cx="990" cy="250" r="5.5" fill="#F5F4E8" opacity="0"/>
+    <circle class="e2n" id="e2n3" cx="972" cy="276" r="5" fill="#F5F4E8" opacity="0"/>
+    <circle class="e2n" id="e2n2" cx="1012" cy="272" r="5" fill="#F5F4E8" opacity="0"/>
+  </g>
+
+  <!-- Evidence labels on stable dark backing, tagged with their scan -->
+  <g class="mono">
+    <g id="lab1" opacity="0">
+      <rect x="546" y="470" width="146" height="26" fill="#070B11" stroke="#294359"/>
+      <text x="556" y="488" fill="#F5F4E8">E1 · IDEA</text>
+      <text x="652" y="488" fill="#76E1CB" font-size="10" letter-spacing="1">P1</text>
+    </g>
+    <g id="lab2" opacity="0">
+      <rect x="1040" y="228" width="170" height="26" fill="#070B11" stroke="#294359"/>
+      <text x="1050" y="246" fill="#F5F4E8">E2 · SYSTEM</text>
+      <text x="1172" y="246" fill="#76E1CB" font-size="10" letter-spacing="1">P2</text>
+    </g>
+    <g id="lab3" opacity="0">
+      <rect x="786" y="394" width="146" height="24" fill="#070B11" stroke="#294359"/>
+      <text x="796" y="411" fill="#C9D6DF">LINKED · PASS 2</text>
+    </g>
+
+    <!-- Case-file column -->
+    <text id="caseFile" x="70" y="190" fill="#76E1CB" opacity="0">CASE FILE 07</text>
+    <text id="pass1" x="70" y="560" fill="#6D8296" opacity="0">PASS 1  ▸ SIGNAL</text>
+    <text id="pass2" x="70" y="584" fill="#6D8296" opacity="0">PASS 2  ▸ NETWORK</text>
+    <rect id="pass1bar" x="56" y="549" width="4" height="14" fill="#76E1CB" opacity="0"/>
+    <rect id="pass2bar" x="56" y="573" width="4" height="14" fill="#76E1CB" opacity="0"/>
+  </g>
+  <g class="serif" fill="#F5F4E8">
+    <text class="tl" x="70" y="260" opacity="0">An idea</text>
+    <text class="tl" x="70" y="316" opacity="0">becomes a</text>
+    <text class="tl" x="70" y="372" opacity="0">connected</text>
+    <text class="tl" x="70" y="428" opacity="0">system.</text>
+  </g>
+  <path id="rule" d="M70 462H420" stroke="#294359" stroke-width="2" stroke-dasharray="350" stroke-dashoffset="350"/>
+  <text id="sub" class="sans" x="70" y="500" fill="#AFC0CC" opacity="0">Two signals, two passes, one relationship.</text>
+</svg>
+</div>
+
+<script src="gsap.min.js"></script>
+<script>
+(function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var CX = 840, CY = 370, R = 260;
+  var A0 = 30; // sweep start angle (deg, SVG clockwise from +x)
+
+  // ---- Static construction (seeded, built once) ----
+  var seed = 157;
+  function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+  var returns = document.getElementById('returns');
+  function dot(x, y, r, o) {
+    var c = document.createElementNS(NS, 'circle');
+    c.setAttribute('cx', x.toFixed(1)); c.setAttribute('cy', y.toFixed(1));
+    c.setAttribute('r', r.toFixed(2)); c.setAttribute('fill-opacity', o.toFixed(2));
+    returns.appendChild(c);
+  }
+  // diffuse background returns (ground clutter)
+  for (var i = 0; i < 320; i++) {
+    var rr = Math.sqrt(rnd()) * 250, th = rnd() * Math.PI * 2;
+    dot(CX + Math.cos(th) * rr, CY + Math.sin(th) * rr, 0.8 + rnd() * 1.4, 0.10 + rnd() * 0.22);
+  }
+  // clustered returns around the two evidence regions
+  function cluster(x, y, n, spread) {
+    for (var k = 0; k < n; k++) {
+      var d = Math.pow(rnd(), 1.6) * spread, a = rnd() * Math.PI * 2;
+      dot(x + Math.cos(a) * d, y + Math.sin(a) * d, 0.9 + rnd() * 1.6, 0.25 + rnd() * 0.35);
+    }
+  }
+  cluster(700, 450, 46, 48);
+  cluster(991, 266, 60, 58);
+  // faint range arcs inside scanned layer
+  [42, 128, 212].forEach(function (r) {
+    var c = document.createElementNS(NS, 'circle');
+    c.setAttribute('cx', CX); c.setAttribute('cy', CY); c.setAttribute('r', r);
+    c.setAttribute('fill', 'none'); c.setAttribute('stroke', '#294359'); c.setAttribute('stroke-opacity', '.6');
+    c.setAttribute('stroke-dasharray', '2 6');
+    returns.appendChild(c);
+  });
+
+  // bearing ticks
+  var ticks = document.getElementById('ticks');
+  for (var t = 0; t < 72; t++) {
+    var ang = t * 5 * Math.PI / 180, l = (t % 6 === 0) ? 12 : 5;
+    var p = document.createElementNS(NS, 'path');
+    p.setAttribute('d', 'M' + (CX + Math.cos(ang) * 260).toFixed(1) + ' ' + (CY + Math.sin(ang) * 260).toFixed(1) +
+      'L' + (CX + Math.cos(ang) * (260 + l)).toFixed(1) + ' ' + (CY + Math.sin(ang) * (260 + l)).toFixed(1));
+    ticks.appendChild(p);
+  }
+
+  // sweep wedge: trailing slices behind the arm (arm points along +x before rotation)
+  var wedge = document.getElementById('wedge');
+  var SL = 14, SPAN = 42;
+  for (var s = 0; s < SL; s++) {
+    var a1 = -(s + 1) * SPAN / SL * Math.PI / 180, a2 = -s * SPAN / SL * Math.PI / 180;
+    var w = document.createElementNS(NS, 'path');
+    w.setAttribute('d', 'M' + CX + ' ' + CY + 'L' + (CX + Math.cos(a1) * R).toFixed(2) + ' ' + (CY + Math.sin(a1) * R).toFixed(2) +
+      'A' + R + ' ' + R + ' 0 0 1 ' + (CX + Math.cos(a2) * R).toFixed(2) + ' ' + (CY + Math.sin(a2) * R).toFixed(2) + 'Z');
+    w.setAttribute('fill', '#76E1CB');
+    w.setAttribute('fill-opacity', (0.30 * Math.pow(1 - s / SL, 1.8)).toFixed(3));
+    wedge.appendChild(w);
+  }
+
+  // ---- Derived drawing from the GSAP-owned sweep proxy ----
+  var sweepEl = document.getElementById('sweep');
+  var swept = document.getElementById('sweptPath');
+  var state = { a: A0 };
+  function pt(deg, r) { var q = deg * Math.PI / 180; return (CX + Math.cos(q) * r).toFixed(2) + ' ' + (CY + Math.sin(q) * r).toFixed(2); }
+  function draw() {
+    var a = state.a;
+    sweepEl.setAttribute('transform', 'rotate(' + a.toFixed(3) + ' ' + CX + ' ' + CY + ')');
+    var span = Math.max(0, Math.min(360, a - A0));
+    var RR = R + 4, d;
+    if (span <= 0.01) d = 'M' + CX + ' ' + CY + 'Z';
+    else if (span >= 359.99) d = 'M' + (CX - RR) + ' ' + CY + 'A' + RR + ' ' + RR + ' 0 1 0 ' + (CX + RR) + ' ' + CY + 'A' + RR + ' ' + RR + ' 0 1 0 ' + (CX - RR) + ' ' + CY + 'Z';
+    else d = 'M' + CX + ' ' + CY + 'L' + pt(A0, RR) + 'A' + RR + ' ' + RR + ' 0 ' + (span > 180 ? 1 : 0) + ' 1 ' + pt(A0 + span, RR) + 'Z';
+    swept.setAttribute('d', d);
+  }
+
+  // sweep timing: one full revolution 0.25s → 1.85s, ease none (constant-rate instrument)
+  var T0 = 0.25, TREV = 1.6;
+  function hitTime(deg) { var d = deg - A0; if (d < 0) d += 360; return T0 + d / 360 * TREV; }
+  function bearing(x, y) { var g = Math.atan2(y - CY, x - CX) * 180 / Math.PI; return g < 0 ? g + 360 : g; }
+  var tE1 = hitTime(bearing(700, 450));            // ≈0.78s, pass 1
+  var tN1 = hitTime(bearing(990, 250));            // ≈1.54s, pass 2
+  var tN3 = hitTime(bearing(972, 276));
+  var tN2 = hitTime(bearing(1012, 272));
+  var PASS_SPLIT = T0 + TREV / 2;                  // 1.05s: pass 1 → pass 2
+
+  // ---- One paused, seekable GSAP timeline ----
+  var tl = gsap.timeline({ paused: true, onUpdate: draw });
+
+  // graticule + copy establish
+  document.querySelectorAll('.ring').forEach(function (c) {
+    var L = 2 * Math.PI * parseFloat(c.getAttribute('r'));
+    c.setAttribute('stroke-dasharray', L.toFixed(1));
+    tl.fromTo(c, { attr: { 'stroke-dashoffset': L } }, { attr: { 'stroke-dashoffset': 0 }, duration: 0.4, ease: 'power2.inOut' }, 0);
+  });
+  tl.fromTo(['#crossH', '#crossV'], { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'sine.inOut' }, 0.05);
+  tl.fromTo('#ticks', { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'sine.inOut' }, 0.1);
+  tl.fromTo('#caseFile', { opacity: 0 }, { opacity: 1, duration: 0.25, ease: 'sine.inOut' }, 0);
+  tl.fromTo('.tl', { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out', stagger: 0.06 }, 0.05);
+  tl.fromTo('#rule', { attr: { 'stroke-dashoffset': 350 } }, { attr: { 'stroke-dashoffset': 0 }, duration: 0.45, ease: 'power2.inOut' }, 0.25);
+  tl.fromTo(['#pass1', '#pass2'], { opacity: 0 }, { opacity: 1, duration: 0.25, ease: 'sine.inOut' }, 0.15);
+
+  // the sweep: one revolution for two passes, then decelerate and dim
+  tl.fromTo(state, { a: A0 }, { a: A0 + 360, duration: TREV, ease: 'none' }, T0);
+  tl.to(state, { a: A0 + 410, duration: 0.65, ease: 'power2.out' }, T0 + TREV);
+  tl.fromTo('#wedge', { opacity: 1 }, { opacity: 0.35, duration: 0.6, ease: 'sine.inOut', immediateRender: false }, 1.9);
+  tl.fromTo('#sweep', { opacity: 0 }, { opacity: 1, duration: 0.15, ease: 'sine.inOut' }, T0 - 0.08);
+
+  // pass indicators
+  tl.fromTo('#pass1', { fill: '#6D8296' }, { fill: '#76E1CB', duration: 0.15, ease: 'sine.inOut', immediateRender: false }, T0);
+  tl.fromTo('#pass1bar', { opacity: 0 }, { opacity: 1, duration: 0.15, ease: 'sine.inOut' }, T0);
+  tl.to('#pass1', { fill: '#C9D6DF', duration: 0.15, ease: 'sine.inOut' }, PASS_SPLIT);
+  tl.to('#pass1bar', { opacity: 0, duration: 0.15, ease: 'sine.inOut' }, PASS_SPLIT);
+  tl.fromTo('#pass2', { fill: '#6D8296' }, { fill: '#76E1CB', duration: 0.15, ease: 'sine.inOut', immediateRender: false }, PASS_SPLIT);
+  tl.fromTo('#pass2bar', { opacity: 0 }, { opacity: 1, duration: 0.15, ease: 'sine.inOut' }, PASS_SPLIT);
+  tl.to('#pass2', { fill: '#C9D6DF', duration: 0.2, ease: 'sine.inOut' }, 1.95);
+  tl.to('#pass2bar', { opacity: 0, duration: 0.2, ease: 'sine.inOut' }, 1.95);
+
+  // PASS 1 finding: E1 · IDEA
+  tl.fromTo('#e1dot', { opacity: 0, attr: { r: 0 } }, { opacity: 1, attr: { r: 6 }, duration: 0.25, ease: 'back.out(1.2)' }, tE1);
+  tl.fromTo('#e1ping', { opacity: 0.9, attr: { r: 6 } }, { opacity: 0, attr: { r: 44 }, duration: 0.5, ease: 'power2.out', immediateRender: false }, tE1);
+  tl.fromTo('#e1ring', { opacity: 0 }, { opacity: 1, duration: 0.25, ease: 'sine.inOut' }, tE1 + 0.1);
+  tl.fromTo('#lab1', { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.22, ease: 'power2.out' }, tE1 + 0.08);
+
+  // PASS 2 finding: E2 · SYSTEM (nodes appear as the sweep crosses each bearing)
+  tl.fromTo('#e2n1', { opacity: 0 }, { opacity: 1, duration: 0.15, ease: 'sine.inOut' }, tN1);
+  tl.fromTo('#e2n3', { opacity: 0 }, { opacity: 1, duration: 0.15, ease: 'sine.inOut' }, tN3);
+  tl.fromTo('#e2n2', { opacity: 0 }, { opacity: 1, duration: 0.15, ease: 'sine.inOut' }, tN2);
+  var triLen = 31.1 + 40.2 + 31.1;
+  document.getElementById('e2tri').setAttribute('stroke-dasharray', triLen.toFixed(1));
+  tl.fromTo('#e2tri', { attr: { 'stroke-dashoffset': triLen } }, { attr: { 'stroke-dashoffset': 0 }, duration: 0.28, ease: 'power2.inOut' }, tN2 + 0.02);
+  tl.fromTo('#e2ping', { opacity: 0.9, attr: { r: 10 } }, { opacity: 0, attr: { r: 64 }, duration: 0.5, ease: 'power2.out', immediateRender: false }, tN1);
+  tl.fromTo('#e2ring', { opacity: 0 }, { opacity: 1, duration: 0.25, ease: 'sine.inOut' }, tN2 + 0.1);
+  tl.fromTo('#lab2', { opacity: 0, x: 8 }, { opacity: 1, x: 0, duration: 0.22, ease: 'power2.out' }, tN2 + 0.1);
+
+  // Comparison delayed until both findings are visible
+  var tLink = 1.95;
+  tl.fromTo('#link', { attr: { x2: 715, y2: 440 } }, { attr: { x2: 962, y2: 284 }, duration: 0.4, ease: 'power2.inOut' }, tLink);
+  tl.fromTo('#lab3', { opacity: 0 }, { opacity: 1, duration: 0.2, ease: 'sine.inOut' }, tLink + 0.32);
+  tl.fromTo('#sub', { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }, tLink + 0.1);
+  // pad to full duration (settled hold 2.5s → 3.0s)
+  tl.set({}, {}, 3);
+
+  tl.seek(0, false);
+  draw();
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  window.addEventListener('hf-seek', function (e) {
+    var t = e && e.detail && typeof e.detail.time === 'number' ? e.detail.time : null;
+    if (t !== null) tl.seek(t, false);
+    draw();
+  });
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

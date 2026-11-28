@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "title": "An idea becomes a connected system — Physical Data Units",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Zero, ruler and series",
+      "startSeconds": 0,
+      "endSeconds": 0.42,
+      "purpose": "Establish the plain ground, the dashed common zero and the shared unit ruler before any quantity appears.",
+      "visuals": ["Orthographic Three.js ground plate with dashed zero baseline", "Unit ruler grows 0→8 with ticks per unit and labels 0/2/4/6/8 plus '1 block = 1'", "Title and subtitle rise in", "Series chips IDEA, LINKS, NODES, SYSTEM fade in under the plate", "Shallow orbit begins at -34° azimuth"],
+      "assets": ["three.bundle.js", "gsap.min.js"],
+      "beats": [
+        {"startSeconds": 0, "endSeconds": 0.42, "development": "Ruler builds from zero; title, subtitle and series chips appear; camera starts its shallow orbit.", "captions": ["An idea becomes a connected system", "Same block, same zero: one unit grows into eight."], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-2",
+      "title": "Build at a constant rule",
+      "startSeconds": 0.42,
+      "endSeconds": 2.0,
+      "purpose": "Show that every series is built from identical 1×1×1 blocks, one level every 0.19 s for all stacks at once, so a taller stack only takes longer.",
+      "visuals": ["Equal unit blocks fall 1.6 units onto each stack and land on the same levels at the same time", "Chip counts tick up as blocks land: IDEA 1, LINKS 3, NODES 5, SYSTEM 8", "SYSTEM uses active #005885; other series use secondary #B9D5DE tones", "Orbit continues toward -16° at constant elevation"],
+      "assets": ["three.bundle.js", "gsap.min.js"],
+      "beats": [
+        {"startSeconds": 0.42, "endSeconds": 1.2, "development": "Level 1 lands on all four stacks at once; levels 2–5 follow at the same rate and IDEA stops at 1, LINKS at 3.", "captions": ["IDEA · 1", "LINKS · 3"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 1.2, "endSeconds": 2.0, "development": "NODES stops at 5; SYSTEM keeps stacking to its eighth block, level with the ruler's 8.", "captions": ["NODES · 5", "SYSTEM · 8"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-3",
+      "title": "Hold the comparison",
+      "startSeconds": 2.0,
+      "endSeconds": 3.0,
+      "purpose": "Name the difference and hold the settled comparison with zero and ruler in view.",
+      "visuals": ["Callout leader draws from the top of SYSTEM, then '8× the idea' appears", "Orbit eases to rest at -16° by 2.5 s", "All blocks, ruler and labels settled"],
+      "assets": ["three.bundle.js", "gsap.min.js"],
+      "beats": [
+        {"startSeconds": 2.0, "endSeconds": 2.34, "development": "Leader line draws, then the callout text fades in.", "captions": ["8× the idea"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 2.34, "endSeconds": 3.0, "development": "Settled reading hold of the full comparison.", "captions": ["An idea becomes a connected system", "Same block, same zero: one unit grows into eight.", "IDEA · 1", "LINKS · 3", "NODES · 5", "SYSTEM · 8", "8× the idea"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.66}
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["Brisk 0.42 s setup; build runs at one constant level rate so the stacks' different heights read as a time difference too; the orbit finishes by 2.5 s."],
+    "justifiedHolds": ["2.34–3.0 s hold so the full comparison and callout can be read while settled."]
+  },
+  "notes": ["Silent preview.", "No reviewed preview recipe exists: STYLE.json has no tech.preview_recipes and the supplied recipe list is empty, so this preview demonstrates the primary characteristic action: build equal units from a common zero, then show the comparison with a shallow orbit.", "No BACKGROUND_REVIEW.json was supplied. The background is a cool grey-blue studio gradient chosen for this subject; it is not taken from the catalogue swatch."]
+}

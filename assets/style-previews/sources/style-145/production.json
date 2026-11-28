@@ -1,0 +1,29 @@
+{
+  "characters": [],
+  "displayTitle": "Phosphor Terminal",
+  "displayDescription": "A glyph light bulb builds band by band on a phosphor monitor, then grows into an ASCII network: an idea becomes a connected system.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative procedural CRT: phosphor persistence is approximated by an exponentially decaying ghost of each cell's previous glyph and a two-pass canvas blur bloom; no physical CRT simulation, shadow mask or scanlines (omitted to keep glyphs crisp).",
+    "Glass curve is suggested by a static radial falloff and inner shadow; glyph columns are kept straight to preserve grid alignment.",
+    "Menlo/Consolas system monospace font is used; every glyph is placed at integer cell centres, so the grid holds even if fallback font metrics differ.",
+    "STYLE.json lists no tech.preview_recipes and no BACKGROUND_REVIEW.json was supplied; the preview demonstrates the catalogue's characteristic action (density-band cell replacement) with a scene-chosen dark blue-black glass.",
+    "GSAP is loaded from the task-supplied local gsap.min.js; the dependency-selection tool could not record selections because this preview project has no dependency manifest.",
+    "Blender was not used."
+  ]
+}

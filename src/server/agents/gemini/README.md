@@ -27,6 +27,13 @@ accepts `auto` (default), `cli`, or `sdk`):
    - Fails fast with an explicit error if `agy` is not installed or not executable.
    - Preserves `HOME` for Antigravity OAuth login while keeping caches/temp project-local
      and stripping all unrelated provider API keys and internal Kiteva tokens.
+   - Kiteva runs one CLI turn at a time because its CLI turns share Antigravity's conversation
+     database. A cancelled turn can leave the queue before it starts. An active turn holds
+     its place until the subprocess and temporary configuration have been cleaned up.
+     A turn's execution timeout starts when it leaves the queue.
+   - If the CLI reports an empty conversation ID before a new turn starts, Kiteva retries
+     startup up to three times with a short delay between attempts. The project activity
+     records each retry. A turn with session or work already recorded follows its usual error path.
 
 2. **Antigravity Python SDK bridge (`bridge.py` + `google-antigravity`) — default when API/Vertex credentials are set**
    - Selected automatically when `GEMINI_API_KEY`, `GOOGLE_API_KEY`,

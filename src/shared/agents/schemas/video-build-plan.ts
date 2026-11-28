@@ -1,6 +1,14 @@
 import { CaptureChapterPlanSchema } from "../../capture-chapters";
+import type { VideoRequest } from "../../domains/video";
+import { hasOnScreenSubtitles } from "../../script-items";
+import { activeSpeech } from "../../speech";
 import { z } from "zod";
-import { StoryboardSchema } from "./storyboard";
+import { CombinedStyleGuideSchema } from "./combined-style-guide";
+import {
+  FullVideoStoryboardSchema,
+  SavedFullVideoStoryboardSchema,
+  StoryboardSchema,
+} from "./storyboard";
 import {
   MAX_VIDEO_DURATION,
   MIN_AUTO_VIDEO_DURATION,
@@ -11,6 +19,7 @@ const seconds = z.number().finite().nonnegative();
 const interval = { startSeconds: seconds, endSeconds: seconds };
 const PlanSchema = z.object({
   version: z.literal(1),
+  combinedStyleGuide: CombinedStyleGuideSchema.optional(),
   width: z.number().int().positive(),
   height: z.number().int().positive(),
   fps: z.number().int().positive(),
@@ -57,9 +66,10 @@ const PlanSchema = z.object({
 });
 const FullVideoPlanSchema = z.object({
   // Optional only when reading historical plans; new planning requires both fields.
-  storyboard: StoryboardSchema.optional(),
+  storyboard: SavedFullVideoStoryboardSchema.optional(),
   capturePlan: CaptureChapterPlanSchema.nullable().optional(),
   version: z.literal(2),
+  combinedStyleGuide: CombinedStyleGuideSchema.optional(),
   width: z.number().int().positive(),
   height: z.number().int().positive(),
   fps: z.number().int().positive(),
@@ -70,6 +80,70 @@ const FullVideoPlanSchema = z.object({
 });
 export type FullVideoPlan = z.infer<typeof FullVideoPlanSchema>;
 export type VideoBuildPlan = z.infer<typeof PlanSchema> | FullVideoPlan;
+
+type ShotCueSettings = Pick<
+  VideoRequest,
+  "speech" | "subtitles" | "scriptItems" | "languageTracks"
+>;
+
+function validateShotCues(
+  storyboard: NonNullable<FullVideoPlan["storyboard"]>,
+  settings: ShotCueSettings,
+  context: z.RefinementCtx,
+) {
+  const items = settings.scriptItems;
+  const speech = activeSpeech(settings);
+  const windows: Record<
+    "narration" | "subtitle",
+    { id?: string; startSeconds: number; endSeconds: number }[]
+  > = {
+    narration:
+      items?.filter((item) => item.speech.mode === "narration") ??
+      (speech
+        ? [
+            {
+              startSeconds: speech.mode === "narration" ? (speech.startSeconds ?? 0) : 0,
+              endSeconds: storyboard.durationSeconds,
+            },
+          ]
+        : []),
+    subtitle: hasOnScreenSubtitles(settings)
+      ? (items?.filter((item) => item.showSubtitles) ?? [
+          { startSeconds: 0, endSeconds: storyboard.durationSeconds },
+        ])
+      : [],
+  };
+  const missing = {
+    narration: new Set(windows.narration),
+    subtitle: new Set(windows.subtitle),
+  };
+  storyboard.scenes.forEach((scene, sceneIndex) => {
+    scene.shots?.forEach((shot, shotIndex) => {
+      shot.cues.forEach((cue, cueIndex) => {
+        if (cue.kind !== "narration" && cue.kind !== "subtitle") return;
+        const kind = cue.kind;
+        const matches = windows[kind].filter(
+          (window) => cue.atSeconds >= window.startSeconds && cue.atSeconds < window.endSeconds,
+        );
+        for (const window of matches) missing[kind].delete(window);
+        if (!matches.length)
+          context.addIssue({
+            code: "custom",
+            path: ["storyboard", "scenes", sceneIndex, "shots", shotIndex, "cues", cueIndex],
+            message: `This ${kind} cue is outside the enabled idea settings or script window`,
+          });
+      });
+    });
+  });
+  for (const kind of ["narration", "subtitle"] as const)
+    for (const window of missing[kind])
+      context.addIssue({
+        code: "custom",
+        path: ["storyboard", "scenes"],
+        message: `Plan a ${kind} cue within the enabled window ${window.startSeconds}–${window.endSeconds}s${window.id ? ` for script item ${window.id}` : ""}`,
+      });
+}
+
 export function fullVideoPlanSchemaFor(
   expected: {
     /** Exact approved timeline, used when revising capture timing. */
@@ -77,6 +151,8 @@ export function fullVideoPlanSchemaFor(
     /** User-selected approximate length for initial full-film planning. */
     targetDuration?: number;
     minimumDuration?: number;
+    requireCombinedStyleGuide?: boolean;
+    cueSettings?: ShotCueSettings;
     width: number;
     height: number;
     fps: number;
@@ -88,6 +164,9 @@ export function fullVideoPlanSchemaFor(
       ? { min: MIN_AUTO_VIDEO_DURATION, max: MAX_VIDEO_DURATION }
       : videoDurationRange(expected.targetDuration);
   const schema = FullVideoPlanSchema.extend({
+    combinedStyleGuide: expected.requireCombinedStyleGuide
+      ? CombinedStyleGuideSchema
+      : CombinedStyleGuideSchema.optional(),
     width: z.literal(expected.width),
     height: z.literal(expected.height),
     fps: z.literal(expected.fps),
@@ -101,8 +180,15 @@ export function fullVideoPlanSchemaFor(
         : z.literal(expected.duration),
   });
   return (
-    requireStoryboard ? schema.required({ storyboard: true, capturePlan: true }) : schema
+    requireStoryboard
+      ? schema.extend({
+          storyboard: FullVideoStoryboardSchema,
+          capturePlan: CaptureChapterPlanSchema.nullable(),
+        })
+      : schema
   ).superRefine((plan, context) => {
+    if (expected.cueSettings && plan.storyboard)
+      validateShotCues(plan.storyboard, expected.cueSettings, context);
     if (plan.storyboard && plan.capturePlan) {
       const references = plan.storyboard.scenes
         .flatMap((scene) => scene.assets)
@@ -134,11 +220,15 @@ export function fullVideoPlanSchemaFor(
 }
 export function videoBuildPlanSchemaFor(expected: {
   duration: number;
+  requireCombinedStyleGuide?: boolean;
   width: number;
   height: number;
   fps: number;
 }) {
   return PlanSchema.extend({
+    combinedStyleGuide: expected.requireCombinedStyleGuide
+      ? CombinedStyleGuideSchema
+      : CombinedStyleGuideSchema.optional(),
     width: z.literal(expected.width),
     height: z.literal(expected.height),
     fps: z.literal(expected.fps),

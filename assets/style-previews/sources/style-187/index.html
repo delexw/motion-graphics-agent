@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Transmission X-Ray · An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #070E16; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; }
+  #stage { display: block; width: 100%; height: 100%; }
+</style>
+<script src="gsap.min.js"></script>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="stage" width="1280" height="720" aria-label="Transmission X-ray scan of an idea becoming a connected system"></canvas>
+</div>
+<script>
+(function () {
+  var W = 1280, H = 720;
+  var C = {
+    bg: '#070E16', panel: '#0A1824', frame: '#294359', fg: '#F5F4E8', active: '#76E1CB',
+    shellStroke: '#8FB4EA', shellFill: 'rgba(90,143,224,0.20)',
+    idea: '#F29B38', links: '#7BC86C', nodes: '#2F6FD6', closed: '#1A2A3B'
+  };
+  var SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+  var MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  var canvas = document.getElementById('stage');
+  var ctx = canvas.getContext('2d');
+
+  // ---- Panels and model (one shared 3D model, two orientations) ----
+  var PA = { x: 40, y: 110, w: 760, h: 500 };
+  var PB = { x: 840, y: 110, w: 400, h: 500 };
+  var VA = { cx: 420, cy: 360, s: 1 };
+  var VB = { cx: 1040, cy: 318 + 42 * 0.62, s: 0.62 };
+  var CASE = { hx: 270, hy: 190, hz: 150, r: 40 };
+  var CORE = { x: 0, y: -42, z: 0 };          // interior feature (idea core)
+  var NODES = [
+    { x: -160, y: -80, z: -110 }, { x: 150, y: -60, z: 95 },
+    { x: 120, y: 90, z: 120 }, { x: -150, y: 70, z: -85 }
+  ];
+  var HUB = { x: 0, y: -30, z: 0 };
+  var LINKS = [[0, 'h'], ['h', 1], [1, 2], [2, 3], [3, 0], ['h', 2]];
+  var BULB_DEPTH = 0.42; // bulb depth / width ratio (simulated)
+  var BULB = new Path2D('M-34 46c-46-32-58-120 34-136s104 84 56 132c-12 14-18 20-18 34h-52c0-14-6-18-20-30z');
+
+  // ---- Seeded static textures (cached once) ----
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  var scanTex = document.createElement('canvas'); scanTex.width = W; scanTex.height = H;
+  (function () {
+    var g = scanTex.getContext('2d');
+    g.fillStyle = 'rgba(118,225,203,0.055)';
+    for (var y = 0; y < H; y += 4) g.fillRect(0, y, W, 1);
+  })();
+  var shellTex = document.createElement('canvas'); shellTex.width = 560; shellTex.height = 400;
+  (function () {
+    var g = shellTex.getContext('2d'), rnd = mulberry32(187);
+    g.fillStyle = C.closed; g.fillRect(0, 0, 560, 400);
+    for (var i = 0; i < 2600; i++) {
+      var v = rnd();
+      g.fillStyle = v > 0.5 ? 'rgba(143,180,234,0.07)' : 'rgba(0,0,0,0.18)';
+      g.fillRect(rnd() * 560, rnd() * 400, 1 + rnd() * 2, 1 + rnd() * 2);
+    }
+    g.strokeStyle = 'rgba(143,180,234,0.10)'; g.lineWidth = 1;
+    for (var k = 0; k < 9; k++) { g.beginPath(); g.moveTo(0, 30 + k * 42); g.lineTo(560, 30 + k * 42 + (rnd() - 0.5) * 8); g.stroke(); }
+  })();
+
+  // ---- Timeline state: GSAP is the only owner of these values ----
+  var S = { scanX: 150, scanGlow: 0, select: 0, isolate: 0, theta: 0, feature: 0 };
+
+  function rr(g, x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+  }
+  function proj(p, th, V) {
+    var c = Math.cos(th), s = Math.sin(th);
+    return { x: V.cx + (p.x * c + p.z * s) * V.s, y: V.cy + p.y * V.s };
+  }
+  // Draw the transmission (density) image of the model at orientation th in view V
+  function drawDensity(th, V, alpha) {
+    var c = Math.cos(th), s = Math.sin(th), k = V.s;
+    ctx.save(); ctx.globalAlpha = alpha;
+    // shell: rotated box silhouette, uniform low density
+    var hw = (CASE.hx * Math.abs(c) + CASE.hz * Math.abs(s)) * k, hh = CASE.hy * k;
+    rr(ctx, V.cx - hw, V.cy - hh, hw * 2, hh * 2, CASE.r * k);
+    ctx.fillStyle = C.shellFill; ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = C.shellStroke; ctx.stroke();
+    // links (medium density)
+    var pts = NODES.map(function (n) { return proj(n, th, V); }), hub = proj(HUB, th, V);
+    ctx.strokeStyle = C.links; ctx.lineWidth = 6 * k + 1; ctx.globalAlpha = alpha * 0.85; ctx.lineCap = 'round';
+    LINKS.forEach(function (l) {
+      var a = l[0] === 'h' ? hub : pts[l[0]], b = l[1] === 'h' ? hub : pts[l[1]];
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    });
+    // idea core (low density) – projected ellipsoid width
+    var sx = Math.sqrt(c * c + BULB_DEPTH * BULB_DEPTH * s * s);
+    var bc = proj({ x: 0, y: 0, z: 0 }, th, V);
+    ctx.save(); ctx.translate(bc.x, bc.y); ctx.scale(k * sx, k);
+    ctx.globalAlpha = alpha * 0.8; ctx.fillStyle = C.idea; ctx.fill(BULB);
+    ctx.globalAlpha = alpha; ctx.fillStyle = C.nodes; rr(ctx, -28, 78, 56, 30, 6); ctx.fill();
+    ctx.restore();
+    // nodes (dense) – spheres, painter-sorted by depth
+    ctx.globalAlpha = alpha; ctx.fillStyle = C.nodes;
+    NODES.map(function (n, i) { return { p: pts[i], d: -n.x * s + n.z * c }; })
+      .sort(function (a, b) { return a.d - b.d; })
+      .forEach(function (o) { ctx.beginPath(); ctx.arc(o.p.x, o.p.y, 16 * k + 2, 0, Math.PI * 2); ctx.fill(); });
+    ctx.restore();
+  }
+  function crosshair(x, y, r, a) {
+    if (a <= 0) return;
+    ctx.save(); ctx.strokeStyle = C.active; ctx.lineWidth = 2.5; ctx.globalAlpha = Math.min(1, a * 1.4);
+    ctx.beginPath(); ctx.arc(x, y, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * a); ctx.stroke();
+    if (a >= 0.999) {
+      ctx.beginPath();
+      ctx.moveTo(x - r - 16, y); ctx.lineTo(x - r, y); ctx.moveTo(x + r, y); ctx.lineTo(x + r + 16, y);
+      ctx.moveTo(x, y - r - 16); ctx.lineTo(x, y - r); ctx.moveTo(x, y + r); ctx.lineTo(x, y + r + 16);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function chip(text, x, y, color) {
+    ctx.font = '14px ' + MONO; var w = ctx.measureText(text).width;
+    ctx.fillStyle = C.panel; ctx.fillRect(x - 6, y - 15, w + 12, 21);
+    ctx.fillStyle = color; ctx.textBaseline = 'alphabetic'; ctx.fillText(text, x, y);
+  }
+
+  function draw() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+    // Title block (static, always readable)
+    ctx.fillStyle = C.fg; ctx.font = '700 28px ' + SANS; ctx.textBaseline = 'alphabetic';
+    ctx.fillText('An idea becomes a connected system', 40, 58);
+    ctx.fillStyle = C.active; ctx.font = '14px ' + MONO;
+    ctx.fillText('TRANSMISSION SCAN · LAYERED DENSITY · CASE 01', 40, 86);
+    // Panels
+    [PA, PB].forEach(function (p) { ctx.fillStyle = C.panel; ctx.fillRect(p.x, p.y, p.w, p.h); });
+    ctx.drawImage(scanTex, PA.x, PA.y, PA.w, PA.h, PA.x, PA.y, PA.w, PA.h);
+    ctx.drawImage(scanTex, PB.x, PB.y, PB.w, PB.h, PB.x, PB.y, PB.w, PB.h);
+
+    // ---- VIEW A: closed object scanned left→right ----
+    var sx = S.scanX;
+    ctx.save(); ctx.beginPath(); ctx.rect(PA.x, PA.y, PA.w, PA.h); ctx.clip();
+    // scanned (transmission) part
+    ctx.save(); ctx.beginPath(); ctx.rect(PA.x, PA.y, sx - PA.x, PA.h); ctx.clip();
+    drawDensity(0, VA, 1);
+    ctx.restore();
+    // unscanned closed exterior
+    if (sx < 692) {
+      ctx.save(); ctx.beginPath(); ctx.rect(sx, PA.y, PA.x + PA.w - sx, PA.h); ctx.clip();
+      rr(ctx, VA.cx - 270, VA.cy - 190, 540, 380, 40); ctx.save(); ctx.clip();
+      ctx.drawImage(shellTex, VA.cx - 280, VA.cy - 200); ctx.restore();
+      rr(ctx, VA.cx - 270, VA.cy - 190, 540, 380, 40);
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(143,180,234,0.55)'; ctx.stroke();
+      ctx.restore();
+    }
+    // scan beam
+    if (S.scanGlow > 0) {
+      ctx.save(); ctx.globalAlpha = S.scanGlow;
+      var grd = ctx.createLinearGradient(sx - 70, 0, sx, 0);
+      grd.addColorStop(0, 'rgba(118,225,203,0)'); grd.addColorStop(1, 'rgba(118,225,203,0.22)');
+      ctx.fillStyle = grd; ctx.fillRect(sx - 70, PA.y + 2, 70, PA.h - 4);
+      ctx.fillStyle = C.active; ctx.fillRect(sx - 1, PA.y + 2, 2, PA.h - 4);
+      ctx.restore();
+    }
+    ctx.restore();
+
+    // selection of the interior feature in View A
+    var ca = proj(CORE, 0, VA);
+    crosshair(ca.x, ca.y, 48, S.select);
+
+    // ---- Isolation link between views ----
+    var cb = proj(CORE, S.theta, VB);
+    if (S.isolate > 0) {
+      ctx.save(); ctx.strokeStyle = C.active; ctx.globalAlpha = 0.7; ctx.lineWidth = 1.5; ctx.setLineDash([6, 6]);
+      var x0 = ca.x + 80, x1 = cb.x - 50 * VB.s - 16;
+      ctx.beginPath(); ctx.moveTo(x0, ca.y); ctx.lineTo(x0 + (x1 - x0) * S.isolate, ca.y); ctx.stroke();
+      ctx.restore();
+    }
+
+    // ---- VIEW B: the isolated scan, rotated about its vertical axis ----
+    ctx.save(); ctx.beginPath(); ctx.rect(PB.x, PB.y, PB.w, PB.h); ctx.clip();
+    if (S.isolate > 0) {
+      drawDensity(S.theta, VB, Math.min(1, S.isolate * 1.2));
+      // depth axis ticks: front / back faces of the case at this orientation
+      if (S.theta > 0.02) {
+        ctx.save(); ctx.globalAlpha = Math.min(1, S.isolate) * 0.9; ctx.strokeStyle = C.frame; ctx.lineWidth = 2;
+        var yAx = VB.cy + (CASE.hy + 26) * VB.s, hwB = (CASE.hx * Math.cos(S.theta) + CASE.hz * Math.sin(S.theta)) * VB.s;
+        ctx.beginPath(); ctx.moveTo(VB.cx - hwB, yAx); ctx.lineTo(VB.cx + hwB, yAx); ctx.stroke();
+        ctx.fillStyle = C.active; ctx.beginPath(); ctx.arc(cb.x, yAx, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+    if (S.isolate > 0) crosshair(cb.x, cb.y, 48 * VB.s + 8, Math.min(1, S.isolate));
+
+    // Panel frames
+    ctx.lineWidth = 2; ctx.strokeStyle = C.frame;
+    ctx.strokeRect(PA.x, PA.y, PA.w, PA.h); ctx.strokeRect(PB.x, PB.y, PB.w, PB.h);
+
+    // Stable labels (opaque chips keep scanlines out of the letterforms)
+    chip('VIEW A · 0° · ' + (sx >= 689 ? 'SCANNED' : 'SCANNING'), 56, 134, C.fg);
+    var deg = Math.round(S.theta * 180 / Math.PI);
+    chip('VIEW B · ISOLATED SCAN · ' + deg + '°', 856, 134, C.fg);
+    if (S.feature > 0) {
+      ctx.save(); ctx.globalAlpha = S.feature;
+      chip('FEATURE: IDEA CORE @ DEPTH 0.5', 856, 594, C.active);
+      ctx.restore();
+    }
+
+    // Density legend (stable scale)
+    var L = [[C.idea, 'IDEA · low density', 40], [C.links, 'LINKS · medium', 290], [C.nodes, 'NODES · dense', 510]];
+    ctx.font = '14px ' + MONO;
+    L.forEach(function (l) { ctx.fillStyle = l[0]; ctx.fillRect(l[2], 642, 18, 18); ctx.fillStyle = C.fg; ctx.fillText(l[1], l[2] + 28, 656); });
+    ctx.fillStyle = 'rgba(245,244,232,0.6)';
+    ctx.fillText('SIMULATED DENSITY · ILLUSTRATION, NOT MEASURED DATA', 760, 656);
+  }
+
+  // ---- One paused, seekable GSAP timeline ----
+  var tl = gsap.timeline({ paused: true, onUpdate: draw });
+  tl.set(S, { scanX: 150, scanGlow: 0, select: 0, isolate: 0, theta: 0, feature: 0 }, 0);
+  tl.to(S, { scanGlow: 1, duration: 0.15, ease: 'none' }, 0.1);
+  tl.to(S, { scanX: 692, duration: 1.1, ease: 'sine.inOut' }, 0.15);
+  tl.to(S, { scanGlow: 0, duration: 0.2, ease: 'none' }, 1.2);
+  tl.to(S, { select: 1, duration: 0.3, ease: 'power2.inOut' }, 1.15);
+  tl.to(S, { isolate: 1, duration: 0.3, ease: 'power2.out' }, 1.4);
+  tl.to(S, { theta: Math.PI / 2, duration: 0.75, ease: 'power2.inOut' }, 1.7);
+  tl.to(S, { feature: 1, duration: 0.2, ease: 'none' }, 2.4);
+  tl.to({}, { duration: 0.01 }, 2.99);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  function seekTo(t) { tl.seek(Math.max(0, Math.min(3, t)), false); draw(); }
+  window.addEventListener('hf-seek', function (e) {
+    var t = e && e.detail && typeof e.detail.time === 'number' ? e.detail.time : tl.time();
+    seekTo(t);
+  });
+  seekTo(0);
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

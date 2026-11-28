@@ -141,7 +141,7 @@ export function ProjectConversation({
           <span className="local-dot" />
         )}
       </div>
-      <ProjectSettings run={run} styles={styles} examples={examples} onUpdated={onRunUpdated} />
+      <ProjectSettings run={run} styles={styles} examples={examples} />
       <div className="project-chat-body">
         <Conversation
           contextRef={contextRef}

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cross-Source Investigation · An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #161C22; overflow: hidden; }
+  #root { width: 100%; height: 100%; position: relative; }
+  svg { display: block; width: 100%; height: 100%; }
+  text { font-family: Menlo, "SF Mono", Consolas, "DejaVu Sans Mono", monospace; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#222B34" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- Stationary case-file desk -->
+  <rect width="1280" height="720" fill="#161C22"/>
+  <rect width="1280" height="720" fill="url(#grid)"/>
+
+  <text id="heading" x="80" y="72" font-size="16" letter-spacing="3" fill="#9FB2C2">CASE FILE · AN IDEA BECOMES A CONNECTED SYSTEM</text>
+  <text id="footer" x="80" y="664" font-size="13" fill="#8A9DAE">ILLUSTRATIVE RECORDS · NOT REAL EVIDENCE</text>
+
+  <!-- Common chronology -->
+  <path id="axis" d="M80 560H1200" pathLength="1" stroke="#C9D4DC" stroke-width="3" fill="none" stroke-dasharray="1" stroke-dashoffset="1"/>
+
+  <!-- Drop lines (card -> date) -->
+  <g fill="none" stroke="#6B7F90" stroke-width="2" stroke-dasharray="4 6">
+    <path class="drop" d="M205 340V553"/>
+    <path class="drop" d="M505 380V553"/>
+    <path class="drop" d="M805 420V553"/>
+  </g>
+  <path id="drop-conv" d="M1095 370V548" fill="none" stroke="#F2C14E" stroke-width="2" stroke-dasharray="4 6"/>
+
+  <g id="ticks">
+    <circle class="tick" cx="205" cy="560" r="7" fill="#C9D4DC"/>
+    <circle class="tick" cx="505" cy="560" r="7" fill="#C9D4DC"/>
+    <circle class="tick" cx="805" cy="560" r="7" fill="#C9D4DC"/>
+  </g>
+  <g font-size="15" fill="#C9D4DC" text-anchor="middle">
+    <text class="date" x="205" y="596">DAY 01</text>
+    <text class="date" x="505" y="596">DAY 09</text>
+    <text class="date" x="805" y="596">DAY 21</text>
+  </g>
+  <circle id="tick-conv" cx="1095" cy="560" r="12" fill="#F2C14E"/>
+  <text id="date-conv" x="1095" y="596" font-size="15" font-weight="700" fill="#F2C14E" text-anchor="middle">DAY 30</text>
+
+  <!-- Convergence strands: drawn behind cards, no arrowheads; endpoint ports appear on arrival -->
+  <g fill="none" stroke="#4FB3E8" stroke-width="3" stroke-linecap="round">
+    <path class="strand" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M330 175C560 118 860 150 990 222"/>
+    <path class="strand" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M630 205C730 188 880 205 990 260"/>
+    <path class="strand" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M930 300C958 300 962 298 990 298"/>
+  </g>
+
+  <!-- SOURCE A -->
+  <g transform="translate(80 140)"><g id="card-a" class="card">
+    <rect width="250" height="200" rx="6" fill="#EEF1F3"/>
+    <rect width="250" height="34" rx="6" fill="#142536"/>
+    <rect y="28" width="250" height="6" fill="#142536"/>
+    <g class="content" data-reveal-after="card-a">
+      <text x="16" y="22" font-size="14" font-weight="700" fill="#EEF1F3">SRC A · NOTEBOOK</text>
+      <rect x="222" y="11" width="12" height="12" fill="#B9D5DE"/>
+      <text x="16" y="60" font-size="13" font-weight="700" fill="#005885">DAY 01 · 09:14</text>
+      <text x="16" y="92" font-size="13" fill="#142536">Idea sketched:</text>
+      <text x="16" y="114" font-size="13" fill="#142536">connect three tools</text>
+      <circle cx="214" cy="103" r="11" fill="#F2C14E" stroke="#142536" stroke-width="3"/>
+      <path d="M16 150H234" stroke="#B9D5DE" stroke-width="2"/>
+      <text x="16" y="178" font-size="12" fill="#3E5163">LOC · STUDIO DESK</text>
+    </g>
+  </g></g>
+
+  <!-- SOURCE B -->
+  <g transform="translate(380 180)"><g id="card-b" class="card">
+    <rect width="250" height="200" rx="6" fill="#EEF1F3"/>
+    <rect width="250" height="34" rx="6" fill="#142536"/>
+    <rect y="28" width="250" height="6" fill="#142536"/>
+    <g class="content" data-reveal-after="card-b">
+      <text x="16" y="22" font-size="14" font-weight="700" fill="#EEF1F3">SRC B · WHITEBOARD</text>
+      <circle cx="228" cy="17" r="6" fill="none" stroke="#B9D5DE" stroke-width="2.5"/>
+      <text x="16" y="60" font-size="13" font-weight="700" fill="#005885">DAY 09 · 15:40</text>
+      <g stroke="#142536" stroke-width="3" fill="none">
+        <path d="M40 108L125 80L210 112L125 140Z"/>
+      </g>
+      <g fill="#142536">
+        <circle cx="40" cy="108" r="8"/><circle cx="125" cy="80" r="8"/>
+        <circle cx="210" cy="112" r="8"/><circle cx="125" cy="140" r="8"/>
+      </g>
+      <path d="M16 158H234" stroke="#B9D5DE" stroke-width="2"/>
+      <text x="16" y="183" font-size="12" fill="#3E5163">LOC · ROOM 2 · 4 PARTS</text>
+    </g>
+  </g></g>
+
+  <!-- SOURCE C -->
+  <g transform="translate(680 220)"><g id="card-c" class="card">
+    <rect width="250" height="200" rx="6" fill="#EEF1F3"/>
+    <rect width="250" height="34" rx="6" fill="#142536"/>
+    <rect y="28" width="250" height="6" fill="#142536"/>
+    <g class="content" data-reveal-after="card-c">
+      <text x="16" y="22" font-size="14" font-weight="700" fill="#EEF1F3">SRC C · SERVER LOG</text>
+      <path d="M222 11h-4v12h4M230 11h4v12h-4" fill="none" stroke="#B9D5DE" stroke-width="2.5"/>
+      <text x="16" y="60" font-size="13" font-weight="700" fill="#005885">DAY 21 · 02:03</text>
+      <text x="16" y="90" font-size="12" fill="#142536">02:03 api + db    ok</text>
+      <text x="16" y="112" font-size="12" fill="#142536">02:03 queue + api ok</text>
+      <text x="16" y="134" font-size="12" fill="#142536">02:04 3 of 3 linked</text>
+      <path d="M16 150H234" stroke="#B9D5DE" stroke-width="2"/>
+      <text x="16" y="178" font-size="12" fill="#3E5163">LOC · RACK 07</text>
+    </g>
+  </g></g>
+
+  <!-- CONVERGENCE -->
+  <g transform="translate(990 150)"><g id="card-conv">
+    <rect width="210" height="220" rx="6" fill="#EEF1F3" stroke="#F2C14E" stroke-width="5"/>
+    <rect x="2.5" y="2.5" width="205" height="32" rx="4" fill="#142536"/>
+    <g class="content" data-reveal-after="card-conv">
+      <text x="16" y="24" font-size="13" font-weight="700" fill="#EEF1F3">MATCH · DAY 30</text>
+      <g stroke="#005885" stroke-width="3" fill="none">
+        <path class="spoke" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M30 72L105 110"/>
+        <path class="spoke" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M30 110H105"/>
+        <path class="spoke" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M30 148L105 110"/>
+        <path class="spoke" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M105 110L180 80"/>
+        <path class="spoke" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" d="M105 110L180 140"/>
+      </g>
+      <g font-size="11" font-weight="700" text-anchor="middle">
+        <g class="port"><circle cx="22" cy="72" r="10" fill="#142536"/><text x="22" y="76" fill="#EEF1F3">A</text></g>
+        <g class="port"><circle cx="22" cy="110" r="10" fill="#142536"/><text x="22" y="114" fill="#EEF1F3">B</text></g>
+        <g class="port"><circle cx="22" cy="148" r="10" fill="#142536"/><text x="22" y="152" fill="#EEF1F3">C</text></g>
+      </g>
+      <circle id="node" cx="105" cy="110" r="17" fill="#F2C14E" stroke="#142536" stroke-width="3"/>
+      <text class="concl" x="16" y="188" font-size="13" font-weight="700" fill="#142536">SYSTEM CONNECTED</text>
+      <text class="concl" x="16" y="207" font-size="11" fill="#3E5163">LOC · LAB · SRC A+B+C</text>
+    </g>
+  </g></g>
+
+  <!-- Strand arrival ports (outside card edge) -->
+  <g fill="#4FB3E8">
+    <circle class="arrive" cx="990" cy="222" r="5"/>
+    <circle class="arrive" cx="990" cy="260" r="5"/>
+    <circle class="arrive" cx="990" cy="298" r="5"/>
+  </g>
+</svg>
+</div>
+<script src="gsap.min.js"></script>
+<script>
+(function () {
+  var q = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  var tl = gsap.timeline({ paused: true, defaults: { ease: "power2.out" } });
+
+  // Initial states (all set at time 0 on the same timeline)
+  tl.set(["#heading", "#footer"], { opacity: 0 }, 0);
+  tl.set(".content", { opacity: 0 }, 0);
+  tl.set(".drop, #drop-conv", { opacity: 0 }, 0);
+  tl.set(".tick, #tick-conv", { scale: 0, transformOrigin: "50% 50%" }, 0);
+  tl.set(".date, #date-conv", { opacity: 0, y: 8 }, 0);
+  tl.set(".arrive", { scale: 0, transformOrigin: "50% 50%" }, 0);
+  tl.set("#card-conv", { opacity: 0, scale: 0.86, transformOrigin: "50% 50%" }, 0);
+  tl.set(".port", { scale: 0, transformOrigin: "50% 50%" }, 0);
+  tl.set("#node", { scale: 0, transformOrigin: "50% 50%" }, 0);
+  tl.set(".concl", { opacity: 0 }, 0);
+
+  // Loose, unsynchronised positions: each source arrives on its own
+  var loose = [
+    { id: "#card-a", x: 70, y: 40, rotation: -7 },
+    { id: "#card-b", x: -40, y: -60, rotation: 6 },
+    { id: "#card-c", x: -150, y: 30, rotation: -5 }
+  ];
+  loose.forEach(function (c) {
+    tl.set(c.id, { x: c.x, y: c.y + 110, rotation: c.rotation, opacity: 0, transformOrigin: "50% 50%" }, 0);
+  });
+
+  // 0.00–0.55 header, disclaimer, common chronology
+  tl.to(["#heading", "#footer"], { opacity: 1, duration: 0.3, ease: "sine.inOut" }, 0);
+  tl.to("#axis", { strokeDashoffset: 0, duration: 0.5, ease: "power2.inOut" }, 0.05);
+
+  // 0.15–1.25 sources presented separately; labels only after each card is complete
+  loose.forEach(function (c, i) {
+    var t = 0.15 + i * 0.3;
+    tl.to(c.id, { y: c.y, opacity: 1, duration: 0.38, ease: "power3.out" }, t);
+    tl.to(c.id + " .content", { opacity: 1, duration: 0.14, ease: "none" }, t + 0.38);
+  });
+
+  // 1.25–1.65 synchronise onto the common timeline
+  tl.to(["#card-a", "#card-b", "#card-c"], { x: 0, y: 0, rotation: 0, duration: 0.4, ease: "power2.inOut", stagger: 0.05 }, 1.25);
+  tl.to(".drop", { opacity: 1, duration: 0.18, stagger: 0.06, ease: "none" }, 1.55);
+  tl.to(".tick", { scale: 1, duration: 0.25, stagger: 0.06, ease: "back.out(2)" }, 1.55);
+  tl.to(".date", { opacity: 1, y: 0, duration: 0.22, stagger: 0.06 }, 1.6);
+
+  // 1.75–2.5 convergence at one event
+  q(".strand").forEach(function (el, i) {
+    var t = 1.75 + i * 0.07;
+    tl.to(el, { strokeDashoffset: 0, duration: 0.36 - i * 0.08, ease: "power2.inOut" }, t);
+    tl.to(q(".arrive")[i], { scale: 1, duration: 0.12, ease: "back.out(2)" }, t + 0.36 - i * 0.08);
+  });
+  tl.to("#card-conv", { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.4)" }, 1.85);
+  tl.to("#card-conv .content", { opacity: 1, duration: 0.01, ease: "none" }, 2.15);
+  tl.to(".port", { scale: 1, duration: 0.16, stagger: 0.04, ease: "back.out(2)" }, 2.15);
+  tl.to(".spoke", { strokeDashoffset: 0, duration: 0.2, stagger: 0.03, ease: "power2.out" }, 2.18);
+  tl.to("#node", { scale: 1, duration: 0.24, ease: "back.out(2.2)" }, 2.25);
+  tl.to(".concl", { opacity: 1, duration: 0.16, ease: "none" }, 2.3);
+  tl.to("#drop-conv", { opacity: 1, duration: 0.15, ease: "none" }, 2.25);
+  tl.to("#tick-conv", { scale: 1, duration: 0.24, ease: "back.out(2)" }, 2.3);
+  tl.to("#date-conv", { opacity: 1, y: 0, duration: 0.2 }, 2.33);
+
+  // 2.55–3.00 held convergence with supporting cards
+  tl.set({}, {}, 3);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  tl.seek(0, false);
+  window.addEventListener("hf-seek", function (e) {
+    var t = e && e.detail && typeof e.detail.time === "number" ? e.detail.time : null;
+    if (t !== null) tl.seek(t, false);
+  });
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

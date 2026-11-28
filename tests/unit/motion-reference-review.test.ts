@@ -1,4 +1,7 @@
-import { beforeMangaReferenceStudy } from "../fixtures/manga-reference-baseline";
+import {
+  beforeMangaReferenceStudy,
+  withoutStylePrompt,
+} from "../fixtures/manga-reference-baseline";
 import { expect, it } from "vitest";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
@@ -30,7 +33,7 @@ it("records all 405 decisions and adds exactly the approved references without c
   for (const style of current.styles.filter((entry: { id: string }) =>
     before.some((prior: { id: string }) => prior.id === entry.id),
   )) {
-    const historicalStyle = beforeMangaReferenceStudy(style);
+    const historicalStyle = withoutStylePrompt(beforeMangaReferenceStudy(style));
     const pairs = review.pairs.filter((pair: { styleId: string }) => pair.styleId === style.id);
     expect(pairs).toHaveLength(3);
     for (const pair of pairs) {
@@ -74,8 +77,8 @@ it("records all 405 decisions and adds exactly the approved references without c
     // Ignore only the later background policy and timestamped frame evidence when checking this historical migration.
     delete style.palette.background_policy;
     delete style.palette.source_frame_review;
-    expect(beforeMangaReferenceStudy(style)).toEqual(
-      before.find((entry: { id: string }) => entry.id === style.id),
+    expect(withoutStylePrompt(beforeMangaReferenceStudy(style))).toEqual(
+      withoutStylePrompt(before.find((entry: { id: string }) => entry.id === style.id)),
     );
   }
   expect(additions).toBe(142);

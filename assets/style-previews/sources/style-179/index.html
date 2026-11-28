@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Backlit Paper Lantern — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #0B1019; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; background: #0B1019; overflow: hidden; }
+  #gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .card {
+    position: absolute;
+    background: rgba(11, 16, 25, 0.9);
+    border: 1px solid rgba(245, 244, 232, 0.08);
+    border-radius: 6px;
+    font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  #labels {
+    left: 4.4%; top: 8.6%;
+    padding: 0.9vh 1.1vw;
+    font-size: max(10px, 1.1vw); letter-spacing: 0.36vw; font-weight: 500;
+    color: #F5F4E8; white-space: nowrap;
+  }
+  #labels .lbl { opacity: 0.5; }
+  #labels .dot { opacity: 0.35; margin: 0 0.35vw; }
+  #caption {
+    left: 4.4%; bottom: 6.4%;
+    padding: 1.4vh 1.5vw 1.6vh;
+    color: #F5F4E8; font-weight: 300;
+    font-size: max(18px, 3.1vw); line-height: 1.16; letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="gl" width="1280" height="720"></canvas>
+  <div id="labels" class="card"><span class="lbl" id="lbl1">LAYER 1</span><span class="dot">·</span><span class="lbl" id="lbl2">LAYER 2</span><span class="dot">·</span><span class="lbl" id="lbl3">OPENING</span></div>
+  <div id="caption" class="card"><div class="line" id="cap1">An idea becomes</div><div class="line" id="cap2">a connected system.</div></div>
+</div>
+<script src="./gsap.min.js"></script>
+<script>
+  // One shared, paused GSAP timeline owns every animated value.
+  // Scene state (lamp, camera, reveal) lives in window.__lantern; Three.js only reads it.
+  (function () {
+    var S = window.__lantern = {
+      lampX: -2.6, lampY: 0.55, lampPower: 0.0,   // hidden lamp behind the paper layers (z = -2)
+      netGlow: 0.0,                               // teal transmission of the third outline
+      camZ: 10.2, camY: 0.62                      // quiet oblique dolly
+    };
+    var tl = gsap.timeline({ paused: true, defaults: { overwrite: false } });
+
+    // Lamp wakes behind LAYER 1 (the idea / bulb cutout)
+    tl.to(S, { lampPower: 1, duration: 0.45, ease: "sine.inOut" }, 0);
+    tl.to(S, { lampX: -1.2, lampY: 0.45, duration: 0.6, ease: "power2.inOut" }, 0.05);
+    // Pass behind LAYER 2 (the far wall), then slide behind its narrow opening
+    tl.to(S, { lampX: 1.05, lampY: 0.15, duration: 0.65, ease: "power2.inOut" }, 0.85);
+    tl.to(S, { lampX: 2.72, lampY: -0.05, duration: 0.6, ease: "power2.inOut" }, 1.55);
+    // Third outline (connected system) appears through the opening and holds
+    tl.to(S, { netGlow: 1, duration: 0.55, ease: "sine.inOut" }, 1.75);
+    // Camera: slow push-in, settles at 2.3 s
+    tl.to(S, { camZ: 9.4, camY: 0.5, duration: 2.3, ease: "sine.inOut" }, 0);
+
+    // Copy: matte cards outside the bright cavity
+    tl.fromTo("#labels", { opacity: 0, y: -6 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.inOut" }, 0.05);
+    tl.fromTo("#cap1", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.inOut" }, 0.25);
+    tl.fromTo("#cap2", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.inOut" }, 0.4);
+    tl.fromTo("#caption", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "sine.inOut" }, 0.2);
+
+    // Active label follows the light (accent #76E1CB marks the active change)
+    var on = { opacity: 1, color: "#76E1CB", duration: 0.2, ease: "sine.inOut" };
+    var off = { opacity: 0.5, color: "#F5F4E8", duration: 0.2, ease: "sine.inOut" };
+    tl.fromTo("#lbl1", { opacity: 0.5, color: "#F5F4E8" }, on, 0.3);
+    tl.to("#lbl1", off, 0.95);
+    tl.fromTo("#lbl2", { opacity: 0.5, color: "#F5F4E8" }, on, 0.95);
+    tl.to("#lbl2", off, 1.7);
+    tl.fromTo("#lbl3", { opacity: 0.5, color: "#F5F4E8" }, on, 1.7);
+
+    // Pad to the full 3 s so the final hold is part of the timeline
+    tl.to({}, { duration: 0.001 }, 2.999);
+
+    function redraw() { if (window.__lanternRender) window.__lanternRender(); }
+    tl.eventCallback("onUpdate", redraw);
+    ["seek", "time", "totalTime", "progress", "totalProgress"].forEach(function (m) {
+      var orig = tl[m];
+      tl[m] = function () {
+        var r = orig.apply(tl, arguments);
+        if (arguments.length) redraw();
+        return r;
+      };
+    });
+    window.addEventListener("hf-seek", redraw);
+    window.__timelines = window.__timelines || {};
+    window.__timelines.video = tl;
+    tl.seek(0);
+  })();
+</script>
+<script type="module" src="./lantern-scene.js"></script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

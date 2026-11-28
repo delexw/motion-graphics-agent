@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Satellite Image Briefing — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #16212B; overflow: hidden; }
+  #root { position: relative; width: 100%; height: 100%; }
+  #root svg { display: block; width: 100%; height: 100%; }
+  .sans { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  .mono { font-family: Menlo, "SF Mono", Consolas, monospace; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+<svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="hatch" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+      <rect width="14" height="5" fill="#5B7356"/>
+    </pattern>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#B9D5DE" stroke-opacity=".22"/>
+    </pattern>
+    <pattern id="rows" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-12)">
+      <rect width="8" height="3" fill="#6E7F55"/>
+    </pattern>
+    <clipPath id="plateClip"><rect x="0" y="0" width="800" height="470"/></clipPath>
+    <clipPath id="wipeClip"><rect id="wipeRect" x="0" y="0" width="0" height="470"/></clipPath>
+    <mask id="outlineMask" maskUnits="userSpaceOnUse" x="-20" y="-20" width="840" height="510">
+      <path id="outlineDraw" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"
+        d="M300 112 Q470 70 690 182 Q722 330 606 404 Q420 432 312 400 Q262 300 300 112 Z"
+        fill="none" stroke="#fff" stroke-width="10"/>
+    </mask>
+
+    <!-- shared landscape: identical footprint, scale and north in both plates -->
+    <g id="base">
+      <rect width="800" height="470" fill="#71876A"/>
+      <rect width="800" height="470" fill="url(#hatch)" opacity=".42"/>
+      <rect x="470" y="0" width="330" height="140" fill="#7E9370"/>
+      <rect x="470" y="0" width="330" height="140" fill="url(#rows)" opacity=".5"/>
+      <rect x="0" y="160" width="100" height="160" fill="#667D5F"/>
+      <rect x="240" y="300" width="150" height="70" fill="#86986F"/>
+      <path d="M0 372 C140 340 250 410 380 380 S620 318 800 344 V470 H0 Z" fill="#46697C"/>
+      <path d="M0 372 C140 340 250 410 380 380 S620 318 800 344" fill="none" stroke="#9FB3A0" stroke-width="2" opacity=".6"/>
+      <path d="M118 0 L226 470" stroke="#D2CBB0" stroke-width="6" fill="none"/>
+      <path d="M0 150 H800" stroke="#D2CBB0" stroke-width="5" fill="none"/>
+    </g>
+    <g id="landmark">
+      <circle r="13" fill="#F2EFE4" stroke="#142536" stroke-width="3"/>
+      <path d="M-14 0h28M0 -14v28" stroke="#142536" stroke-width="2"/>
+    </g>
+    <g id="site"><rect x="-9" y="-9" width="18" height="18" fill="#EDF1F3" stroke="#142536" stroke-width="2"/></g>
+  </defs>
+
+  <!-- stationary background -->
+  <rect width="1280" height="720" fill="#16212B"/>
+
+  <!-- heading -->
+  <text x="60" y="56" class="sans" font-size="30" font-weight="700" fill="#EDF1F3">An idea becomes a connected system</text>
+  <text x="60" y="88" class="mono" font-size="14" letter-spacing="2" fill="#B9D5DE">BRIEFING 07 · TWO DATED PLATES · SAME FOOTPRINT · NORTH UP</text>
+
+  <!-- map plate -->
+  <g id="plate" transform="translate(60 112)">
+    <g clip-path="url(#plateClip)">
+      <!-- T0 plate -->
+      <g id="t0">
+        <use href="#base"/>
+        <use href="#site" x="440" y="190" transform="translate(440 190) scale(.7) translate(-440 -190)"/>
+        <rect width="800" height="470" fill="url(#grid)"/>
+      </g>
+
+      <!-- T1 plate, revealed by wipe after registration -->
+      <g id="t1" clip-path="url(#wipeClip)">
+        <use href="#base"/>
+        <!-- surface change in T1: cleared parcels, new built footprints and tracks -->
+        <g fill="#B7AE8E">
+          <rect x="420" y="168" width="44" height="44"/>
+          <rect x="500" y="128" width="40" height="42"/>
+          <rect x="618" y="218" width="44" height="44"/>
+          <rect x="538" y="338" width="44" height="40"/>
+          <rect x="310" y="150" width="40" height="40"/>
+          <rect x="358" y="348" width="44" height="40"/>
+        </g>
+        <g fill="#8D9592">
+          <rect x="428" y="176" width="12" height="10"/><rect x="446" y="194" width="10" height="10"/>
+          <rect x="508" y="136" width="10" height="12"/><rect x="626" y="228" width="12" height="10"/>
+          <rect x="644" y="244" width="10" height="10"/><rect x="546" y="346" width="12" height="10"/>
+          <rect x="318" y="158" width="10" height="10"/><rect x="366" y="356" width="10" height="12"/>
+        </g>
+        <path d="M440 190 L520 150 L640 240 L560 360 M440 190 L330 170 M440 190 L380 370 L560 360"
+          fill="none" stroke="#C9C1A2" stroke-width="3" opacity=".8"/>
+        <rect width="800" height="470" fill="url(#grid)"/>
+      </g>
+
+      <!-- registration ghost: T1 line-art before alignment -->
+      <g id="ghost" transform="translate(64 -46) rotate(4 360 220)" opacity="0">
+        <rect x="1" y="1" width="798" height="468" fill="none" stroke="#EDF1F3" stroke-width="2" stroke-dasharray="8 6"/>
+        <path d="M118 0 L226 470 M0 150 H800" stroke="#EDF1F3" stroke-width="2.5" fill="none"/>
+        <path d="M0 372 C140 340 250 410 380 380 S620 318 800 344" stroke="#EDF1F3" stroke-width="2.5" fill="none"/>
+        <circle cx="360" cy="220" r="16" fill="none" stroke="#EDF1F3" stroke-width="2.5"/>
+        <path d="M340 220h40M360 200v40" stroke="#EDF1F3" stroke-width="2"/>
+      </g>
+
+      <!-- change layer: one contrast colour, restrained opacity -->
+      <g id="change">
+        <path id="outlineFill" d="M300 112 Q470 70 690 182 Q722 330 606 404 Q420 432 312 400 Q262 300 300 112 Z"
+          fill="#5FD0FF" fill-opacity="0"/>
+        <path d="M300 112 Q470 70 690 182 Q722 330 606 404 Q420 432 312 400 Q262 300 300 112 Z"
+          fill="none" stroke="#5FD0FF" stroke-width="2.5" pathLength="100" stroke-dasharray="1.6 1" mask="url(#outlineMask)"/>
+        <g fill="none" stroke="#5FD0FF" stroke-width="4" stroke-linecap="round">
+          <path class="link" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="M440 190 L520 150"/>
+          <path class="link" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="M440 190 L330 170"/>
+          <path class="link" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="M440 190 L380 370"/>
+          <path class="link" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="M520 150 L640 240"/>
+          <path class="link" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="M440 190 L560 360"/>
+          <path class="link" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="M640 240 L560 360"/>
+          <path class="link" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="M380 370 L560 360"/>
+        </g>
+        <g id="nodes">
+          <g class="node" transform="translate(440 190)"><g class="pop"><use href="#site"/></g></g>
+          <g class="node" transform="translate(520 150)"><g class="pop"><use href="#site"/></g></g>
+          <g class="node" transform="translate(330 170)"><g class="pop"><use href="#site"/></g></g>
+          <g class="node" transform="translate(380 370)"><g class="pop"><use href="#site"/></g></g>
+          <g class="node" transform="translate(640 240)"><g class="pop"><use href="#site"/></g></g>
+          <g class="node" transform="translate(560 360)"><g class="pop"><use href="#site"/></g></g>
+        </g>
+      </g>
+
+      <!-- shared landmark in the common coordinate plane -->
+      <use href="#landmark" x="360" y="220"/>
+
+      <!-- wipe edge -->
+      <g id="wipeEdge" transform="translate(0 0)" opacity="0">
+        <rect x="-1.5" y="0" width="3" height="470" fill="#EDF1F3"/>
+      </g>
+    </g>
+    <rect x="0" y="0" width="800" height="470" fill="none" stroke="#B9D5DE" stroke-opacity=".55"/>
+
+    <!-- date tags: always visible, outside the change region -->
+    <g class="mono" font-size="15" font-weight="700">
+      <rect x="12" y="12" width="170" height="30" fill="#EDF1F3"/>
+      <text x="24" y="33" fill="#142536">T0 · 2024-03-02</text>
+      <rect x="618" y="12" width="170" height="30" fill="#EDF1F3"/>
+      <text x="630" y="33" fill="#142536">T1 · 2026-11-26</text>
+    </g>
+    <!-- scale + north (bottom-right, on dark backing) -->
+    <g class="mono" font-size="12" fill="#EDF1F3">
+      <rect x="628" y="424" width="160" height="34" fill="#16212B" fill-opacity=".82"/>
+      <path d="M640 436h80" stroke="#EDF1F3" stroke-width="3"/>
+      <text x="640" y="452">0 — 500 m</text>
+      <text x="748" y="447" font-weight="700">N↑</text>
+    </g>
+  </g>
+
+  <!-- coordinate ticks outside the plate -->
+  <g class="mono" font-size="11" fill="#B9D5DE">
+    <text x="60" y="600">12.4920°E</text>
+    <text x="422" y="600">12.4964°E</text>
+    <text x="796" y="600">12.5008°E</text>
+    <path d="M420 582v8" stroke="#B9D5DE"/>
+  </g>
+
+  <!-- side panel -->
+  <g transform="translate(900 112)" class="mono">
+    <text x="0" y="14" font-size="12" letter-spacing="2" fill="#B9D5DE">LANDMARK ⊕</text>
+    <text x="0" y="40" font-size="17" font-weight="700" fill="#EDF1F3">41.9028°N</text>
+    <text x="0" y="64" font-size="17" font-weight="700" fill="#EDF1F3">12.4964°E</text>
+    <path d="M0 88H320" stroke="#B9D5DE" stroke-opacity=".35"/>
+
+    <text x="0" y="118" font-size="12" letter-spacing="2" fill="#B9D5DE">REGISTRATION</text>
+    <text id="regOff" x="0" y="146" font-size="15" fill="#EDF1F3">offset 64 m E · 46 m N · 4.0°</text>
+    <g id="regOk" opacity="0">
+      <rect x="0" y="160" width="250" height="30" fill="#EDF1F3"/>
+      <text x="12" y="181" font-size="14" font-weight="700" fill="#142536">PLATES CO-REGISTERED</text>
+    </g>
+    <path d="M0 214H320" stroke="#B9D5DE" stroke-opacity=".35"/>
+
+    <text x="0" y="244" font-size="12" letter-spacing="2" fill="#B9D5DE">COMPARISON</text>
+    <text x="0" y="272" font-size="15" fill="#EDF1F3">T0  2024-03-02</text>
+    <text x="0" y="296" font-size="15" fill="#EDF1F3">T1  2026-11-26</text>
+    <g id="legend" opacity="0">
+      <path d="M2 330h40" stroke="#5FD0FF" stroke-width="2.5" stroke-dasharray="7 5"/>
+      <text x="54" y="335" font-size="13" fill="#B9D5DE">region of change</text>
+      <path d="M2 358h40" stroke="#5FD0FF" stroke-width="4"/>
+      <text x="54" y="363" font-size="13" fill="#B9D5DE">new links (T1)</text>
+    </g>
+  </g>
+
+  <!-- caption -->
+  <g id="caption" class="mono" opacity="0">
+    <text x="60" y="648" font-size="18" font-weight="700" fill="#5FD0FF">Δ CHANGE TRACED — 1 spark became 6 linked sites</text>
+    <text x="60" y="678" font-size="13" fill="#B9D5DE">Same landmark ⊕, same scale, same north. Illustrative procedural plates, not real imagery.</text>
+  </g>
+</svg>
+</div>
+<script src="gsap.min.js"></script>
+<script>
+(function () {
+  var tl = gsap.timeline({ paused: true, defaults: { ease: "power2.inOut" } });
+
+  // 1 · Establish shared landscape, ghost T1 plate enters misaligned
+  tl.fromTo("#ghost", { opacity: 0 }, { opacity: 0.95, duration: 0.2, ease: "none" }, 0.05);
+  // 2 · Register on the landmark (translate + rotate to identity)
+  tl.fromTo("#ghost", { attr: { transform: "translate(64 -46) rotate(4 360 220)" } },
+    { attr: { transform: "translate(0 0) rotate(0 360 220)" }, duration: 0.75, ease: "power3.inOut" }, 0.2);
+  tl.fromTo("#regOff", { opacity: 1 }, { opacity: 0.35, duration: 0.2, ease: "none" }, 0.8);
+  tl.fromTo("#regOk", { opacity: 0 }, { opacity: 1, duration: 0.15, ease: "none" }, 0.92);
+
+  // 3 · Wipe T0 -> T1 across the registered footprint
+  tl.fromTo("#wipeEdge", { opacity: 0 }, { opacity: 1, duration: 0.08, ease: "none" }, 1.0);
+  tl.fromTo("#wipeRect", { attr: { width: 0 } }, { attr: { width: 800 }, duration: 0.7, ease: "power1.inOut" }, 1.02);
+  tl.fromTo("#wipeEdge", { attr: { transform: "translate(0 0)" } }, { attr: { transform: "translate(800 0)" }, duration: 0.7, ease: "power1.inOut" }, 1.02);
+  tl.fromTo("#ghost", { opacity: 0.95 }, { opacity: 0, duration: 0.5, ease: "none" }, 1.15);
+  tl.fromTo("#wipeEdge", { opacity: 1 }, { opacity: 0, duration: 0.1, ease: "none" }, 1.72);
+
+  // 4 · Trace the region of change and the linked system
+  tl.fromTo("#outlineDraw", { attr: { "stroke-dashoffset": 1 } }, { attr: { "stroke-dashoffset": 0 }, duration: 0.55 }, 1.6);
+  tl.fromTo("#outlineFill", { attr: { "fill-opacity": 0 } }, { attr: { "fill-opacity": 0.16 }, duration: 0.4, ease: "none" }, 1.85);
+  tl.fromTo(".pop", { scale: 0, transformOrigin: "50% 50%" }, { scale: 1, duration: 0.25, ease: "back.out(1.6)", stagger: 0.06 }, 1.7);
+  tl.fromTo(".link", { attr: { "stroke-dashoffset": 1 } }, { attr: { "stroke-dashoffset": 0 }, duration: 0.28, ease: "power2.out", stagger: 0.05 }, 1.8);
+  tl.fromTo("#legend", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "none" }, 1.9);
+  tl.fromTo("#caption", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 1.95);
+
+  // 5 · Hold the outlined change
+  tl.set({}, {}, 3);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  tl.seek(0);
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

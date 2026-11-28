@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Physical Data Units — An idea becomes a connected system</title>
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #C9D3D9; }
+  #stage {
+    position: relative; width: 100%; height: 100%; overflow: hidden;
+    background: linear-gradient(180deg, #E3E9EC 0%, #CBD5DB 60%, #B4C2CA 100%);
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #142536;
+  }
+  #gl { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+  #overlay { position: absolute; inset: 0; pointer-events: none; }
+  .title { position: absolute; left: 4.6875%; top: 8.4%; margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.2px; color: #142536; white-space: nowrap; }
+  .sub { position: absolute; left: 4.6875%; top: 14.6%; margin: 0; font-size: 17px; color: #2A4054; white-space: nowrap; }
+  .tick { position: absolute; font: 13px Menlo, "SF Mono", Monaco, monospace; color: #142536; transform: translate(-100%, -50%); white-space: nowrap; }
+  .unit-note { position: absolute; font: 12px Menlo, "SF Mono", Monaco, monospace; color: #142536; transform: translate(-100%, -50%); white-space: nowrap; }
+  .series { position: absolute; transform: translate(-50%, 0); padding: 5px 11px 5px 13px; border-radius: 4px;
+    background: rgba(255,255,255,0.94); font-size: 15px; font-weight: 700; letter-spacing: 2px; color: #142536; white-space: nowrap;
+    box-shadow: 0 1px 0 rgba(20,37,54,0.18); }
+  .series.active { color: #005885; }
+  .callout { position: absolute; transform: translate(0, -50%); white-space: nowrap; display: flex; align-items: center; }
+  .callout .line { width: 46px; height: 2px; background: #005885; transform-origin: 0 50%; }
+  .callout .txt { margin-left: 8px; font-size: 16px; font-weight: 700; color: #005885; }
+</style>
+</head>
+<body>
+<div id="stage" data-composition-id="video" data-width="1280" data-height="720" data-duration="3" data-fps="30">
+  <canvas id="gl" width="1280" height="720"></canvas>
+  <div id="overlay">
+    <h1 class="title" id="title">An idea becomes a connected system</h1>
+    <p class="sub" id="sub">Same block, same zero: one unit grows into eight.</p>
+    <div id="ticks"></div>
+    <div id="labels"></div>
+    <div class="callout" id="callout"><div class="line" id="calloutLine"></div><div class="txt" id="calloutTxt">8× the idea</div></div>
+  </div>
+</div>
+<script src="gsap.min.js"></script>
+<script src="three.bundle.js"></script>
+<script>
+(function () {
+  "use strict";
+  var W = 1280, H = 720;
+  var PX_PER_UNIT = 56;            // orthographic scale: 1 world unit = 56 px (no perspective distortion)
+  var UNIT = 1.0;                  // quantity rule: 1 count = one 1×1×1 block, stacked at a 1.0 pitch
+  var SERIES = [
+    { name: "IDEA", count: 1, x: -4.2, active: false },
+    { name: "LINKS", count: 3, x: -1.4, active: false },
+    { name: "NODES", count: 5, x: 1.4, active: false },
+    { name: "SYSTEM", count: 8, x: 4.2, active: true }
+  ];
+  var RULER_X = -6.0, RULER_MAX = 8;
+  var TARGET = new THREE.Vector3(0.0, 3.7, 0.2);
+  var ELEV = 20 * Math.PI / 180;   // constant elevation keeps vertical unit lengths equal for all frames
+
+  // ---------- renderer / camera ----------
+  var canvas = document.getElementById("gl");
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(1);
+  renderer.setSize(W, H, false);
+  renderer.setClearColor(0x000000, 0);
+  var scene = new THREE.Scene();
+  var hw = W / 2 / PX_PER_UNIT, hh = H / 2 / PX_PER_UNIT;
+  var camera = new THREE.OrthographicCamera(-hw, hw, hh, -hh, 0.1, 100);
+
+  function srgb(hex) { var c = parseInt(hex.slice(1), 16); return new THREE.Vector3(((c >> 16) & 255) / 255, ((c >> 8) & 255) / 255, (c & 255) / 255); }
+
+  // Face-toned tactile material: fixed key light from top-left-front, tones authored in sRGB.
+  var vs = [
+    "varying vec3 vN; varying vec3 vW;",
+    "void main(){ vN = normalize(mat3(modelMatrix) * normal); vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz;",
+    "gl_Position = projectionMatrix * viewMatrix * w; }"
+  ].join("\n");
+  var fs = [
+    "uniform vec3 uTop; uniform vec3 uLeft; uniform vec3 uFront; uniform vec3 uDark; uniform float uOpacity; uniform vec3 uView;",
+    "varying vec3 vN; varying vec3 vW;",
+    "void main(){ vec3 n = normalize(vN); vec3 c = uDark;",
+    " if (n.y > 0.5) c = uTop; else if (n.x < -0.5) c = uLeft; else if (n.z > 0.5) c = uFront;",
+    " float facing = clamp(dot(n, normalize(uView)), 0.0, 1.0);",
+    " c *= 0.9 + 0.1 * facing;",                       // subtle orbit-dependent shading
+    " gl_FragColor = vec4(c, uOpacity); }"
+  ].join("\n");
+  var viewDir = new THREE.Vector3();
+  function faceMat(top, left, front, dark) {
+    return new THREE.ShaderMaterial({
+      vertexShader: vs, fragmentShader: fs, transparent: true, depthWrite: true,
+      uniforms: { uTop: { value: srgb(top) }, uLeft: { value: srgb(left) }, uFront: { value: srgb(front) },
+        uDark: { value: srgb(dark) }, uOpacity: { value: 1 }, uView: { value: viewDir } }
+    });
+  }
+
+  // ---------- ground plate + contact shadows ----------
+  var plateMat = faceMat("#A3B3BC", "#8597A2", "#8C9EA9", "#7A8C97");
+  var plate = new THREE.Mesh(new THREE.BoxGeometry(14.2, 0.2, 3.6), plateMat);
+  plate.position.set(-0.3, -0.1, 0.25);
+  scene.add(plate);
+  var plateEdges = new THREE.LineSegments(new THREE.EdgesGeometry(plate.geometry), new THREE.LineBasicMaterial({ color: 0x5E717D }));
+  plate.add(plateEdges);
+
+  var shCanvas = document.createElement("canvas"); shCanvas.width = shCanvas.height = 128;
+  var sctx = shCanvas.getContext("2d");
+  var grad = sctx.createRadialGradient(64, 64, 8, 64, 64, 62);
+  grad.addColorStop(0, "rgba(20,37,54,0.55)"); grad.addColorStop(0.55, "rgba(20,37,54,0.22)"); grad.addColorStop(1, "rgba(20,37,54,0)");
+  sctx.fillStyle = grad; sctx.fillRect(0, 0, 128, 128);
+  var shTex = new THREE.CanvasTexture(shCanvas); shTex.colorSpace = THREE.SRGBColorSpace;
+  var shGeo = new THREE.PlaneGeometry(1.9, 1.9);
+  SERIES.forEach(function (s) {
+    var m = new THREE.Mesh(shGeo, new THREE.MeshBasicMaterial({ map: shTex, transparent: true, depthWrite: false }));
+    m.rotation.x = -Math.PI / 2; m.position.set(s.x + 0.12, 0.003, 0.12);
+    scene.add(m);
+  });
+
+  // ---------- zero baseline (dashed) ----------
+  var baseGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(RULER_X, 0.004, 0.62), new THREE.Vector3(6.4, 0.004, 0.62)]);
+  var baseLine = new THREE.Line(baseGeo, new THREE.LineDashedMaterial({ color: 0x142536, dashSize: 0.16, gapSize: 0.11 }));
+  baseLine.computeLineDistances();
+  scene.add(baseLine);
+
+  // ---------- unit ruler (same ruler for every series) ----------
+  var inkMat = new THREE.MeshBasicMaterial({ color: 0x142536 });
+  var rulerGeo = new THREE.BoxGeometry(0.06, RULER_MAX * UNIT, 0.06); rulerGeo.translate(0, RULER_MAX * UNIT / 2, 0);
+  var ruler = new THREE.Mesh(rulerGeo, inkMat); ruler.position.set(RULER_X, 0, 0.62); scene.add(ruler);
+  var tickGeo = new THREE.BoxGeometry(0.22, 0.045, 0.045);
+  var tickMeshes = [];
+  for (var k = 0; k <= RULER_MAX; k++) {
+    var t = new THREE.Mesh(tickGeo, inkMat); t.position.set(RULER_X - 0.11, k * UNIT, 0.62); scene.add(t); tickMeshes.push(t);
+  }
+
+  // ---------- equal units, instanced per series from the data ----------
+  var unitGeo = new THREE.BoxGeometry(UNIT, UNIT, UNIT);
+  var unitEdges = new THREE.EdgesGeometry(unitGeo);
+  var units = [];
+  SERIES.forEach(function (s, si) {
+    for (var lvl = 0; lvl < s.count; lvl++) {
+      var mat = s.active ? faceMat("#4C9ACB", "#005885", "#003F62", "#002B44") : faceMat("#E4F1F5", "#B9D5DE", "#8DB0BE", "#6F909E");
+      var mesh = new THREE.Mesh(unitGeo, mat);
+      var edgeMat = new THREE.LineBasicMaterial({ color: s.active ? 0x0B1A27 : 0x142536, transparent: true });
+      mesh.add(new THREE.LineSegments(unitEdges, edgeMat));
+      mesh.position.set(s.x, (lvl + 0.5) * UNIT, 0);
+      scene.add(mesh);
+      units.push({ series: si, level: lvl, mesh: mesh, mat: mat, edgeMat: edgeMat, st: { p: 0 } });
+    }
+  });
+
+  // ---------- HTML labels anchored to projected 3D positions ----------
+  var tickWrap = document.getElementById("ticks"), labelWrap = document.getElementById("labels");
+  var tickEls = [];
+  for (var n = 0; n <= RULER_MAX; n += 2) {
+    var el = document.createElement("div"); el.className = "tick"; el.textContent = String(n); tickWrap.appendChild(el); tickEls.push({ v: n, el: el });
+  }
+  var unitNote = document.createElement("div"); unitNote.className = "unit-note"; unitNote.textContent = "1 block = 1"; tickWrap.appendChild(unitNote);
+  var labelEls = SERIES.map(function (s) {
+    var el = document.createElement("div"); el.className = "series" + (s.active ? " active" : "");
+    el.textContent = s.name + " · " + s.count; labelWrap.appendChild(el); return el;
+  });
+  var titleEl = document.getElementById("title"), subEl = document.getElementById("sub");
+  var callout = document.getElementById("callout"), calloutLine = document.getElementById("calloutLine"), calloutTxt = document.getElementById("calloutTxt");
+
+  var tmp = new THREE.Vector3();
+  function toScreen(x, y, z) { tmp.set(x, y, z).project(camera); return { x: (tmp.x + 1) / 2 * W, y: (1 - tmp.y) / 2 * H }; }
+  function place(el, p, dx, dy) { el.style.left = ((p.x + (dx || 0)) / W * 100) + "%"; el.style.top = ((p.y + (dy || 0)) / H * 100) + "%"; }
+
+  // ---------- GSAP-owned state (single owner for every animated property) ----------
+  var S = { az: -34, title: 0, ruler: 0, labels: 0, callLine: 0, callText: 0 };
+  var DROP = 1.6;
+
+  function render() {
+    // camera: shallow orbit around a fixed target at constant elevation (orthographic)
+    var az = S.az * Math.PI / 180, D = 30;
+    camera.position.set(TARGET.x + D * Math.sin(az) * Math.cos(ELEV), TARGET.y + D * Math.sin(ELEV), TARGET.z + D * Math.cos(az) * Math.cos(ELEV));
+    camera.up.set(0, 1, 0); camera.lookAt(TARGET); camera.updateMatrixWorld(true);
+    viewDir.copy(camera.position).sub(TARGET).normalize();
+
+    // ruler grows from zero
+    ruler.scale.y = Math.max(0.0001, S.ruler);
+    var rulerTop = S.ruler * RULER_MAX;
+    tickMeshes.forEach(function (m, i) { m.visible = rulerTop >= i - 0.001; });
+
+    // equal units drop onto their stack at a constant rate; size never changes
+    var landed = [0, 0, 0, 0];
+    units.forEach(function (u) {
+      var p = u.st.p;
+      u.mesh.visible = p > 0.0001;
+      u.mesh.position.y = (u.level + 0.5) * UNIT + (1 - p) * DROP;
+      var o = Math.min(1, p * 3.5);
+      u.mat.uniforms.uOpacity.value = o; u.edgeMat.opacity = o;
+      if (p >= 0.999) landed[u.series]++;
+    });
+    renderer.render(scene, camera);
+
+    // overlay text
+    titleEl.style.opacity = S.title; titleEl.style.transform = "translateY(" + ((1 - S.title) * 14).toFixed(2) + "px)";
+    subEl.style.opacity = S.title; subEl.style.transform = "translateY(" + ((1 - S.title) * 10).toFixed(2) + "px)";
+    tickEls.forEach(function (t) {
+      place(t.el, toScreen(RULER_X - 0.32, t.v * UNIT, 0.62), 0, 0);
+      t.el.style.opacity = rulerTop >= t.v - 0.001 ? 1 : 0;
+    });
+    place(unitNote, toScreen(RULER_X - 0.32, -0.55, 0.62), 0, 0);
+    unitNote.style.opacity = S.ruler;
+    SERIES.forEach(function (s, i) {
+      var el = labelEls[i];
+      place(el, toScreen(s.x, -0.2, 2.05), 0, 4);
+      el.style.opacity = S.labels;
+      el.textContent = s.name + " · " + landed[i];
+    });
+    var top = SERIES[3];
+    place(callout, toScreen(top.x + 1.0, RULER_MAX * UNIT - 0.25, 0), 0, 0);
+    calloutLine.style.transform = "scaleX(" + S.callLine.toFixed(4) + ")";
+    calloutTxt.style.opacity = S.callText;
+  }
+
+  // ---------- one paused, seekable timeline ----------
+  var tl = gsap.timeline({ paused: true, onUpdate: render });
+  tl.to(S, { az: -16, duration: 2.5, ease: "sine.inOut" }, 0);
+  tl.to(S, { title: 1, duration: 0.4, ease: "power2.out" }, 0);
+  tl.to(S, { ruler: 1, duration: 0.45, ease: "power2.inOut" }, 0.05);
+  tl.to(S, { labels: 1, duration: 0.3, ease: "power2.out" }, 0.2);
+  var LEVEL0 = 0.42, PER_LEVEL = 0.19, FALL = 0.24;   // constant quantity rule: one level per 0.19 s for every series
+  units.forEach(function (u) { tl.to(u.st, { p: 1, duration: FALL, ease: "power2.in" }, LEVEL0 + u.level * PER_LEVEL); });
+  tl.to(S, { callLine: 1, duration: 0.2, ease: "power2.out" }, 2.0);
+  tl.to(S, { callText: 1, duration: 0.22, ease: "power2.out" }, 2.12);
+  tl.set({}, {}, 3);
+
+  // Render after every seek, including suppressed-event seeks and out-of-order jumps.
+  var baseTotalTime = tl.totalTime;
+  tl.totalTime = function () { var r = baseTotalTime.apply(tl, arguments); if (arguments.length) render(); return r; };
+  function onSeek() { render(); }
+  window.addEventListener("hf-seek", onSeek);
+  document.addEventListener("hf-seek", onSeek);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines.video = tl;
+  tl.seek(0);
+  render();
+})();
+</script>
+<script id="arrow-drawing-runtime">(()=>{const __name=(value)=>value;const installArrowDrawing=function installArrowDrawing(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;let count=0;const ns="http://www.w3.org/2000/svg";for(const timeline of Object.values(host.__timelines)){if(timeline.__arrowDrawingInstalled)continue;timeline.__arrowDrawingInstalled=true;const children=timeline.getChildren(true,true,false);const shafts=new Map;for(const tween of children){if(tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime();let parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(target instanceof SVGGeometryElement&&typeof target.getTotalLength==="function")shafts.set(target,Math.max(shafts.get(target)||0,end))}}const claimed=new Set;const gate=__name((head,end)=>{if(claimed.has(head))return;claimed.add(head);const opacity=Number(getComputedStyle(head).opacity)||1;gsap.set(head,{opacity:0});timeline.fromTo(head,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end);count++},"gate");for(const[shaft,end]of shafts){const markerUrl=shaft.getAttribute("marker-end")||getComputedStyle(shaft).markerEnd;const markerId=markerUrl?.match(/#([^"')\s]+)/)?.[1];const marker=markerId?document.getElementById(markerId):null;if(marker?.localName==="marker"){const clone=marker.cloneNode(true);clone.id="arrow-drawing-marker-"+count;const group=document.createElementNS(ns,"g");while(clone.firstChild)group.appendChild(clone.firstChild);clone.appendChild(group);marker.parentNode.appendChild(clone);shaft.style.markerEnd="url(#"+clone.id+")";gate(group,end)}const svg=shaft.ownerSVGElement;const matrix=shaft.getCTM();if(!svg||!matrix)continue;const point=shaft.getPointAtLength(shaft.getTotalLength());const endpoint=new DOMPoint(point.x,point.y).matrixTransform(matrix);for(const head of svg.querySelectorAll("path,polyline,polygon")){if(head===shaft||head.closest("defs,marker,clipPath,mask"))continue;const explicit=head.getAttribute("data-arrowhead-for");if(explicit){if(explicit===shaft.id)gate(head,end);continue}if(shaft.getTotalLength()<40)continue;if(head.localName==="path"&&!/^mllz?$/i.test((head.getAttribute("d")||"").match(/[a-df-z]/gi)?.join("")||""))continue;if((head.localName==="polygon"||head.localName==="polyline")&&head.points.numberOfItems!==3)continue;const box=head.getBBox(),transform=head.getCTM();if(!transform||box.width>64||box.height>64||box.width<2||box.height<2)continue;const style=getComputedStyle(head),shaftStyle=getComputedStyle(shaft);if(style.stroke!==shaftStyle.stroke&&style.fill!==shaftStyle.stroke)continue;const corners=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(p=>p.matrixTransform(transform));const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);if(endpoint.x>=Math.min(...xs)-2&&endpoint.x<=Math.max(...xs)+2&&endpoint.y>=Math.min(...ys)-2&&endpoint.y<=Math.max(...ys)+2)gate(head,end)}}}host.__arrowDrawingCount=count};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installArrowDrawing,{once:true});else installArrowDrawing();})();</script><script id="content-reveal-runtime">(()=>{const __name=(value)=>value;const install=function installContentReveal(){const host=window;if(!host.gsap||!host.__timelines)return;const gsap=host.gsap;const bounds=__name(element=>{const box=element.getBBox(),matrix=element.getCTM();if(!matrix)return null;const points=[new DOMPoint(box.x,box.y),new DOMPoint(box.x+box.width,box.y),new DOMPoint(box.x,box.y+box.height),new DOMPoint(box.x+box.width,box.y+box.height)].map(point=>point.matrixTransform(matrix));return{left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))}},"bounds");for(const timeline of Object.values(host.__timelines)){const tweens=timeline.getChildren(true,true,false);const animated=tweens.flatMap(tween=>tween.targets()).filter(target=>target instanceof SVGGraphicsElement);const originalTime=timeline.time();timeline.seek(timeline.duration(),true);const reveals=new Map;for(const tween of tweens){if(tween.vars.opacity===void 0&&tween.vars.strokeDashoffset===void 0)continue;let end=tween.endTime(),parent=tween.parent;while(parent&&parent!==timeline){end=parent.startTime()+end/Math.abs(parent.timeScale()||1);parent=parent.parent}for(const target of tween.targets()){if(!(target instanceof SVGGraphicsElement))continue;const shape=target.matches("rect,use,circle,ellipse,polygon,path")?target:target.querySelector("rect,use,circle,ellipse,polygon,path");if(!(shape instanceof SVGGraphicsElement))continue;if(shape.localName==="path"&&!/[zZ]\s*$/.test(shape.getAttribute("d")||""))continue;const box=bounds(shape);if(!box||box.right-box.left>1e3||box.bottom-box.top>600)continue;for(const label of shape.ownerSVGElement.querySelectorAll("text")){if(target.contains(label)||animated.some(actor=>actor===label||actor.contains(label)))continue;const ownership=label.getAttribute("data-reveal-after");const textBox=bounds(label);const contained=textBox&&textBox.left>=box.left-1&&textBox.right<=box.right+1&&textBox.top>=box.top-1&&textBox.bottom<=box.bottom+1;if(ownership?ownership===shape.id||ownership===target.id:contained)reveals.set(label,Math.max(reveals.get(label)||0,end))}}}timeline.seek(originalTime,true);for(const[label,end]of reveals){const opacity=Number(getComputedStyle(label).opacity);gsap.set(label,{opacity:0});timeline.fromTo(label,{opacity:0},{opacity,duration:.001,ease:"none",immediateRender:false},end)}}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();})();</script></body>
+</html>

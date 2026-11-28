@@ -3,6 +3,7 @@ import { gsap } from "gsap";
 import { XMLParser } from "fast-xml-parser";
 import { describe, expect, it } from "vitest";
 import { loadCatalog } from "../../src/server/catalog/catalog";
+import { parseStyleGuide } from "../../src/shared/agents/schemas/combined-style-guide";
 import {
   validateExamplePalette,
   validateExampleSvg,
@@ -27,7 +28,7 @@ const stepTime = (step: number) => step / 12;
 describe("Cassette Futurism catalog entry", () => {
   it("adds an authored style-137 with separate renderer, motion and pipeline roles", async () => {
     const catalog = await loadCatalog();
-    expect(catalog.styles).toHaveLength(143);
+    expect(catalog.styles).toHaveLength(199);
     const style = catalog.styles.find((s) => s.id === "style-137")!;
     expect(style.name_en).toBe("Cassette Futurism");
     expect(style.provenance).toBe("authored");
@@ -56,7 +57,9 @@ describe("Cassette Futurism catalog entry", () => {
       .filter((tool) => tool.production_roles.includes("render_pipeline"))
       .map((tool) => tool.name);
     expect(pipeline).toEqual(["HyperFrames", "Remotion"]);
-    expect(style.executable_prompt_template).toContain("{{render_pipeline}}");
+    expect(
+      parseStyleGuide(style.executable_prompt_template)?.sections["Implementation tools"],
+    ).toContain("bounded CRT layer");
     expect(style.combination_guidance_provenance).toBe(
       "authored_compatibility_guidance_2026-10-18",
     );

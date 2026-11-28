@@ -11,6 +11,7 @@ export function projectSettingsDraft(request: CreativeRequest) {
       images: request.requirements?.images.instructions || "",
       urls: request.requirements?.urls.instructions || "",
     },
+    musicStyle: request.requirements?.music.style,
     preference: request.preference,
     provider: request.provider,
     mainModel: request.mainModel,

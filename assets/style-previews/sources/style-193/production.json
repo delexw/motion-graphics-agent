@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Replay Telestrator",
+  "displayDescription": "A signal plays from IDEA, freezes at a decision, gets telestrated along its path, then releases to light up the SYSTEM.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "The 'source footage' is an authored vector network scene, not real video; the freeze, dim and resume are simulated on one SVG layer stack.",
+    "Telestrator marks are traced over the signal's actual on-screen path; the segment after the decision is drawn dashed and labelled NEXT as an inferred move before the replay confirms it.",
+    "No reviewed preview recipes were supplied in STYLE.json (tech.preview_recipes absent) and no BACKGROUND_REVIEW.json exists, so the preview demonstrates the core characteristic action: play, freeze at decision, draw route, release to consequence.",
+    "Blender was not used, per the user's instruction."
+  ]
+}

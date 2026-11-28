@@ -3,6 +3,26 @@ import { z } from "zod";
 const seconds = z.number().finite().nonnegative();
 const strings = z.array(z.string());
 const audioText = z.union([z.string(), strings]);
+const shotDescription = z.string().trim().min(1);
+const shotList = z
+  .array(
+    z.object({
+      startSeconds: seconds,
+      endSeconds: seconds,
+      framing: shotDescription,
+      cameraMovement: shotDescription,
+      visibleAction: shotDescription,
+      transition: shotDescription,
+      cues: z.array(
+        z.object({
+          atSeconds: seconds,
+          kind: z.enum(["music", "sfx", "narration", "subtitle"]),
+          description: shotDescription,
+        }),
+      ),
+    }),
+  )
+  .min(1);
 export const StoryboardBeatSchema = z.object({
   startSeconds: seconds,
   endSeconds: seconds,
@@ -21,6 +41,7 @@ export const StoryboardSceneSchema = z.object({
   assets: strings,
   beats: z.array(StoryboardBeatSchema).min(1),
 });
+const timingTolerance = 0.001;
 export const StoryboardSchema = z
   .object({
     version: z.literal(3),
@@ -31,7 +52,6 @@ export const StoryboardSchema = z
     notes: strings,
   })
   .superRefine((storyboard, context) => {
-    const tolerance = 0.001;
     const issue = (path: (string | number)[], message: string) =>
       context.addIssue({ code: "custom", path, message });
     const ids = new Set<string>();
@@ -40,14 +60,14 @@ export const StoryboardSchema = z
       const prefix = ["scenes", i];
       if (ids.has(scene.id)) issue([...prefix, "id"], "Scene IDs must be unique");
       ids.add(scene.id);
-      if (Math.abs(scene.startSeconds - sceneEnd) > tolerance)
+      if (Math.abs(scene.startSeconds - sceneEnd) > timingTolerance)
         issue(
           [...prefix, "startSeconds"],
           "Scenes must be ordered and contiguous, starting at zero",
         );
       if (
         scene.endSeconds <= scene.startSeconds ||
-        scene.endSeconds > storyboard.durationSeconds + tolerance
+        scene.endSeconds > storyboard.durationSeconds + timingTolerance
       )
         issue(
           [...prefix, "endSeconds"],
@@ -56,24 +76,58 @@ export const StoryboardSchema = z
       let beatEnd = scene.startSeconds;
       scene.beats.forEach((beat, j) => {
         const beatPath = [...prefix, "beats", j];
-        if (Math.abs(beat.startSeconds - beatEnd) > tolerance)
+        if (Math.abs(beat.startSeconds - beatEnd) > timingTolerance)
           issue(
             [...beatPath, "startSeconds"],
             "Beats must be ordered and contiguous within the scene",
           );
-        if (beat.endSeconds <= beat.startSeconds || beat.endSeconds > scene.endSeconds + tolerance)
+        if (
+          beat.endSeconds <= beat.startSeconds ||
+          beat.endSeconds > scene.endSeconds + timingTolerance
+        )
           issue([...beatPath, "endSeconds"], "Beat must have positive length within its scene");
-        if (beat.readingHoldSeconds > beat.endSeconds - beat.startSeconds + tolerance)
+        if (beat.readingHoldSeconds > beat.endSeconds - beat.startSeconds + timingTolerance)
           issue([...beatPath, "readingHoldSeconds"], "Reading hold cannot exceed beat duration");
         beatEnd = beat.endSeconds;
       });
-      if (Math.abs(beatEnd - scene.endSeconds) > tolerance)
+      if (Math.abs(beatEnd - scene.endSeconds) > timingTolerance)
         issue([...prefix, "beats"], "Beats must cover the complete scene");
       sceneEnd = scene.endSeconds;
     });
-    if (Math.abs(sceneEnd - storyboard.durationSeconds) > tolerance)
+    if (Math.abs(sceneEnd - storyboard.durationSeconds) > timingTolerance)
       issue(["scenes"], "Scenes must cover the complete video duration");
   });
+const PlannedSceneSchema = StoryboardSceneSchema.extend({ shots: shotList.optional() }).superRefine(
+  (scene, context) => {
+    if (!scene.shots) return;
+    const issue = (path: (string | number)[], message: string) =>
+      context.addIssue({ code: "custom", path, message });
+    let shotEnd = scene.startSeconds;
+    scene.shots.forEach((shot, index) => {
+      const path = ["shots", index];
+      if (Math.abs(shot.startSeconds - shotEnd) > timingTolerance)
+        issue([...path, "startSeconds"], "Shots must be ordered and contiguous within the scene");
+      if (
+        shot.endSeconds <= shot.startSeconds ||
+        shot.endSeconds > scene.endSeconds + timingTolerance
+      )
+        issue([...path, "endSeconds"], "Shot must have positive length within its scene");
+      shot.cues.forEach((cue, index) => {
+        if (cue.atSeconds < shot.startSeconds || cue.atSeconds >= shot.endSeconds)
+          issue([...path, "cues", index, "atSeconds"], "Cue must start within its shot");
+      });
+      shotEnd = shot.endSeconds;
+    });
+    if (Math.abs(shotEnd - scene.endSeconds) > timingTolerance)
+      issue(["shots"], "Shots must cover the complete scene");
+  },
+);
+export const SavedFullVideoStoryboardSchema = StoryboardSchema.safeExtend({
+  scenes: z.array(PlannedSceneSchema).min(1),
+});
+export const FullVideoStoryboardSchema = SavedFullVideoStoryboardSchema.safeExtend({
+  scenes: z.array(PlannedSceneSchema.safeExtend({ shots: shotList })).min(1),
+});
 export type Storyboard = z.infer<typeof StoryboardSchema>;
 
 // Version 2 is only an explicitly migrated historical document, never a generation output.

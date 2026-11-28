@@ -1,0 +1,29 @@
+{
+  "characters": [],
+  "displayTitle": "Pen Plotter",
+  "displayDescription": "A dry-pen plotter traces a light bulb, lifts, travels and links a node network, finishing with a red ninth link.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP (local gsap.min.js 3.15.1, one paused timeline at window.__timelines.video)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative procedural plotter: ink is an SVG stroke revealed by path length; no pen pressure, ink bleed or paper tooth is simulated.",
+    "The gantry, carriage and pen lift are a stylised 2D approximation of plotter hardware (lift shown by raised pen body, wider soft shadow and a hollow pen-up marker).",
+    "Plot speed is compressed to fit 3 seconds; draw speed is constant by path length, travel moves ease in and out.",
+    "STYLE.json lists no reviewed preview recipes and no BACKGROUND_REVIEW.json was supplied, so the preview demonstrates the core characteristic action (trace, lift, travel, resume) only.",
+    "Bed (#2E343B) and paper (#F2F2EE) follow the approved illustration; ink uses foreground #242831 and active #9F352D.",
+    "GSAP is the workspace-provided gsap.min.js; the dependency-selection record could not be written because this preview workspace has no project dependency file."
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Source Convergence",
+  "displayDescription": "Three labelled source cards arrive separately, snap onto one chronology and converge on a single DAY 30 event.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP (local gsap.min.js, one paused timeline at window.__timelines.video)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview: no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "STYLE.json contains no tech.preview_recipes and no BACKGROUND_REVIEW.json was supplied, so the preview demonstrates the primary characteristic action (align three records on one timeline, draw their convergence).",
+    "All records, timestamps and locations are illustrative markers, not real evidence; this is stated on screen.",
+    "Flat vector SVG medium; no depth, lighting or material simulation is implied. Blender was not used.",
+    "creative_pool.select_project_technologies failed (missing PROJECT_DEPENDENCIES.json host file); SVG is native and GSAP is the supplied local gsap.min.js, so no packages were installed."
+  ]
+}

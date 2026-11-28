@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "Flow Field",
+  "displayDescription": "Seeded streamlines flow down a corridor, then one coupling parameter bends them all into a highlighted system boundary.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "Canvas 2D"
+  ],
+  "motionEngine": [
+    "GSAP (local gsap.min.js)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview — no music, sound effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Illustrative procedural field (corridor + Gaussian-weighted sink and vortex), not measured data.",
+    "Streamlines are RK2 integrations at 4 px steps, drawn as polylines; no physical fluid simulation.",
+    "STYLE.json contains no tech.preview_recipes and no BACKGROUND_REVIEW.json was supplied; the refresh demonstrates the catalogue's corridor-to-vortex/divergence project choice.",
+    "GSAP is loaded from the project-local gsap.min.js; the project-dependency selection tool could not record choices because PROJECT_DEPENDENCIES.json is absent in this preview project.",
+    "Blender not used, per instruction."
+  ]
+}

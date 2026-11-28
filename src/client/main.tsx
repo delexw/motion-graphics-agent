@@ -16,6 +16,7 @@ import { LanguageTrackSettings } from "./components/language-track-settings";
 import type { LanguageTracks } from "../shared/language-tracks";
 import { languageMediaUrls } from "./lib/language-media";
 import { PromptText } from "./components/style-mention";
+import { StyleGuidePanel } from "./components/style-guide-panel";
 import { ScriptItems } from "./components/script-items";
 import { legacyScriptItems, type ScriptItem } from "../shared/script-items";
 import { creativeApproaches, type CreativeApproach } from "../shared/creative-approach";
@@ -120,7 +121,6 @@ import type {
 import { isRunSettled } from "../shared/contracts";
 import { StyleCard, PaletteSwatches, StyleExampleMedia } from "./style-card";
 import { Dialog } from "./dialog";
-import { SuggestedCombinations } from "./style-combinations";
 import { MotionExplorer } from "./motion-explorer";
 import { MotionReferences } from "./motion-references";
 import { MotionGraphicVariants } from "./catalog-variants";
@@ -228,6 +228,7 @@ function App() {
   const [languageTracks, setLanguageTracks] = useState<LanguageTracks>();
   const [speech, setSpeech] = useState<SpeechConfiguration>();
   const [urls, setUrls] = useState("");
+  const [musicStyle, setMusicStyle] = useState<string>();
   const [sectionInstructions, setSectionInstructions] = useState({
     videos: "",
     music: "",
@@ -378,6 +379,7 @@ function App() {
               setScriptItems(draft.scriptItems);
               setUrls(draft.urls);
               setSectionInstructions(draft.sectionInstructions);
+              setMusicStyle(draft.musicStyle);
               setAssets(
                 attachments.assets.map((asset) => ({
                   ...asset,
@@ -515,6 +517,7 @@ function App() {
   const startSignature = JSON.stringify({
     instructions,
     sectionInstructions,
+    musicStyle,
     urls,
     outputType,
     provider,
@@ -641,6 +644,7 @@ function App() {
           main: { instructions: "", assetIds: mainAssetIds },
           music: {
             instructions: sectionInstructions.music,
+            style: musicStyle,
             assetIds: assets.filter((asset) => asset.section === "music").map((asset) => asset.id),
           },
           images: {
@@ -733,6 +737,7 @@ function App() {
       setComposerRevision((previous) => previous + 1);
       setInstructions("");
       setSectionInstructions({ music: "", images: "", videos: "", urls: "" });
+      setMusicStyle(undefined);
       setPreference("context");
       setProvider("codex");
       setMainModel(undefined);
@@ -1201,6 +1206,7 @@ function App() {
           </div>
           <div>
             <p className="eyebrow">{translateUi(detail.category)}</p>
+            <StyleGuidePanel markdown={detail.executable_prompt_template} />
             <h3>{translateUi("Visual direction")}</h3>
             <p>
               <PromptText>{translateUi(detail.visual_cues)}</PromptText>
@@ -1235,12 +1241,6 @@ function App() {
               <PromptText>{translateUi(detail.audio_direction.prompt)}</PromptText>
             </p>
             <MotionGraphicVariants variants={detail.motion_graphic_variants} />
-            <SuggestedCombinations
-              style={detail}
-              styles={styles}
-              examples={examples}
-              onSelect={openStyle}
-            />
             <Collapse
               destroyOnHidden
               size="small"
@@ -1270,23 +1270,6 @@ function App() {
                   children: (
                     <>
                       <MotionReferences references={detail.motion_references} />
-                    </>
-                  ),
-                },
-              ]}
-            />
-            <Collapse
-              destroyOnHidden
-              size="small"
-              items={[
-                {
-                  key: "Executable prompt",
-                  label: translateUi("Original executable prompt"),
-                  children: (
-                    <>
-                      <pre>
-                        <PromptText>{detail.executable_prompt_template}</PromptText>
-                      </pre>
                     </>
                   ),
                 },
@@ -1717,6 +1700,8 @@ function App() {
                     <PromptInputBody>
                       <BriefRequirements
                         instructions={sectionInstructions}
+                        musicStyle={musicStyle}
+                        onMusicStyleChange={setMusicStyle}
                         onChange={(section, value) =>
                           setSectionInstructions((previous) => ({
                             ...previous,

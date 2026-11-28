@@ -6,9 +6,7 @@ import { expect } from "@playwright/test";
 import { test } from "../fixtures/playwright-test";
 import { appRoot } from "../../src/server/runtime/config";
 
-test("unloads offscreen media and window bodies, and lazily mounts collapsed guidance", async ({
-  page,
-}) => {
+test("unloads offscreen media and window bodies", async ({ page }) => {
   test.setTimeout(60000);
   const cacheDir = await mkdtemp(path.join(os.tmpdir(), "viewport-vite-"));
   const server = await createBrowserFixtureServer({
@@ -31,19 +29,14 @@ test("unloads offscreen media and window bodies, and lazily mounts collapsed gui
 </style><div id="root"></div><script type="module">
 import React,{useState,useRef} from 'react';import{createRoot}from'react-dom/client';
 import{StyleExampleMedia}from'/src/client/style-card.tsx';
-import{SuggestedCombinations}from'/src/client/style-combinations.tsx';
 import{RoomWindow}from'/src/client/room/room-window.tsx';
-const style={id:'example-a',name_en:'First style',category:'Drawing',visual_cues:'A drawn style',palette:{tokens:{foreground:'#18243B'},constraints:[]}};
-const support={...style,id:'example-b',name_en:'Second style'};
-style.suggested_combinations={selection_guidance:'Consider this combination',suggestions:[{supporting_styles:[{style_id:support.id,role:'Motion'}],rationale:'Useful motion',best_for:'Stories',video_application:'Animate it',html_application:'Interact',consistency_rules:['Unique hidden guidance'],avoid:['Clutter']}]};
 function App(){const[enabled,setEnabled]=useState(true);const[shown,setShown]=useState(false);const[value,setValue]=useState('Saved draft');const desktop=useRef(null);
 const state={id:'test',x:shown?0:2000,y:0,width:400,height:220,minimized:false,maximized:false};
 return React.createElement(React.Fragment,null,
 React.createElement('button',{id:'toggle',onClick:()=>setEnabled(v=>!v)},'Toggle demos'),
 React.createElement('div',{id:'gallery'},React.createElement(StyleExampleMedia,{styleId:'first',video:'preview.webm',playbackEnabled:enabled}),React.createElement('div',{style:{height:700}}),React.createElement(StyleExampleMedia,{styleId:'last',video:'preview.webm',playbackEnabled:enabled})),
 React.createElement('button',{id:'window-toggle',onClick:()=>setShown(v=>!v)},'Toggle window'),
-React.createElement('div',{id:'desktop',ref:desktop},React.createElement(RoomWindow,{state,display:state,title:'Test window',desktop,area:{width:2500,height:240},onChange(){},onFocus(){},focused:true,layer:2},React.createElement('input',{'aria-label':'Saved window draft',value,onChange:e=>setValue(e.target.value)}),React.createElement('div',{style:{height:500}},'Window contents'))),
-React.createElement(SuggestedCombinations,{style,styles:[style,support],examples:[],onSelect(){}}));}
+React.createElement('div',{id:'desktop',ref:desktop},React.createElement(RoomWindow,{state,display:state,title:'Test window',desktop,area:{width:2500,height:240},onChange(){},onFocus(){},focused:true,layer:2},React.createElement('input',{'aria-label':'Saved window draft',value,onChange:e=>setValue(e.target.value)}),React.createElement('div',{style:{height:500}},'Window contents'))));}
 createRoot(document.getElementById('root')).render(React.createElement(App));
 </script>`,
             );
@@ -125,17 +118,6 @@ createRoot(document.getElementById('root')).render(React.createElement(App));
     await page.waitForFunction(
       () => document.querySelector(".room-window-content")?.scrollTop === 130,
     );
-    await expect(page.locator(".combination-guidance")).toHaveCount(0);
-    await page.locator(".combination-accordion .ant-collapse-header").first().click();
-    await page.locator(".combination-guidance").first().waitFor({ state: "attached" });
-    expect(
-      await page
-        .locator(".combination-guidance")
-        .first()
-        .evaluate((el) => el.textContent),
-    ).toContain("Unique hidden guidance");
-    await page.locator(".combination-accordion .ant-collapse-header").first().click();
-    await page.waitForFunction(() => !document.querySelector(".combination-guidance"));
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.reload();
     await page.locator(".example").first().waitFor({ state: "attached" });

@@ -1,0 +1,27 @@
+{
+  "characters": [],
+  "displayTitle": "Stick Explainer",
+  "displayDescription": "A stick figure lifts an idea onto a shared board; a partner touches it and the idea connects into a system.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview — no music, sound effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "No reviewed preview recipes or background review were supplied, so the preview demonstrates the style's catalogued characteristic action: choice pose, hand following the idea to a shared prop, held outcome.",
+    "Limb motion is procedural two-bone inverse kinematics on SVG strokes (hands and feet pinned to contact targets); a stylised approximation of body mechanics.",
+    "GSAP is loaded from the supplied local gsap.min.js; the project technology-selection step could not record it because this preview folder has no dependency manifest.",
+    "Blender was not used, per instruction."
+  ]
+}

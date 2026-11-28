@@ -25,6 +25,7 @@ vi.mock("../../src/server/agents/bundled-skills/installation", async (original) 
 const sdk = vi.hoisted(() => ({ query: vi.fn(), construct: vi.fn(), stream: vi.fn() }));
 vi.mock("../../src/server/agents/sdk-home", () => ({
   isolatedCodexHome: async () => "/isolated-home",
+  syncCodexLogin: async () => "unchanged",
 }));
 vi.mock("@anthropic-ai/claude-agent-sdk", () => ({
   query: (...args: unknown[]) => Object.assign(sdk.query(...args), { close: vi.fn() }),

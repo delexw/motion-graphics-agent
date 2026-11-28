@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "title": "An idea becomes a connected system — Coloured Pencil Story preview",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "Hatching the exterior",
+      "startSeconds": 0,
+      "endSeconds": 1,
+      "purpose": "Build the lightbulb with broad crossing pencil hatches so the exterior reads before any detail appears.",
+      "visuals": ["Sage paper with a fixed warm tooth", "Ochre hatching at 35° crossed by slate hatching at -48°, both broken by pencil grain", "Graphite outline traced around the bulb", "Slate-hatched base cap", "Italic title fades in"],
+      "assets": ["index.html (Canvas 2D, procedural)"],
+      "beats": [
+        {"startSeconds": 0, "endSeconds": 0.65, "development": "Ochre strokes sweep across the bulb while the graphite outline traces around it; the title appears.", "captions": ["An idea becomes", "a connected system"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 0.65, "endSeconds": 1, "development": "Slate cross-hatching finishes the form shadow and the base cap fills in. The exterior holds briefly so it reads.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.1}
+      ]
+    },
+    {
+      "id": "scene-2",
+      "title": "Peel back the outer layer",
+      "startSeconds": 1,
+      "endSeconds": 1.62,
+      "purpose": "Peel the hatched outer layer back along a hinge that follows the original cut line, keeping the same view.",
+      "visuals": ["The flap's hatched face shortens and darkens as it lifts", "It turns over to show warm, lightly hatched paper on the underside", "A soft shadow falls on the interior", "Clean graphite edges mark the section"],
+      "assets": [],
+      "beats": [
+        {"startSeconds": 1, "endSeconds": 1.62, "development": "The cutaway flap rotates about the hinge (0°→162°) and reveals the warm paper interior with faint red hatching.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-3",
+      "title": "The system inside",
+      "startSeconds": 1.62,
+      "endSeconds": 3,
+      "purpose": "Show the connected system in the opened interior and label it from the cutaway edge.",
+      "visuals": ["Red pencil nodes pop in and links draw between them", "Leader lines run out from the nodes", "Each label appears after its leader finishes", "Figure caption fades in on clear paper"],
+      "assets": [],
+      "beats": [
+        {"startSeconds": 1.62, "endSeconds": 2.46, "development": "Nodes and links connect one after another. The leaders for 'first spark', 'new link' and 'the system inside' draw, and each label follows its leader. The caption fades in.", "captions": ["first spark", "new link", "the system inside", "fig. 3 — outer layer peeled back to show the interior"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 2.46, "endSeconds": 3, "development": "The finished cutaway holds with every label legible.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.54}
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["The exterior is complete by 0.95 s, before the peel starts at 1.0 s, as the style requires.", "All motion settles by 2.46 s, ahead of the 2.7 s limit."],
+    "justifiedHolds": ["0.54 s final hold lets the viewer read the three labels and the caption."]
+  },
+  "notes": ["Silent preview.", "No preview recipes were supplied, so this demonstrates the style's main action: build with hatches, then peel back to the labelled interior.", "Canvas is redrawn from GSAP timeline time on every seek; textures and strokes are seeded and cached."]
+}

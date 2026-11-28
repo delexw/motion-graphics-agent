@@ -5,7 +5,17 @@ import { prepareCodexToolHook } from "./codex-tool-hooks";
 import { userHome } from "../runtime/platform";
 import { prepareProjectRuntime } from "../runtime/project-files";
 import { constants } from "node:fs";
-import { mkdir, access, readdir, copyFile } from "node:fs/promises";
+import {
+  mkdir,
+  access,
+  readdir,
+  copyFile,
+  readFile,
+  writeFile,
+  rename,
+  rm,
+} from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import { dataRoot } from "../runtime/config";
 interface HomePreparation {
   promise: Promise<string>;
@@ -62,15 +72,71 @@ export async function isolatedCodexHome(
       });
   }
   signal?.throwIfAborted();
+  await syncCodexLogin(folder, signal);
   if (sessionId) await copyExistingSession(folder, sessionId, signal);
   return folder;
+}
+
+type CodexLoginSync = "project_updated" | "user_updated" | "unchanged";
+
+export async function syncCodexLogin(home: string, signal?: AbortSignal): Promise<CodexLoginSync> {
+  signal?.throwIfAborted();
+  const userFile = path.join(codexSourceHome(), "auth.json");
+  const projectFile = path.join(home, "auth.json");
+  const [user, project] = await Promise.all([
+    readCodexLogin(userFile),
+    readCodexLogin(projectFile),
+  ]);
+  if (!user || user.text === project?.text) return "unchanged";
+  const sameAccount = user.accountId !== undefined && user.accountId === project?.accountId;
+  if (project && sameAccount && project.refreshedAt > user.refreshedAt) {
+    if ((await readCodexLogin(userFile))?.text !== user.text) return "unchanged";
+    await replaceFile(userFile, project.text, signal);
+    return "user_updated";
+  }
+  await replaceFile(projectFile, user.text, signal);
+  return "project_updated";
+}
+
+function codexSourceHome() {
+  return process.env.CODEX_HOME || path.join(userHome(), ".codex");
+}
+
+async function readCodexLogin(file: string) {
+  const text = await readFile(file, "utf8").catch((error: NodeJS.ErrnoException) => {
+    if (error.code !== "ENOENT") throw error;
+    return undefined;
+  });
+  if (text === undefined) return undefined;
+  let login: { last_refresh?: unknown; tokens?: { account_id?: unknown } } = {};
+  try {
+    login = JSON.parse(text) ?? {};
+  } catch {
+    login = {};
+  }
+  const refreshedAt =
+    typeof login.last_refresh === "string" ? Date.parse(login.last_refresh) || 0 : 0;
+  const accountId =
+    typeof login.tokens?.account_id === "string" ? login.tokens.account_id : undefined;
+  return { text, refreshedAt, accountId };
+}
+
+async function replaceFile(file: string, text: string, signal?: AbortSignal) {
+  const temporary = path.join(path.dirname(file), `.auth-${randomUUID()}.tmp`);
+  try {
+    await writeFile(temporary, text, { mode: 0o600, flag: "wx", signal });
+    signal?.throwIfAborted();
+    await rename(temporary, file);
+  } finally {
+    await rm(temporary, { force: true });
+  }
 }
 async function prepare(folder: string, signal: AbortSignal) {
   signal.throwIfAborted();
   await mkdir(folder, { recursive: true, mode: 0o700 });
   await mkdir(path.join(folder, "sessions"), { recursive: true, mode: 0o700 });
-  const source = process.env.CODEX_HOME || path.join(userHome(), ".codex");
-  for (const name of ["auth.json", "cloud-config-bundle-cache.json", "models_cache.json"]) {
+  const source = codexSourceHome();
+  for (const name of ["cloud-config-bundle-cache.json", "models_cache.json"]) {
     try {
       signal.throwIfAborted();
       await access(path.join(source, name));

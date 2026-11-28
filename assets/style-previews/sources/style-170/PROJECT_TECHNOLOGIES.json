@@ -1,0 +1,39 @@
+{
+  "updatedAt": "2026-11-26T06:54:40.385Z",
+  "fixedNpm": {},
+  "selected": [
+    {
+      "id": "three_js",
+      "purpose": "Style renderer: terrain heightfield mesh with elevation-ramp/contour GLSL shader, lifted 3D section slice and pitched perspective camera",
+      "runtimeDirectory": "runtime",
+      "name": "Three.js",
+      "ecosystem": "npm",
+      "package": "three",
+      "version": "0.187.0",
+      "browserSources": {
+        "build/three.module.js": "104f56145899722094556490d787aae0617cc2fc3382f31df02d724ea1aee341",
+        "build/three.cjs": "b326d5a8b9639e18e3d8debae1c331eaaf426ec703bf218c5ab72b9d6bfa1e94"
+      }
+    },
+    {
+      "id": "gsap",
+      "purpose": "Motion engine: one paused seekable timeline (window.__timelines.video) owning all animated state",
+      "runtimeDirectory": "runtime",
+      "name": "GSAP",
+      "ecosystem": "npm",
+      "package": "gsap",
+      "version": "3.15.1",
+      "browserSources": {
+        "index.js": "070038235ba75ec2186d054ebd83ae94e6de6a971f5d3f3d6cd1037551f94faa",
+        "dist/gsap.js": "0536e0d4ff18b134391a8a9ec012f16059153bcdb737f4d5e3f15e59afb5d4cd"
+      }
+    },
+    {
+      "id": "svg",
+      "purpose": "Crisp map annotations (locator, section line, routes, labels, scale, legend) projected from the shared 3D coordinates, and the section profile card",
+      "runtimeDirectory": ".",
+      "name": "SVG",
+      "ecosystem": "native"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "characters": [],
+  "displayTitle": "Light Table",
+  "displayDescription": "Two acetate plates of an idea's network slide into register, then a lens finds the one new link.",
+  "pipeline": "HyperFrames",
+  "fallbackReason": null,
+  "styleRenderer": [
+    "SVG"
+  ],
+  "motionEngine": [
+    "GSAP (local gsap.min.js, single paused timeline at window.__timelines.video)"
+  ],
+  "sourceFile": "index.html",
+  "duration": 3,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "audioDescription": "Silent preview; no music, effects or narration.",
+  "audioFile": null,
+  "audioTracks": [],
+  "limitations": [
+    "Backlit acetate, translucency and the lens glass are flat SVG approximations made with opacity, gradients and blur. They do not model real light transmission or refraction.",
+    "The magnified view is a 1.8x vector copy of the aligned artwork clipped to a circle, not an optical simulation.",
+    "This is illustrative artwork, not scans from a real archive.",
+    "STYLE.json lists no preview recipes, so the preview shows the core characteristic action.",
+    "The technology record could not be written because the selection tool reported a missing project dependency file. The preview uses only browser-native SVG/HTML and the project-supplied gsap.min.js."
+  ]
+}

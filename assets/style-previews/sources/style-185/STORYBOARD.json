@@ -1,0 +1,53 @@
+{
+  "version": 3,
+  "title": "Connect-O-Tron: An Idea Becomes a Connected System",
+  "durationSeconds": 3,
+  "scenes": [
+    {
+      "id": "scene-1-gadget",
+      "title": "Gadget state: OFF to ON",
+      "startSeconds": 0,
+      "endSeconds": 1,
+      "purpose": "Show the invented gadget's initial OFF state, then trigger it so the idea fires out as loose nodes.",
+      "visuals": ["Wide shot in deep-violet space with planet and ground", "Connect-O-Tron with grey emitter, dim bulb and grey lamps", "Sidekick robot neutral at right", "Label CONNECT-O-TRON · OFF"],
+      "assets": ["Canvas 2D procedural cel drawings (no bitmap assets)"],
+      "beats": [
+        {"startSeconds": 0, "endSeconds": 0.3, "development": "Initial OFF state held: dim bulb, grey emitter, empty sky to the right.", "captions": ["CONNECT-O-TRON · OFF"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.3},
+        {"startSeconds": 0.3, "endSeconds": 0.54, "development": "Idea bulb lights in three stepped cel stages with rays.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 0.54, "endSeconds": 1, "development": "Trigger: body kicks back, emitter and lamps switch to active colour, label flips to ON, stepped beam fires and four pink idea nodes pop in unconnected.", "captions": ["CONNECT-O-TRON · ON"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-2-reaction",
+      "title": "Reaction cut",
+      "startSeconds": 1,
+      "endSeconds": 1.6,
+      "purpose": "One strong reaction: hard cut to the robot close-up, axis kept with gadget light spilling from screen-left.",
+      "visuals": ["Close-up of the same robot drawing at 3.4x", "Yellow gadget light wedge from the left", "Static toon shock lines and '!' burst in the hard pose"],
+      "assets": ["Canvas 2D procedural cel drawings"],
+      "beats": [
+        {"startSeconds": 1, "endSeconds": 1.1, "development": "Neutral robot pose held for three frames before the hit.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 1.1, "endSeconds": 1.6, "development": "Hard pose swap: eyes widen, mouth O, brows and antenna shoot up, hop, shock lines and '!' burst; pink node reflections in eyes.", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0}
+      ]
+    },
+    {
+      "id": "scene-3-altered-prop",
+      "title": "Return to the altered prop",
+      "startSeconds": 1.6,
+      "endSeconds": 3,
+      "purpose": "Cut back to the wide: the loose nodes are now a connected system and the approved caption lands.",
+      "visuals": ["Same wide framing as scene 1", "Zigzag yellow links draw between nodes in six steps", "Signal pulses travel the links", "Caption bubble with tail toward the gadget dome"],
+      "assets": ["Canvas 2D procedural cel drawings"],
+      "beats": [
+        {"startSeconds": 1.6, "endSeconds": 2.06, "development": "Links draw node to node; caption bubble scales in, text appears only once the bubble is complete (2.02 s).", "captions": [], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0},
+        {"startSeconds": 2.06, "endSeconds": 2.56, "development": "Signal pulses run along every link; beam relaxes; nodes gain a connected glow.", "captions": ["AN IDEA BECOMES A CONNECTED SYSTEM!"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.5},
+        {"startSeconds": 2.56, "endSeconds": 3, "development": "Settled hold: outline boil frozen, all motion stopped, caption fully legible.", "captions": ["AN IDEA BECOMES A CONNECTED SYSTEM!", "CONNECT-O-TRON · ON"], "audio": {"music": "", "effects": [], "subtitles": []}, "readingHoldSeconds": 0.44}
+      ]
+    }
+  ],
+  "pacingAudit": {
+    "findings": ["Gadget trigger lands by 0.54 s, reaction hit at 1.1 s, altered prop returns at 1.6 s: one clear action-reaction-result chain.", "Caption text readable from 2.02 s to 3.0 s (~0.98 s); motion settled by 2.56 s."],
+    "justifiedHolds": ["0.0-0.3 s initial OFF state so the change is legible.", "1.0-1.1 s neutral beat before the hard reaction pose.", "2.56-3.0 s settled reading hold."]
+  },
+  "notes": ["Silent preview: no music, effects, narration or subtitles.", "No reviewed preview recipe exists in STYLE.json (tech.preview_recipes absent) and no BACKGROUND_REVIEW.json was supplied; the preview demonstrates the catalogue characteristic action.", "Renderer: Canvas 2D; motion owner: one paused GSAP timeline (local gsap.min.js)."]
+}
