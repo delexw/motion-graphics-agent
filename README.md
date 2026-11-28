@@ -82,6 +82,7 @@ The three most recent dated entries are listed here, regardless of gaps between 
 - **Video planning.** Full-video plans describe how the story moves from one section to the next and break each scene into timed shots. The preview or full build reuses its recorded background decision when it retries.
 - **Gemini CLI.** Kiteva queues CLI turns that share a conversation database and retries startup if Antigravity returns an empty conversation ID.
 - **Video refinement.** Removed the unused refinement form. Playwright now checks image attachments and revision history in Creative Room.
+- **Browser tests.** The style-guide check waits for Motion Graphics search to be ready before continuing.
 
 </details>
 

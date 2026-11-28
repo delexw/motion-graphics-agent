@@ -60,6 +60,8 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 ### Fixed
 
+- The style-guide browser test waits for the Motion Graphics search field to accept input.
+
 - Kiteva queues Gemini CLI turns that use the same conversation database. It retries an empty conversation ID before a new turn starts.
 
 - Cancelling website sign-in stops waiting for browser controls while the owned browser shuts down.

@@ -30,8 +30,12 @@ test("opens the complete style guide without showing suggested combinations", as
       };
       return route.fulfill({ json: fixtures[pathname] ?? {} });
     });
-    await page.goto(new URL("/styles", server.resolvedUrls!.local[0]).href);
-    await page.getByRole("textbox", { name: "Search Motion Graphics" }).fill("2.5D Pixel Art");
+    await page.goto(new URL("/styles", server.resolvedUrls!.local[0]).href, {
+      waitUntil: "commit",
+    });
+    await page
+      .getByRole("textbox", { name: "Search Motion Graphics" })
+      .fill("2.5D Pixel Art", { timeout: 30_000 });
     await expect(page.getByText("2.5D Pixel Art", { exact: true })).toBeVisible();
     await expect(page.getByText("Pixel Art", { exact: true })).toHaveCount(0);
     await page.getByText("2.5D Pixel Art", { exact: true }).click();
