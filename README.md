@@ -81,6 +81,7 @@ The three most recent dated entries are listed here, regardless of gaps between 
 - **HTML pages through MCP.** Pass `settings.outputType: "page"` to `create_idea` to save an interactive page draft. Start it with `start_idea`. See the [MCP page guide](docs/agent-mcp.md#build-an-html-page).
 - **Video planning.** Full-video plans describe how the story moves from one section to the next and break each scene into timed shots. The preview or full build reuses its recorded background decision when it retries.
 - **Gemini CLI.** Kiteva queues CLI turns that share a conversation database and retries startup if Antigravity returns an empty conversation ID.
+- **Video refinement.** Removed the unused refinement form. Playwright now checks image attachments and revision history in Creative Room.
 
 </details>
 

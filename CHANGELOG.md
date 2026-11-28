@@ -64,6 +64,10 @@ Notable changes to Kiteva. Versions follow [Semantic Versioning](https://semver.
 
 - Cancelling website sign-in stops waiting for browser controls while the owned browser shuts down.
 
+### Removed
+
+- Removed the unused video refinement form. Playwright covers image uploads, retrying a failed submission and reviewing revision history in Creative Room.
+
 ## [1.2.0] — 2026-11-16
 
 DeepSeek authoring, finished-project reuse and governed multilingual media workflows.

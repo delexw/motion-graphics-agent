@@ -1,7 +1,6 @@
 import { translateUi, useUiLanguage } from "../i18n";
 import { ProjectSettings } from "./project-settings";
 import { PromptText } from "./style-mention";
-import { VideoRefinement } from "./video-refinement";
 import { Button, Card } from "antd";
 import { Fragment, useMemo, useState, type ReactNode, type Ref } from "react";
 import type { StickToBottomContext } from "use-stick-to-bottom";
@@ -381,7 +380,6 @@ export function ProjectConversation({
             {!events.length && !run.jobs.length && (
               <p role="status">{translateUi("Preparing your project…")}</p>
             )}
-            <VideoRefinement key={`refine-${run.id}`} run={run} onUpdated={onRunUpdated} />
           </ConversationContent>
           <ConversationScrollButton aria-label={translateUi("Jump to latest project update")} />
         </Conversation>

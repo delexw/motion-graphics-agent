@@ -71,6 +71,7 @@
 - **通过 MCP 制作 HTML 页面。** 给 `create_idea` 传入 `settings.outputType: "page"` 保存互动网页草稿，再用 `start_idea` 启动制作。详见 [MCP 页面指南](docs/agent-mcp.md#build-an-html-page)。
 - **视频规划。** 成片计划说明各段剧情如何衔接，并把每个场景拆成带时间的镜头。预览或成片重试时，会复用已记录的背景决定。
 - **Gemini CLI。** Kiteva 将共用会话数据库的 CLI 调用排队。Antigravity 返回空会话 ID 时，Kiteva 会重试启动。
+- **视频微调。** 移除了未使用的旧表单。Playwright 现在在创作空间中测试图片附件和版本历史。
 
 </details>
 

@@ -9,7 +9,7 @@ import { Workflow } from "../../src/server/jobs/workflow";
 import { Store } from "../../src/server/jobs/store";
 import { loadCatalog } from "../../src/server/catalog/catalog";
 import { dataRoot } from "../../src/server/runtime/config";
-import { VideoRefinement } from "../../src/client/components/video-refinement";
+import { RoomProject } from "../../src/client/room/room-project";
 import { buildVideoPrompt } from "../../src/server/domains/video/prompts";
 import sharp from "sharp";
 import { VideoRefinementRequestSchema } from "../../src/shared/domains/video";
@@ -243,19 +243,36 @@ it("keeps text-only refinement compatible and rejects unsupported or excessive i
   ).rejects.toMatchObject({ code: "FILE_TYPE_UNSUPPORTED" });
   expect(run.jobs).toHaveLength(1);
 });
-it("shows inline AI Elements fine-tune input only after a completed video and disables it during work", () => {
+it("shows Creative Room fine-tuning for a refinable version and disables it during work", () => {
   const run = project("/tmp/unused");
-  const html = renderToStaticMarkup(<VideoRefinement run={run} onUpdated={() => {}} />);
+  const noop = () => {};
+  const renderRoom = () =>
+    renderToStaticMarkup(
+      <RoomProject
+        run={run}
+        view={{ tab: "full", refine: "" }}
+        onView={noop}
+        events={[]}
+        controls={null}
+        renderFull={() => null}
+        renderPreview={() => null}
+        onQuestion={noop}
+        onUpdated={noop}
+        onEdit={noop}
+        onCancel={noop}
+        onRetry={noop}
+      />,
+    );
+  const html = renderRoom();
   expect(html).toContain('aria-label="Fine-tune instructions"');
-  expect(html).toContain('aria-label="Video to fine-tune"');
-  expect(html).toContain("Apply changes");
+  expect(html).toContain('aria-label="Version to fine-tune"');
   expect(html).toContain('aria-label="Attach refinement images"');
   run.phase = "generating";
-  expect(renderToStaticMarkup(<VideoRefinement run={run} onUpdated={() => {}} />)).toContain(
-    'disabled=""',
+  expect(renderRoom()).toMatch(
+    /<textarea(?=[^>]*aria-label="Fine-tune instructions")[^>]*disabled/,
   );
   run.jobs[0].phase = "failed";
-  expect(renderToStaticMarkup(<VideoRefinement run={run} onUpdated={() => {}} />)).toBe("");
+  expect(renderRoom()).not.toContain('aria-label="Fine-tune instructions"');
 });
 
 it.each(["claude", "codex"] as const)(
